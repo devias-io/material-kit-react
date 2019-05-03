@@ -3,7 +3,7 @@
 ![license](https://img.shields.io/badge/license-MIT-blue.svg) [![GitHub issues open](https://img.shields.io/github/issues/devias-io/material-react-register-page.svg?maxAge=2592000)](https://s3.eu-west-2.amazonaws.com/devias/products/material-react-register-page/react-register-xl.gif) [![GitHub issues closed](https://img.shields.io/github/issues-closed-raw/devias-io/material-react-register-page.svg?maxAge=2592000)](https://github.com/devias-io/material-react-register-page/issues?q=is%3Aissue+is%3Aclosed) [![Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/BSHaUGR)  
   
   
-![Register Page](https://s3.eu-west-2.amazonaws.com/devias/products/react-material-dashboard/material-react-dashboard.gif)  
+![Register Page](https://s3.eu-west-2.amazonaws.com/devias/products/react-material-dashboard/material-react-dashboard-free.gif)  
 
 >Free React Dashboard made with [Material UI's](https://material-ui/?ref=devias-io) components, [React](https://reactjs.org/?ref=devias-io) and of course [create-react-app](https://facebook.github.io/create-react-app/?ref=devias-io) to boost your app development process! We'll launch a pro version soon, so if you are interested subscribe to our personal emailing list on [https://devias.io/](https://devias.io/)
 
