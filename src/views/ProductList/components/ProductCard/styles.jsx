@@ -36,6 +36,7 @@ export default theme => ({
   },
   description: {
     lineHeight: '16px',
+    minHeight: 32,
     color: theme.palette.text.secondary,
     textAlign: 'center',
     marginTop: theme.spacing.unit,
