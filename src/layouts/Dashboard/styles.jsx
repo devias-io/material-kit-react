@@ -19,7 +19,7 @@ export default theme => ({
     width: '271px'
   },
   sidebar: {
-    width: '270px'
+    width: 'auto'
   },
   content: {
     marginTop: '64px',
@@ -30,6 +30,7 @@ export default theme => ({
     })
   },
   contentShift: {
-    marginLeft: '270px'
+    marginLeft: '270px',
+    display: 'block'
   }
 });

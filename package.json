@@ -8,11 +8,13 @@
     "@material-ui/styles": "^3.0.0-alpha.10",
     "chart.js": "^2.7.3",
     "classnames": "^2.2.6",
+    "core-js": "^3.0.1",
     "history": "^4.7.2",
     "moment": "^2.24.0",
     "node-sass": "^4.11.0",
     "prop-types": "^15.7.1",
     "react": "^16.8.1",
+    "react-app-polyfill": "^1.0.1",
     "react-chartjs-2": "^2.7.4",
     "react-dom": "^16.8.1",
     "react-perfect-scrollbar": "^1.4.4",
@@ -35,7 +37,7 @@
   "browserslist": [
     ">0.2%",
     "not dead",
-    "not ie <= 11",
+    "not ie < 10",
     "not op_mini all"
   ],
   "devDependencies": {
