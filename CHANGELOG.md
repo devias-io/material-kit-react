@@ -4,6 +4,7 @@
 
 ### Updates
 
+- Updated README.md
 - Removed unused scss from assets
 - Removed unused components from shared components
 - Removed `authGuard` since it won't be used in this version
