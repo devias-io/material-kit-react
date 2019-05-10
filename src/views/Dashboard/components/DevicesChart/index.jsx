@@ -12,7 +12,6 @@ import { withStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 
-import DevicesIcon from '@material-ui/icons/Devices';
 import LaptopMacIcon from '@material-ui/icons/LaptopMac';
 import PhoneIphoneIcon from '@material-ui/icons/PhoneIphone';
 import RefreshIcon from '@material-ui/icons/Refresh';
@@ -46,13 +45,11 @@ class DevicesChart extends Component {
         className={rootClassName}
       >
         <PortletHeader noDivider>
-          <PortletLabel
-            icon={<DevicesIcon />}
-            title="Users by device"
-          />
+          <PortletLabel title="Users by device" />
           <PortletToolbar>
             <IconButton
               className={classes.refreshButton}
+              onClick={this.handleRefresh}
               variant="text"
             >
               <RefreshIcon />

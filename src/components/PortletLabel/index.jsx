@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 // Externals
 import classNames from 'classnames';
@@ -32,38 +32,36 @@ const styles = theme => ({
   }
 });
 
-class PortletLabel extends Component {
-  render() {
-    const { classes, className, icon, title, subtitle, ...rest } = this.props;
+const PortletLabel = props => {
+  const { classes, className, icon, title, subtitle, ...rest } = props;
 
-    const rootClassName = classNames(classes.root, className);
+  const rootClassName = classNames(classes.root, className);
 
-    return (
-      <div
-        {...rest}
-        className={rootClassName}
-      >
-        {icon && <span className={classes.icon}>{icon}</span>}
-        {title && (
-          <Typography
-            className={classes.title}
-            variant="h5"
-          >
-            {title}
-          </Typography>
-        )}
-        {subtitle && (
-          <Typography
-            className={classes.subtitle}
-            variant="subtitle2"
-          >
-            {subtitle}
-          </Typography>
-        )}
-      </div>
-    );
-  }
-}
+  return (
+    <div
+      {...rest}
+      className={rootClassName}
+    >
+      {icon && <span className={classes.icon}>{icon}</span>}
+      {title && (
+        <Typography
+          className={classes.title}
+          variant="h5"
+        >
+          {title}
+        </Typography>
+      )}
+      {subtitle && (
+        <Typography
+          className={classes.subtitle}
+          variant="subtitle2"
+        >
+          {subtitle}
+        </Typography>
+      )}
+    </div>
+  );
+};
 
 PortletLabel.propTypes = {
   children: PropTypes.node,

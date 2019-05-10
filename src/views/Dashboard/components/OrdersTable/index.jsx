@@ -97,7 +97,7 @@ class OrdersTable extends Component {
         <PortletHeader noDivider>
           <PortletLabel
             subtitle={`${ordersTotal} total`}
-            title="Latest Orders"
+            title="Latest orders"
           />
           <PortletToolbar>
             <Button
@@ -135,7 +135,7 @@ class OrdersTable extends Component {
                         title="Sort"
                       >
                         <TableSortLabel
-                          active="true"
+                          active
                           direction="desc"
                         >
                           Date

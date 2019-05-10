@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 // Externals
 import PropTypes from 'prop-types';
@@ -14,37 +14,35 @@ import AppsOutlinedIcon from '@material-ui/icons/AppsOutlined';
 // Component styles
 import styles from './styles';
 
-class DisplayMode extends Component {
-  render() {
-    const { classes, className, mode, onChange } = this.props;
+const DisplayMode = props => {
+  const { classes, className, mode, onChange } = props;
 
-    const rootClassName = classNames(classes.root, className);
+  const rootClassName = classNames(classes.root, className);
 
-    return (
-      <div className={rootClassName}>
-        <span
-          className={classNames({
-            [classes.option]: true,
-            [classes.optionSelected]: mode === 'grid'
-          })}
-          onClick={onChange}
-        >
-          <AppsOutlinedIcon className={classes.displayIcon} />
-        </span>
-        <span className={classes.divider} />
-        <span
-          className={classNames({
-            [classes.option]: true,
-            [classes.optionSelected]: mode === 'list'
-          })}
-          onClick={onChange}
-        >
-          <ListOutlinedIcon className={classes.displayIcon} />
-        </span>
-      </div>
-    );
-  }
-}
+  return (
+    <div className={rootClassName}>
+      <span
+        className={classNames({
+          [classes.option]: true,
+          [classes.optionSelected]: mode === 'grid'
+        })}
+        onClick={onChange}
+      >
+        <AppsOutlinedIcon className={classes.displayIcon} />
+      </span>
+      <span className={classes.divider} />
+      <span
+        className={classNames({
+          [classes.option]: true,
+          [classes.optionSelected]: mode === 'list'
+        })}
+        onClick={onChange}
+      >
+        <ListOutlinedIcon className={classes.displayIcon} />
+      </span>
+    </div>
+  );
+};
 
 DisplayMode.propTypes = {
   className: PropTypes.string,

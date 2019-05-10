@@ -25,9 +25,7 @@ export const options = {
   cornerRadius: 20,
   tooltips: {
     backgroundColor: palette.common.white,
-    titleFontFamily: 'Roboto',
     titleFontColor: palette.text.primary,
-    bodyFontFamily: 'Roboto',
     bodyFontColor: palette.text.secondary,
     footerFontColor: palette.text.secondary
   },

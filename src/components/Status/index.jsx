@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 // Externals
 import PropTypes from 'prop-types';
@@ -46,28 +46,26 @@ const styles = theme => ({
   }
 });
 
-class Status extends Component {
-  render() {
-    const { classes, className, size, color, ...rest } = this.props;
+const Status = props => {
+  const { classes, className, size, color, ...rest } = props;
 
-    const rootClassName = classNames(
-      {
-        [classes.root]: true,
-        [classes[size]]: size,
-        [classes[color]]: color
-      },
-      className
-    );
+  const rootClassName = classNames(
+    {
+      [classes.root]: true,
+      [classes[size]]: size,
+      [classes[color]]: color
+    },
+    className
+  );
 
-    return (
-      <span
-        {...rest}
-        className={rootClassName}
-        //
-      />
-    );
-  }
-}
+  return (
+    <span
+      {...rest}
+      className={rootClassName}
+      //
+    />
+  );
+};
 
 Status.propTypes = {
   className: PropTypes.string,

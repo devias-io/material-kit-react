@@ -10,17 +10,16 @@ import { withStyles } from '@material-ui/core/styles';
 
 // Material components
 import Button from '@material-ui/core/Button';
-import Typography from '@material-ui/core/Typography';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ArrowRightIcon from '@material-ui/icons/ArrowRight';
 
 // Shared components
 import Portlet from 'components/Portlet';
+import PortletHeader from 'components/PortletHeader';
+import PortletLabel from 'components/PortletLabel';
+import PortletToolbar from 'components/PortletToolbar';
 import PortletContent from 'components/PortletContent';
 import PortletFooter from 'components/PortletFooter';
-
-// Palette
-import palette from 'theme/palette';
 
 // Chart configuration
 import { data, options } from './chart';
@@ -39,9 +38,19 @@ class SalesChart extends Component {
         {...rest}
         className={rootClassName}
       >
+        <PortletHeader noDivider>
+          <PortletLabel title="Latest sales" />
+          <PortletToolbar>
+            <Button
+              className={classes.dropdownButton}
+              size="small"
+              variant="text"
+            >
+              Last 7 days <ArrowDropDownIcon />
+            </Button>
+          </PortletToolbar>
+        </PortletHeader>
         <PortletContent>
-          <Typography variant="h1">12.370</Typography>
-          <Typography variant="body1">total sales</Typography>
           <div className={classes.chartWrapper}>
             <Bar
               data={data}
@@ -51,17 +60,11 @@ class SalesChart extends Component {
         </PortletContent>
         <PortletFooter className={classes.portletFooter}>
           <Button
-            size="small"
-            variant="text"
-          >
-            Last 7 days <ArrowDropDownIcon />
-          </Button>
-          <Button
             color="primary"
             size="small"
             variant="text"
           >
-            Sales overview <ArrowRightIcon />
+            Overview <ArrowRightIcon />
           </Button>
         </PortletFooter>
       </Portlet>
