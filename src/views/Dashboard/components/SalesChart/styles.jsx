@@ -4,19 +4,23 @@ export default theme => ({
     display: 'flex',
     justifyContent: 'space-between'
   },
-  details: {
-    minWidth: '700px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: theme.spacing.unit * 4
-  },
   summary: {},
-  legends: {},
+  chartWrapper: {
+    marginTop: theme.spacing.unit * 4,
+    minWidth: '100%',
+    height: '400px',
+    maxHeight: '100%'
+  },
+  legends: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: theme.spacing.unit * 3
+  },
   legend: {
     display: 'flex',
     alignItems: 'center',
     '& + &': {
-      marginTop: theme.spacing.unit
+      marginLeft: theme.spacing.unit * 2
     }
   },
   legendColor: {
@@ -25,9 +29,5 @@ export default theme => ({
     width: '18px',
     borderRadius: '3px',
     marginRight: theme.spacing.unit
-  },
-  chart: {
-    height: '400px',
-    padding: theme.spacing.unit * 3
   }
 });

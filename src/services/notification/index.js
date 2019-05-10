@@ -1,6 +1,5 @@
 // Mock data
 import notifications from 'data/notifications';
-// const notifications = [];
 
 export const getNotifications = (limit = 6) => {
   return new Promise(resolve => {

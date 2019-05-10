@@ -3,9 +3,9 @@ export default theme => ({
   refreshButton: {
     margin: -theme.spacing.unit * 2
   },
-  chart: {
+  chartWrapper: {
     height: '300px',
-    width: '300px',
+    maxHeight: '100%',
     margin: '0 auto'
   },
   stats: {

@@ -63,7 +63,10 @@ class UsersToolbar extends Component {
           </Button>
         </div>
         <div className={classes.row}>
-          <SearchInput placeholder="Search user" />
+          <SearchInput
+            className={classes.searchInput}
+            placeholder="Search user"
+          />
           <span className={classes.spacer} />
           <DisplayMode mode="list" />
         </div>

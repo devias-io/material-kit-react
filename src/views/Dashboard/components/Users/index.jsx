@@ -9,7 +9,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 // Material components
 import Typography from '@material-ui/core/Typography';
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
+import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
 import PeopleOutlinedIcon from '@material-ui/icons/PeopleOutlined';
 
 // Shared components
@@ -42,7 +42,7 @@ class Users extends Component {
               className={classes.difference}
               variant="body2"
             >
-              <ArrowDropDownIcon />
+              <ArrowDropUpIcon />
               16%
             </Typography>
           </div>

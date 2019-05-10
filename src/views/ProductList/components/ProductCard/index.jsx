@@ -15,16 +15,9 @@ import GetAppIcon from '@material-ui/icons/GetApp';
 
 // Shared components
 import Paper from 'components/Paper';
-import Status from 'components/Status';
 
 // Component styles
 import styles from './styles';
-
-const statusColors = {
-  published: 'success',
-  archived: 'neutral',
-  draft: 'warning'
-};
 
 class ProductCard extends Component {
   render() {
@@ -34,19 +27,6 @@ class ProductCard extends Component {
 
     return (
       <Paper className={rootClassName}>
-        <div className={classes.statusWrapper}>
-          <Status
-            className={classes.status}
-            color={statusColors[product.status]}
-            size="sm"
-          />
-          <Typography
-            className={classes.statusText}
-            variant="body2"
-          >
-            {product.status}
-          </Typography>
-        </div>
         <div className={classes.imageWrapper}>
           <img
             alt="Product"

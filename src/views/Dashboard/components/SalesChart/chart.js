@@ -22,13 +22,24 @@ export const data = {
 export const options = {
   maintainAspectRatio: false,
   legend: { display: false },
+  cornerRadius: 20,
+  tooltips: {
+    backgroundColor: palette.common.white,
+    titleFontFamily: 'Roboto',
+    titleFontColor: palette.text.primary,
+    bodyFontFamily: 'Roboto',
+    bodyFontColor: palette.text.secondary,
+    footerFontColor: palette.text.secondary
+  },
   scales: {
     xAxes: [
       {
-        maxBarThickness: 20,
+        barThickness: 16,
+        maxBarThickness: 16,
         barPercentage: 1,
-        categoryPercentage: 0.25,
-        ticks: {},
+        ticks: {
+          fontColor: palette.text.secondary
+        },
         gridLines: {
           display: false,
           drawBorder: false
@@ -38,6 +49,7 @@ export const options = {
     yAxes: [
       {
         ticks: {
+          fontColor: palette.text.secondary,
           beginAtZero: true,
           min: 0,
           callback: function(value) {
@@ -47,8 +59,13 @@ export const options = {
           }
         },
         gridLines: {
+          borderDash: [2],
+          borderDashOffset: [2],
           color: palette.divider,
-          drawBorder: false
+          drawBorder: false,
+          zeroLineBorderDash: [2],
+          zeroLineBorderDashOffset: [2],
+          zeroLineColor: palette.divider
         }
       }
     ]

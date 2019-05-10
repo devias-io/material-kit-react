@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 
 // Externals
 import PropTypes from 'prop-types';
@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 
 // Material components
+import Grid from '@material-ui/core/Grid';
 import TypographyC from '@material-ui/core/Typography';
 
 // Shared layouts
@@ -16,20 +17,6 @@ import DashboardLayout from 'layouts/Dashboard';
 const styles = theme => ({
   root: {
     padding: theme.spacing.unit * 4
-  },
-  row: {
-    display: 'flex',
-    // flexWrap: 'wrap',
-    alignItems: 'center',
-    marginBottom: '50px'
-  },
-  caption: {
-    flexBasis: '320px',
-    flexShrink: 0,
-    flexGrow: 0
-  },
-  example: {
-    flexGrow: 1
   }
 });
 
@@ -57,25 +44,29 @@ class Typography extends Component {
     return (
       <DashboardLayout title="Typography">
         <div className={classes.root}>
-          {Object.keys(variants).map((key, i) => (
-            <div
-              className={classes.row}
-              key={i}
-            >
-              <TypographyC
-                className={classes.caption}
-                variant="caption"
-              >
-                {key}
-              </TypographyC>
-              <TypographyC
-                className={classes.example}
-                variant={key}
-              >
-                {variants[key]}
-              </TypographyC>
-            </div>
-          ))}
+          <Grid
+            container
+            spacing={32}
+          >
+            {Object.keys(variants).map((key, i) => (
+              <Fragment key={i}>
+                <Grid
+                  item
+                  sm={3}
+                  xs={12}
+                >
+                  <TypographyC variant="caption">{key}</TypographyC>
+                </Grid>
+                <Grid
+                  item
+                  sm={9}
+                  xs={12}
+                >
+                  <TypographyC variant={key}>{variants[key]}</TypographyC>
+                </Grid>
+              </Fragment>
+            ))}
+          </Grid>
         </div>
       </DashboardLayout>
     );

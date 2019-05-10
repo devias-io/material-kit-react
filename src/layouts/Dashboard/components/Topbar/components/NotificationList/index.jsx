@@ -70,7 +70,6 @@ class NotificationList extends Component {
                   <Link
                     key={notification.id}
                     to="#"
-                    // to={notification.to}
                   >
                     <ListItem
                       className={classes.listItem}

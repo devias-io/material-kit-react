@@ -28,7 +28,7 @@ import { data, options } from './chart';
 // Component styles
 import styles from './styles';
 
-class TabsChart extends Component {
+class SalesChart extends Component {
   render() {
     const { classes, className, ...rest } = this.props;
 
@@ -39,34 +39,32 @@ class TabsChart extends Component {
         {...rest}
         className={rootClassName}
       >
-        <PortletContent noPadding>
-          <div className={classes.details}>
-            <div className={classes.summary}>
-              <Typography variant="h1">12.370</Typography>
-              <Typography variant="body1">total sales</Typography>
-            </div>
-            <div className={classes.legends}>
-              <div className={classes.legend}>
-                <span
-                  className={classes.legendColor}
-                  style={{ backgroundColor: palette.primary.main }}
-                />
-                <Typography varint="body1">This year</Typography>
-              </div>
-              <div className={classes.legend}>
-                <span
-                  className={classes.legendColor}
-                  style={{ backgroundColor: palette.common.neutral }}
-                />
-                <Typography varint="body1">Last year</Typography>
-              </div>
-            </div>
+        <PortletContent>
+          <div className={classes.summary}>
+            <Typography variant="h1">12.370</Typography>
+            <Typography variant="body1">total sales</Typography>
           </div>
-          <div className={classes.chart}>
+          <div className={classes.chartWrapper}>
             <Bar
               data={data}
               options={options}
             />
+          </div>
+          <div className={classes.legends}>
+            <div className={classes.legend}>
+              <span
+                className={classes.legendColor}
+                style={{ backgroundColor: palette.primary.main }}
+              />
+              <Typography varint="body1">This year</Typography>
+            </div>
+            <div className={classes.legend}>
+              <span
+                className={classes.legendColor}
+                style={{ backgroundColor: palette.common.neutral }}
+              />
+              <Typography varint="body1">Last year</Typography>
+            </div>
           </div>
         </PortletContent>
         <PortletFooter className={classes.portletFooter}>
@@ -77,7 +75,7 @@ class TabsChart extends Component {
             color="primary"
             variant="text"
           >
-            Audience Overview <ArrowRightIcon />
+            Sales overview <ArrowRightIcon />
           </Button>
         </PortletFooter>
       </Portlet>
@@ -85,9 +83,9 @@ class TabsChart extends Component {
   }
 }
 
-TabsChart.propTypes = {
+SalesChart.propTypes = {
   className: PropTypes.string,
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(TabsChart);
+export default withStyles(styles)(SalesChart);

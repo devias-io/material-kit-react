@@ -1,5 +1,7 @@
 export default theme => ({
   root: {
+    flexGrow: 0,
+    flexShrink: 0,
     overflow: 'hidden',
     borderRadius: '5px',
     display: 'inline-flex',
