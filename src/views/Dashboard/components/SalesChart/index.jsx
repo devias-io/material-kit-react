@@ -40,39 +40,25 @@ class SalesChart extends Component {
         className={rootClassName}
       >
         <PortletContent>
-          <div className={classes.summary}>
-            <Typography variant="h1">12.370</Typography>
-            <Typography variant="body1">total sales</Typography>
-          </div>
+          <Typography variant="h1">12.370</Typography>
+          <Typography variant="body1">total sales</Typography>
           <div className={classes.chartWrapper}>
             <Bar
               data={data}
               options={options}
             />
           </div>
-          <div className={classes.legends}>
-            <div className={classes.legend}>
-              <span
-                className={classes.legendColor}
-                style={{ backgroundColor: palette.primary.main }}
-              />
-              <Typography varint="body1">This year</Typography>
-            </div>
-            <div className={classes.legend}>
-              <span
-                className={classes.legendColor}
-                style={{ backgroundColor: palette.common.neutral }}
-              />
-              <Typography varint="body1">Last year</Typography>
-            </div>
-          </div>
         </PortletContent>
         <PortletFooter className={classes.portletFooter}>
-          <Button variant="text">
+          <Button
+            size="small"
+            variant="text"
+          >
             Last 7 days <ArrowDropDownIcon />
           </Button>
           <Button
             color="primary"
+            size="small"
             variant="text"
           >
             Sales overview <ArrowRightIcon />
