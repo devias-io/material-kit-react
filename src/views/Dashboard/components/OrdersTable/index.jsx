@@ -103,6 +103,7 @@ class OrdersTable extends Component {
             <Button
               className={classes.newEntryButton}
               color="primary"
+              size="small"
               variant="outlined"
             >
               New entry

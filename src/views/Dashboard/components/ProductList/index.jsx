@@ -157,6 +157,7 @@ class ProductList extends Component {
         <PortletFooter className={classes.portletFooter}>
           <Button
             color="primary"
+            size="small"
             variant="text"
           >
             View all <ArrowRightIcon />
