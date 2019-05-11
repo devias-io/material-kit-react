@@ -5,14 +5,16 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Typography from '@material-ui/core/Typography';
-import MonetizationOnOutlinedIcon from '@material-ui/icons/MonetizationOnOutlined';
+import { Typography } from '@material-ui/core';
+
+// Material icons
+import { MonetizationOn as MonetizationOnIcon } from '@material-ui/icons';
 
 // Shared components
-import Paper from 'components/Paper';
+import { Paper } from 'components';
 
 // Component styles
 import styles from './styles';
@@ -45,7 +47,7 @@ class Profit extends Component {
           </div>
         </div>
         <div className={classes.iconWrapper}>
-          <MonetizationOnOutlinedIcon className={classes.icon} />
+          <MonetizationOnIcon className={classes.icon} />
         </div>
       </Paper>
     );

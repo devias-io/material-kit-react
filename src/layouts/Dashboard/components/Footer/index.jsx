@@ -5,11 +5,10 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Divider from '@material-ui/core/Divider';
-import Typography from '@material-ui/core/Typography';
+import { Divider, Typography } from '@material-ui/core';
 
 // Component styles
 const styles = theme => ({

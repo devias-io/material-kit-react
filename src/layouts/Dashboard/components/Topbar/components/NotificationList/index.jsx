@@ -6,29 +6,34 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Button from '@material-ui/core/Button';
-import Divider from '@material-ui/core/Divider';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import Typography from '@material-ui/core/Typography';
+import {
+  Button,
+  Divider,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Typography
+} from '@material-ui/core';
 
-import ArrowForwardIosIcon from '@material-ui/icons/ArrowForwardIos';
-import DollarIcon from '@material-ui/icons/AttachMoneyOutlined';
-import PeopleIcon from '@material-ui/icons/PeopleOutlineOutlined';
-import CodeIcon from '@material-ui/icons/CodeOutlined';
-import ApplicationIcon from '@material-ui/icons/DashboardOutlined';
+// Material icons
+import {
+  ArrowForwardIos as ArrowForwardIosIcon,
+  Payment as PaymentIcon,
+  PeopleOutlined as PeopleIcon,
+  Code as CodeIcon,
+  Store as StoreIcon
+} from '@material-ui/icons';
 
 // Component styles
 import styles from './styles';
 
 const icons = {
   order: {
-    icon: <DollarIcon />,
+    icon: <PaymentIcon />,
     color: 'blue'
   },
   user: {
@@ -36,7 +41,7 @@ const icons = {
     color: 'red'
   },
   product: {
-    icon: <ApplicationIcon />,
+    icon: <StoreIcon />,
     color: 'green'
   },
   feature: {

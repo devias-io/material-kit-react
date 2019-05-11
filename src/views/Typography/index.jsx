@@ -4,14 +4,13 @@ import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Grid from '@material-ui/core/Grid';
-import TypographyC from '@material-ui/core/Typography';
+import { Grid, Typography as TypographyComponent } from '@material-ui/core';
 
 // Shared layouts
-import DashboardLayout from 'layouts/Dashboard';
+import { Dashboard as DashboardLayout } from 'layouts';
 
 // Component styles
 const styles = theme => ({
@@ -46,7 +45,7 @@ class Typography extends Component {
         <div className={classes.root}>
           <Grid
             container
-            spacing={32}
+            spacing={4}
           >
             {Object.keys(variants).map((key, i) => (
               <Fragment key={i}>
@@ -55,14 +54,18 @@ class Typography extends Component {
                   sm={3}
                   xs={12}
                 >
-                  <TypographyC variant="caption">{key}</TypographyC>
+                  <TypographyComponent variant="caption">
+                    {key}
+                  </TypographyComponent>
                 </Grid>
                 <Grid
                   item
                   sm={9}
                   xs={12}
                 >
-                  <TypographyC variant={key}>{variants[key]}</TypographyC>
+                  <TypographyComponent variant={key}>
+                    {variants[key]}
+                  </TypographyComponent>
                 </Grid>
               </Fragment>
             ))}

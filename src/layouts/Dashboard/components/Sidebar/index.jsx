@@ -6,26 +6,32 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Avatar from '@material-ui/core/Avatar';
-import Divider from '@material-ui/core/Divider';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import ListSubheader from '@material-ui/core/ListSubheader';
-import Typography from '@material-ui/core/Typography';
-import DashboardIcon from '@material-ui/icons/DashboardOutlined';
-import PeopleIcon from '@material-ui/icons/PeopleOutlineRounded';
-import ShoppingIcon from '@material-ui/icons/ShoppingBasketOutlined';
-import LockIcon from '@material-ui/icons/LockOpenOutlined';
-import TextIcon from '@material-ui/icons/TextFieldsOutlined';
-import ImageIcon from '@material-ui/icons/ImageAspectRatioOutlined';
-import InfoIcon from '@material-ui/icons/InfoOutlined';
-import AccountBoxOutlinedIcon from '@material-ui/icons/AccountBoxOutlined';
-import SettingsOutlinedIcon from '@material-ui/icons/SettingsOutlined';
+import {
+  Avatar,
+  Divider,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  ListSubheader,
+  Typography
+} from '@material-ui/core';
+
+// Material icons
+import {
+  DashboardOutlined as DashboardIcon,
+  PeopleOutlined as PeopleIcon,
+  ShoppingBasketOutlined as ShoppingBasketIcon,
+  LockOpenOutlined as LockOpenIcon,
+  TextFields as TextFieldsIcon,
+  ImageOutlined as ImageIcon,
+  InfoOutlined as InfoIcon,
+  AccountBoxOutlined as AccountBoxIcon,
+  SettingsOutlined as SettingsIcon
+} from '@material-ui/icons';
 
 // Component styles
 import styles from './styles';
@@ -112,7 +118,7 @@ class Sidebar extends Component {
             to="/products"
           >
             <ListItemIcon className={classes.listItemIcon}>
-              <ShoppingIcon />
+              <ShoppingBasketIcon />
             </ListItemIcon>
             <ListItemText
               classes={{ primary: classes.listItemText }}
@@ -126,7 +132,7 @@ class Sidebar extends Component {
             to="/sign-in"
           >
             <ListItemIcon className={classes.listItemIcon}>
-              <LockIcon />
+              <LockOpenIcon />
             </ListItemIcon>
             <ListItemText
               classes={{ primary: classes.listItemText }}
@@ -140,7 +146,7 @@ class Sidebar extends Component {
             to="/typography"
           >
             <ListItemIcon className={classes.listItemIcon}>
-              <TextIcon />
+              <TextFieldsIcon />
             </ListItemIcon>
             <ListItemText
               classes={{ primary: classes.listItemText }}
@@ -168,7 +174,7 @@ class Sidebar extends Component {
             to="/account"
           >
             <ListItemIcon className={classes.listItemIcon}>
-              <AccountBoxOutlinedIcon />
+              <AccountBoxIcon />
             </ListItemIcon>
             <ListItemText
               classes={{ primary: classes.listItemText }}
@@ -182,7 +188,7 @@ class Sidebar extends Component {
             to="/settings"
           >
             <ListItemIcon className={classes.listItemIcon}>
-              <SettingsOutlinedIcon />
+              <SettingsIcon />
             </ListItemIcon>
             <ListItemText
               classes={{ primary: classes.listItemText }}

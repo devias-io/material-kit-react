@@ -5,15 +5,19 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Typography from '@material-ui/core/Typography';
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
-import MoneyOutlinedIcon from '@material-ui/icons/MoneyOutlined';
+import { Typography } from '@material-ui/core';
+
+// Material icons
+import {
+  ArrowDropDown as ArrowDropDownIcon,
+  Money as MoneyIcon
+} from '@material-ui/icons';
 
 // Shared components
-import Paper from 'components/Paper';
+import { Paper } from 'components';
 
 // Component styles
 import styles from './styles';
@@ -48,7 +52,7 @@ class Budget extends Component {
           </div>
         </div>
         <div className={classes.iconWrapper}>
-          <MoneyOutlinedIcon className={classes.icon} />
+          <MoneyIcon className={classes.icon} />
         </div>
       </Paper>
     );

@@ -5,14 +5,13 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Button from '@material-ui/core/Button';
+import { Button } from '@material-ui/core';
 
 // Shared components
-import SearchInput from 'components/SearchInput';
-import DisplayMode from 'components/DisplayMode';
+import { DisplayMode, SearchInput } from 'components';
 
 // Component styles
 import styles from './styles';
@@ -32,7 +31,7 @@ class ProductsToolbar extends Component {
             size="small"
             variant="outlined"
           >
-            Add product
+            Add
           </Button>
         </div>
         <div className={classes.row}>

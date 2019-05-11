@@ -4,21 +4,19 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Typography from '@material-ui/core/Typography';
+import { CircularProgress, Typography } from '@material-ui/core';
 
 // Shared layouts
-import DashboardLayout from 'layouts/Dashboard';
+import { Dashboard as DashboardLayout } from 'layouts';
 
 // Shared services
 import { getUsers } from 'services/user';
 
 // Custom components
-import UsersToolbar from './components/UsersToolbar';
-import UsersTable from './components/UsersTable';
+import { UsersToolbar, UsersTable } from './components';
 
 // Component styles
 import styles from './style';

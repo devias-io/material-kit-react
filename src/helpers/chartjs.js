@@ -1,7 +1,6 @@
 // ChartJS extension rounded bar chart
 // https://codepen.io/jedtrow/full/ygRYgo
-
-export function draw() {
+function draw() {
   const { ctx } = this._chart;
   const vm = this._view;
   let { borderWidth } = vm;
@@ -187,3 +186,7 @@ export function draw() {
     ctx.stroke();
   }
 }
+
+export default {
+  draw
+};

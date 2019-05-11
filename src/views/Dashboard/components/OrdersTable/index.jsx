@@ -7,29 +7,33 @@ import PerfectScrollbar from 'react-perfect-scrollbar';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Button from '@material-ui/core/Button';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Tooltip from '@material-ui/core/Tooltip';
-import TableSortLabel from '@material-ui/core/TableSortLabel';
+import {
+  Button,
+  CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Tooltip,
+  TableSortLabel
+} from '@material-ui/core';
 
 // Shared services
 import { getOrders } from 'services/order';
 
 // Shared components
-import Portlet from 'components/Portlet';
-import PortletHeader from 'components/PortletHeader';
-import PortletLabel from 'components/PortletLabel';
-import PortletToolbar from 'components/PortletToolbar';
-import PortletContent from 'components/PortletContent';
-import Status from 'components/Status';
+import {
+  Portlet,
+  PortletHeader,
+  PortletLabel,
+  PortletToolbar,
+  PortletContent,
+  Status
+} from 'components';
 
 // Component styles
 import styles from './styles';

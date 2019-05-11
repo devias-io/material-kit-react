@@ -21,14 +21,6 @@ export default theme => ({
   progressWrapper: {
     marginTop: theme.spacing.unit * 2
   },
-  progressRoot: {
-    borderRadius: '3px',
-    marginTop: theme.spacing.unit,
-    overflow: 'hidden'
-  },
-  progressColorPrimary: {
-    backgroundColor: theme.palette.common.neutral
-  },
   uploadButton: {
     marginRight: theme.spacing.unit * 2
   }

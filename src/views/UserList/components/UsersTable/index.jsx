@@ -8,25 +8,26 @@ import moment from 'moment';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Avatar from '@material-ui/core/Avatar';
-import Checkbox from '@material-ui/core/Checkbox';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Typography from '@material-ui/core/Typography';
-import TablePagination from '@material-ui/core/TablePagination';
+import {
+  Avatar,
+  Checkbox,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
+  TablePagination
+} from '@material-ui/core';
 
 // Shared helpers
-import getInitials from 'helpers/getInitials';
+import { getInitials } from 'helpers';
 
 // Shared components
-import Portlet from 'components/Portlet';
-import PortletContent from 'components/PortletContent';
+import { Portlet, PortletContent } from 'components';
 
 // Component styles
 import styles from './styles';

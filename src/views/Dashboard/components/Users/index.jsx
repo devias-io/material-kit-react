@@ -5,15 +5,19 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Typography from '@material-ui/core/Typography';
-import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
-import PeopleOutlinedIcon from '@material-ui/icons/PeopleOutlined';
+import { Typography } from '@material-ui/core';
+
+// Material icons
+import {
+  ArrowDropUp as ArrowDropUpIcon,
+  PeopleOutlined as PeopleIcon
+} from '@material-ui/icons';
 
 // Shared components
-import Paper from 'components/Paper';
+import { Paper } from 'components';
 
 // Component styles
 import styles from './styles';
@@ -48,7 +52,7 @@ class Users extends Component {
           </div>
         </div>
         <div className={classes.iconWrapper}>
-          <PeopleOutlinedIcon className={classes.icon} />
+          <PeopleIcon className={classes.icon} />
         </div>
       </Paper>
     );

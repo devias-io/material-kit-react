@@ -6,13 +6,15 @@ import { createBrowserHistory } from 'history';
 import { Chart } from 'react-chartjs-2';
 
 // Material helpers
-import { MuiThemeProvider } from '@material-ui/core/styles';
+import { ThemeProvider } from '@material-ui/styles';
 
 // ChartJS helpers
-import { draw } from './helpers/chartjs';
+import { chartjs } from './helpers';
 
 // Theme
 import theme from './theme';
+
+// Styles
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import './assets/scss/index.scss';
 
@@ -23,16 +25,18 @@ import Routes from './Routes';
 const browserHistory = createBrowserHistory();
 
 // Configure ChartJS
-Chart.helpers.extend(Chart.elements.Rectangle.prototype, { draw });
+Chart.helpers.extend(Chart.elements.Rectangle.prototype, {
+  draw: chartjs.draw
+});
 
 export default class App extends Component {
   render() {
     return (
-      <MuiThemeProvider theme={theme}>
+      <ThemeProvider theme={theme}>
         <Router history={browserHistory}>
           <Routes />
         </Router>
-      </MuiThemeProvider>
+      </ThemeProvider>
     );
   }
 }

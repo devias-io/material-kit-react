@@ -4,10 +4,10 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Shared layouts
-import DashboardLayout from 'layouts/Dashboard';
+import { Dashboard as DashboardLayout } from 'layouts';
 
 // Component styles
 const styles = theme => ({

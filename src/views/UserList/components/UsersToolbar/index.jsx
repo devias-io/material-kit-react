@@ -5,18 +5,20 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
-import ArrowDownwardOutlinedIcon from '@material-ui/icons/ArrowDownwardOutlined';
-import ArrowUpwardOutlinedIcon from '@material-ui/icons/ArrowUpwardOutlined';
-import DeleteIcon from '@material-ui/icons/Delete';
+import { Button, IconButton } from '@material-ui/core';
+
+// Material icons
+import {
+  ArrowDownward as ArrowDownwardIcon,
+  ArrowUpward as ArrowUpwardIcon,
+  Delete as DeleteIcon
+} from '@material-ui/icons';
 
 // Shared components
-import SearchInput from 'components/SearchInput';
-import DisplayMode from 'components/DisplayMode';
+import { DisplayMode, SearchInput } from 'components';
 
 // Component styles
 import styles from './styles';
@@ -44,14 +46,14 @@ class UsersToolbar extends Component {
             size="small"
             variant="outlined"
           >
-            <ArrowDownwardOutlinedIcon className={classes.importIcon} /> Import
+            <ArrowDownwardIcon className={classes.importIcon} /> Import
           </Button>
           <Button
             className={classes.exportButton}
             size="small"
             variant="outlined"
           >
-            <ArrowUpwardOutlinedIcon className={classes.exportIcon} />
+            <ArrowUpwardIcon className={classes.exportIcon} />
             Export
           </Button>
           <Button
@@ -59,7 +61,7 @@ class UsersToolbar extends Component {
             size="small"
             variant="outlined"
           >
-            Add user
+            Add
           </Button>
         </div>
         <div className={classes.row}>

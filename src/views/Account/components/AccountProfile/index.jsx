@@ -5,18 +5,13 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Avatar from '@material-ui/core/Avatar';
-import Typography from '@material-ui/core/Typography';
-import Button from '@material-ui/core/Button';
-import LinearProgress from '@material-ui/core/LinearProgress';
+import { Avatar, Typography, Button, LinearProgress } from '@material-ui/core';
 
 // Shared components
-import Portlet from 'components/Portlet';
-import PortletContent from 'components/PortletContent';
-import PortletFooter from 'components/PortletFooter';
+import { Portlet, PortletContent, PortletFooter } from 'components';
 
 // Component styles
 import styles from './styles';
@@ -57,10 +52,6 @@ class AccountProfile extends Component {
           <div className={classes.progressWrapper}>
             <Typography variant="body1">Profile Completeness: 70%</Typography>
             <LinearProgress
-              classes={{
-                root: classes.progressRoot,
-                colorPrimary: classes.progressColorPrimary
-              }}
               value={70}
               variant="determinate"
             />

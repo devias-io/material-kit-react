@@ -1,5 +1,5 @@
 // Colors
-import { primary } from 'common/colors';
+import { primary } from '../../common/colors';
 import palette from '../palette';
 
 export default {

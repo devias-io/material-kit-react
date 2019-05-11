@@ -6,20 +6,26 @@ import PropTypes from 'prop-types';
 import { Bar } from 'react-chartjs-2';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Button from '@material-ui/core/Button';
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
-import ArrowRightIcon from '@material-ui/icons/ArrowRight';
+import { Button } from '@material-ui/core';
+
+// Material icons
+import {
+  ArrowDropDown as ArrowDropDownIcon,
+  ArrowRight as ArrowRightIcon
+} from '@material-ui/icons';
 
 // Shared components
-import Portlet from 'components/Portlet';
-import PortletHeader from 'components/PortletHeader';
-import PortletLabel from 'components/PortletLabel';
-import PortletToolbar from 'components/PortletToolbar';
-import PortletContent from 'components/PortletContent';
-import PortletFooter from 'components/PortletFooter';
+import {
+  Portlet,
+  PortletHeader,
+  PortletLabel,
+  PortletToolbar,
+  PortletContent,
+  PortletFooter
+} from 'components';
 
 // Chart configuration
 import { data, options } from './chart';

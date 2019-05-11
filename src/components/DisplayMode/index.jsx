@@ -5,11 +5,10 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import ListOutlinedIcon from '@material-ui/icons/ListOutlined';
-import AppsOutlinedIcon from '@material-ui/icons/AppsOutlined';
+import { List as ListIcon, Apps as AppsIcon } from '@material-ui/icons';
 
 // Component styles
 import styles from './styles';
@@ -28,7 +27,7 @@ const DisplayMode = props => {
         })}
         onClick={onChange}
       >
-        <AppsOutlinedIcon className={classes.displayIcon} />
+        <AppsIcon className={classes.displayIcon} />
       </span>
       <span className={classes.divider} />
       <span
@@ -38,7 +37,7 @@ const DisplayMode = props => {
         })}
         onClick={onChange}
       >
-        <ListOutlinedIcon className={classes.displayIcon} />
+        <ListIcon className={classes.displayIcon} />
       </span>
     </div>
   );

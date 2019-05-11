@@ -4,17 +4,16 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Grid from '@material-ui/core/Grid';
+import { Grid } from '@material-ui/core';
 
 // Shared layouts
-import DashboardLayout from 'layouts/Dashboard';
+import { Dashboard as DashboardLayout } from 'layouts';
 
 // Custom components
-import Notifications from './components/Notifications';
-import Password from './components/Password';
+import { Notifications, Password } from './components';
 
 // Component styles
 const styles = theme => ({
@@ -32,7 +31,7 @@ class Settings extends Component {
         <div className={classes.root}>
           <Grid
             container
-            spacing={32}
+            spacing={4}
           >
             <Grid
               item

@@ -5,25 +5,30 @@ import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import IconButton from '@material-ui/core/IconButton';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
-import ChevronLeftOutlinedIcon from '@material-ui/icons/ChevronLeftOutlined';
-import ChevronRightOutlinedIcon from '@material-ui/icons/ChevronRightOutlined';
+import {
+  IconButton,
+  CircularProgress,
+  Grid,
+  Typography
+} from '@material-ui/core';
+
+// Material icons
+import {
+  ChevronRight as ChevronRightIcon,
+  ChevronLeft as ChevronLeftIcon
+} from '@material-ui/icons';
 
 // Shared layouts
-import DashboardLayout from 'layouts/Dashboard';
+import { Dashboard as DashboardLayout } from 'layouts';
 
 // Shared services
 import { getProducts } from 'services/product';
 
 // Custom components
-import ProductsToolbar from './components/ProductsToolbar';
-import ProductCard from './components/ProductCard';
+import { ProductsToolbar, ProductCard } from './components';
 
 // Component styles
 import styles from './styles';
@@ -96,7 +101,7 @@ class ProductList extends Component {
     return (
       <Grid
         container
-        spacing={24}
+        spacing={3}
       >
         {products.map(product => (
           <Grid
@@ -126,10 +131,10 @@ class ProductList extends Component {
           <div className={classes.pagination}>
             <Typography variant="caption">1-6 of 20</Typography>
             <IconButton>
-              <ChevronLeftOutlinedIcon />
+              <ChevronLeftIcon />
             </IconButton>
             <IconButton>
-              <ChevronRightOutlinedIcon />
+              <ChevronRightIcon />
             </IconButton>
           </div>
         </div>

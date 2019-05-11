@@ -5,15 +5,16 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Typography from '@material-ui/core/Typography';
-import LinearProgress from '@material-ui/core/LinearProgress';
-import TimelineOutlinedIcon from '@material-ui/icons/TimelineOutlined';
+import { Typography, LinearProgress } from '@material-ui/core';
+
+// Material icons
+import { Timeline as TimelineIcon } from '@material-ui/icons';
 
 // Shared components
-import Paper from 'components/Paper';
+import { Paper } from 'components';
 
 // Component styles
 import styles from './styles';
@@ -47,7 +48,7 @@ class Progress extends Component {
           </div>
         </div>
         <div className={classes.iconWrapper}>
-          <TimelineOutlinedIcon className={classes.icon} />
+          <TimelineIcon className={classes.icon} />
         </div>
       </Paper>
     );

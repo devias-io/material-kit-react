@@ -5,16 +5,19 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Typography from '@material-ui/core/Typography';
-import Divider from '@material-ui/core/Divider';
-import AccessTimeOutlinedIcon from '@material-ui/icons/AccessTimeOutlined';
-import GetAppIcon from '@material-ui/icons/GetApp';
+import { Typography, Divider } from '@material-ui/core';
+
+// Material icons
+import {
+  AccessTime as AccessTimeIcon,
+  GetApp as GetAppIcon
+} from '@material-ui/icons';
 
 // Shared components
-import Paper from 'components/Paper';
+import { Paper } from 'components';
 
 // Component styles
 import styles from './styles';
@@ -50,7 +53,7 @@ class ProductCard extends Component {
         </div>
         <Divider />
         <div className={classes.stats}>
-          <AccessTimeOutlinedIcon className={classes.updateIcon} />
+          <AccessTimeIcon className={classes.updateIcon} />
           <Typography
             className={classes.updateText}
             variant="body2"

@@ -9,22 +9,30 @@ import PropTypes from 'prop-types';
 import { getProducts } from 'services/product';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
-import Typography from '@material-ui/core/Typography';
-import ArrowRightIcon from '@material-ui/icons/ArrowRight';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import MoreVertIcon from '@material-ui/icons/MoreVert';
+import {
+  Button,
+  IconButton,
+  Typography,
+  CircularProgress
+} from '@material-ui/core';
+
+// Material icons
+import {
+  ArrowRight as ArrowRightIcon,
+  MoreVert as MoreVertIcon
+} from '@material-ui/icons';
 
 // Shared components
-import Portlet from 'components/Portlet';
-import PortletHeader from 'components/PortletHeader';
-import PortletLabel from 'components/PortletLabel';
-import PortletContent from 'components/PortletContent';
-import PortletFooter from 'components/PortletFooter';
+import {
+  Portlet,
+  PortletHeader,
+  PortletLabel,
+  PortletContent,
+  PortletFooter
+} from 'components';
 
 // Component styles
 import styles from './styles';
@@ -108,7 +116,7 @@ class ProductList extends Component {
               />
             </div>
             <div className={classes.productDetails}>
-              <Link to={`/products/${product.id}`}>
+              <Link to="#">
                 <Typography
                   className={classes.productTitle}
                   variant="h5"

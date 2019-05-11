@@ -6,23 +6,27 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import IconButton from '@material-ui/core/IconButton';
-import Typography from '@material-ui/core/Typography';
+import { IconButton, Typography } from '@material-ui/core';
 
-import LaptopMacIcon from '@material-ui/icons/LaptopMac';
-import PhoneIphoneIcon from '@material-ui/icons/PhoneIphone';
-import RefreshIcon from '@material-ui/icons/Refresh';
-import TabletMacIcon from '@material-ui/icons/TabletMac';
+// Material icons
+import {
+  LaptopMac as LaptopMacIcon,
+  PhoneIphone as PhoneIphoneIcon,
+  Refresh as RefreshIcon,
+  TabletMac as TabletMacIcon
+} from '@material-ui/icons';
 
 // Shared components
-import Portlet from 'components/Portlet';
-import PortletHeader from 'components/PortletHeader';
-import PortletLabel from 'components/PortletLabel';
-import PortletToolbar from 'components/PortletToolbar';
-import PortletContent from 'components/PortletContent';
+import {
+  Portlet,
+  PortletHeader,
+  PortletLabel,
+  PortletToolbar,
+  PortletContent
+} from 'components';
 
 // Palette
 import palette from 'theme/palette';
