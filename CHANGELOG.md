@@ -15,6 +15,7 @@
 
 ### Fixed bugs
 
+- Fixed charts responsiveness
 - Fixed `DisplayMode` component size, when used as a flex child it could grow/shrink
 - Fixed `Typography` view responsiveness for small devices
 - Fixed `ProductCard` component description height
