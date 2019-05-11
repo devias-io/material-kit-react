@@ -8,33 +8,42 @@ export const data = {
     {
       label: 'This year',
       backgroundColor: palette.primary.main,
-      data: [18000, 5000, 19000, 27000, 29000, 19000, 20000]
+      data: [18, 5, 19, 27, 29, 19, 20]
     },
     {
       label: 'Last year',
       backgroundColor: palette.common.neutral,
-      data: [11000, 20000, 12000, 29000, 30000, 25000, 13000]
+      data: [11, 20, 12, 29, 30, 25, 13]
     }
   ]
 };
 
 // Chart options
 export const options = {
+  responsive: true,
   maintainAspectRatio: false,
+  animation: false,
   legend: { display: false },
   cornerRadius: 20,
   tooltips: {
+    enabled: true,
+    mode: 'index',
+    intersect: false,
+    borderWidth: 1,
+    borderColor: palette.border,
     backgroundColor: palette.common.white,
     titleFontColor: palette.text.primary,
     bodyFontColor: palette.text.secondary,
     footerFontColor: palette.text.secondary
   },
+  layout: { padding: 0 },
   scales: {
     xAxes: [
       {
-        barThickness: 16,
-        maxBarThickness: 16,
-        barPercentage: 1,
+        barThickness: 12,
+        maxBarThickness: 10,
+        barPercentage: 0.5,
+        categoryPercentage: 0.5,
         ticks: {
           fontColor: palette.text.secondary
         },
@@ -49,12 +58,7 @@ export const options = {
         ticks: {
           fontColor: palette.text.secondary,
           beginAtZero: true,
-          min: 0,
-          callback: function(value) {
-            const v = value / 1000;
-
-            return v === 0 ? 0 : v + 'K';
-          }
+          min: 0
         },
         gridLines: {
           borderDash: [2],
@@ -67,6 +71,5 @@ export const options = {
         }
       }
     ]
-  },
-  responsiveAnimationDuration: 1000
+  }
 };

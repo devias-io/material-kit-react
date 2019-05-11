@@ -4,9 +4,8 @@ export default theme => ({
     margin: -theme.spacing.unit * 2
   },
   chartWrapper: {
-    height: '300px',
-    maxHeight: '100%',
-    margin: '0 auto'
+    position: 'relative',
+    height: '300px'
   },
   stats: {
     marginTop: theme.spacing.unit * 2,

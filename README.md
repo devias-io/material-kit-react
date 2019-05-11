@@ -59,6 +59,7 @@ material-react-dashboard
 ├── package.json
 ├── README.md
 ├── public
+├── docs
 └── src
 	├── assets
 	│	└── scss

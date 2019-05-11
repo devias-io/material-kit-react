@@ -1,10 +1,11 @@
 # Change Log
 
-## [0.1.1] 2019-05-10
+## [0.1.1] 2019-05-11
 
 ### Updates
 
 - Updated README.md
+- Added docs for IE11 polyfill
 - Removed unused scss from assets
 - Removed unused components from shared components
 - Removed `authGuard` since it won't be used in this version

@@ -1,3 +1,6 @@
+// ChartJS extension rounded bar chart
+// https://codepen.io/jedtrow/full/ygRYgo
+
 export function draw() {
   const { ctx } = this._chart;
   const vm = this._view;

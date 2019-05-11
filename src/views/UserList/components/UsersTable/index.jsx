@@ -94,10 +94,10 @@ class UsersTable extends Component {
     const rootClassName = classNames(classes.root, className);
 
     return (
-      <Portlet>
+      <Portlet className={rootClassName}>
         <PortletContent noPadding>
           <PerfectScrollbar>
-            <Table className={rootClassName}>
+            <Table>
               <TableHead>
                 <TableRow>
                   <TableCell align="left">

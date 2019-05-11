@@ -96,7 +96,7 @@ class OrdersTable extends Component {
       <Portlet className={rootClassName}>
         <PortletHeader noDivider>
           <PortletLabel
-            subtitle={`${ordersTotal} total`}
+            subtitle={`${ordersTotal} in total`}
             title="Latest orders"
           />
           <PortletToolbar>

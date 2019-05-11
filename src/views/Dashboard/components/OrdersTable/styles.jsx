@@ -15,6 +15,10 @@ export default theme => ({
     cursor: 'pointer'
   },
   customerCell: {
+    maxWidth: '200px',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
     fontWeight: 500
   },
   statusWrapper: {

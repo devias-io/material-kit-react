@@ -45,6 +45,7 @@ class Dashboard extends Component {
           >
             <Grid
               item
+              lg={3}
               sm={6}
               xl={3}
               xs={12}
@@ -53,6 +54,7 @@ class Dashboard extends Component {
             </Grid>
             <Grid
               item
+              lg={3}
               sm={6}
               xl={3}
               xs={12}
@@ -61,6 +63,7 @@ class Dashboard extends Component {
             </Grid>
             <Grid
               item
+              lg={3}
               sm={6}
               xl={3}
               xs={12}
@@ -69,6 +72,7 @@ class Dashboard extends Component {
             </Grid>
             <Grid
               item
+              lg={3}
               sm={6}
               xl={3}
               xs={12}

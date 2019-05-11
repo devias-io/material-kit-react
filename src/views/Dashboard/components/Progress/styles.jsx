@@ -23,8 +23,7 @@ export default theme => ({
   },
   iconWrapper: {},
   icon: {
-    color: theme.palette.text.secondary,
-    opacity: 0.2,
+    color: theme.palette.common.neutral,
     width: '4rem',
     height: '4rem',
     fontSize: '4rem'

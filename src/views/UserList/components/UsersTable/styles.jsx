@@ -1,6 +1,5 @@
 export default theme => ({
   root: {},
-  table: {},
   tableRow: {
     height: '64px'
   },
