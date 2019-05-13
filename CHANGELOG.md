@@ -1,5 +1,16 @@
 # Change Log
 
+## [0.2.0] 2019-05-13
+
+## Updates
+
+- [#5](https://github.com/devias-io/react-material-dashboard/issues/5) Updated to @material-ui to `4.0.0-beta`
+- Updated few icons to match @material-ui v4 updates
+- Updated React version to `16.8.6` to support React Hooks
+- Implemented `jsconfig.json` file and removed `.env` to match React v16.8.6 absolute paths
+- Updated chart styles and options
+- [#7](https://github.com/devias-io/react-material-dashboard/issues/7) Removed yarn.lock from commit
+
 ## [0.1.1] 2019-05-11
 
 ### Updates
@@ -18,8 +29,7 @@
 - Fixed charts responsiveness
 - Fixed `DisplayMode` component size, when used as a flex child it could grow/shrink
 - Fixed `Typography` view responsiveness for small devices
-- Fixed `ProductCard` component description height
-  https://github.com/devias-io/react-material-dashboard/pull/2
+- [#2](https://github.com/devias-io/react-material-dashboard/pull/2) Fixed `ProductCard` component description height
 
 ## [0.1.0] 2019-05-02
 

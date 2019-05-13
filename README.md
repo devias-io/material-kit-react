@@ -54,7 +54,10 @@ Within the download you'll find the following directories and files:
 material-react-dashboard
 
 ├── .eslintrc
+├── .gitignore
 ├── .prettierrc
+├── CHANGELOG.md
+├── jsconfig.json
 ├── LICENSE.md
 ├── package.json
 ├── README.md
