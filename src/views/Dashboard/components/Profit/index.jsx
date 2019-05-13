@@ -11,7 +11,7 @@ import { withStyles } from '@material-ui/core';
 import { Typography } from '@material-ui/core';
 
 // Material icons
-import { MonetizationOn as MonetizationOnIcon } from '@material-ui/icons';
+import { AttachMoney as AttachMoneyIcon } from '@material-ui/icons';
 
 // Shared components
 import { Paper } from 'components';
@@ -31,23 +31,23 @@ class Profit extends Component {
         className={rootClassName}
       >
         <div className={classes.content}>
-          <Typography
-            className={classes.title}
-            variant="body2"
-          >
-            TOTAL PROFIT
-          </Typography>
           <div className={classes.details}>
             <Typography
-              className={classes.amount}
+              className={classes.title}
+              variant="body2"
+            >
+              TOTAL PROFIT
+            </Typography>
+            <Typography
+              className={classes.value}
               variant="h3"
             >
               $23,200
             </Typography>
           </div>
-        </div>
-        <div className={classes.iconWrapper}>
-          <MonetizationOnIcon className={classes.icon} />
+          <div className={classes.iconWrapper}>
+            <AttachMoneyIcon className={classes.icon} />
+          </div>
         </div>
       </Paper>
     );

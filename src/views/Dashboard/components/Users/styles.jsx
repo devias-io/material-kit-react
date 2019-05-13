@@ -1,39 +1,46 @@
 export default theme => ({
   root: {
-    padding: theme.spacing.unit * 3,
-    display: 'flex',
-    alignItems: 'center'
+    padding: theme.spacing.unit * 3
   },
   content: {
-    flexGrow: 1
+    alignItems: 'center',
+    display: 'flex'
   },
   title: {
-    fontWeight: 700,
-    color: theme.palette.text.secondary
+    color: theme.palette.text.secondary,
+    fontWeight: 700
   },
-  details: {
-    marginTop: theme.spacing.unit,
+  value: {
+    marginTop: theme.spacing.unit
+  },
+  iconWrapper: {
+    alignItems: 'center',
+    backgroundColor: theme.palette.success.main,
+    borderRadius: '50%',
+    display: 'inline-flex',
+    height: '4rem',
+    justifyContent: 'center',
+    marginLeft: 'auto',
+    width: '4rem'
+  },
+  icon: {
+    color: theme.palette.common.white,
+    fontSize: '2rem',
+    height: '2rem',
+    width: '2rem'
+  },
+  footer: {
+    marginTop: theme.spacing.unit * 2,
     display: 'flex',
     alignItems: 'center'
   },
   difference: {
-    fontWeight: 700,
-    marginLeft: theme.spacing.unit,
-    backgroundColor: theme.palette.success.light,
-    color: theme.palette.success.dark,
-    display: 'flex',
     alignItems: 'center',
-    paddingTop: theme.spacing.unit * 0.5,
-    paddingLeft: theme.spacing.unit * 0.5,
-    paddingBottom: theme.spacing.unit * 0.5,
-    paddingRight: theme.spacing.unit,
-    borderRadius: '3px'
+    color: theme.palette.success.dark,
+    display: 'inline-flex',
+    fontWeight: 700
   },
-  iconWrapper: {},
-  icon: {
-    color: theme.palette.common.neutral,
-    width: '4rem',
-    height: '4rem',
-    fontSize: '4rem'
+  caption: {
+    marginLeft: theme.spacing.unit
   }
 });

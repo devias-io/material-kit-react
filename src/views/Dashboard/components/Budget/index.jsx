@@ -12,7 +12,7 @@ import { Typography } from '@material-ui/core';
 
 // Material icons
 import {
-  ArrowDropDown as ArrowDropDownIcon,
+  ArrowDownward as ArrowDownwardIcon,
   Money as MoneyIcon
 } from '@material-ui/icons';
 
@@ -34,25 +34,38 @@ class Budget extends Component {
         className={rootClassName}
       >
         <div className={classes.content}>
-          <Typography
-            className={classes.title}
-            variant="body2"
-          >
-            BUDGET
-          </Typography>
           <div className={classes.details}>
-            <Typography variant="h3">$24,000</Typography>
             <Typography
-              className={classes.difference}
+              className={classes.title}
               variant="body2"
             >
-              <ArrowDropDownIcon />
-              12%
+              BUDGET
+            </Typography>
+            <Typography
+              className={classes.value}
+              variant="h3"
+            >
+              $24,000
             </Typography>
           </div>
+          <div className={classes.iconWrapper}>
+            <MoneyIcon className={classes.icon} />
+          </div>
         </div>
-        <div className={classes.iconWrapper}>
-          <MoneyIcon className={classes.icon} />
+        <div className={classes.footer}>
+          <Typography
+            className={classes.difference}
+            variant="body2"
+          >
+            <ArrowDownwardIcon />
+            12%
+          </Typography>
+          <Typography
+            className={classes.caption}
+            variant="caption"
+          >
+            Since last month
+          </Typography>
         </div>
       </Paper>
     );

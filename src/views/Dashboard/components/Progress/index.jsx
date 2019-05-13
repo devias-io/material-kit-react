@@ -11,7 +11,7 @@ import { withStyles } from '@material-ui/core';
 import { Typography, LinearProgress } from '@material-ui/core';
 
 // Material icons
-import { Timeline as TimelineIcon } from '@material-ui/icons';
+import { InsertChartOutlined as InsertChartIcon } from '@material-ui/icons';
 
 // Shared components
 import { Paper } from 'components';
@@ -31,24 +31,29 @@ class Progress extends Component {
         className={rootClassName}
       >
         <div className={classes.content}>
-          <Typography
-            className={classes.title}
-            variant="body2"
-          >
-            PROGRESS
-          </Typography>
           <div className={classes.details}>
-            <Typography variant="h3">75.5%</Typography>
-            <div className={classes.progressWrapper}>
-              <LinearProgress
-                value={75.5}
-                variant="determinate"
-              />
-            </div>
+            <Typography
+              className={classes.title}
+              variant="body2"
+            >
+              PROGRESS
+            </Typography>
+            <Typography
+              className={classes.value}
+              variant="h3"
+            >
+              75.5%
+            </Typography>
+          </div>
+          <div className={classes.iconWrapper}>
+            <InsertChartIcon className={classes.icon} />
           </div>
         </div>
-        <div className={classes.iconWrapper}>
-          <TimelineIcon className={classes.icon} />
+        <div className={classes.footer}>
+          <LinearProgress
+            value={75.5}
+            variant="determinate"
+          />
         </div>
       </Paper>
     );

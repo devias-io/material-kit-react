@@ -8,8 +8,8 @@
 - Updated few icons to match @material-ui v4 updates
 - Updated React version to `16.8.6` to support React Hooks
 - Implemented `jsconfig.json` file and removed `.env` to match React v16.8.6 absolute paths
+- Updated Dashboard view top widgets styles and structure
 - Updated chart styles and options
-- [#7](https://github.com/devias-io/react-material-dashboard/issues/7) Removed yarn.lock from commit
 
 ## [0.1.1] 2019-05-11
 

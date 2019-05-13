@@ -2,30 +2,34 @@ export default theme => ({
   root: {
     backgroundColor: theme.palette.primary.main,
     borderColor: theme.palette.primary.main,
-    padding: theme.spacing.unit * 3,
+    padding: theme.spacing.unit * 3
+  },
+  content: {
     display: 'flex',
     alignItems: 'center'
   },
-  content: {
-    flexGrow: 1
-  },
+  details: {},
   title: {
     fontWeight: 700,
     color: theme.palette.common.white
   },
-  details: {
-    marginTop: theme.spacing.unit,
-    display: 'flex',
-    alignItems: 'center'
-  },
-  amount: {
+  value: {
     color: theme.palette.common.white
   },
-  iconWrapper: {},
-  icon: {
-    color: theme.palette.common.white,
-    width: '4rem',
+  iconWrapper: {
+    alignItems: 'center',
+    backgroundColor: theme.palette.common.white,
+    borderRadius: '50%',
+    display: 'inline-flex',
     height: '4rem',
-    fontSize: '4rem'
+    justifyContent: 'center',
+    marginLeft: 'auto',
+    width: '4rem'
+  },
+  icon: {
+    color: theme.palette.primary.main,
+    width: '2rem',
+    height: '2rem',
+    fontSize: '2rem'
   }
 });
