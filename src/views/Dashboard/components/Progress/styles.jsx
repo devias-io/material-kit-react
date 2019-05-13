@@ -4,8 +4,7 @@ export default theme => ({
   },
   content: {
     display: 'flex',
-    alignItems: 'center',
-    paddingRight: theme.spacing.unit * 3
+    alignItems: 'center'
   },
   details: {},
   title: {
