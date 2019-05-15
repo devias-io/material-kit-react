@@ -8,21 +8,23 @@ import validate from 'validate.js';
 import _ from 'underscore';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles/index';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Grid from '@material-ui/core/Grid/index';
-import Button from '@material-ui/core/Button/index';
-import CircularProgress from '@material-ui/core/CircularProgress/index';
-import IconButton from '@material-ui/core/IconButton/index';
-import TextField from '@material-ui/core/TextField/index';
-import Typography from '@material-ui/core/Typography/index';
+import {
+  Grid,
+  Button,
+  IconButton,
+  CircularProgress,
+  TextField,
+  Typography
+} from '@material-ui/core';
 
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+// Material icons
+import { ArrowBack as ArrowBackIcon } from '@material-ui/icons';
 
 // Shared components
-import FacebookIcon from 'icons/Facebook';
-import GoogleIcon from 'icons/Google';
+import { Facebook as FacebookIcon, Google as GoogleIcon } from 'icons';
 
 // Component styles
 import styles from './styles';

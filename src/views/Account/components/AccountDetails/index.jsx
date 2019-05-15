@@ -5,18 +5,19 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
+import { Button, TextField } from '@material-ui/core';
 
 // Shared components
-import Portlet from 'components/Portlet';
-import PortletHeader from 'components/PortletHeader';
-import PortletLabel from 'components/PortletLabel';
-import PortletContent from 'components/PortletContent';
-import PortletFooter from 'components/PortletFooter';
+import {
+  Portlet,
+  PortletHeader,
+  PortletLabel,
+  PortletContent,
+  PortletFooter
+} from 'components';
 
 // Component styles
 import styles from './styles';
@@ -55,6 +56,7 @@ class Account extends Component {
   render() {
     const { classes, className, ...rest } = this.props;
     const { firstName, lastName, phone, state, country, email } = this.state;
+
     const rootClassName = classNames(classes.root, className);
 
     return (
@@ -118,9 +120,7 @@ class Account extends Component {
                 onChange={this.handleChange}
                 required
                 select
-                SelectProps={{
-                  native: true
-                }}
+                SelectProps={{ native: true }}
                 value={state}
                 variant="outlined">
                 {states.map(option => (

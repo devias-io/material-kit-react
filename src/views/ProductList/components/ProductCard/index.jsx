@@ -5,26 +5,22 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Typography from '@material-ui/core/Typography';
-import Divider from '@material-ui/core/Divider';
-import AccessTimeOutlinedIcon from '@material-ui/icons/AccessTimeOutlined';
-import GetAppIcon from '@material-ui/icons/GetApp';
+import { Typography, Divider } from '@material-ui/core';
+
+// Material icons
+import {
+  AccessTime as AccessTimeIcon,
+  GetApp as GetAppIcon
+} from '@material-ui/icons';
 
 // Shared components
-import Paper from 'components/Paper';
-import Status from 'components/Status';
+import { Paper } from 'components';
 
 // Component styles
 import styles from './styles';
-
-const statusColors = {
-  published: 'success',
-  archived: 'neutral',
-  draft: 'warning'
-};
 
 class ProductCard extends Component {
   render() {
@@ -34,19 +30,6 @@ class ProductCard extends Component {
 
     return (
       <Paper className={rootClassName}>
-        <div className={classes.statusWrapper}>
-          <Status
-            className={classes.status}
-            color={statusColors[product.status]}
-            size="sm"
-          />
-          <Typography
-            className={classes.statusText}
-            variant="body2"
-          >
-            {product.status}
-          </Typography>
-        </div>
         <div className={classes.imageWrapper}>
           <img
             alt="Product"
@@ -70,7 +53,7 @@ class ProductCard extends Component {
         </div>
         <Divider />
         <div className={classes.stats}>
-          <AccessTimeOutlinedIcon className={classes.updateIcon} />
+          <AccessTimeIcon className={classes.updateIcon} />
           <Typography
             className={classes.updateText}
             variant="body2"

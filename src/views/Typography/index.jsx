@@ -1,35 +1,21 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 
 // Externals
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import TypographyC from '@material-ui/core/Typography';
+import { Grid, Typography as TypographyComponent } from '@material-ui/core';
 
 // Shared layouts
-import DashboardLayout from 'layouts/Dashboard';
+import { Dashboard as DashboardLayout } from 'layouts';
 
 // Component styles
 const styles = theme => ({
   root: {
     padding: theme.spacing.unit * 4
-  },
-  row: {
-    display: 'flex',
-    // flexWrap: 'wrap',
-    alignItems: 'center',
-    marginBottom: '50px'
-  },
-  caption: {
-    flexBasis: '320px',
-    flexShrink: 0,
-    flexGrow: 0
-  },
-  example: {
-    flexGrow: 1
   }
 });
 
@@ -57,25 +43,33 @@ class Typography extends Component {
     return (
       <DashboardLayout title="Typography">
         <div className={classes.root}>
-          {Object.keys(variants).map((key, i) => (
-            <div
-              className={classes.row}
-              key={i}
-            >
-              <TypographyC
-                className={classes.caption}
-                variant="caption"
-              >
-                {key}
-              </TypographyC>
-              <TypographyC
-                className={classes.example}
-                variant={key}
-              >
-                {variants[key]}
-              </TypographyC>
-            </div>
-          ))}
+          <Grid
+            container
+            spacing={4}
+          >
+            {Object.keys(variants).map((key, i) => (
+              <Fragment key={i}>
+                <Grid
+                  item
+                  sm={3}
+                  xs={12}
+                >
+                  <TypographyComponent variant="caption">
+                    {key}
+                  </TypographyComponent>
+                </Grid>
+                <Grid
+                  item
+                  sm={9}
+                  xs={12}
+                >
+                  <TypographyComponent variant={key}>
+                    {variants[key]}
+                  </TypographyComponent>
+                </Grid>
+              </Fragment>
+            ))}
+          </Grid>
         </div>
       </DashboardLayout>
     );

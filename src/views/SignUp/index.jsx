@@ -8,18 +8,21 @@ import validate from 'validate.js';
 import _ from 'underscore';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles/index';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Button from '@material-ui/core/Button/index';
-import Checkbox from '@material-ui/core/Checkbox/index';
-import CircularProgress from '@material-ui/core/CircularProgress/index';
-import Grid from '@material-ui/core/Grid/index';
-import IconButton from '@material-ui/core/IconButton/index';
-import TextField from '@material-ui/core/TextField/index';
-import Typography from '@material-ui/core/Typography/index';
+import {
+  Button,
+  Checkbox,
+  CircularProgress,
+  Grid,
+  IconButton,
+  TextField,
+  Typography
+} from '@material-ui/core';
 
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+// Material icons
+import { ArrowBack as ArrowBackIcon } from '@material-ui/icons';
 
 // Shared utilities
 import validators from 'common/validators';

@@ -1,14 +1,7 @@
 export default theme => ({
   root: {},
-  portletHeader: {
-    minWidth: '600px'
-  },
   portletContent: {
     minWidth: '600px'
-  },
-  sortButton: {
-    marginLeft: theme.spacing.unit,
-    marginRight: theme.spacing.unit
   },
   newEntryButton: {
     marginLeft: theme.spacing.unit
@@ -18,11 +11,14 @@ export default theme => ({
     display: 'flex',
     justifyContent: 'center'
   },
-  table: {},
   tableRow: {
     cursor: 'pointer'
   },
   customerCell: {
+    maxWidth: '200px',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
     fontWeight: 500
   },
   statusWrapper: {

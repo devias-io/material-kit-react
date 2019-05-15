@@ -6,13 +6,6 @@ export default theme => ({
     paddingRight: theme.spacing.unit * 3,
     paddingLeft: theme.spacing.unit * 3
   },
-  statusWrapper: {
-    display: 'none', // flex
-    alignItems: 'center'
-  },
-  status: {
-    marginRight: theme.spacing.unit
-  },
   imageWrapper: {
     height: '64px',
     width: '64px',
@@ -36,6 +29,10 @@ export default theme => ({
   },
   description: {
     lineHeight: '16px',
+    height: theme.spacing.unit * 4,
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
     color: theme.palette.text.secondary,
     textAlign: 'center',
     marginTop: theme.spacing.unit,

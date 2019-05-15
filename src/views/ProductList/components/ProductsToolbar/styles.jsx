@@ -8,5 +8,8 @@ export default theme => ({
   },
   spacer: {
     flexGrow: 1
+  },
+  searchInput: {
+    marginRight: theme.spacing.unit
   }
 });

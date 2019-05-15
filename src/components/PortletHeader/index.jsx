@@ -1,11 +1,11 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 // Externals
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Component styles
 const styles = theme => ({
@@ -29,36 +29,27 @@ const styles = theme => ({
   }
 });
 
-class PortletHeader extends Component {
-  render() {
-    const {
-      classes,
-      className,
-      noDivider,
-      noPadding,
-      children,
-      ...rest
-    } = this.props;
+const PortletHeader = props => {
+  const { classes, className, noDivider, noPadding, children, ...rest } = props;
 
-    const rootClassName = classNames(
-      {
-        [classes.root]: true,
-        [classes.noDivider]: noDivider,
-        [classes.noPadding]: noPadding
-      },
-      className
-    );
+  const rootClassName = classNames(
+    {
+      [classes.root]: true,
+      [classes.noDivider]: noDivider,
+      [classes.noPadding]: noPadding
+    },
+    className
+  );
 
-    return (
-      <div
-        {...rest}
-        className={rootClassName}
-      >
-        {children}
-      </div>
-    );
-  }
-}
+  return (
+    <div
+      {...rest}
+      className={rootClassName}
+    >
+      {children}
+    </div>
+  );
+};
 
 PortletHeader.propTypes = {
   children: PropTypes.node,

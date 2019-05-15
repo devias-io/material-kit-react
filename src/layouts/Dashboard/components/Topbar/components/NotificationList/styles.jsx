@@ -29,7 +29,7 @@ export default theme => ({
     backgroundColor: 'rgba(0, 0, 0, 0.03)',
     padding: '10px',
     borderRadius: '50%',
-    marginRight: 0
+    marginRight: theme.spacing.unit * 2
   },
   listItemTextSecondary: {
     marignTop: '4px',

@@ -6,21 +6,18 @@ import compose from 'recompose/compose';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
-import withWidth from '@material-ui/core/withWidth';
+import { withStyles, withWidth } from '@material-ui/core';
 
 // Material components
-import Drawer from '@material-ui/core/Drawer';
+import { Drawer } from '@material-ui/core';
 
 // Custom components
-import Sidebar from './components/Sidebar';
-import Topbar from './components/Topbar';
-import Footer from './components/Footer';
+import { Sidebar, Topbar, Footer } from './components';
 
 // Component styles
 import styles from './styles';
 
-class DashboardLayout extends Component {
+class Dashboard extends Component {
   constructor(props) {
     super(props);
 
@@ -81,7 +78,7 @@ class DashboardLayout extends Component {
   }
 }
 
-DashboardLayout.propTypes = {
+Dashboard.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
   classes: PropTypes.object.isRequired,
@@ -92,4 +89,4 @@ DashboardLayout.propTypes = {
 export default compose(
   withStyles(styles),
   withWidth()
-)(DashboardLayout);
+)(Dashboard);

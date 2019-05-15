@@ -26,7 +26,8 @@ export default theme => ({
   profile: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center'
+    alignItems: 'center',
+    minHeight: 'fit-content'
   },
   avatar: {
     width: '100px',

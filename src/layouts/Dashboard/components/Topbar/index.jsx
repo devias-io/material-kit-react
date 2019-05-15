@@ -7,24 +7,30 @@ import compose from 'recompose/compose';
 import PropTypes from 'prop-types';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Badge from '@material-ui/core/Badge';
-import IconButton from '@material-ui/core/IconButton';
-import Popover from '@material-ui/core/Popover';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import MenuIcon from '@material-ui/icons/Menu';
-import CloseIcon from '@material-ui/icons/CloseOutlined';
-import NotificationsIcon from '@material-ui/icons/NotificationsOutlined';
-import SignoutIcon from '@material-ui/icons/ExitToAppOutlined';
+import {
+  Badge,
+  IconButton,
+  Popover,
+  Toolbar,
+  Typography
+} from '@material-ui/core';
+
+// Material icons
+import {
+  Menu as MenuIcon,
+  Close as CloseIcon,
+  NotificationsOutlined as NotificationsIcon,
+  Input as InputIcon
+} from '@material-ui/icons';
 
 // Shared services
 import { getNotifications } from 'services/notification';
 
 // Custom components
-import NotificationList from './components/NotificationList';
+import { NotificationList } from './components';
 
 // Component styles
 import styles from './styles';
@@ -132,7 +138,7 @@ class Topbar extends Component {
               className={classes.signOutButton}
               onClick={this.handleSignOut}
             >
-              <SignoutIcon />
+              <InputIcon />
             </IconButton>
           </Toolbar>
         </div>

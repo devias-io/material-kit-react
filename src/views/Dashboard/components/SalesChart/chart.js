@@ -8,27 +8,45 @@ export const data = {
     {
       label: 'This year',
       backgroundColor: palette.primary.main,
-      data: [18000, 5000, 19000, 27000, 29000, 19000, 20000]
+      data: [18, 5, 19, 27, 29, 19, 20]
     },
     {
       label: 'Last year',
       backgroundColor: palette.common.neutral,
-      data: [11000, 20000, 12000, 29000, 30000, 25000, 13000]
+      data: [11, 20, 12, 29, 30, 25, 13]
     }
   ]
 };
 
 // Chart options
 export const options = {
+  responsive: true,
   maintainAspectRatio: false,
+  animation: false,
   legend: { display: false },
+  cornerRadius: 20,
+  tooltips: {
+    enabled: true,
+    mode: 'index',
+    intersect: false,
+    borderWidth: 1,
+    borderColor: palette.border,
+    backgroundColor: palette.common.white,
+    titleFontColor: palette.text.primary,
+    bodyFontColor: palette.text.secondary,
+    footerFontColor: palette.text.secondary
+  },
+  layout: { padding: 0 },
   scales: {
     xAxes: [
       {
-        maxBarThickness: 20,
-        barPercentage: 1,
-        categoryPercentage: 0.25,
-        ticks: {},
+        barThickness: 12,
+        maxBarThickness: 10,
+        barPercentage: 0.5,
+        categoryPercentage: 0.5,
+        ticks: {
+          fontColor: palette.text.secondary
+        },
         gridLines: {
           display: false,
           drawBorder: false
@@ -38,20 +56,20 @@ export const options = {
     yAxes: [
       {
         ticks: {
+          fontColor: palette.text.secondary,
           beginAtZero: true,
-          min: 0,
-          callback: function(value) {
-            const v = value / 1000;
-
-            return v === 0 ? 0 : v + 'K';
-          }
+          min: 0
         },
         gridLines: {
+          borderDash: [2],
+          borderDashOffset: [2],
           color: palette.divider,
-          drawBorder: false
+          drawBorder: false,
+          zeroLineBorderDash: [2],
+          zeroLineBorderDashOffset: [2],
+          zeroLineColor: palette.divider
         }
       }
     ]
-  },
-  responsiveAnimationDuration: 1000
+  }
 };

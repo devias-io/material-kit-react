@@ -5,18 +5,19 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import TextField from '@material-ui/core/TextField/index';
-import Button from '@material-ui/core/Button';
+import { Button, TextField } from '@material-ui/core';
 
 // Shared components
-import Portlet from 'components/Portlet';
-import PortletHeader from 'components/PortletHeader';
-import PortletLabel from 'components/PortletLabel';
-import PortletContent from 'components/PortletContent';
-import PortletFooter from 'components/PortletFooter';
+import {
+  Portlet,
+  PortletHeader,
+  PortletLabel,
+  PortletContent,
+  PortletFooter
+} from 'components';
 
 // Component styles
 import styles from './styles';

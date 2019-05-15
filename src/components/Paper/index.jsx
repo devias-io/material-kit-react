@@ -1,14 +1,14 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 // Externals
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
 // Material helpers
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core';
 
 // Material components
-import Paper from '@material-ui/core/Paper';
+import { Paper } from '@material-ui/core';
 
 // Component styles
 const styles = theme => {
@@ -25,36 +25,27 @@ const styles = theme => {
   };
 };
 
-class CustomPaper extends Component {
-  render() {
-    const {
-      classes,
-      className,
-      outlined,
-      squared,
-      children,
-      ...rest
-    } = this.props;
+const CustomPaper = props => {
+  const { classes, className, outlined, squared, children, ...rest } = props;
 
-    const rootClassName = classNames(
-      {
-        [classes.root]: true,
-        [classes.squared]: squared,
-        [classes.outlined]: outlined
-      },
-      className
-    );
+  const rootClassName = classNames(
+    {
+      [classes.root]: true,
+      [classes.squared]: squared,
+      [classes.outlined]: outlined
+    },
+    className
+  );
 
-    return (
-      <Paper
-        {...rest}
-        className={rootClassName}
-      >
-        {children}
-      </Paper>
-    );
-  }
-}
+  return (
+    <Paper
+      {...rest}
+      className={rootClassName}
+    >
+      {children}
+    </Paper>
+  );
+};
 
 CustomPaper.propTypes = {
   children: PropTypes.node,

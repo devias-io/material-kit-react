@@ -3,10 +3,9 @@ export default theme => ({
   refreshButton: {
     margin: -theme.spacing.unit * 2
   },
-  chart: {
-    height: '300px',
-    width: '300px',
-    margin: '0 auto'
+  chartWrapper: {
+    position: 'relative',
+    height: '300px'
   },
   stats: {
     marginTop: theme.spacing.unit * 2,
