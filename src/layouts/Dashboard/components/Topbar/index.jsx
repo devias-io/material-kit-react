@@ -27,7 +27,7 @@ import {
 } from '@material-ui/icons';
 
 // Shared services
-import { getNotifications } from 'services/notification';
+import { getNotifications } from '/src/services/notification';
 
 // Custom components
 import { NotificationList } from './components';
@@ -112,32 +112,25 @@ class Topbar extends Component {
             <IconButton
               className={classes.menuButton}
               onClick={onToggleSidebar}
-              variant="text"
-            >
+              variant="text">
               {isSidebarOpen ? <CloseIcon /> : <MenuIcon />}
             </IconButton>
-            <Typography
-              className={classes.title}
-              variant="h4"
-            >
+            <Typography className={classes.title} variant="h4">
               {title}
             </Typography>
             <IconButton
               className={classes.notificationsButton}
-              onClick={this.handleShowNotifications}
-            >
+              onClick={this.handleShowNotifications}>
               <Badge
                 badgeContent={notificationsCount}
                 color="primary"
-                variant="dot"
-              >
+                variant="dot">
                 <NotificationsIcon />
               </Badge>
             </IconButton>
             <IconButton
               className={classes.signOutButton}
-              onClick={this.handleSignOut}
-            >
+              onClick={this.handleSignOut}>
               <InputIcon />
             </IconButton>
           </Toolbar>
@@ -153,8 +146,7 @@ class Topbar extends Component {
           transformOrigin={{
             vertical: 'top',
             horizontal: 'center'
-          }}
-        >
+          }}>
           <NotificationList
             notifications={notifications}
             onSelect={this.handleCloseNotifications}

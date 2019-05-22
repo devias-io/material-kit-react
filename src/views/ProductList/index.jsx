@@ -22,10 +22,10 @@ import {
 } from '@material-ui/icons';
 
 // Shared layouts
-import { Dashboard as DashboardLayout } from 'layouts';
+import { Dashboard as DashboardLayout } from '/src/layouts';
 
 // Shared services
-import { getProducts } from 'services/product';
+import { getProducts } from '/src/services/product';
 
 // Custom components
 import { ProductsToolbar, ProductCard } from './components';
@@ -99,18 +99,9 @@ class ProductList extends Component {
     }
 
     return (
-      <Grid
-        container
-        spacing={3}
-      >
+      <Grid container spacing={3}>
         {products.map(product => (
-          <Grid
-            item
-            key={product.id}
-            lg={4}
-            md={6}
-            xs={12}
-          >
+          <Grid item key={product.id} lg={4} md={6} xs={12}>
             <Link to="#">
               <ProductCard product={product} />
             </Link>

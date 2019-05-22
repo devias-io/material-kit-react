@@ -11,7 +11,7 @@ import { withStyles } from '@material-ui/core';
 import { Avatar, Typography, Button, LinearProgress } from '@material-ui/core';
 
 // Shared components
-import { Portlet, PortletContent, PortletFooter } from 'components';
+import { Portlet, PortletContent, PortletFooter } from '/src/components';
 
 // Component styles
 import styles from './styles';
@@ -23,24 +23,15 @@ class AccountProfile extends Component {
     const rootClassName = classNames(classes.root, className);
 
     return (
-      <Portlet
-        {...rest}
-        className={rootClassName}
-      >
+      <Portlet {...rest} className={rootClassName}>
         <PortletContent>
           <div className={classes.details}>
             <div className={classes.info}>
               <Typography variant="h2">John Doe</Typography>
-              <Typography
-                className={classes.locationText}
-                variant="body1"
-              >
+              <Typography className={classes.locationText} variant="body1">
                 Rm. Valcea, Romania
               </Typography>
-              <Typography
-                className={classes.dateText}
-                variant="body1"
-              >
+              <Typography className={classes.dateText} variant="body1">
                 4:32PM (GMT-4)
               </Typography>
             </div>
@@ -51,18 +42,14 @@ class AccountProfile extends Component {
           </div>
           <div className={classes.progressWrapper}>
             <Typography variant="body1">Profile Completeness: 70%</Typography>
-            <LinearProgress
-              value={70}
-              variant="determinate"
-            />
+            <LinearProgress value={70} variant="determinate" />
           </div>
         </PortletContent>
         <PortletFooter>
           <Button
             className={classes.uploadButton}
             color="primary"
-            variant="text"
-          >
+            variant="text">
             Upload picture
           </Button>
           <Button variant="text">Remove picture</Button>

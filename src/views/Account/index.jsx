@@ -10,7 +10,7 @@ import { withStyles } from '@material-ui/core';
 import { Grid } from '@material-ui/core';
 
 // Shared layouts
-import { Dashboard as DashboardLayout } from 'layouts';
+import { Dashboard as DashboardLayout } from '/src/layouts';
 
 // Custom components
 import { AccountProfile, AccountDetails } from './components';
@@ -31,26 +31,11 @@ class Account extends Component {
     return (
       <DashboardLayout title="Account">
         <div className={classes.root}>
-          <Grid
-            container
-            spacing={4}
-          >
-            <Grid
-              item
-              lg={4}
-              md={6}
-              xl={4}
-              xs={12}
-            >
+          <Grid container spacing={4}>
+            <Grid item lg={4} md={6} xl={4} xs={12}>
               <AccountProfile />
             </Grid>
-            <Grid
-              item
-              lg={8}
-              md={6}
-              xl={8}
-              xs={12}
-            >
+            <Grid item lg={8} md={6} xl={8} xs={12}>
               <AccountDetails />
             </Grid>
           </Grid>

@@ -17,7 +17,7 @@ import {
 } from '@material-ui/icons';
 
 // Shared components
-import { Paper } from 'components';
+import { Paper } from '/src/components';
 
 // Component styles
 import styles from './styles';
@@ -29,22 +29,13 @@ class Budget extends Component {
     const rootClassName = classNames(classes.root, className);
 
     return (
-      <Paper
-        {...rest}
-        className={rootClassName}
-      >
+      <Paper {...rest} className={rootClassName}>
         <div className={classes.content}>
           <div className={classes.details}>
-            <Typography
-              className={classes.title}
-              variant="body2"
-            >
+            <Typography className={classes.title} variant="body2">
               BUDGET
             </Typography>
-            <Typography
-              className={classes.value}
-              variant="h3"
-            >
+            <Typography className={classes.value} variant="h3">
               $24,000
             </Typography>
           </div>
@@ -53,17 +44,11 @@ class Budget extends Component {
           </div>
         </div>
         <div className={classes.footer}>
-          <Typography
-            className={classes.difference}
-            variant="body2"
-          >
+          <Typography className={classes.difference} variant="body2">
             <ArrowDownwardIcon />
             12%
           </Typography>
-          <Typography
-            className={classes.caption}
-            variant="caption"
-          >
+          <Typography className={classes.caption} variant="caption">
             Since last month
           </Typography>
         </div>

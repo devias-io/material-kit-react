@@ -18,7 +18,7 @@ import {
 } from '@material-ui/icons';
 
 // Shared components
-import { DisplayMode, SearchInput } from 'components';
+import { DisplayMode, SearchInput } from '/src/components';
 
 // Component styles
 import styles from './styles';
@@ -36,31 +36,24 @@ class UsersToolbar extends Component {
           {selectedUsers.length > 0 && (
             <IconButton
               className={classes.deleteButton}
-              onClick={this.handleDeleteUsers}
-            >
+              onClick={this.handleDeleteUsers}>
               <DeleteIcon />
             </IconButton>
           )}
           <Button
             className={classes.importButton}
             size="small"
-            variant="outlined"
-          >
+            variant="outlined">
             <ArrowDownwardIcon className={classes.importIcon} /> Import
           </Button>
           <Button
             className={classes.exportButton}
             size="small"
-            variant="outlined"
-          >
+            variant="outlined">
             <ArrowUpwardIcon className={classes.exportIcon} />
             Export
           </Button>
-          <Button
-            color="primary"
-            size="small"
-            variant="outlined"
-          >
+          <Button color="primary" size="small" variant="outlined">
             Add
           </Button>
         </div>

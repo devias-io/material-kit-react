@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core';
 
 // Shared layouts
-import { Dashboard as DashboardLayout } from 'layouts';
+import { Dashboard as DashboardLayout } from '/src/layouts';
 
 // Component styles
 const styles = theme => ({

@@ -26,10 +26,10 @@ import {
   PortletLabel,
   PortletToolbar,
   PortletContent
-} from 'components';
+} from '/src/components';
 
 // Palette
-import palette from 'theme/palette';
+import palette from '/src/theme/palette';
 
 // Chart configuration
 import { data, options } from './chart';
@@ -44,57 +44,41 @@ class DevicesChart extends Component {
     const rootClassName = classNames(classes.root, className);
 
     return (
-      <Portlet
-        {...rest}
-        className={rootClassName}
-      >
+      <Portlet {...rest} className={rootClassName}>
         <PortletHeader noDivider>
           <PortletLabel title="Users by device" />
           <PortletToolbar>
             <IconButton
               className={classes.refreshButton}
               onClick={this.handleRefresh}
-              variant="text"
-            >
+              variant="text">
               <RefreshIcon />
             </IconButton>
           </PortletToolbar>
         </PortletHeader>
         <PortletContent>
           <div className={classes.chartWrapper}>
-            <Doughnut
-              data={data}
-              options={options}
-            />
+            <Doughnut data={data} options={options} />
           </div>
           <div className={classes.stats}>
             <div className={classes.device}>
               <LaptopMacIcon className={classes.deviceIcon} />
               <Typography variant="body1">Desktop</Typography>
-              <Typography
-                style={{ color: palette.primary.main }}
-                variant="h2"
-              >
+              <Typography style={{ color: palette.primary.main }} variant="h2">
                 63%
               </Typography>
             </div>
             <div className={classes.device}>
               <TabletMacIcon className={classes.deviceIcon} />
               <Typography variant="body1">Tablet</Typography>
-              <Typography
-                style={{ color: palette.danger.main }}
-                variant="h2"
-              >
+              <Typography style={{ color: palette.danger.main }} variant="h2">
                 15%
               </Typography>
             </div>
             <div className={classes.device}>
               <PhoneIphoneIcon className={classes.deviceIcon} />
               <Typography variant="body1">Mobile</Typography>
-              <Typography
-                style={{ color: palette.warning.main }}
-                variant="h2"
-              >
+              <Typography style={{ color: palette.warning.main }} variant="h2">
                 23%
               </Typography>
             </div>

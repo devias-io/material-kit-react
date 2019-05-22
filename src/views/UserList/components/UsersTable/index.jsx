@@ -24,10 +24,10 @@ import {
 } from '@material-ui/core';
 
 // Shared helpers
-import { getInitials } from 'helpers';
+import { getInitials } from '/src/helpers';
 
 // Shared components
-import { Portlet, PortletContent } from 'components';
+import { Portlet, PortletContent } from '/src/components';
 
 // Component styles
 import styles from './styles';
@@ -138,8 +138,7 @@ class UsersTable extends Component {
                       className={classes.tableRow}
                       hover
                       key={user.id}
-                      selected={selectedUsers.indexOf(user.id) !== -1}
-                    >
+                      selected={selectedUsers.indexOf(user.id) !== -1}>
                       <TableCell className={classes.tableCell}>
                         <div className={classes.tableCellInner}>
                           <Checkbox
@@ -152,15 +151,13 @@ class UsersTable extends Component {
                           />
                           <Avatar
                             className={classes.avatar}
-                            src={user.avatarUrl}
-                          >
+                            src={user.avatarUrl}>
                             {getInitials(user.name)}
                           </Avatar>
                           <Link to="#">
                             <Typography
                               className={classes.nameText}
-                              variant="body1"
-                            >
+                              variant="body1">
                               {user.name}
                             </Typography>
                           </Link>

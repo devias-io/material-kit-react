@@ -25,7 +25,7 @@ import {
   PortletToolbar,
   PortletContent,
   PortletFooter
-} from 'components';
+} from '/src/components';
 
 // Chart configuration
 import { data, options } from './chart';
@@ -40,36 +40,25 @@ class SalesChart extends Component {
     const rootClassName = classNames(classes.root, className);
 
     return (
-      <Portlet
-        {...rest}
-        className={rootClassName}
-      >
+      <Portlet {...rest} className={rootClassName}>
         <PortletHeader noDivider>
           <PortletLabel title="Latest sales" />
           <PortletToolbar>
             <Button
               className={classes.dropdownButton}
               size="small"
-              variant="text"
-            >
+              variant="text">
               Last 7 days <ArrowDropDownIcon />
             </Button>
           </PortletToolbar>
         </PortletHeader>
         <PortletContent>
           <div className={classes.chartWrapper}>
-            <Bar
-              data={data}
-              options={options}
-            />
+            <Bar data={data} options={options} />
           </div>
         </PortletContent>
         <PortletFooter className={classes.portletFooter}>
-          <Button
-            color="primary"
-            size="small"
-            variant="text"
-          >
+          <Button color="primary" size="small" variant="text">
             Overview <ArrowRightIcon />
           </Button>
         </PortletFooter>

@@ -1,6 +1,5 @@
 // Mock data
-import orders from 'data/orders';
-import users from 'data/users';
+import orders from '/src/data/orders';
 
 function lookupOrder(order) {
   order.customer = users.find(user => user.id === order.customer);

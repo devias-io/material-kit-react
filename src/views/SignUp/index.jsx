@@ -25,7 +25,7 @@ import {
 import { ArrowBack as ArrowBackIcon } from '@material-ui/icons';
 
 // Shared utilities
-import validators from 'common/validators';
+import validators from '/src/common/validators';
 
 // Component styles
 import styles from './styles';
@@ -147,68 +147,40 @@ class SignUp extends Component {
 
     return (
       <div className={classes.root}>
-        <Grid
-          className={classes.grid}
-          container
-        >
-          <Grid
-            className={classes.quoteWrapper}
-            item
-            lg={5}
-          >
+        <Grid className={classes.grid} container>
+          <Grid className={classes.quoteWrapper} item lg={5}>
             <div className={classes.quote}>
               <div className={classes.quoteInner}>
-                <Typography
-                  className={classes.quoteText}
-                  variant="h1"
-                >
+                <Typography className={classes.quoteText} variant="h1">
                   Hella narwhal Cosby sweater McSweeney's, salvia kitsch before
                   they sold out High Life.
                 </Typography>
                 <div className={classes.person}>
-                  <Typography
-                    className={classes.name}
-                    variant="body1"
-                  >
+                  <Typography className={classes.name} variant="body1">
                     Takamaru Ayako
                   </Typography>
-                  <Typography
-                    className={classes.bio}
-                    variant="body2"
-                  >
+                  <Typography className={classes.bio} variant="body2">
                     Manager at inVision
                   </Typography>
                 </div>
               </div>
             </div>
           </Grid>
-          <Grid
-            className={classes.content}
-            item
-            lg={7}
-            xs={12}
-          >
+          <Grid className={classes.content} item lg={7} xs={12}>
             <div className={classes.content}>
               <div className={classes.contentHeader}>
                 <IconButton
                   className={classes.backButton}
-                  onClick={this.handleBack}
-                >
+                  onClick={this.handleBack}>
                   <ArrowBackIcon />
                 </IconButton>
               </div>
               <div className={classes.contentBody}>
                 <form className={classes.form}>
-                  <Typography
-                    className={classes.title}
-                    variant="h2"
-                  >
+                  <Typography className={classes.title} variant="h2">
                     Create new account
                   </Typography>
-                  <Typography
-                    className={classes.subtitle}
-                    variant="body1"
-                  >
+                  <Typography className={classes.subtitle} variant="body1">
                     Use your work email to create new account... it's free.
                   </Typography>
                   <div className={classes.fields}>
@@ -225,8 +197,7 @@ class SignUp extends Component {
                     {showFirstNameError && (
                       <Typography
                         className={classes.fieldError}
-                        variant="body2"
-                      >
+                        variant="body2">
                         {errors.firstName[0]}
                       </Typography>
                     )}
@@ -242,8 +213,7 @@ class SignUp extends Component {
                     {showLastNameError && (
                       <Typography
                         className={classes.fieldError}
-                        variant="body2"
-                      >
+                        variant="body2">
                         {errors.lastName[0]}
                       </Typography>
                     )}
@@ -260,8 +230,7 @@ class SignUp extends Component {
                     {showEmailError && (
                       <Typography
                         className={classes.fieldError}
-                        variant="body2"
-                      >
+                        variant="body2">
                         {errors.email[0]}
                       </Typography>
                     )}
@@ -278,8 +247,7 @@ class SignUp extends Component {
                     {showPasswordError && (
                       <Typography
                         className={classes.fieldError}
-                        variant="body2"
-                      >
+                        variant="body2">
                         {errors.password[0]}
                       </Typography>
                     )}
@@ -295,13 +263,9 @@ class SignUp extends Component {
                       />
                       <Typography
                         className={classes.policyText}
-                        variant="body1"
-                      >
+                        variant="body1">
                         I have read the &nbsp;
-                        <Link
-                          className={classes.policyUrl}
-                          to="#"
-                        >
+                        <Link className={classes.policyUrl} to="#">
                           Terms and Conditions
                         </Link>
                         .
@@ -310,17 +274,13 @@ class SignUp extends Component {
                     {showPolicyError && (
                       <Typography
                         className={classes.fieldError}
-                        variant="body2"
-                      >
+                        variant="body2">
                         {errors.policy[0]}
                       </Typography>
                     )}
                   </div>
                   {submitError && (
-                    <Typography
-                      className={classes.submitError}
-                      variant="body2"
-                    >
+                    <Typography className={classes.submitError} variant="body2">
                       {submitError}
                     </Typography>
                   )}
@@ -333,20 +293,13 @@ class SignUp extends Component {
                       disabled={!isValid}
                       onClick={this.handleSignUp}
                       size="large"
-                      variant="contained"
-                    >
+                      variant="contained">
                       Sign up now
                     </Button>
                   )}
-                  <Typography
-                    className={classes.signIn}
-                    variant="body1"
-                  >
+                  <Typography className={classes.signIn} variant="body1">
                     Have an account?{' '}
-                    <Link
-                      className={classes.signInUrl}
-                      to="/sign-in"
-                    >
+                    <Link className={classes.signInUrl} to="/sign-in">
                       Sign In
                     </Link>
                   </Typography>
