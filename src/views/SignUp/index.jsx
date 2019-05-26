@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Link, withRouter } from 'react-router-dom';
+import { withFirebase } from '../../firebase';
 
 // Externals
 import PropTypes from 'prop-types';
@@ -36,12 +37,19 @@ import schema from './schema';
 validate.validators.checked = validators.checked;
 
 // Service methods
-const signUp = () => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(true);
-    }, 1500);
-  });
+// const signUp = () => {
+//   return new Promise(resolve => {
+//     setTimeout(() => {
+//       resolve(true);
+//     }, 1500);
+//   });
+// };
+
+const INITIAL_STATE = {
+  username: '',
+  email: '',
+  password: '',
+  error: null,
 };
 
 class SignUp extends Component {
@@ -100,21 +108,28 @@ class SignUp extends Component {
     this.setState(newState, this.validateForm);
   };
 
-  handleSignUp = async () => {
+  handleSignUp = () => {
     try {
       const { history } = this.props;
       const { values } = this.state;
 
       this.setState({ isLoading: true });
 
-      await signUp({
-        firstName: values.firstName,
-        lastName: values.lastName,
-        email: values.email,
-        password: values.password
-      });
+      this.props.firebase
+        .doCreateUserWithEmailAndPassword(values.email, values.password)
+        .then(authUser => {
+          this.setState({ ...INITIAL_STATE });
+          history.push('/sign-in');
+        })
 
-      history.push('/sign-in');
+      // await signUp({
+      //   firstName: values.firstName,
+      //   lastName: values.lastName,
+      //   email: values.email,
+      //   password: values.password
+      // });
+
+      
     } catch (error) {
       this.setState({
         isLoading: false,
@@ -335,7 +350,7 @@ class SignUp extends Component {
                       size="large"
                       variant="contained"
                     >
-                      Sign up now
+                        Sign up now
                     </Button>
                   )}
                   <Typography
@@ -367,6 +382,7 @@ SignUp.propTypes = {
 };
 
 export default compose(
+  withFirebase,
   withRouter,
   withStyles(styles)
 )(SignUp);

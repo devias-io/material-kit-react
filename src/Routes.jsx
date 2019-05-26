@@ -21,7 +21,7 @@ export default class Routes extends Component {
         <Redirect
           exact
           from="/"
-          to="/dashboard"
+          to="/sign-in"
         />
         <Route
           component={Dashboard}

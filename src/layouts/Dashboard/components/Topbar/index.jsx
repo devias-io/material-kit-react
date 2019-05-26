@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import { withRouter } from 'react-router-dom';
-
+import Firebase, { withFirebase } from '../../../../firebase';
 // Externals
 import classNames from 'classnames';
 import compose from 'recompose/compose';
@@ -74,8 +74,10 @@ class Topbar extends Component {
   }
 
   handleSignOut = () => {
-    const { history } = this.props;
-
+    const { history,
+      firebase
+    } = this.props;
+    firebase.doSignOut();
     localStorage.setItem('isAuthenticated', false);
     history.push('/sign-in');
   };
@@ -104,7 +106,6 @@ class Topbar extends Component {
 
     const rootClassName = classNames(classes.root, className);
     const showNotifications = Boolean(notificationsEl);
-
     return (
       <Fragment>
         <div className={rootClassName}>
@@ -180,5 +181,6 @@ Topbar.defaultProps = {
 
 export default compose(
   withRouter,
+  withFirebase,
   withStyles(styles)
 )(Topbar);

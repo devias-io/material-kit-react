@@ -10,7 +10,7 @@
       }
     ],
     "jsx-quotes": 1,
-    "linebreak-style": [2, "unix"],
+    "linebreak-style": [2, "windows"],
     "quotes": [2, "single"],
     "react/display-name": 1,
     "react/forbid-prop-types": 0,

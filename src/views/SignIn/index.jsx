@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Link, withRouter } from 'react-router-dom';
+import { withFirebase } from '../../firebase';
 
 // Externals
 import PropTypes from 'prop-types';
@@ -33,12 +34,18 @@ import styles from './styles';
 import schema from './schema';
 
 // Service methods
-const signIn = () => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(true);
-    }, 1500);
-  });
+// const signIn = () => {
+//   return new Promise(resolve => {
+//     setTimeout(() => {
+//       resolve(true);
+//     }, 1500);
+//   });
+// };
+
+const INITIAL_STATE = {
+  email: '',
+  password: '',
+  error: null,
 };
 
 class SignIn extends Component {
@@ -95,11 +102,14 @@ class SignIn extends Component {
 
       this.setState({ isLoading: true });
 
-      await signIn(values.email, values.password);
-
-      localStorage.setItem('isAuthenticated', true);
-
-      history.push('/dashboard');
+      this.props.firebase
+        .doSignInWithEmailAndPassword(values.email, values.password)
+        .then(() => {
+          this.setState({ ...INITIAL_STATE });
+          localStorage.setItem('isAuthenticated', true);
+          history.push('/dashboard');
+        })
+      // await signIn(values.email, values.password);      
     } catch (error) {
       this.setState({
         isLoading: false,
@@ -305,5 +315,6 @@ SignIn.propTypes = {
 
 export default compose(
   withRouter,
+  withFirebase,
   withStyles(styles)
 )(SignIn);

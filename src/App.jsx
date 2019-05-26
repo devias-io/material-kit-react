@@ -21,6 +21,9 @@ import './assets/scss/index.scss';
 // Routes
 import Routes from './Routes';
 
+// Auth
+import { withAuthentication } from './session';
+
 // Browser history
 const browserHistory = createBrowserHistory();
 
@@ -29,7 +32,7 @@ Chart.helpers.extend(Chart.elements.Rectangle.prototype, {
   draw: chartjs.draw
 });
 
-export default class App extends Component {
+class App extends Component {
   render() {
     return (
       <ThemeProvider theme={theme}>
@@ -40,3 +43,5 @@ export default class App extends Component {
     );
   }
 }
+
+export default withAuthentication(App);
