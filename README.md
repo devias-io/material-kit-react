@@ -1,4 +1,4 @@
-## [Brainalytica Dashboard with Firebase Auth - Free](https://react-firebase-brainalytica.firebaseapp.com) 
+## [Brainalytica Dashboard with Firebase Auth, ReactContextApi and Session Mgmt built in!!](https://react-firebase-brainalytica.firebaseapp.com) 
 
 - Based off Devias React Material Template "Brainalytica" found [here](https://github.com/devias-io/react-material-dashboard)
 - Lots of Firebase Auth help from "rwieruch" [here](https://www.robinwieruch.de/complete-firebase-authentication-react-tutorial/)
