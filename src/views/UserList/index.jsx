@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { compose } from 'recompose';
 
 // Externals
 import PropTypes from 'prop-types';
@@ -20,6 +21,9 @@ import { UsersToolbar, UsersTable } from './components';
 
 // Component styles
 import styles from './style';
+
+// Authorization
+import { withAuthorization } from '../../session';
 
 class UserList extends Component {
   signal = true;
@@ -118,4 +122,10 @@ UserList.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(UserList);
+const condition = authUser => !!authUser;
+
+export default compose(
+  withAuthorization(condition),
+  withStyles(styles))(UserList);
+
+

@@ -1,4 +1,8 @@
 import React, { Component } from 'react';
+import { compose } from 'recompose';
+
+// Authorization
+import { withAuthorization } from '../../session'
 
 // Externals
 import PropTypes from 'prop-types';
@@ -64,4 +68,8 @@ Account.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(Account);
+const condition = authUser => !!authUser;
+
+export default compose(
+  withAuthorization(condition),   
+  withStyles(styles))(Account);

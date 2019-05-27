@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import { withRouter } from 'react-router-dom';
-import Firebase, { withFirebase } from '../../../../firebase';
+import { withFirebase } from '../../../../firebase';
 // Externals
 import classNames from 'classnames';
 import compose from 'recompose/compose';

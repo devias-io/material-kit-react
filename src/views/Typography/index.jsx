@@ -1,4 +1,8 @@
 import React, { Component, Fragment } from 'react';
+import { compose } from 'recompose';
+
+// Authorization
+import { withAuthorization } from '../../session';
 
 // Externals
 import PropTypes from 'prop-types';
@@ -80,4 +84,8 @@ Typography.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(Typography);
+const condition = authUser => !!authUser;
+
+export default compose(
+  withAuthorization(condition),  
+  withStyles(styles))(Typography);

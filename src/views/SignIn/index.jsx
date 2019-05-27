@@ -95,7 +95,49 @@ class SignIn extends Component {
     this.setState(newState, this.validateForm);
   };
 
-  handleSignIn = async () => {
+  handleFBSignIn = () => {
+    try {
+      const { history } = this.props;
+
+      this.setState({ isLoading: true });
+
+      this.props.firebase
+        .doSignInWithFacebook()
+        .then(() => {
+          this.setState({ ...INITIAL_STATE });
+          localStorage.setItem('isAuthenticated', true);
+          history.push('/dashboard');
+        })    
+    } catch (error) {
+      this.setState({
+        isLoading: false,
+        serviceError: error
+      });
+    }
+  };
+
+  handleGoogSignIn = () => {
+    try {
+      const { history } = this.props;
+
+      this.setState({ isLoading: true });
+
+      this.props.firebase
+        .doSignInWithGoogle()
+        .then(() => {
+          this.setState({ ...INITIAL_STATE });
+          localStorage.setItem('isAuthenticated', true);
+          history.push('/dashboard');
+        })    
+    } catch (error) {
+      this.setState({
+        isLoading: false,
+        serviceError: error
+      });
+    }
+  };
+
+  handleEmailSignIn = () => {
     try {
       const { history } = this.props;
       const { values } = this.state;
@@ -109,7 +151,6 @@ class SignIn extends Component {
           localStorage.setItem('isAuthenticated', true);
           history.push('/dashboard');
         })
-      // await signIn(values.email, values.password);      
     } catch (error) {
       this.setState({
         isLoading: false,
@@ -201,7 +242,7 @@ class SignIn extends Component {
                   <Button
                     className={classes.facebookButton}
                     color="primary"
-                    onClick={this.handleSignIn}
+                    onClick={this.handleFBSignIn}
                     size="large"
                     variant="contained"
                   >
@@ -210,7 +251,7 @@ class SignIn extends Component {
                   </Button>
                   <Button
                     className={classes.googleButton}
-                    onClick={this.handleSignIn}
+                    onClick={this.handleGoogSignIn}
                     size="large"
                     variant="contained"
                   >
@@ -278,7 +319,7 @@ class SignIn extends Component {
                       className={classes.signInButton}
                       color="primary"
                       disabled={!isValid}
-                      onClick={this.handleSignIn}
+                      onClick={this.handleEmailSignIn}
                       size="large"
                       variant="contained"
                     >

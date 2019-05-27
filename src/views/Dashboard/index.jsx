@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { compose } from 'recompose';
 
 // Externals
 import PropTypes from 'prop-types';
@@ -23,6 +24,9 @@ import {
   ProductList,
   OrdersTable
 } from './components';
+
+// Authorization
+import { withAuthorization } from '../../session';
 
 // Component styles
 const styles = theme => ({
@@ -128,4 +132,14 @@ Dashboard.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(Dashboard);
+// export default withStyles(styles)(Dashboard);
+
+const condition = authUser => !!authUser;
+
+// export default compose(
+//   withStyles(styles),
+//   withAuthorization(condition)(Dashboard));
+
+export default compose(
+  withAuthorization(condition),
+  withStyles(styles))(Dashboard);
