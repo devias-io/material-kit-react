@@ -1,5 +1,17 @@
 # Change Log
 
+## [0.2.0] 2019-05-27
+
+## Updates
+
+- Added High Order components for Firebase and Sessions using React Context Api
+- Added withAuthorization on all Routes except for SignIn, SignUp, /, UnderDevelopment and NotFound
+- Setup new Project in Firebase with Sign Options to local email, Facebook and Google login providers
+- Added .env with firebase config info
+- Updated gitignore
+- Updated Readme for forked repo of Template with Firebase Auth
+
+
 ## [0.2.0] 2019-05-13
 
 ## Updates
