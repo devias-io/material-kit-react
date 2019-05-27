@@ -1,9 +1,9 @@
 # Brainalytica Dashboard with Firebase Auth!! 
 
-## [Brainalytica Dashboard with Firebase Auth - Free] (https://react-firebase-brainalytica.firebaseapp.com) 
+## [Brainalytica Dashboard with Firebase Auth - Free](https://react-firebase-brainalytica.firebaseapp.com) 
 
-- Based off Devias React Material Template "Brainalytica" found [here] (https://github.com/devias-io/react-material-dashboard)
-- Lost of Firebase Auth help from rwieruch [here] (https://www.robinwieruch.de/complete-firebase-authentication-react-tutorial/)
+- Based off Devias React Material Template "Brainalytica" found [here](https://github.com/devias-io/react-material-dashboard)
+- Lost of Firebase Auth help from rwieruch [here](https://www.robinwieruch.de/complete-firebase-authentication-react-tutorial/)
 
 ![React Material Dashboard](https://s3.eu-west-2.amazonaws.com/devias/products/react-material-dashboard/react-material-free.png)
 
@@ -32,8 +32,8 @@
 
 ## Resources
 
-- React Material Template - [Devias] (https://devias.io/)
-- Firebase Auth Configs - [RWieruch] (https://www.robinwieruch.de/complete-firebase-authentication-react-tutorial/)
+- React Material Template - [Devias](https://devias.io/)
+- Firebase Auth Configs - [RWieruch](https://www.robinwieruch.de/complete-firebase-authentication-react-tutorial/)
 
 ## Reporting Issues:
 
