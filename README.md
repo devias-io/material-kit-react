@@ -32,7 +32,7 @@
   REACT_APP_DATABASE_URL=https://your-project-name.firebaseio.com
   REACT_APP_PROJECT_ID=your-project-name
   REACT_APP_STORAGE_BUCKET=your-project-name.appspot.com
-  REACT_APP_MESSAGING_SENDER_ID=999120432754      <-----somenumbers for sender ID
+  REACT_APP_MESSAGING_SENDER_ID=999120432754      <-----will look something like this
   ```
 
 - Install dependencies: `npm install` or `yarn`
