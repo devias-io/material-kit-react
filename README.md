@@ -44,7 +44,8 @@
 ## Resources
 
 - React Material Template - [Devias](https://devias.io/)
-- Firebase Auth Configs - [RWieruch](https://www.robinwieruch.de/complete-firebase-authentication-react-tutorial/)
+- Firebase Auth Example - [RWieruch](https://www.robinwieruch.de/complete-firebase-authentication-react-tutorial/)
+- Firebase Auth - [Docs](https://firebase.google.com/docs/auth/web/start)
 
 ## Reporting Issues:
 
