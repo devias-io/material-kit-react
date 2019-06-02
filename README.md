@@ -53,5 +53,5 @@
 
 ## Contact Us
 
-- Email : dnbr2002@yahoo.com
+- Email : bryce.kinnamon@gmail.com
 
