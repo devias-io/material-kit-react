@@ -1,0 +1,25 @@
+version: 0.2
+
+env:
+  parameter-store:
+    HEROKU_API_KEY: /tools/main-app-spa/HEROKU_API_KEY
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 8
+    commands:
+      - eval $($CODEBUILD_SRC_DIR_source2_output/awsAssume.sh)
+      - mkdir -p ~/.ssh; echo "${ID_RSA}" > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa
+      - which yarn || npm install -g yarn
+      - yarn install
+      # prepare .netrc to make sure we can git push to Heroku
+      - echo 'machine git.heroku.com' >> ~/.netrc
+      - echo '  login ci-builds@advanon.com' >> ~/.netrc
+      - echo "  password $HEROKU_API_KEY" >> ~/.netrc
+  build:
+    commands:
+      - if [ "$STAGE" != "staging" ] && [ "$STAGE" != "prod" ]; then exit; fi;
+          make deploy;
+          APP_NAME=advanon make deploy-heroku;
+          APP_NAME=blkb make deploy-heroku

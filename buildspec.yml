@@ -1,0 +1,17 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 8
+    commands:
+      - mkdir -p ~/.ssh; echo "${ID_RSA}" > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa
+      - which jq || (apt-get update -qq; apt-get install -qq jq)
+      - aws s3 cp s3://tools-scripts-eu-central-1/awsAssume.sh . && chmod +x awsAssume.sh && eval $(./awsAssume.sh)
+      - which yarn || npm install -g yarn
+      - yarn install
+  build:
+    commands:
+      - CI=1 yarn build
+      - export branch=$(git branch -a --contains $CODEBUILD_SOURCE_VERSION | grep -v remotes/origin | grep -v "no branch" | xargs echo | sed 's:[_/]:-:g' | awk '{print tolower($0)}')
+      - if [ "$STAGE" = "dev" ] && [ "$branch" != "production" ]; then make deploy; fi
