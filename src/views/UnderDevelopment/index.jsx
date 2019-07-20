@@ -12,7 +12,7 @@ import { Grid, Typography } from '@material-ui/core';
 // Component styles
 const styles = theme => ({
   root: {
-    padding: theme.spacing.unit * 4
+    padding: theme.spacing(4)
   },
   content: {
     marginTop: '150px',
@@ -32,16 +32,8 @@ class UnderDevelopment extends Component {
 
     return (
       <div className={classes.root}>
-        <Grid
-          container
-          justify="center"
-          spacing={4}
-        >
-          <Grid
-            item
-            lg={6}
-            xs={12}
-          >
+        <Grid container justify="center" spacing={4}>
+          <Grid item lg={6} xs={12}>
             <div className={classes.content}>
               <Typography variant="h1">Page Under Development</Typography>
               <Typography variant="subtitle2">

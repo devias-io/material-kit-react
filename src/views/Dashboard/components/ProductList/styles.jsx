@@ -8,8 +8,8 @@ export default theme => ({
     justifyContent: 'flex-end'
   },
   product: {
-    paddingBottom: theme.spacing.unit * 3,
-    paddingTop: theme.spacing.unit * 3,
+    paddingBottom: theme.spacing(3),
+    paddingTop: theme.spacing(3),
     display: 'flex',
     alignItems: 'center',
     '&:not(:first-of-type)': {
@@ -27,12 +27,12 @@ export default theme => ({
     height: 'auto'
   },
   productDetails: {
-    marginLeft: theme.spacing.unit * 2,
+    marginLeft: theme.spacing(2),
     flexGrow: 1
   },
   productTitle: {},
   productTimestamp: {
-    marginTop: theme.spacing.unit,
+    marginTop: theme.spacing(1),
     color: theme.palette.text.secondary
   }
 });

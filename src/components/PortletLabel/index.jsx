@@ -17,7 +17,7 @@ const styles = theme => ({
   },
   icon: {
     fontSize: '1.3rem',
-    marginRight: theme.spacing.unit,
+    marginRight: theme.spacing(1),
     color: theme.palette.text.secondary,
     alignItems: 'center',
     display: 'flex'
@@ -27,7 +27,7 @@ const styles = theme => ({
   },
   subtitle: {
     fontWeight: 400,
-    marginLeft: theme.spacing.unit,
+    marginLeft: theme.spacing(1),
     color: theme.palette.text.secondary
   }
 });
@@ -38,24 +38,15 @@ const PortletLabel = props => {
   const rootClassName = classNames(classes.root, className);
 
   return (
-    <div
-      {...rest}
-      className={rootClassName}
-    >
+    <div {...rest} className={rootClassName}>
       {icon && <span className={classes.icon}>{icon}</span>}
       {title && (
-        <Typography
-          className={classes.title}
-          variant="h5"
-        >
+        <Typography className={classes.title} variant="h5">
           {title}
         </Typography>
       )}
       {subtitle && (
-        <Typography
-          className={classes.subtitle}
-          variant="subtitle2"
-        >
+        <Typography className={classes.subtitle} variant="subtitle2">
           {subtitle}
         </Typography>
       )}

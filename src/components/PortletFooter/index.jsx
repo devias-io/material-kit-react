@@ -10,10 +10,10 @@ import { withStyles } from '@material-ui/core';
 // Component styles
 const styles = theme => ({
   root: {
-    paddingBottom: theme.spacing.unit,
-    paddingTop: theme.spacing.unit,
-    paddingLeft: theme.spacing.unit * 2,
-    paddingRight: theme.spacing.unit * 2,
+    paddingBottom: theme.spacing(1),
+    paddingTop: theme.spacing(1),
+    paddingLeft: theme.spacing(2),
+    paddingRight: theme.spacing(2),
     borderTop: `1px solid ${theme.palette.border}`,
     borderBottomLeftRadius: '2px',
     borderBottomRightRadius: '2px'
@@ -35,10 +35,7 @@ const PortletFooter = props => {
   );
 
   return (
-    <div
-      {...rest}
-      className={rootClassName}
-    >
+    <div {...rest} className={rootClassName}>
       {children}
     </div>
   );

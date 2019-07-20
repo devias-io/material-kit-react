@@ -6,26 +6,26 @@ export default theme => ({
   },
   group: {
     flexGrow: 1,
-    padding: theme.spacing.unit * 2
+    padding: theme.spacing(2)
   },
   groupLabel: {
-    paddingLeft: theme.spacing.unit * 2
+    paddingLeft: theme.spacing(2)
   },
   field: {
-    marginBottom: theme.spacing.unit * 2,
-    marginTop: theme.spacing.unit * 2,
+    marginBottom: theme.spacing(2),
+    marginTop: theme.spacing(2),
     display: 'flex',
     alignItems: 'center'
   },
   textField: {
     width: '320px',
     maxWidth: '100%',
-    marginRight: theme.spacing.unit * 3
+    marginRight: theme.spacing(3)
   },
   portletFooter: {
-    paddingLeft: theme.spacing.unit * 3,
-    paddingRight: theme.spacing.unit * 3,
-    paddingTop: theme.spacing.unit * 2,
-    paddingBottom: theme.spacing.unit * 2
+    paddingLeft: theme.spacing(3),
+    paddingRight: theme.spacing(3),
+    paddingTop: theme.spacing(2),
+    paddingBottom: theme.spacing(2)
   }
 });

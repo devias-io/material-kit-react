@@ -4,28 +4,28 @@ export default theme => ({
     height: '42px',
     display: 'flex',
     alignItems: 'center',
-    marginTop: theme.spacing.unit
+    marginTop: theme.spacing(1)
   },
   spacer: {
     flexGrow: 1
   },
   deleteButton: {
     color: theme.palette.danger.main,
-    marginRight: theme.spacing.unit
+    marginRight: theme.spacing(1)
   },
   importButton: {
-    marginRight: theme.spacing.unit
+    marginRight: theme.spacing(1)
   },
   importIcon: {
-    marginRight: theme.spacing.unit
+    marginRight: theme.spacing(1)
   },
   exportButton: {
-    marginRight: theme.spacing.unit
+    marginRight: theme.spacing(1)
   },
   exportIcon: {
-    marginRight: theme.spacing.unit
+    marginRight: theme.spacing(1)
   },
   searchInput: {
-    marginRight: theme.spacing.unit
+    marginRight: theme.spacing(1)
   }
 });

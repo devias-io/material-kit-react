@@ -13,11 +13,11 @@ import { Divider, Typography } from '@material-ui/core';
 // Component styles
 const styles = theme => ({
   root: {
-    padding: theme.spacing.unit * 4
+    padding: theme.spacing(4)
   },
   company: {
-    marginTop: theme.spacing.unit * 2,
-    marginBottom: theme.spacing.unit * 0.5
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(0.5)
   }
 });
 
@@ -30,10 +30,7 @@ class Footer extends Component {
     return (
       <div className={rootClassName}>
         <Divider />
-        <Typography
-          className={classes.company}
-          variant="body1"
-        >
+        <Typography className={classes.company} variant="body1">
           &copy; Devias Io. 2019
         </Typography>
         <Typography variant="caption">

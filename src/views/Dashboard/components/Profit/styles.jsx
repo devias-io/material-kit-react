@@ -2,7 +2,7 @@ export default theme => ({
   root: {
     backgroundColor: theme.palette.primary.main,
     borderColor: theme.palette.primary.main,
-    padding: theme.spacing.unit * 3
+    padding: theme.spacing(3)
   },
   content: {
     display: 'flex',

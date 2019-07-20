@@ -27,7 +27,7 @@ import {
 // Component styles
 const styles = theme => ({
   root: {
-    padding: theme.spacing.unit * 4
+    padding: theme.spacing(4)
   },
   item: {
     height: '100%'
@@ -41,80 +41,29 @@ class Dashboard extends Component {
     return (
       <DashboardLayout title="Dashboard">
         <div className={classes.root}>
-          <Grid
-            container
-            spacing={4}
-          >
-            <Grid
-              item
-              lg={3}
-              sm={6}
-              xl={3}
-              xs={12}
-            >
+          <Grid container spacing={4}>
+            <Grid item lg={3} sm={6} xl={3} xs={12}>
               <Budget className={classes.item} />
             </Grid>
-            <Grid
-              item
-              lg={3}
-              sm={6}
-              xl={3}
-              xs={12}
-            >
+            <Grid item lg={3} sm={6} xl={3} xs={12}>
               <Users className={classes.item} />
             </Grid>
-            <Grid
-              item
-              lg={3}
-              sm={6}
-              xl={3}
-              xs={12}
-            >
+            <Grid item lg={3} sm={6} xl={3} xs={12}>
               <Progress className={classes.item} />
             </Grid>
-            <Grid
-              item
-              lg={3}
-              sm={6}
-              xl={3}
-              xs={12}
-            >
+            <Grid item lg={3} sm={6} xl={3} xs={12}>
               <Profit className={classes.item} />
             </Grid>
-            <Grid
-              item
-              lg={8}
-              md={12}
-              xl={9}
-              xs={12}
-            >
+            <Grid item lg={8} md={12} xl={9} xs={12}>
               <SalesChart className={classes.item} />
             </Grid>
-            <Grid
-              item
-              lg={4}
-              md={6}
-              xl={3}
-              xs={12}
-            >
+            <Grid item lg={4} md={6} xl={3} xs={12}>
               <DevicesChart className={classes.item} />
             </Grid>
-            <Grid
-              item
-              lg={4}
-              md={6}
-              xl={3}
-              xs={12}
-            >
+            <Grid item lg={4} md={6} xl={3} xs={12}>
               <ProductList className={classes.item} />
             </Grid>
-            <Grid
-              item
-              lg={8}
-              md={12}
-              xl={9}
-              xs={12}
-            >
+            <Grid item lg={8} md={12} xl={9} xs={12}>
               <OrdersTable className={classes.item} />
             </Grid>
           </Grid>

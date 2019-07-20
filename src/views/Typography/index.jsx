@@ -15,7 +15,7 @@ import { Dashboard as DashboardLayout } from 'layouts';
 // Component styles
 const styles = theme => ({
   root: {
-    padding: theme.spacing.unit * 4
+    padding: theme.spacing(4)
   }
 });
 
@@ -43,26 +43,15 @@ class Typography extends Component {
     return (
       <DashboardLayout title="Typography">
         <div className={classes.root}>
-          <Grid
-            container
-            spacing={4}
-          >
+          <Grid container spacing={4}>
             {Object.keys(variants).map((key, i) => (
               <Fragment key={i}>
-                <Grid
-                  item
-                  sm={3}
-                  xs={12}
-                >
+                <Grid item sm={3} xs={12}>
                   <TypographyComponent variant="caption">
                     {key}
                   </TypographyComponent>
                 </Grid>
-                <Grid
-                  item
-                  sm={9}
-                  xs={12}
-                >
+                <Grid item sm={9} xs={12}>
                   <TypographyComponent variant={key}>
                     {variants[key]}
                   </TypographyComponent>

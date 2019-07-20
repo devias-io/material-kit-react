@@ -5,7 +5,7 @@ export default theme => ({
   },
   info: {},
   locationText: {
-    marginTop: theme.spacing.unit,
+    marginTop: theme.spacing(1),
     color: theme.palette.text.secondary
   },
   dateText: {
@@ -19,9 +19,9 @@ export default theme => ({
     flexGrow: 0
   },
   progressWrapper: {
-    marginTop: theme.spacing.unit * 2
+    marginTop: theme.spacing(2)
   },
   uploadButton: {
-    marginRight: theme.spacing.unit * 2
+    marginRight: theme.spacing(2)
   }
 });

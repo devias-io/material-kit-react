@@ -18,7 +18,7 @@ import { AccountProfile, AccountDetails } from './components';
 // Component styles
 const styles = theme => ({
   root: {
-    padding: theme.spacing.unit * 4
+    padding: theme.spacing(4)
   }
 });
 
@@ -31,26 +31,11 @@ class Account extends Component {
     return (
       <DashboardLayout title="Account">
         <div className={classes.root}>
-          <Grid
-            container
-            spacing={4}
-          >
-            <Grid
-              item
-              lg={4}
-              md={6}
-              xl={4}
-              xs={12}
-            >
+          <Grid container spacing={4}>
+            <Grid item lg={4} md={6} xl={4} xs={12}>
               <AccountProfile />
             </Grid>
-            <Grid
-              item
-              lg={8}
-              md={6}
-              xl={8}
-              xs={12}
-            >
+            <Grid item lg={8} md={6} xl={8} xs={12}>
               <AccountDetails />
             </Grid>
           </Grid>

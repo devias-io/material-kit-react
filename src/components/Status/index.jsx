@@ -15,16 +15,16 @@ const styles = theme => ({
     flexShrink: 0
   },
   sm: {
-    height: theme.spacing.unit,
-    width: theme.spacing.unit
+    height: theme.spacing(1),
+    width: theme.spacing(1)
   },
   md: {
-    height: theme.spacing.unit * 2,
-    width: theme.spacing.unit * 2
+    height: theme.spacing(2),
+    width: theme.spacing(2)
   },
   lg: {
-    height: theme.spacing.unit * 3,
-    width: theme.spacing.unit * 3
+    height: theme.spacing(3),
+    width: theme.spacing(3)
   },
   neutral: {
     backgroundColor: theme.palette.common.neutral

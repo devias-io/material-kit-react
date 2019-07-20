@@ -24,29 +24,29 @@
     ]
   },
   "dependencies": {
-    "@material-ui/core": "^4.0.0-beta.1",
-    "@material-ui/icons": "^4.0.0-beta.0",
-    "@material-ui/styles": "^4.0.0-beta.1",
-    "chart.js": "^2.7.3",
+    "@material-ui/core": "^4.2.1",
+    "@material-ui/icons": "^4.2.1",
+    "@material-ui/styles": "^4.2.1",
+    "chart.js": "^2.8.0",
     "classnames": "^2.2.6",
-    "history": "^4.7.2",
+    "history": "^4.9.0",
     "moment": "^2.24.0",
-    "node-sass": "^4.11.0",
-    "prop-types": "^15.7.1",
+    "node-sass": "^4.12.0",
+    "prop-types": "^15.7.2",
     "react": "^16.8.6",
-    "react-chartjs-2": "^2.7.4",
+    "react-chartjs-2": "^2.7.6",
     "react-dom": "^16.8.6",
-    "react-perfect-scrollbar": "^1.4.4",
-    "react-router-dom": "^5.0.0",
+    "react-perfect-scrollbar": "^1.5.3",
+    "react-router-dom": "^5.0.1",
     "react-scripts": "3.0.1",
     "recompose": "^0.30.0",
     "underscore": "^1.9.1",
-    "validate.js": "^0.12.0"
+    "validate.js": "^0.13.1"
   },
   "devDependencies": {
-    "eslint-plugin-prettier": "^3.0.1",
-    "eslint-plugin-react": "^7.12.4",
-    "prettier-eslint": "^8.8.2",
-    "prettier-eslint-cli": "^4.7.1"
+    "eslint-plugin-prettier": "^3.1.0",
+    "eslint-plugin-react": "^7.14.2",
+    "prettier-eslint": "^9.0.0",
+    "prettier-eslint-cli": "^5.0.0"
   }
 }

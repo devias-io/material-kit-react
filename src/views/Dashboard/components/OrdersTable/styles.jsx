@@ -4,10 +4,10 @@ export default theme => ({
     minWidth: '600px'
   },
   newEntryButton: {
-    marginLeft: theme.spacing.unit
+    marginLeft: theme.spacing(1)
   },
   progressWrapper: {
-    padding: theme.spacing.unit * 3,
+    padding: theme.spacing(3),
     display: 'flex',
     justifyContent: 'center'
   },
@@ -26,6 +26,6 @@ export default theme => ({
     alignItems: 'center'
   },
   status: {
-    marginRight: theme.spacing.unit
+    marginRight: theme.spacing(1)
   }
 });

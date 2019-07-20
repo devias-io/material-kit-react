@@ -1,6 +1,6 @@
 export default theme => ({
   root: {
-    padding: theme.spacing.unit * 3
+    padding: theme.spacing(3)
   },
   content: {
     alignItems: 'center',
@@ -11,7 +11,7 @@ export default theme => ({
     fontWeight: 700
   },
   value: {
-    marginTop: theme.spacing.unit
+    marginTop: theme.spacing(1)
   },
   iconWrapper: {
     alignItems: 'center',
@@ -30,7 +30,7 @@ export default theme => ({
     width: '2rem'
   },
   footer: {
-    marginTop: theme.spacing.unit * 2,
+    marginTop: theme.spacing(2),
     display: 'flex',
     alignItems: 'center'
   },
@@ -41,6 +41,6 @@ export default theme => ({
     fontWeight: 700
   },
   caption: {
-    marginLeft: theme.spacing.unit
+    marginLeft: theme.spacing(1)
   }
 });

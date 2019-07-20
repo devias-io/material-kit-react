@@ -11,7 +11,7 @@ export default theme => ({
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
-    padding: theme.spacing.unit,
+    padding: theme.spacing(1),
     backgroundColor: theme.palette.common.white
   },
   optionSelected: {
