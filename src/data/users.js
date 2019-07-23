@@ -1,4 +1,4 @@
-export default [
+const users = [
   {
     id: 'DEV705225',
     name: 'Ekaterina Tankova',
@@ -192,3 +192,5 @@ export default [
     returning: true
   }
 ];
+
+export default users;

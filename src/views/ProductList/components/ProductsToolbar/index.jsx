@@ -11,7 +11,7 @@ import { withStyles } from '@material-ui/core';
 import { Button } from '@material-ui/core';
 
 // Shared components
-import { DisplayMode, SearchInput } from 'components';
+import { DisplayMode, SearchInput } from '../../../../components';
 
 // Component styles
 import styles from './styles';
@@ -26,11 +26,7 @@ class ProductsToolbar extends Component {
       <div className={rootClassName}>
         <div className={classes.row}>
           <span className={classes.spacer} />
-          <Button
-            color="primary"
-            size="small"
-            variant="outlined"
-          >
+          <Button color="primary" size="small" variant="outlined">
             Add
           </Button>
         </div>

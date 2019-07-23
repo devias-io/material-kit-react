@@ -14,7 +14,7 @@ import { Typography } from '@material-ui/core';
 import { AttachMoney as AttachMoneyIcon } from '@material-ui/icons';
 
 // Shared components
-import { Paper } from 'components';
+import { Paper } from '../../../../components';
 
 // Component styles
 import styles from './styles';
@@ -26,22 +26,13 @@ class Profit extends Component {
     const rootClassName = classNames(classes.root, className);
 
     return (
-      <Paper
-        {...rest}
-        className={rootClassName}
-      >
+      <Paper {...rest} className={rootClassName}>
         <div className={classes.content}>
           <div className={classes.details}>
-            <Typography
-              className={classes.title}
-              variant="body2"
-            >
+            <Typography className={classes.title} variant="body2">
               TOTAL PROFIT
             </Typography>
-            <Typography
-              className={classes.value}
-              variant="h3"
-            >
+            <Typography className={classes.value} variant="h3">
               $23,200
             </Typography>
           </div>
