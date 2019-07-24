@@ -1,58 +1,56 @@
-import { white, black } from '../common/colors';
+import { colors } from '@material-ui/core';
+
+const white = '#FFFFFF';
+const black = '#000000';
 
 export default {
-  common: {
-    black,
-    white,
-    neutral: '#E4E7EB',
-    muted: '#9EA0A4'
-  },
+  black,
+  white,
   primary: {
     contrastText: white,
-    main: '#0767DB',
-    light: '#F6F9FD',
-    dark: '#0B48A0'
+    dark: colors.indigo[900],
+    main: colors.indigo[500],
+    light: colors.indigo[100]
   },
   secondary: {
     contrastText: white,
-    main: '#7d58ff',
-    light: '',
-    dark: '#37248F'
+    dark: colors.blue[900],
+    main: colors.blue['A400'],
+    light: colors.blue['A400']
   },
   success: {
     contrastText: white,
-    main: '#45B880',
-    light: '#F1FAF5',
-    dark: '#00783E'
+    dark: colors.green[900],
+    main: colors.green[600],
+    light: colors.green[400]
   },
   info: {
     contrastText: white,
-    main: '#1070CA',
-    light: '#F1FBFC',
-    dark: '#007489'
+    dark: colors.blue[900],
+    main: colors.blue[600],
+    light: colors.blue[400]
   },
   warning: {
     contrastText: white,
-    main: '#FFB822',
-    light: '#FDF8F3',
-    dark: '#95591E'
+    dark: colors.orange[900],
+    main: colors.orange[600],
+    light: colors.orange[400]
   },
-  danger: {
+  error: {
     contrastText: white,
-    main: '#ED4740',
-    light: '#FEF6F6',
-    dark: '#BF0E08'
+    dark: colors.red[900],
+    main: colors.red[600],
+    light: colors.red[400]
   },
   text: {
-    primary: '#12161B',
-    secondary: '#66788A',
-    disabled: '#A6B1BB'
+    primary: colors.blueGrey[900],
+    secondary: colors.blueGrey[600],
+    link: colors.blue[600]
   },
   background: {
-    default: '#f8fafc',
-    dark: '#172B4D',
+    default: '#F4F6F8',
     paper: white
   },
-  border: '#DFE3E8',
-  divider: '#DFE3E8'
+  icon: colors.blueGrey[600],
+  divider: colors.grey[200]
 };

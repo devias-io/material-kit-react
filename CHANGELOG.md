@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.3.0] 2019-07-24
+
+- Replaced dependency `classnames` with `clsx`
+- Replaced `.jsx` with `.js`
+- Removed unused `.scss` files from `assets` folder
+- Updated dependencies
+
 ## [0.2.0] 2019-05-13
 
 ## Updates

@@ -2,8 +2,7 @@ import palette from '../palette';
 
 export default {
   root: {
-    padding: '10px',
-    color: palette.text.secondary,
+    color: palette.icon,
     '&:hover': {
       backgroundColor: 'rgba(0, 0, 0, 0.03)'
     }

@@ -65,40 +65,11 @@ material-react-dashboard
 ├── docs
 └── src
 	├── assets
-	│	└── scss
 	├── common
-	│	├── colors
-	│	├── validators
-	│	└── serviceWorker.js
 	├── components
-	│	├── DisplayMode
-	│	├── Paper
-	│	├── Portlet
-	│	├── PortletContent
-	│	├── PortletFooter
-	│	├── PortletHeader
-	│	├── DisplayMode
-	│	├── PortletLabel
-	│	├── PortletToolbar
-	│	├── SearchInput
-	│	├── Status
-	│	└── SearchInput
-	├── data
 	├── helpers
 	├── icons
-	│	├── Facebook
-	│	└── Google
 	├── layouts
-	│	├── Dashboard
-	│	│	└── components
-	│	│		├── Footer
-	│	│		├── Sidebar
-	│	│		└── Topbar
-	├── services
-	│	├── notification
-	│	├── order
-	│	├── product
-	│	├── user
 	├── theme
 	│	├── overrides
 	│	├── pallete.js
@@ -113,7 +84,6 @@ material-react-dashboard
 	│	├── SignIn
 	│	├── SignUp
 	│	├── Typography
-	│	├── UnderDevelopment
 	│	└── UserList
 	├── App.jsx
 	├── index.jsx

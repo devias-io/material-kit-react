@@ -10,16 +10,28 @@
       }
     ],
     "jsx-quotes": 1,
-    "linebreak-style": [2, "unix"],
-    "quotes": [2, "single"],
+    "linebreak-style": [
+      2,
+      "unix"
+    ],
+    "quotes": [
+      2,
+      "single"
+    ],
     "react/display-name": 1,
     "react/forbid-prop-types": 0,
     "react/sort-prop-types": 1,
     "react/jsx-boolean-value": 1,
-    "react/jsx-first-prop-new-line": [1, "multiline"],
+    "react/jsx-first-prop-new-line": [
+      1,
+      "multiline"
+    ],
     "react/jsx-closing-bracket-location": 1,
     "react/jsx-curly-spacing": 1,
-    "react/jsx-indent-props": [2, 2],
+    "react/jsx-indent-props": [
+      2,
+      2
+    ],
     "react/jsx-max-props-per-line": 1,
     "react/jsx-no-duplicate-props": 1,
     "react/jsx-no-literals": 0,
@@ -32,7 +44,7 @@
     "react/no-did-update-set-state": 1,
     "react/no-direct-mutation-state": 1,
     "react/no-multi-comp": 1,
-    "react/no-set-state": 0,
+    "react/no-set-state": 1,
     "react/no-unknown-property": 1,
     "react/prefer-es6-class": 1,
     "react/prop-types": 1,
@@ -50,5 +62,7 @@
     "jsx": true,
     "experimentalObjectRestSpread": true
   },
-  "plugins": ["react"]
+  "plugins": [
+    "react"
+  ]
 }
