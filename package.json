@@ -3,7 +3,7 @@
   "author": "DeviasIO",
   "email": "contact@devias.io",
   "licence": "MIT",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "scripts": {
     "start": "react-scripts start",
