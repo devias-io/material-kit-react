@@ -2,10 +2,23 @@
 
 ## [0.3.0] 2019-07-24
 
+## Updates
+
+- Removed `services` and `data` folders, each component has its own data
+- Implemented a custom Route component to wrap views in layouts
+- Updated the layout to match with the PRO version
+- Replaced custom cumponents (Portlet) with Material-UI built-in components
+- Ajusted theme colors
+- Implemented `useStyle` hook instead of `withStyles` HOC
+- Moved from Class Components to Functional Components
 - Replaced dependency `classnames` with `clsx`
 - Replaced `.jsx` with `.js`
 - Removed unused `.scss` files from `assets` folder
 - Updated dependencies
+
+## Contributors
+
+- [Christopher Escalon](https://github.com/escalonc) - Updating packages and fixing deprecated for spacing
 
 ## [0.2.0] 2019-05-13
 

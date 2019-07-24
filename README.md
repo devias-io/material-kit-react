@@ -1,6 +1,6 @@
-## [Brainalytica - Material React Dashboard Free](https://devias.io/products/material-react-dashboard) [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&logo=twitter)](https://twitter.com/intent/tweet?text=%F0%9F%9A%A8Devias%20Freebie%20Alert%20-%20An%20awesome%20ready-to-use%20register%20page%20made%20with%20%23material%20%23react%0D%0Ahttps%3A%2F%2Fdevias.io%20%23createreactapp%20%23devias%20%23material%20%23freebie%20%40devias-io)
+## [Devias Kit - Admin Dashboard](https://devias.io/products/material-react-dashboard) [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&logo=twitter)](https://twitter.com/intent/tweet?text=%F0%9F%9A%A8Devias%20Freebie%20Alert%20-%20An%20awesome%20ready-to-use%20register%20page%20made%20with%20%23material%20%23react%0D%0Ahttps%3A%2F%2Fdevias.io%20%23createreactapp%20%23devias%20%23material%20%23freebie%20%40devias-io)
 
-![license](https://img.shields.io/badge/license-MIT-blue.svg) [![GitHub issues](https://img.shields.io/github/issues/devias-io/react-material-dashboard.svg)](https://github.com/devias-io/react-material-dashboard/issues?q=is%3Aopen+is%3Aissue) [![GitHub issues closed](https://img.shields.io/github/issues-closed-raw/devias-io/react-material-dashboard.svg?maxAge=2592000)](https://github.com/devias-io/react-material-dashboard/issues?q=is%3Aissue+is%3Aclosed) [![Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/BSHaUGR)
+![license](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ![React Material Dashboard](https://s3.eu-west-2.amazonaws.com/devias/products/react-material-dashboard/react-material-free.png)
 
@@ -31,6 +31,8 @@
 ## Quick start
 
 - [Download from Github](https://github.com/devias-io/react-material-dashboard/archive/master.zip) or [Download from Devias](https://devias.io/products/material-react-dashboard) or clone the repo: `git clone https://github.com/devias-io/react-material-dashboard.git`
+
+- Make sure your NodeJS and npm versions are up to date for `React 16.8.6`
 
 - Install dependencies: `npm install` or `yarn`
 
@@ -71,9 +73,6 @@ material-react-dashboard
 	├── icons
 	├── layouts
 	├── theme
-	│	├── overrides
-	│	├── pallete.js
-	│	└── typography.js
 	├── views
 	│	├── Account
 	│	├── Dashboard
@@ -98,7 +97,7 @@ material-react-dashboard
 
 - [Github Issues Page](https://github.com/devias-io/react-material-dashboard/issues?ref=devias-io)
 
-## Design Files
+## License
 
 - Licensed under MIT (https://github.com/devias-io/react-material-dashboard/blob/master/LICENSE.md)
 
