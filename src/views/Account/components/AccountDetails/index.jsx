@@ -17,7 +17,7 @@ import {
   PortletLabel,
   PortletContent,
   PortletFooter
-} from 'components';
+} from '../../../../components';
 
 // Component styles
 import styles from './styles';
@@ -60,10 +60,7 @@ class Account extends Component {
     const rootClassName = classNames(classes.root, className);
 
     return (
-      <Portlet
-        {...rest}
-        className={rootClassName}
-      >
+      <Portlet {...rest} className={rootClassName}>
         <PortletHeader>
           <PortletLabel
             subtitle="The information can be edited"
@@ -71,10 +68,7 @@ class Account extends Component {
           />
         </PortletHeader>
         <PortletContent noPadding>
-          <form
-            autoComplete="off"
-            noValidate
-          >
+          <form autoComplete="off" noValidate>
             <div className={classes.field}>
               <TextField
                 className={classes.textField}
@@ -124,10 +118,7 @@ class Account extends Component {
                 value={state}
                 variant="outlined">
                 {states.map(option => (
-                  <option
-                    key={option.value}
-                    value={option.value}
-                  >
+                  <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
@@ -144,10 +135,7 @@ class Account extends Component {
           </form>
         </PortletContent>
         <PortletFooter className={classes.portletFooter}>
-          <Button
-            color="primary"
-            variant="contained"
-          >
+          <Button color="primary" variant="contained">
             Save details
           </Button>
         </PortletFooter>

@@ -1,6 +1,6 @@
 // Mock data
-import users from 'data/users';
-import orders from 'data/orders';
+import users from '../../data/users';
+import orders from '../../data/orders';
 
 function lookupUser(user) {
   const userCopy = JSON.parse(JSON.stringify(user));

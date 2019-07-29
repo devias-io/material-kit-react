@@ -23,7 +23,7 @@ import {
 } from '@material-ui/core';
 
 // Shared services
-import { getOrders } from 'services/order';
+import { getOrders } from '../../../../services/order';
 
 // Shared components
 import {
@@ -33,7 +33,7 @@ import {
   PortletToolbar,
   PortletContent,
   Status
-} from 'components';
+} from '../../../../components';
 
 // Component styles
 import styles from './styles';
@@ -108,17 +108,13 @@ class OrdersTable extends Component {
               className={classes.newEntryButton}
               color="primary"
               size="small"
-              variant="outlined"
-            >
+              variant="outlined">
               New entry
             </Button>
           </PortletToolbar>
         </PortletHeader>
         <PerfectScrollbar>
-          <PortletContent
-            className={classes.portletContent}
-            noPadding
-          >
+          <PortletContent className={classes.portletContent} noPadding>
             {isLoading && (
               <div className={classes.progressWrapper}>
                 <CircularProgress />
@@ -130,18 +126,9 @@ class OrdersTable extends Component {
                   <TableRow>
                     <TableCell>Order ID</TableCell>
                     <TableCell align="left">Customer</TableCell>
-                    <TableCell
-                      align="left"
-                      sortDirection="desc"
-                    >
-                      <Tooltip
-                        enterDelay={300}
-                        title="Sort"
-                      >
-                        <TableSortLabel
-                          active
-                          direction="desc"
-                        >
+                    <TableCell align="left" sortDirection="desc">
+                      <Tooltip enterDelay={300} title="Sort">
+                        <TableSortLabel active direction="desc">
                           Date
                         </TableSortLabel>
                       </Tooltip>
@@ -151,11 +138,7 @@ class OrdersTable extends Component {
                 </TableHead>
                 <TableBody>
                   {orders.map(order => (
-                    <TableRow
-                      className={classes.tableRow}
-                      hover
-                      key={order.id}
-                    >
+                    <TableRow className={classes.tableRow} hover key={order.id}>
                       <TableCell>{order.id}</TableCell>
                       <TableCell className={classes.customerCell}>
                         {order.customer.name}

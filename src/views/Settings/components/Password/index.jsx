@@ -17,7 +17,7 @@ import {
   PortletLabel,
   PortletContent,
   PortletFooter
-} from 'components';
+} from '../../../../components';
 
 // Component styles
 import styles from './styles';
@@ -45,15 +45,9 @@ class Password extends Component {
     const rootClassName = classNames(classes.root, className);
 
     return (
-      <Portlet
-        {...rest}
-        className={rootClassName}
-      >
+      <Portlet {...rest} className={rootClassName}>
         <PortletHeader>
-          <PortletLabel
-            subtitle="Update password"
-            title="Password"
-          />
+          <PortletLabel subtitle="Update password" title="Password" />
         </PortletHeader>
         <PortletContent>
           <form className={classes.form}>
@@ -82,10 +76,7 @@ class Password extends Component {
           </form>
         </PortletContent>
         <PortletFooter className={classes.portletFooter}>
-          <Button
-            color="primary"
-            variant="outlined"
-          >
+          <Button color="primary" variant="outlined">
             Update
           </Button>
         </PortletFooter>

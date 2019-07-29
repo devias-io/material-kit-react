@@ -6,7 +6,7 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 
 // Shared services
-import { getProducts } from 'services/product';
+import { getProducts } from '../../../../services/product';
 
 // Material helpers
 import { withStyles } from '@material-ui/core';
@@ -32,7 +32,7 @@ import {
   PortletLabel,
   PortletContent,
   PortletFooter
-} from 'components';
+} from '../../../../components';
 
 // Component styles
 import styles from './styles';
@@ -104,10 +104,7 @@ class ProductList extends Component {
     return (
       <Fragment>
         {products.map((product, i) => (
-          <div
-            className={classes.product}
-            key={i}
-          >
+          <div className={classes.product} key={i}>
             <div className={classes.productImageWrapper}>
               <img
                 alt="Product Name"
@@ -117,17 +114,11 @@ class ProductList extends Component {
             </div>
             <div className={classes.productDetails}>
               <Link to="#">
-                <Typography
-                  className={classes.productTitle}
-                  variant="h5"
-                >
+                <Typography className={classes.productTitle} variant="h5">
                   {product.title}
                 </Typography>
               </Link>
-              <Typography
-                className={classes.productTimestamp}
-                variant="body2"
-              >
+              <Typography className={classes.productTimestamp} variant="body2">
                 Updated 5hr ago
               </Typography>
             </div>
@@ -149,10 +140,7 @@ class ProductList extends Component {
     const rootClassName = classNames(classes.root, className);
 
     return (
-      <Portlet
-        {...rest}
-        className={rootClassName}
-      >
+      <Portlet {...rest} className={rootClassName}>
         <PortletHeader noDivider>
           <PortletLabel
             subtitle={`${productsTotal} in total`}
@@ -163,11 +151,7 @@ class ProductList extends Component {
           {this.renderProducts()}
         </PortletContent>
         <PortletFooter className={classes.portletFooter}>
-          <Button
-            color="primary"
-            size="small"
-            variant="text"
-          >
+          <Button color="primary" size="small" variant="text">
             View all <ArrowRightIcon />
           </Button>
         </PortletFooter>

@@ -1,4 +1,4 @@
-export default [
+const notifications = [
   {
     id: 'DEV716627',
     title: 'New order has been received',
@@ -28,3 +28,5 @@ export default [
     to: '/features'
   }
 ];
+
+export default notifications;
