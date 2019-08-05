@@ -28,6 +28,17 @@
 - [Account Page](http://react-material-dashboard.devias.io/account?ref=github-readme)
 - [Settings Page](http://react-material-dashboard.devias.io/settings?ref=github-readme)
 
+## Upgrade to PRO Version
+
+We also have a pro version of this product which bundles even more pages and components if you want to save more time and design efforts :)
+
+| Devias Demo              | [Devias Kit PRO](https://themes.material-ui.com/previews/devias-kit-pro/) |
+| ------------------------ | :----------------------------------------------------------- |
+| **7** Demo Pages         | **32** Demo Pages                                            |
+| **2** Integrated Plugins | **8** Integrated Plugins                                     |
+| -                        | ✔ Design Files (sketch & figma)                              |
+| -                        | ✔ Complete Users Flows                                       |
+
 ## Quick start
 
 - [Download from Github](https://github.com/devias-io/react-material-dashboard/archive/master.zip) or [Download from Devias](https://devias.io/products/material-react-dashboard) or clone the repo: `git clone https://github.com/devias-io/react-material-dashboard.git`
