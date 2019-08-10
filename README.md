@@ -6,18 +6,6 @@
 
 > Free React Dashboard made with [Material UI's](https://material-ui.com/?ref=devias-io) components, [React](https://reactjs.org/?ref=devias-io) and of course [create-react-app](https://facebook.github.io/create-react-app/?ref=devias-io) to boost your app development process! We'll launch a pro version soon, so if you are interested subscribe to our personal emailing list on [https://devias.io/](https://devias.io/)
 
-## Table of Contents
-
-- [Demo](#demo)
-- [Quick Start](#quick-start)
-- [Documentation](#documentation)
-- [Design Files](#design-files)
-- [File Structure](#file-structure)
-- [Resources](#resources)
-- [Reporting Issues](#reporting-issues)
-- [Licensing](#licensing)
-- [Contact Us](#contact-us)
-
 ## Demo
 
 - [Dashboard Page](http://react-material-dashboard.devias.io/dashboard?ref=github-readme)
@@ -36,7 +24,7 @@ We also have a pro version of this product which bundles even more pages and com
 | ------------------------ | :----------------------------------------------------------- |
 | **7** Demo Pages         | **32** Demo Pages                                            |
 | **2** Integrated Plugins | **8** Integrated Plugins                                     |
-| -                        | ✔ Design Files (sketch & figma)                              |
+| -                        | ✔ Design Files (sketch & figma) - for Extended License       |
 | -                        | ✔ Complete Users Flows                                       |
 
 ## Quick start
