@@ -43,10 +43,11 @@ We also have a pro version of this product which bundles even more pages and com
 
 The documentation for the React Material Kit is can be found [here](https://material-ui.com?ref=devias-io).
 
-## Design Files
+## 🖌 Design Files
 
-[Download Sketch file](https://s3.eu-west-2.amazonaws.com/devias/products/react-material-dashboard/react-material-dashboard-free.sketch)
-[Download Figma file](https://devias.s3.eu-west-2.amazonaws.com/products/react-material-dashboard/react-material-dashboard-free.fig)
+👉[Download Sketch file](https://s3.eu-west-2.amazonaws.com/devias/products/react-material-dashboard/react-material-dashboard-free.sketch)
+
+👉[Download Figma file](https://devias.s3.eu-west-2.amazonaws.com/products/react-material-dashboard/react-material-dashboard-free.fig)
 
 ## File Structure
 
