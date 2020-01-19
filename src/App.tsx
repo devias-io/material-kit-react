@@ -1,7 +1,6 @@
-import React, { Component } from 'react';
+import * as React from 'react';
 import { Router } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
-import { Chart } from 'react-chartjs-2';
 import { ThemeProvider } from '@material-ui/styles';
 import validate from 'validate.js';
 
@@ -11,6 +10,8 @@ import 'react-perfect-scrollbar/dist/css/styles.css';
 import './assets/scss/index.scss';
 import validators from './common/validators';
 import Routes from './Routes';
+
+const Chart = require('react-chartjs-2').Chart;
 
 const browserHistory = createBrowserHistory();
 
@@ -23,7 +24,7 @@ validate.validators = {
   ...validators
 };
 
-export default class App extends Component {
+export default class App extends React.Component {
   render() {
     return (
       <ThemeProvider theme={theme}>
