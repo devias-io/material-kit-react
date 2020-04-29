@@ -32,7 +32,7 @@ const Footer = props => {
         . 2020
       </Typography>
       <Typography variant="caption">
-        Criado e desenvolvido por Equipe EXD
+        Criado e desenvolvido por Equipe QXD
       </Typography>
     </div>
   );

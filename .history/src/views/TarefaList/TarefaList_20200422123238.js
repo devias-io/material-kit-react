@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { makeStyles } from '@material-ui/styles';
-import { Button } from 'reactstrap';
+import { makeStyles, Button } from '@material-ui/styles';
+
 
 import { TarefasToolbar, TarefasTable } from './components';
 import {
