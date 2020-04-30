@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import clsx from 'clsx';
 import PropTypes from 'prop-types';
-// import moment from 'moment';
+import moment from 'moment';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import { makeStyles } from '@material-ui/styles';
+import TimerIcon from '@material-ui/icons/Timer';
+import DoneAllIcon from '@material-ui/icons/DoneAll';
+import DeleteIcon from '@material-ui/icons/Delete'
 import {
   Card,
   CardContent,
@@ -12,13 +15,11 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  IconButton,
-  // Typography,
+  Typography,
+  IconButton
 } from '@material-ui/core';
 
-import TimerIcon from '@material-ui/icons/Timer';
-import DoneAllIcon from '@material-ui/icons/DoneAll';
-import DeleteIcon from '@material-ui/icons/Delete';
+import { getInitials } from 'helpers';
 
 const useStyles = makeStyles(theme => ({
   root: {},
@@ -40,6 +41,8 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
+
+
 const TarefasTable = props => {
   const { className, tarefas, ...rest } = props;
 
@@ -53,58 +56,57 @@ const TarefasTable = props => {
       <CardContent className={classes.content}>
         <PerfectScrollbar>
           <div className={classes.inner}>
-
+            
             <Table>
-
               <TableHead>
                 <TableRow>
                   <TableCell>Código</TableCell>
                   <TableCell>Descrição</TableCell>
-                  <TableCell>Categoria</TableCell>
+                  <TableCell>Categoria</TableCell>   
                   <TableCell>Status</TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                 </TableRow>
+
               </TableHead>
 
-              <TableBody>
-                {tarefas.map(tarefa => {
-                  return (
-                    <TableRow key={tarefa.id}>
-                      <TableCell>{tarefa.id}</TableCell>
-                      <TableCell>{tarefa.descricao}</TableCell>
-                      <TableCell>{tarefa.categoria}</TableCell>
-                      <TableCell>{tarefa.done ? 'Feito' : 'Pendente'}</TableCell>
-                      <TableCell>
-                        <IconButton onClick={e => props.alterarStatus(tarefa.id)} color="secondary">
-                          {tarefa.done ?
-                            (
-                              <DoneAllIcon />
-                            ) :
-                            (
-                              <TimerIcon />
-                            )
-                          }
-                        </IconButton>
-                      </TableCell>
+                <TableBody>
 
-                      <TableCell>
-                        <IconButton onClick={e => props.deleteAction(tarefa.id)}>
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
+                  {
+                  tarefas.map( tarefa => {
 
-                    </TableRow>
-                  )
-                })
-                }
-              </TableBody>
+                    return(
+                      <TableRow key={tarefa.id}>
+                        <TableCell>{tarefa.id}</TableCell>
+                        <TableCell>{tarefa.descricao}</TableCell>
+                        <TableCell>{tarefa.categoria}</TableCell>
+                        <TableCell>{tarefa.done ? "Feita" : "Não feita"}</TableCell>
+                        <TableCell>
+                          <IconButton onClick={e => props.alterarStatus(tarefa.id)} color="secondary">
+                            {
+                              tarefa.done ? ( <DoneAllIcon/> ) : ( <TimerIcon/> )
+                            }
+                          </IconButton>
+                        </TableCell>
 
+                        <TableCell>
+                          <IconButton onClick={e => props.deleteAction(tarefa.id)}>
+                              <DeleteIcon/>
+                          </IconButton>
+                        </TableCell>
+
+                      </TableRow>
+                    )
+                  })
+                  }
+                  
+                </TableBody>
             </Table>
 
           </div>
         </PerfectScrollbar>
       </CardContent>
+     
     </Card>
   );
 };

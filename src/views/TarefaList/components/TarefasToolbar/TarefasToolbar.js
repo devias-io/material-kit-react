@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/styles';
-import {
+import { 
+
   Button,
   TextField,
   Grid,
@@ -11,6 +12,7 @@ import {
   FormControl,
   InputLabel
 } from '@material-ui/core';
+
 
 const useStyles = makeStyles(theme => ({
   root: {},
@@ -37,20 +39,21 @@ const useStyles = makeStyles(theme => ({
 const TarefasToolbar = props => {
   const { className, ...rest } = props;
 
-  const [descricao, setDescricao] = useState('')
-  const [categoria, setCategoria] = useState('')
+  const [descricao, setDescricao] = useState('');
+  const [categoria, setCategoria] = useState('');
+
 
   const classes = useStyles();
 
-  const submit = (event) => {
+  const submit = (event) =>{
     event.preventDefault();
     const tarefa = {
-      descricao: descricao,
-      categoria: categoria
+      descricao : descricao,
+      categoria : categoria
     }
-    props.salvar(tarefa)
-    setDescricao('')
+    props.salvar(tarefa)  
     setCategoria('')
+    setDescricao('')
   }
 
   return (
@@ -61,48 +64,40 @@ const TarefasToolbar = props => {
       <div className={classes.row}>
         <span className={classes.spacer} />
       </div>
-
       <div className={classes.row}>
 
         <Grid container>
+          <Grid item md={4}>
+          <TextField
+            className={classes.searchInput}
+            placeholder="Descrição da tarefa"
+            label = "Descrição:"
+            fullWidth={true}
+            value={descricao}
+            onChange={e => setDescricao(e.target.value)}
+          />
 
-
-
-          <Grid item md={4} xs={12} sm={6}>
-            <TextField
-              className={classes.searchInput}
-              placeholder="Descrição da tarefa"
-              label="Descrição:"
-              value={descricao}
-              fullWidth
-              onChange={e => setDescricao(e.target.value)}
-            />
           </Grid>
 
-          <Grid item md={4} xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Categoria: </InputLabel>
-              <Select
-                onChange={e => setCategoria(e.target.value)}
-                value={categoria}
-              >
-                <MenuItem value="" >Selecionar categoria...</MenuItem>
-                <MenuItem value={"TRABALHO"}>Trabalho</MenuItem>
-                <MenuItem value={"ESTUDOS"}>Estudos</MenuItem>
-                <MenuItem value={"OUTROS"}>Outros</MenuItem>
-              </Select>
-            </FormControl>
+          <Grid item md={4}>
+          <FormControl fullWidth={true}>
+            <InputLabel> Categoria: </InputLabel>
+            <Select value={categoria} onChange={e => setCategoria(e.target.value)}> 
+              <MenuItem value="">Selecione...</MenuItem>
+              <MenuItem value={"TRABALHO"}>Trabalho</MenuItem>
+              <MenuItem value={"ESTUDOS"}>Estudos</MenuItem>
+              <MenuItem value={"OUTROS"}>Outros</MenuItem>
+            </Select>
+          </FormControl>
           </Grid>
 
-          <Grid>
-            <Button
-              onClick={submit}
-              variant="contained"
-              color="secondary">Adicionar</Button>
+          <Grid item md={2}>
+            <Button onClick={submit}variant="contained" color="secondary">
+              Adicionar
+            </Button>
           </Grid>
 
         </Grid>
-
       </div>
     </div>
   );

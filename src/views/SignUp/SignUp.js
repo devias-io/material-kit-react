@@ -210,20 +210,21 @@ const SignUp = props => {
                 className={classes.quoteText}
                 variant="h1"
               >
-                Cadastre-se no sistema para ter acesso aos recursos administrativos da sua aplicação
+                Cadastre suas tarefas no sistema e tenha melhor controle e gerenciamento delas.
+                Basta logar com seu email e cadastrá-las na página.
               </Typography>
               <div className={classes.person}>
                 <Typography
                   className={classes.name}
                   variant="body1"
                 >
-                  Takamaru Ayako
+                  Set Tarefas
                 </Typography>
                 <Typography
                   className={classes.bio}
                   variant="body2"
                 >
-                  Manager at inVision
+                  Gerenciamento de Tarefas Online
                 </Typography>
               </div>
             </div>
@@ -250,13 +251,13 @@ const SignUp = props => {
                   className={classes.title}
                   variant="h2"
                 >
-                  Criar uma conta
+                  Create new account
                 </Typography>
                 <Typography
                   color="textSecondary"
                   gutterBottom
                 >
-                  Use seu e-mail para cria uma conta
+                  Use your email to create new account
                 </Typography>
                 <TextField
                   className={classes.textField}
@@ -265,14 +266,14 @@ const SignUp = props => {
                   helperText={
                     hasError('firstName') ? formState.errors.firstName[0] : null
                   }
-                  label="Nome"
+                  label="First name"
                   name="firstName"
                   onChange={handleChange}
                   type="text"
                   value={formState.values.firstName || ''}
                   variant="outlined"
                 />
-                {/* <TextField
+                <TextField
                   className={classes.textField}
                   error={hasError('lastName')}
                   fullWidth
@@ -285,7 +286,7 @@ const SignUp = props => {
                   type="text"
                   value={formState.values.lastName || ''}
                   variant="outlined"
-                /> */}
+                />
                 <TextField
                   className={classes.textField}
                   error={hasError('email')}
@@ -293,7 +294,7 @@ const SignUp = props => {
                   helperText={
                     hasError('email') ? formState.errors.email[0] : null
                   }
-                  label="E-mail"
+                  label="Email address"
                   name="email"
                   onChange={handleChange}
                   type="text"
@@ -307,7 +308,7 @@ const SignUp = props => {
                   helperText={
                     hasError('password') ? formState.errors.password[0] : null
                   }
-                  label="Senha"
+                  label="Password"
                   name="password"
                   onChange={handleChange}
                   type="password"
@@ -327,7 +328,7 @@ const SignUp = props => {
                     color="textSecondary"
                     variant="body1"
                   >
-                    Estou de acordo com os{' '}
+                    I have read the{' '}
                     <Link
                       color="primary"
                       component={RouterLink}
@@ -335,7 +336,7 @@ const SignUp = props => {
                       underline="always"
                       variant="h6"
                     >
-                      Termos e Condições
+                      Terms and Conditions
                     </Link>
                   </Typography>
                 </div>
@@ -347,25 +348,25 @@ const SignUp = props => {
                 <Button
                   className={classes.signUpButton}
                   color="primary"
-                  // disabled={!formState.isValid}
+                  disabled={!formState.isValid}
                   fullWidth
                   size="large"
                   type="submit"
                   variant="contained"
                 >
-                  Cadastrar-se agora
+                  Sign up now
                 </Button>
                 <Typography
                   color="textSecondary"
                   variant="body1"
                 >
-                  Já tem uma conta?{' '}
+                  Have an account?{' '}
                   <Link
                     component={RouterLink}
                     to="/sign-in"
                     variant="h6"
                   >
-                    Login
+                    Sign in
                   </Link>
                 </Typography>
               </form>

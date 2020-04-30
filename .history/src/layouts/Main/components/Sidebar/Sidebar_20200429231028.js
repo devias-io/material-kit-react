@@ -53,11 +53,9 @@ const Sidebar = props => {
       icon: <LaptopChromebookIcon />,
       items: [
 
-        {
-          title: 'Clientes',
-          href: '/clientes',
-          icon: <PeopleIcon />,
-        }
+        {title: 'Clientes',
+        href: '/clientes',
+        icon: <PeopleIcon />,}
       ]
     },
     {

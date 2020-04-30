@@ -40,9 +40,9 @@ const AccountProfile = props => {
   const classes = useStyles();
 
   const user = {
-    name: 'Roberlan Carvalho',
-    city: 'Quixadá',
-    country: 'BRA',
+    name: 'Shen Zhi',
+    city: 'Los Angeles',
+    country: 'USA',
     timezone: 'GTM-7',
     avatar: '/images/avatars/avatar_11.png'
   };

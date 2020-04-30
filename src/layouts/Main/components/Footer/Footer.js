@@ -24,15 +24,15 @@ const Footer = props => {
         &copy;{' '}
         <Link
           component="a"
-          href="https://"
+          href="https://d/"
           target="_blank"
         >
-          Set Tarefas
+          I9Colab
         </Link>
         . 2020
       </Typography>
       <Typography variant="caption">
-        Criado e desenvolvido por Equipe QXD
+        Desenvolvimento Web
       </Typography>
     </div>
   );
