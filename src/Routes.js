@@ -9,7 +9,8 @@ import {
   SignIn as SignInView,
   TarefaList as TarefaListView,
   Clientes as ClientesView,
-  ProdutoList as ProdutoListView
+  ProdutoList as ProdutoListView,
+  FornecedorList as FornecedorListView,
   // Typography as TypographyView,
   // Icons as IconsView,
   // Account as AccountView,
@@ -51,6 +52,13 @@ const Routes = () => {
         exact
         layout={MainLayout}
         path="/produtos"
+      />
+
+      <RouteWithLayout
+        component={FornecedorListView}
+        exact
+        layout={MainLayout}
+        path="/fornecedores"
       />
 
       {/* <RouteWithLayout
