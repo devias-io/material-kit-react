@@ -1,35 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, withRouter } from 'react-router-dom';
 import PropTypes from 'prop-types';
-// import validate from 'validate.js';
+import validate from 'validate.js';
 import { makeStyles } from '@material-ui/styles';
 import {
   Grid,
   Button,
+  IconButton,
   TextField,
-  Typography,
-  // IconButton,
-  // Link
+  Link,
+  Typography
 } from '@material-ui/core';
-// import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 
-// import { Facebook as FacebookIcon, Google as GoogleIcon } from 'icons';
+import { Facebook as FacebookIcon, Google as GoogleIcon } from 'icons';
 
-// const schema = {
-//   email: {
-//     presence: { allowEmpty: false, message: 'is required' },
-//     email: true,
-//     length: {
-//       maximum: 64
-//     }
-//   },
-//   password: {
-//     presence: { allowEmpty: false, message: 'is required' },
-//     length: {
-//       maximum: 128
-//     }
-//   }
-// };
+const schema = {
+  email: {
+    presence: { allowEmpty: false, message: 'is required' },
+    email: true,
+    length: {
+      maximum: 64
+    }
+  },
+  password: {
+    presence: { allowEmpty: false, message: 'is required' },
+    length: {
+      maximum: 128
+    }
+  }
+};
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -129,15 +129,54 @@ const SignIn = props => {
   const { history } = props;
 
   const classes = useStyles();
-  const [email, setEmail] = useState();
 
+  const [formState, setFormState] = useState({
+    isValid: false,
+    values: {},
+    touched: {},
+    errors: {}
+  });
+
+  useEffect(() => {
+    const errors = validate(formState.values, schema);
+
+    setFormState(formState => ({
+      ...formState,
+      isValid: errors ? false : true,
+      errors: errors || {}
+    }));
+  }, [formState.values]);
+
+  const handleBack = () => {
+    history.goBack();
+  };
+
+  const handleChange = event => {
+    event.persist();
+
+    setFormState(formState => ({
+      ...formState,
+      values: {
+        ...formState.values,
+        [event.target.name]:
+          event.target.type === 'checkbox'
+            ? event.target.checked
+            : event.target.value
+      },
+      touched: {
+        ...formState.touched,
+        [event.target.name]: true
+      }
+    }));
+  };
 
   const handleSignIn = event => {
     event.preventDefault();
-    localStorage.setItem("email_usuario_logado", email)
     history.push('/dashboard');
   };
 
+  const hasError = field =>
+    formState.touched[field] && formState.errors[field] ? true : false;
 
   return (
     <div className={classes.root}>
@@ -156,8 +195,7 @@ const SignIn = props => {
                 className={classes.quoteText}
                 variant="h1"
               >
-                Cadastre suas tarefas no sistema e tenha melhor controle e gerenciamento delas.
-                Basta logar com seu email e cadastrá-las na página.
+                Cadastre suas tarefas no sistema e tenha melhor controle e gerenciamento delas. Basta logar com seu email e cadastrá-las na página.
               </Typography>
               <div className={classes.person}>
                 <Typography
@@ -170,12 +208,14 @@ const SignIn = props => {
                   className={classes.bio}
                   variant="body2"
                 >
-                  Gerenciador de Tarefas Online
+                  Garenciador de Tarefas Online
                 </Typography>
               </div>
             </div>
           </div>
         </Grid>
+
+        
         <Grid
           className={classes.content}
           item
@@ -184,8 +224,12 @@ const SignIn = props => {
         >
           <div className={classes.content}>
             <div className={classes.contentHeader}>
-
+              {/* <IconButton onClick={handleBack}>
+                <ArrowBackIcon />
+              </IconButton> */}
             </div>
+
+            
             <div className={classes.contentBody}>
               <form
                 className={classes.form}
@@ -197,17 +241,45 @@ const SignIn = props => {
                 >
                   Login
                 </Typography>
-                <Typography
+
+
+                {/* <Typography
                   color="textSecondary"
                   gutterBottom
                 >
-                </Typography>
-                <Grid
+                  Entre com seu endereço de email
+                </Typography> */}
+
+
+                {/* <Grid
                   className={classes.socialButtons}
                   container
                   spacing={2}
                 >
-                </Grid>
+                  <Grid item>
+                    <Button
+                      color="primary"
+                      onClick={handleSignIn}
+                      size="large"
+                      variant="contained"
+                    >
+                      <FacebookIcon className={classes.socialIcon} />
+                      Login with Facebook
+                    </Button>
+                  </Grid>
+                  <Grid item>
+                    <Button
+                      onClick={handleSignIn}
+                      size="large"
+                      variant="contained"
+                    >
+                      <GoogleIcon className={classes.socialIcon} />
+                      Login with Google
+                    </Button>
+                  </Grid>
+                </Grid> */}
+
+
 
                 <Typography
                   align="center"
@@ -216,20 +288,22 @@ const SignIn = props => {
                   variant="body1"
                 >
                   Entre com seu endereço de email
-
                 </Typography>
                 <TextField
                   className={classes.textField}
+                  error={hasError('email')}
                   fullWidth
-                  label="E-mail"
+                  helperText={
+                    hasError('email') ? formState.errors.email[0] : null
+                  }
+                  label="Email address"
                   name="email"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={handleChange}
+                  type="text"
+                  value={formState.values.email || ''}
                   variant="outlined"
                 />
-
-                {/* <TextField
+                <TextField
                   className={classes.textField}
                   error={hasError('password')}
                   fullWidth
@@ -242,11 +316,11 @@ const SignIn = props => {
                   type="password"
                   value={formState.values.password || ''}
                   variant="outlined"
-                /> */}
-
+                />
                 <Button
                   className={classes.signInButton}
                   color="primary"
+                  disabled={!formState.isValid}
                   fullWidth
                   size="large"
                   type="submit"
@@ -254,19 +328,19 @@ const SignIn = props => {
                 >
                   Entrar
                 </Button>
-                {/* <Typography
+                <Typography
                   color="textSecondary"
                   variant="body1"
                 >
-                  Don't have an account?{' '}
+                  Não tem uma conta?{' '}
                   <Link
                     component={RouterLink}
                     to="/sign-up"
                     variant="h6"
                   >
-                    Sign up
+                    Criar conta
                   </Link>
-                </Typography> */}
+                </Typography>
               </form>
             </div>
           </div>

@@ -88,14 +88,14 @@ const useStyles = makeStyles(theme => ({
   },
   contentContainer: {},
   content: {
-    height: '100%',
+    height: '70%',
     display: 'flex',
     flexDirection: 'column'
   },
   contentHeader: {
     display: 'flex',
     alignItems: 'center',
-    paddingTop: theme.spacing(5),
+    paddingTop: theme.spacing(3),
     paddingBototm: theme.spacing(2),
     paddingLeft: theme.spacing(2),
     paddingRight: theme.spacing(2)
@@ -104,8 +104,10 @@ const useStyles = makeStyles(theme => ({
     marginLeft: theme.spacing(4)
   },
   contentBody: {
+    height: 450, //alterando a altura do contentBody do formulário de cadastro
     flexGrow: 1,
     display: 'flex',
+   
     alignItems: 'center',
     [theme.breakpoints.down('md')]: {
       justifyContent: 'center'
@@ -114,7 +116,7 @@ const useStyles = makeStyles(theme => ({
   form: {
     paddingLeft: 100,
     paddingRight: 100,
-    paddingBottom: 125,
+    paddingBottom: 0, //paddin de baixo, que ficava maior que o necessário
     flexBasis: 700,
     [theme.breakpoints.down('sm')]: {
       paddingLeft: theme.spacing(2),
@@ -187,7 +189,7 @@ const SignUp = props => {
 
   const handleSignUp = event => {
     event.preventDefault();
-    history.push('/');
+    history.push('/dashboard');
   };
 
   const hasError = field =>
@@ -224,7 +226,7 @@ const SignUp = props => {
                   className={classes.bio}
                   variant="body2"
                 >
-                  Gerenciamento de Tarefas Online
+                  Gerenciador de Tarefas Online
                 </Typography>
               </div>
             </div>
@@ -251,13 +253,13 @@ const SignUp = props => {
                   className={classes.title}
                   variant="h2"
                 >
-                  Create new account
+                  Criar uma nova conta
                 </Typography>
                 <Typography
                   color="textSecondary"
                   gutterBottom
                 >
-                  Use your email to create new account
+                  Use o seu email para criar uma nova conta
                 </Typography>
                 <TextField
                   className={classes.textField}
@@ -328,7 +330,7 @@ const SignUp = props => {
                     color="textSecondary"
                     variant="body1"
                   >
-                    I have read the{' '}
+                    Eu li os{' '}
                     <Link
                       color="primary"
                       component={RouterLink}
@@ -336,7 +338,7 @@ const SignUp = props => {
                       underline="always"
                       variant="h6"
                     >
-                      Terms and Conditions
+                      Termos e condições
                     </Link>
                   </Typography>
                 </div>
@@ -354,19 +356,20 @@ const SignUp = props => {
                   type="submit"
                   variant="contained"
                 >
-                  Sign up now
+                  
+                    Inscreva-se agora
                 </Button>
                 <Typography
                   color="textSecondary"
                   variant="body1"
                 >
-                  Have an account?{' '}
+                  Tem uma conta?{' '}
                   <Link
                     component={RouterLink}
-                    to="/sign-in"
+                    to="/login"
                     variant="h6"
                   >
-                    Sign in
+                    Login
                   </Link>
                 </Typography>
               </form>
