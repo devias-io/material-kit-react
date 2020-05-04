@@ -1,0 +1,3 @@
+[0502/174813.950:ERROR:process_reader_win.cc(151)] SuspendThread: Acesso negado. (0x5)
+[0502/174816.540:ERROR:exception_snapshot_win.cc(98)] thread ID 15252 not found in process
+[0502/174816.998:ERROR:scoped_process_suspend.cc(40)] NtResumeProcess: Tentou-se acessar um processo de saída. (0xc000010a)

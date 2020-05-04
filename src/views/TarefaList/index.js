@@ -1,2 +1,2 @@
-export { default } from './TarefaList';
+export { default } from './PedidoList';
 

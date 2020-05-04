@@ -261,6 +261,8 @@ const SignUp = props => {
                 >
                   Use o seu email para criar uma nova conta
                 </Typography>
+
+
                 <TextField
                   className={classes.textField}
                   error={hasError('firstName')}
@@ -268,13 +270,15 @@ const SignUp = props => {
                   helperText={
                     hasError('firstName') ? formState.errors.firstName[0] : null
                   }
-                  label="First name"
+                  label="Nome"
                   name="firstName"
                   onChange={handleChange}
                   type="text"
                   value={formState.values.firstName || ''}
                   variant="outlined"
                 />
+
+
                 <TextField
                   className={classes.textField}
                   error={hasError('lastName')}
@@ -282,13 +286,15 @@ const SignUp = props => {
                   helperText={
                     hasError('lastName') ? formState.errors.lastName[0] : null
                   }
-                  label="Last name"
+                  label="Sobrenome"
                   name="lastName"
                   onChange={handleChange}
                   type="text"
                   value={formState.values.lastName || ''}
                   variant="outlined"
                 />
+
+
                 <TextField
                   className={classes.textField}
                   error={hasError('email')}
@@ -296,13 +302,15 @@ const SignUp = props => {
                   helperText={
                     hasError('email') ? formState.errors.email[0] : null
                   }
-                  label="Email address"
+                  label="Endereço de Email"
                   name="email"
                   onChange={handleChange}
                   type="text"
                   value={formState.values.email || ''}
                   variant="outlined"
                 />
+
+
                 <TextField
                   className={classes.textField}
                   error={hasError('password')}
@@ -310,7 +318,7 @@ const SignUp = props => {
                   helperText={
                     hasError('password') ? formState.errors.password[0] : null
                   }
-                  label="Password"
+                  label="Senha"
                   name="password"
                   onChange={handleChange}
                   type="password"

@@ -6,3 +6,5 @@ export { default as TarefaList } from './TarefaList';
 export { default as Clientes } from './Clientes';
 export { default as ProdutoList } from './ProdutoList';
 export { default as FornecedorList } from './Fornecedores';
+export { default as AddFornecedores } from './Fornecedores/AddFornecedores';
+

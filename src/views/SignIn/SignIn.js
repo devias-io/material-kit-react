@@ -13,7 +13,7 @@ import {
 } from '@material-ui/core';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 
-import { Facebook as FacebookIcon, Google as GoogleIcon } from 'icons';
+// import { Facebook as FacebookIcon, Google as GoogleIcon } from 'icons';
 
 const schema = {
   email: {
@@ -172,6 +172,7 @@ const SignIn = props => {
 
   const handleSignIn = event => {
     event.preventDefault();
+    localStorage.setItem('email_usuario_logado', formState.values.email)
     history.push('/dashboard');
   };
 
@@ -296,7 +297,7 @@ const SignIn = props => {
                   helperText={
                     hasError('email') ? formState.errors.email[0] : null
                   }
-                  label="Email address"
+                  label="Endereço de email"
                   name="email"
                   onChange={handleChange}
                   type="text"
@@ -310,7 +311,7 @@ const SignIn = props => {
                   helperText={
                     hasError('password') ? formState.errors.password[0] : null
                   }
-                  label="Password"
+                  label="Senha"
                   name="password"
                   onChange={handleChange}
                   type="password"

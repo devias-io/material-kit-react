@@ -3,16 +3,57 @@ import uuid from 'uuid/v1';
 export default [
   {
     id: uuid(),
-    name: 'Amazon',
-    address: {
-      country: 'USA',
-      state: 'West Virginia',
-      city: 'Parkersburg',
-      street: '2849 Fulton Street'
-    },
+    nome: 'Amazon',
+    endereco: 'Center',
+    cidade: 'San Diego',
+    uf: 'Califórnia',
     email: 'amazon.services@org.com',
-    phone: '304-428-3097',
-    avatarUrl: '/images/avatars/logo_amazon.jpg',
+    telefone: '304-428-3101',
+    avatarUrl: '/images/logos/logo_amazon.jpg',
+    createdAt: 1555016400000
+  },
+  {
+    id: uuid(),
+    nome: 'Amazon',
+    endereco: 'Center',
+    cidade: 'San Diego',
+    uf: 'Califórnia',
+    email: 'amazon.services@org.com',
+    telefone: '304-428-3101',
+    avatarUrl: '/images/logos/logo_amazon.jpg',
+    createdAt: 1555016400000
+  },
+  {
+    id: uuid(),
+    nome: 'Amazon',
+    endereco: 'Center',
+    cidade: 'San Diego',
+    uf: 'Califórnia',
+    email: 'amazon.services@org.com',
+    telefone: '304-428-3101',
+    avatarUrl: '/images/logos/logo_amazon.jpg',
+    createdAt: 1555016400000
+  },
+  {
+    id: uuid(),
+    nome: 'Amazon',
+    endereco: 'Center',
+    cidade: 'San Diego',
+    uf: 'Califórnia',
+    email: 'amazon.services@org.com',
+    telefone: '304-428-3101',
+    avatarUrl: '/images/logos/logo_amazon.jpg',
+    createdAt: 1555016400000
+  },
+  {
+    id: uuid(),
+    nome: 'Amazon',
+    endereco: 'Center',
+    cidade: 'San Diego',
+    uf: 'Califórnia',
+    email: 'amazon.services@org.com',
+    telefone: '304-428-3101',
+    avatarUrl: '/images/logos/logo_amazon.jpg',
     createdAt: 1555016400000
   },
   // {

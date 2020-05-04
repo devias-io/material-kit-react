@@ -8,39 +8,39 @@ const http = axios.create({
 
 
 const ACTIONS = {
-    LISTAR: 'TAREFAS_LISTAR',
-    ADD: 'TAREFAS_ADD',
-    REMOVER: 'TAREFAS_REMOVE',
-    UPDATE_STATUS: 'TAREFAS_UPDATE_STATUS'
+    LISTAR: 'PEDIDOS_LISTAR',
+    ADD: 'PEDIDOS_ADD',
+    REMOVER: 'PEDIDOS_REMOVE',
+    UPDATE_STATUS: 'PEDIDOS_UPDATE_STATUS'
 
 
 }
 
 const ESTADO_INICIAL = {
-    tarefas: []
+    pedidos: []
 }
 
-export const tarefaReducer = (state = ESTADO_INICIAL, action) => {
+export const pedidoReducer = (state = ESTADO_INICIAL, action) => {
     switch (action.type) {
         case ACTIONS.LISTAR:
-            return { ...state, tarefas: action.tarefas }
+            return { ...state, pedidos: action.pedidos }
 
         case ACTIONS.ADD:
-            return { ...state, tarefas: [...state.tarefas, action.tarefa] }
+            return { ...state, pedidos: [...state.pedidos, action.pedido] }
 
         case ACTIONS.REMOVER:
             const id = action.id
-            const tarefas = state.tarefas.filter( tarefa => tarefa.id !== id)
-            return {...state, tarefas: tarefas}
+            const pedidos = state.pedidos.filter( pedido => pedido.id !== id)
+            return {...state, pedidos: pedidos}
 
         case ACTIONS.UPDATE_STATUS:
-            const lista = [...state.tarefas]
-            lista.forEach( tarefa =>{
-                if(tarefa.id === action.id){
-                    tarefa.done = true
+            const lista = [...state.pedidos]
+            lista.forEach( pedido =>{
+                if(pedido.id === action.id){
+                    pedido.done = true
                 }
             })
-            return {...state, tarefas: lista}
+            return {...state, pedidos: lista}
 
         default:
             return state;
@@ -52,12 +52,12 @@ export const tarefaReducer = (state = ESTADO_INICIAL, action) => {
 export function listar() {
     return dispatch => {
 
-        http.get('/tarefas', {
+        http.get('/pedidos', {
             headers: { 'x-tenant-id': localStorage.getItem('email_usuario_logado') }
         }).then(response => {
             dispatch({
                 type: ACTIONS.LISTAR,
-                tarefas: response.data
+                pedidos: response.data
             })
         })
 
@@ -65,17 +65,17 @@ export function listar() {
 
 }
 
-export function salvar(tarefa) {
+export function salvar(pedido) {
     return dispatch => {
-        http.post('/tarefas', tarefa, {
+        http.post('/pedidos', pedido, {
             headers: { 'x-tenant-id': localStorage.getItem('email_usuario_logado') }
         }).then(response => {
             dispatch
             (
                 [{
                 type: ACTIONS.ADD,
-                tarefa: response.data
-            }, mostrarMensagem('Tarefa adicionada com sucesso!')]
+                pedido: response.data
+            }, mostrarMensagem('Pedido adicionada com sucesso!')]
 
             )
         })
@@ -84,20 +84,20 @@ export function salvar(tarefa) {
 
 export function deletar(id) {
     return disaptch => {
-        http.delete(`/tarefas/${id}`, {
+        http.delete(`/pedidos/${id}`, {
             headers: { 'x-tenant-id': localStorage.getItem('email_usuario_logado') }
         }).then(response => {
             disaptch([{
                 type: ACTIONS.REMOVER,
                 id: id
-            }, mostrarMensagem('Tarefa deletada com sucesso!')])
+            }, mostrarMensagem('Pedido deletada com sucesso!')])
         })
     }
 }
 
 export function alterarStatus( id ){
     return dispatch => {
-        http.patch(`tarefas/${id}`, null, {
+        http.patch(`pedidos/${id}`, null, {
             headers: { 'x-tenant-id': localStorage.getItem('email_usuario_logado') }
           }).then( response => {
               dispatch([{

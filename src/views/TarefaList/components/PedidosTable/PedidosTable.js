@@ -43,8 +43,8 @@ const useStyles = makeStyles(theme => ({
 
 
 
-const TarefasTable = props => {
-  const { className, tarefas, ...rest } = props;
+const PedidosTable = props => {
+  const { className, pedidos, ...rest } = props;
 
   const classes = useStyles();
 
@@ -60,9 +60,9 @@ const TarefasTable = props => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Código</TableCell>
-                  <TableCell>Descrição</TableCell>
-                  <TableCell>Categoria</TableCell>   
+                  <TableCell>Id</TableCell>
+                  <TableCell>Cliente</TableCell>
+                  <TableCell>Produto</TableCell>   
                   <TableCell>Status</TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
@@ -73,31 +73,31 @@ const TarefasTable = props => {
                 <TableBody>
 
                   {
-                  tarefas.map( tarefa => {
+                   pedidos.map( pedido => {
 
                     return(
-                      <TableRow key={tarefa.id}>
-                        <TableCell>{tarefa.id}</TableCell>
-                        <TableCell>{tarefa.descricao}</TableCell>
-                        <TableCell>{tarefa.categoria}</TableCell>
-                        <TableCell>{tarefa.done ? "Feita" : "Não feita"}</TableCell>
+                      <TableRow key={pedido.id}>
+                        <TableCell>{pedido.id}</TableCell>
+                        <TableCell>{pedido.cliente}</TableCell>
+                        <TableCell>{pedido.produto}</TableCell>
+                        <TableCell>{pedido.done ? "Entregue" : "Não entregue"}</TableCell>
                         <TableCell>
-                          <IconButton onClick={e => props.alterarStatus(tarefa.id)} color="secondary">
+                          <IconButton onClick={e => props.alterarStatus(pedido.id)} color="secondary">
                             {
-                              tarefa.done ? ( <DoneAllIcon/> ) : ( <TimerIcon/> )
+                              pedido.done ? ( <DoneAllIcon/> ) : ( <TimerIcon/> )
                             }
                           </IconButton>
                         </TableCell>
 
                         <TableCell>
-                          <IconButton onClick={e => props.deleteAction(tarefa.id)}>
+                          <IconButton onClick={e => props.deleteAction(pedido.id)}>
                               <DeleteIcon/>
                           </IconButton>
                         </TableCell>
 
                       </TableRow>
                     )
-                  })
+                     })
                   }
                   
                 </TableBody>
@@ -111,9 +111,9 @@ const TarefasTable = props => {
   );
 };
 
-TarefasTable.propTypes = {
+PedidosTable.propTypes = {
   className: PropTypes.string,
-  tarefas: PropTypes.array.isRequired
+  pedidos: PropTypes.array.isRequired
 };
 
-export default TarefasTable;
+export default PedidosTable;

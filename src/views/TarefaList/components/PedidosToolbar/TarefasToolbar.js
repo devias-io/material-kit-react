@@ -36,24 +36,24 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const TarefasToolbar = props => {
+const PedidosToolbar = props => {
   const { className, ...rest } = props;
 
-  const [descricao, setDescricao] = useState('');
-  const [categoria, setCategoria] = useState('');
+  const [cliente, setCliente] = useState('');
+  const [produto, setProduto] = useState('');
 
 
   const classes = useStyles();
 
   const submit = (event) =>{
     event.preventDefault();
-    const tarefa = {
-      descricao : descricao,
-      categoria : categoria
+    const pedido = {
+      cliente : cliente,
+      produto : produto
     }
-    props.salvar(tarefa)  
-    setCategoria('')
-    setDescricao('')
+    props.salvar(pedido)  
+    setProduto('')
+    setCliente('')
   }
 
   return (
@@ -68,25 +68,28 @@ const TarefasToolbar = props => {
 
         <Grid container>
           <Grid item md={4}>
+
+
           <TextField
             className={classes.searchInput}
-            placeholder="Descrição da tarefa"
-            label = "Descrição:"
+            placeholder="Nome do cliente"
+            label = "Cliente:"
             fullWidth={true}
-            value={descricao}
-            onChange={e => setDescricao(e.target.value)}
+            value={cliente}
+            onChange={e => setCliente(e.target.value)}
+            // variant="outlined"
           />
 
           </Grid>
 
           <Grid item md={4}>
           <FormControl fullWidth={true}>
-            <InputLabel> Categoria: </InputLabel>
-            <Select value={categoria} onChange={e => setCategoria(e.target.value)}> 
+            <InputLabel> Produto: </InputLabel>
+            <Select value={produto} onChange={e => setProduto(e.target.value)}> 
               <MenuItem value="">Selecione...</MenuItem>
-              <MenuItem value={"TRABALHO"}>Trabalho</MenuItem>
-              <MenuItem value={"ESTUDOS"}>Estudos</MenuItem>
-              <MenuItem value={"OUTROS"}>Outros</MenuItem>
+              <MenuItem value={"TRABALHO"}>PRODUTO 1</MenuItem>
+              <MenuItem value={"ESTUDOS"}>PRODUTO 2</MenuItem>
+              <MenuItem value={"OUTROS"}>PRODUTO 3</MenuItem>
             </Select>
           </FormControl>
           </Grid>
@@ -103,8 +106,8 @@ const TarefasToolbar = props => {
   );
 };
 
-TarefasToolbar.propTypes = {
+PedidosToolbar.propTypes = {
   className: PropTypes.string
 };
 
-export default TarefasToolbar;
+export default PedidosToolbar;

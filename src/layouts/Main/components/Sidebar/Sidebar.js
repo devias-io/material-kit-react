@@ -9,7 +9,7 @@ import LaptopChromebookIcon from '@material-ui/icons/LaptopChromebook';
 import PeopleIcon from '@material-ui/icons/People';
 import ShoppingBasketIcon from '@material-ui/icons/ShoppingBasket';
 import FormatListBulletedIcon from '@material-ui/icons/FormatListBulleted';
-import BusinessCenterIcon from '@material-ui/icons/BusinessCenter';
+// import BusinessCenterIcon from '@material-ui/icons/BusinessCenter';
 import LocalShippingIcon from '@material-ui/icons/LocalShipping';
 
 import { Profile, SidebarNav, } from './components';
@@ -86,6 +86,8 @@ const Sidebar = props => {
       href: '/login',
       icon: <LockOpenIcon />
     },
+
+
 
     // {
     //   title: 'Products',

@@ -1,9 +1,9 @@
 import { combineReducers } from 'redux'
-import { tarefaReducer }  from './tarefasReducer';
+import { pedidoReducer }  from './pedidosReducer';
 import { mensagemReducer } from './mensagensReducer'
 
 const mainReducer = combineReducers({   
-    tarefas: tarefaReducer,
+    pedidos: pedidoReducer,
     mensagens: mensagemReducer
 })
 

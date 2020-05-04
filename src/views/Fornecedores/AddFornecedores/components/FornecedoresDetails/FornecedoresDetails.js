@@ -17,18 +17,19 @@ const useStyles = makeStyles(() => ({
   root: {}
 }));
 
-const AccountDetails = props => {
+const FornecedoresDetails = props => {
   const { className, ...rest } = props;
 
   const classes = useStyles();
 
   const [values, setValues] = useState({
-    firstName: 'Shen',
-    lastName: 'Zhi',
-    email: 'shen.zhi@devias.io',
-    phone: '',
-    state: 'Alabama',
-    country: 'USA'
+    nome: '',
+    numero: '',
+    email: '',
+    telefone: '',
+    state: '',
+    endereco: '',
+    cidade: ''
   });
 
   const handleChange = event => {
@@ -39,17 +40,114 @@ const AccountDetails = props => {
   };
 
   const states = [
+
     {
-      value: 'alabama',
-      label: 'Alabama'
+      value: "AC",
+      label: "Acre"
     },
-    {
-      value: 'new-york',
-      label: 'New York'
+         {
+      value: "AL",
+      label: "Alagoas"
     },
-    {
-      value: 'san-francisco',
-      label: 'San Francisco'
+         {
+      value: "AM",
+      label: "Amazonas"
+    },
+         {
+      value: "AP",
+      label: "Amapá"
+    },
+         {
+      value: "BA",
+      label: "Bahia"
+    },
+         {
+      value: "CE",
+      label: "Ceará"
+    },
+         {
+      value: "DF",
+      label: "Distrito Federal"
+    },
+         {
+      value: "ES",
+      label: "Espírito Santo"
+    },
+         {
+      value: "GO",
+      label: "Goiás"
+    },
+         {
+      value: "MA",
+      label: "Maranhão"
+    },
+         {
+      value: "MG",
+      label: "Minas Gerais"
+    },
+         {
+      value: "MS",
+      label: "Mato Grosso do Sul"
+    },
+         {
+      value: "MT",
+      label: "Mato Grosso"
+    },
+         {
+      value: "PA",
+      label: "Pará"
+    },
+         {
+      value: "PB",
+      label: "Paraíba"
+    },
+         {
+      value: "PE",
+      label: "Pernambuco"
+    },
+         {
+      value: "PI",
+      label: "Piauí"
+    },
+         {
+      value: "PR",
+      label: "Paraná"
+    },
+         {
+      value: "RJ",
+      label: "Rio de Janeiro"
+    },
+         {
+      value: "RN",
+      label: "Rio Grande do Norte"
+    },
+         {
+      value: "RO",
+      label: "Rondônia"
+    },
+         {
+      value: "RR",
+      label: "Roraima"
+    },
+         {
+      value: "RS",
+      label: "Rio Grande do Sul"
+    },
+         {
+      value: "SC",
+      label: "Santa Catarina"
+    },
+         {
+      value: "SE",
+      label: "Sergipe"
+    },
+         {
+      value: "SP",
+      label: "São Paulo"
+    },
+         {
+      value: "TO",
+      label: "Tocantins"
     }
   ];
 
@@ -63,8 +161,8 @@ const AccountDetails = props => {
         noValidate
       >
         <CardHeader
-          subheader="The information can be edited"
-          title="Profile"
+          subheader="Incluir informações"
+          title="Perfil"
         />
         <Divider />
         <CardContent>
@@ -79,16 +177,18 @@ const AccountDetails = props => {
             >
               <TextField
                 fullWidth
-                helperText="Please specify the first name"
-                label="First name"
+                // helperText="Especifique o seu primeiro nome"
+                label="Nome"
                 margin="dense"
-                name="firstName"
+                name="nome"
                 onChange={handleChange}
                 required
-                value={values.firstName}
+                value={values.nome}
                 variant="outlined"
               />
             </Grid>
+
+
             <Grid
               item
               md={6}
@@ -96,15 +196,16 @@ const AccountDetails = props => {
             >
               <TextField
                 fullWidth
-                label="Last name"
+                label="Número de Telefone"
                 margin="dense"
-                name="lastName"
+                name="numero"
                 onChange={handleChange}
-                required
-                value={values.lastName}
+                type="number"
+                value={values.numero}
                 variant="outlined"
               />
             </Grid>
+
             <Grid
               item
               md={6}
@@ -112,7 +213,7 @@ const AccountDetails = props => {
             >
               <TextField
                 fullWidth
-                label="Email Address"
+                label="E-mail"
                 margin="dense"
                 name="email"
                 onChange={handleChange}
@@ -121,6 +222,9 @@ const AccountDetails = props => {
                 variant="outlined"
               />
             </Grid>
+
+            
+
             <Grid
               item
               md={6}
@@ -128,15 +232,16 @@ const AccountDetails = props => {
             >
               <TextField
                 fullWidth
-                label="Phone Number"
+                label="Endereço"
                 margin="dense"
-                name="phone"
+                name="endereco"
                 onChange={handleChange}
-                type="number"
-                value={values.phone}
+                required
+                value={values.endereco}
                 variant="outlined"
               />
             </Grid>
+            
             <Grid
               item
               md={6}
@@ -144,26 +249,30 @@ const AccountDetails = props => {
             >
               <TextField
                 fullWidth
-                label="Select State"
+                // label="Estado"
                 margin="dense"
                 name="state"
                 onChange={handleChange}
                 required
                 select
-                // eslint-disable-next-line react/jsx-sort-props
+                // eslint-disable-next-line= {react/jsx-sort-props} 
                 SelectProps={{ native: true }}
                 value={values.state}
                 variant="outlined"
               >
-                {states.map(option => (
+                {
+                  states.map(option => (
                   <option
                     key={option.value}
                     value={option.value}
                   >
                     {option.label}
                   </option>
-                ))}
+                ))
+                }
               </TextField>
+
+
             </Grid>
             <Grid
               item
@@ -172,15 +281,17 @@ const AccountDetails = props => {
             >
               <TextField
                 fullWidth
-                label="Country"
+                label="Cidade"
                 margin="dense"
-                name="country"
+                name="cidade"
                 onChange={handleChange}
                 required
-                value={values.country}
+                value={values.cidade}
                 variant="outlined"
               />
             </Grid>
+
+            
           </Grid>
         </CardContent>
         <Divider />
@@ -189,7 +300,7 @@ const AccountDetails = props => {
             color="primary"
             variant="contained"
           >
-            Save details
+            Salvar
           </Button>
         </CardActions>
       </form>
@@ -197,8 +308,8 @@ const AccountDetails = props => {
   );
 };
 
-AccountDetails.propTypes = {
+FornecedoresDetails.propTypes = {
   className: PropTypes.string
 };
 
-export default AccountDetails;
+export default FornecedoresDetails;

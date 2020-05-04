@@ -34,7 +34,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const AccountProfile = props => {
+const FornecedoresProfile = props => {
   const { className, ...rest } = props;
 
   const classes = useStyles();
@@ -59,9 +59,9 @@ const AccountProfile = props => {
               gutterBottom
               variant="h2"
             >
-              John Doe
+              Adicionar Novo Fornecedor
             </Typography>
-            <Typography
+            {/* <Typography
               className={classes.locationText}
               color="textSecondary"
               variant="body1"
@@ -72,25 +72,25 @@ const AccountProfile = props => {
               className={classes.dateText}
               color="textSecondary"
               variant="body1"
-            >
-              {moment().format('hh:mm A')} ({user.timezone})
-            </Typography>
+            > */}
+              {/* {moment().format('hh:mm A')} ({user.timezone})
+            </Typography> */}
           </div>
-          <Avatar
+          {/* <Avatar
             className={classes.avatar}
             src={user.avatar}
-          />
+          /> */}
         </div>
-        <div className={classes.progress}>
+        {/* <div className={classes.progress}>
           <Typography variant="body1">Profile Completeness: 70%</Typography>
           <LinearProgress
             value={70}
             variant="determinate"
           />
-        </div>
+        </div> */}
       </CardContent>
       <Divider />
-      <CardActions>
+      {/* <CardActions>
         <Button
           className={classes.uploadButton}
           color="primary"
@@ -99,13 +99,13 @@ const AccountProfile = props => {
           Upload picture
         </Button>
         <Button variant="text">Remove picture</Button>
-      </CardActions>
+      </CardActions> */}
     </Card>
   );
 };
 
-AccountProfile.propTypes = {
+FornecedoresProfile.propTypes = {
   className: PropTypes.string
 };
 
-export default AccountProfile;
+export default FornecedoresProfile;

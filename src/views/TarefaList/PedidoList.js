@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/styles';
-import { TarefasToolbar, TarefasTable } from './components';
+import { PedidosToolbar, PedidosTable } from './components';
 // import axios from 'axios';
 
 import { bindActionCreators } from 'redux'
@@ -11,7 +11,7 @@ import {
   deletar,
   alterarStatus
 
-} from '../../store/tarefasReducer'
+} from '../../store/pedidosReducer'
 
 import {
   Dialog,
@@ -43,7 +43,7 @@ const useStyles = makeStyles(theme => ({
 // const API_URL = 'https://minhastarefas-api.herokuapp.com/tarefas'
 
 
-const TarefaList = (props) => {
+const PedidoList = (props) => {
   const classes = useStyles()
 
   // const [tarefas, setTarefas] = useState([])
@@ -128,11 +128,11 @@ const TarefaList = (props) => {
 
   return (
     <div className={classes.root}>
-      <TarefasToolbar salvar={props.salvar} />     {/* ---------  PROPS REDUX --------- */}
+      <PedidosToolbar salvar={props.salvar} />     {/* ---------  PROPS REDUX --------- */}
       <div className={classes.content}>
-        <TarefasTable
+        <PedidosTable
           alterarStatus={props.alterarStatus}     //---------  PROPS REDUX ---------
-          tarefas={props.tarefas}                 //---------  PROPS REDUX ---------
+          pedidos={props.pedidos}                 //---------  PROPS REDUX ---------
           deleteAction={props.deletar}            //---------  PROPS REDUX ---------
         />
       </div>
@@ -151,7 +151,7 @@ const TarefaList = (props) => {
 };
 
 const mapStateToProps = state => ({
-  tarefas: state.tarefas.tarefas,
+  pedidos: state.pedidos.pedidos,
   mensagem: state.mensagens.mensagem,
   openDialog: state.mensagens.mostrarMensagem
 })
@@ -165,4 +165,4 @@ const mapDispatchToDrops = dispatch =>
     esconderMensagem
   }, dispatch)
 
-export default connect(mapStateToProps, mapDispatchToDrops)(TarefaList);
+export default connect(mapStateToProps, mapDispatchToDrops)(PedidoList);

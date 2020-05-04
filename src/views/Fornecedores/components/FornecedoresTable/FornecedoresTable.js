@@ -100,7 +100,11 @@ const FornecedoresTable = props => {
       <CardContent className={classes.content}>
         <PerfectScrollbar>
           <div className={classes.inner}>
+
+            
             <Table>
+
+
               <TableHead>
                 <TableRow>
                   <TableCell padding="checkbox">
@@ -114,21 +118,27 @@ const FornecedoresTable = props => {
                       onChange={handleSelectAll}
                     />
                   </TableCell>
-                  <TableCell>Name</TableCell>
+                  <TableCell>Nome</TableCell>
                   <TableCell>Email</TableCell>
-                  <TableCell>Location</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Registration date</TableCell>
+                  <TableCell>Endereço</TableCell>
+                  <TableCell>Cidade</TableCell>
+                  <TableCell>UF</TableCell>
+                  <TableCell>Telefone</TableCell>
+                  <TableCell>Data de cadastro</TableCell>
                 </TableRow>
               </TableHead>
+
+
               <TableBody>
                 {fornecedores.slice(0, rowsPerPage).map(fornecedor => (
+
                   <TableRow
                     className={classes.tableRow}
                     hover
                     key={fornecedor.id}
                     selected={selectedFornecedores.indexOf(fornecedor.id) !== -1}
                   >
+
                     <TableCell padding="checkbox">
                       <Checkbox
                         checked={selectedFornecedores.indexOf(fornecedor.id) !== -1}
@@ -137,29 +147,55 @@ const FornecedoresTable = props => {
                         value="true"
                       />
                     </TableCell>
+
+
+
                     <TableCell>
                       <div className={classes.nameContainer}>
                         <Avatar
                           className={classes.avatar}
                           src={fornecedor.avatarUrl}
                         >
-                          {getInitials(fornecedor.name)}
+                          {getInitials(fornecedor.nome)}
                         </Avatar>
-                        <Typography variant="body1">{fornecedor.name}</Typography>
+                        <Typography variant="body1">{fornecedor.nome}</Typography>
                       </div>
                     </TableCell>
+
+
+                    
                     <TableCell>{fornecedor.email}</TableCell>
+                    
+                    
                     <TableCell>
-                      {fornecedor.address.city}, {fornecedor.address.state},{' '}
-                      {fornecedor.address.country}
+                      {fornecedor.endereco}
                     </TableCell>
-                    <TableCell>{fornecedor.phone}</TableCell>
+
+                    <TableCell>
+                      {fornecedor.cidade}
+                    </TableCell>
+
+                    <TableCell>
+                      {fornecedor.uf}
+                    </TableCell>
+
+
+
+                    <TableCell>{fornecedor.telefone}</TableCell>
+
+
+
                     <TableCell>
                       {moment(fornecedor.createdAt).format('DD/MM/YYYY')}
                     </TableCell>
+
+
                   </TableRow>
+
                 ))}
               </TableBody>
+
+
             </Table>
           </div>
         </PerfectScrollbar>

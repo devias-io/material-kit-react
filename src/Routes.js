@@ -13,7 +13,7 @@ import {
   FornecedorList as FornecedorListView,
   // Typography as TypographyView,
   // Icons as IconsView,
-  // Account as AccountView,
+  AddFornecedores as AddFornecedoresView,
   // Settings as SettingsView,
   SignUp as SignUpView,
   // NotFound as NotFoundView
@@ -73,6 +73,15 @@ const Routes = () => {
         layout={MinimalLayout}
         path="/login"
       />
+
+      <RouteWithLayout
+        component={AddFornecedoresView}
+        exact
+        layout={MainLayout}
+        path="/AddFornecedor"
+      />
+
+
 
       <Redirect to="/not-found" />
     </Switch>
