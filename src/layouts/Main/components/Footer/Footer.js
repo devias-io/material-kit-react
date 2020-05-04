@@ -24,16 +24,15 @@ const Footer = props => {
         &copy;{' '}
         <Link
           component="a"
-          href="https://devias.io/"
+          href="https://racksandrollers.com/"
           target="_blank"
         >
-          Devias IO
+          Toff
         </Link>
-        . 2019
+          - Version 1.0
       </Typography>
       <Typography variant="caption">
-        Created with love for the environment. By designers and developers who
-        love to work together in offices!
+        Created 4th May 2020
       </Typography>
     </div>
   );
