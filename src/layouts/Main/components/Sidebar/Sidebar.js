@@ -10,13 +10,12 @@ import TextFieldsIcon from '@material-ui/icons/TextFields';
 import ImageIcon from '@material-ui/icons/Image';
 import AccountBoxIcon from '@material-ui/icons/AccountBox';
 import SettingsIcon from '@material-ui/icons/Settings';
-import LockOpenIcon from '@material-ui/icons/LockOpen';
-
-import { Profile, SidebarNav, UpgradePlan } from './components';
+import AssignmentIcon from '@material-ui/icons/Assignment';
+import { SidebarNav} from './components';
 
 const useStyles = makeStyles(theme => ({
   drawer: {
-    width: 240,
+    width: 236,
     [theme.breakpoints.up('lg')]: {
       marginTop: 64,
       height: 'calc(100% - 64px)'
@@ -33,7 +32,7 @@ const useStyles = makeStyles(theme => ({
     margin: theme.spacing(2, 0)
   },
   nav: {
-    marginBottom: theme.spacing(2)
+    marginBottom: theme.spacing(1)
   }
 }));
 
@@ -49,22 +48,22 @@ const Sidebar = props => {
       icon: <DashboardIcon />
     },
     {
-      title: 'Users',
+      title: 'PO Management',
+      href: '/po',
+      icon: <AssignmentIcon />
+    },
+    {
+      title: 'Master',
       href: '/users',
       icon: <PeopleIcon />
     },
     {
-      title: 'Products',
+      title: 'Inventory',
       href: '/products',
       icon: <ShoppingBasketIcon />
     },
     {
-      title: 'Authentication',
-      href: '/sign-in',
-      icon: <LockOpenIcon />
-    },
-    {
-      title: 'Typography',
+      title: 'Outbound',
       href: '/typography',
       icon: <TextFieldsIcon />
     },
@@ -97,13 +96,11 @@ const Sidebar = props => {
         {...rest}
         className={clsx(classes.root, className)}
       >
-        <Profile />
-        <Divider className={classes.divider} />
         <SidebarNav
           className={classes.nav}
           pages={pages}
         />
-        <UpgradePlan />
+        <Divider className={classes.divider} />
       </div>
     </Drawer>
   );
