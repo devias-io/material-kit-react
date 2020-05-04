@@ -8,9 +8,11 @@ import { makeStyles } from '@material-ui/styles';
 import { List, ListItem, Button, colors } from '@material-ui/core';
 
 const useStyles = makeStyles(theme => ({
-  root: {},
+  root: {
+  },
   item: {
     display: 'flex',
+    alignItems:'flex-start',
     paddingTop: 0,
     paddingBottom: 0
   },
@@ -28,7 +30,7 @@ const useStyles = makeStyles(theme => ({
     width: 24,
     height: 24,
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginRight: theme.spacing(1)
   },
   active: {
@@ -43,7 +45,7 @@ const useStyles = makeStyles(theme => ({
 const CustomRouterLink = forwardRef((props, ref) => (
   <div
     ref={ref}
-    style={{ flexGrow: 1 }}
+    style={{ flexGrow: 1, }}
   >
     <RouterLink {...props} />
   </div>
@@ -62,7 +64,7 @@ const SidebarNav = props => {
       {pages.map(page => (
         <ListItem
           className={classes.item}
-          disableGutters
+        disableGutters='true'
           key={page.title}
         >
           <Button
