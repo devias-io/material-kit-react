@@ -18,11 +18,11 @@ import TabletMacIcon from '@material-ui/icons/TabletMac';
 
 const useStyles = makeStyles(theme => ({
   root: {
-    height: '100%'
+    height: '99.9%'
   },
   chartContainer: {
     position: 'relative',
-    height: '300px'
+    height: '255px'
   },
   stats: {
     marginTop: theme.spacing(2),
