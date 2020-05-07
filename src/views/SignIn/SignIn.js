@@ -16,6 +16,12 @@ import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 // import { Facebook as FacebookIcon, Google as GoogleIcon } from 'icons';
 
 const schema = {
+  username: {
+    presence: { allowEmpty: false, message: 'is required' },
+    length: {
+      maximum: 64
+    }
+  },
   email: {
     presence: { allowEmpty: false, message: 'is required' },
     email: true,
@@ -172,7 +178,11 @@ const SignIn = props => {
 
   const handleSignIn = event => {
     event.preventDefault();
-    localStorage.setItem('email_usuario_logado', formState.values.email)
+
+    localStorage.setItem('email', formState.values.email)
+    localStorage.setItem('username', formState.values.username)
+    localStorage.setItem('password', formState.values.password)
+
     history.push('/dashboard');
   };
 
@@ -290,6 +300,24 @@ const SignIn = props => {
                 >
                   Entre com seu endereço de email
                 </Typography>
+
+
+                <TextField
+                  className={classes.textField}
+                  error={hasError('username')}
+                  fullWidth
+                  helperText={
+                    hasError('username') ? formState.errors.username[0] : null
+                  }
+                  label="Nome de usuário"
+                  name="username"
+                  onChange={handleChange}
+                  type="text"
+                  value={formState.values.username || ''}
+                  variant="outlined"
+                />
+
+
                 <TextField
                   className={classes.textField}
                   error={hasError('email')}
@@ -300,10 +328,12 @@ const SignIn = props => {
                   label="Endereço de email"
                   name="email"
                   onChange={handleChange}
-                  type="text"
+                  type="email"
                   value={formState.values.email || ''}
                   variant="outlined"
                 />
+
+
                 <TextField
                   className={classes.textField}
                   error={hasError('password')}
@@ -318,6 +348,9 @@ const SignIn = props => {
                   value={formState.values.password || ''}
                   variant="outlined"
                 />
+
+
+
                 <Button
                   className={classes.signInButton}
                   color="primary"

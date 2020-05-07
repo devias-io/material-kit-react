@@ -53,7 +53,7 @@ export function listar() {
     return dispatch => {
 
         http.get('/pedidos', {
-            headers: { 'x-tenant-id': localStorage.getItem('email_usuario_logado') }
+            headers: { 'x-tenant-id': localStorage.getItem('email') }
         }).then(response => {
             dispatch({
                 type: ACTIONS.LISTAR,
@@ -68,7 +68,7 @@ export function listar() {
 export function salvar(pedido) {
     return dispatch => {
         http.post('/pedidos', pedido, {
-            headers: { 'x-tenant-id': localStorage.getItem('email_usuario_logado') }
+            headers: { 'x-tenant-id': localStorage.getItem('email') }
         }).then(response => {
             dispatch
             (
@@ -85,7 +85,7 @@ export function salvar(pedido) {
 export function deletar(id) {
     return disaptch => {
         http.delete(`/pedidos/${id}`, {
-            headers: { 'x-tenant-id': localStorage.getItem('email_usuario_logado') }
+            headers: { 'x-tenant-id': localStorage.getItem('email') }
         }).then(response => {
             disaptch([{
                 type: ACTIONS.REMOVER,
@@ -98,7 +98,7 @@ export function deletar(id) {
 export function alterarStatus( id ){
     return dispatch => {
         http.patch(`pedidos/${id}`, null, {
-            headers: { 'x-tenant-id': localStorage.getItem('email_usuario_logado') }
+            headers: { 'x-tenant-id': localStorage.getItem('email') }
           }).then( response => {
               dispatch([{
                   type: ACTIONS.UPDATE_STATUS, 

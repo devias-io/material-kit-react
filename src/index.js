@@ -9,12 +9,16 @@ import thunk from 'redux-thunk'
 import mainReducer from './store/index'
 import multi from 'redux-multi'
 
+// ReactDOM.render(<App />, document.getElementById('root'))
+
 const store = applyMiddleware(thunk, multi)(createStore)(mainReducer)
 
 ReactDOM.render(
     <Provider store={store}>
         <App />
     </Provider>,
-    document.getElementById('root'));
+    document.getElementById('root')
+    
+    );
 
 serviceWorker.unregister();

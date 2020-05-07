@@ -46,80 +46,7 @@ const useStyles = makeStyles(theme => ({
 const PedidoList = (props) => {
   const classes = useStyles()
 
-  // const [tarefas, setTarefas] = useState([])
-  // const [openDialog, setOpenDialog] = useState(false)
-  // const [mensagem, setMensagem] = useState("")
 
-
-
-
-  // const salvar = (tarefa) => {
-  //   axios.post(API_URL, tarefa, {
-  //     headers: {'x-tenant-id' : localStorage.getItem('email_usuario_logado')} 
-  //   }).then( response => {
-  //     const novaTarefa = response.data
-  //     setTarefas( [...tarefas, novaTarefa] )
-  //     setMensagem("Tarefa adicionada com sucesso")
-  //     setOpenDialog(true)
-  //   }).catch(erro =>{
-  //     setMensagem("Ocorreu um erro")
-  //     setOpenDialog(true)
-  //   })
-  // }
-
-
-
-
-  // const listarTarefas = () => {
-  //   axios.get(API_URL, {
-  //     headers: { 'x-tenant-id': localStorage.getItem('email_usuario_logado') }
-  //   }).then(response => {
-  //     const listaDeTarefas = response.data
-  //     console.log(listaDeTarefas)
-  //     setTarefas(listaDeTarefas)
-  //   }).catch(erro => {
-  //     setMensagem("Erro ao listar. Tente novamente!")
-  //     setOpenDialog(true)
-  //   })
-  // }
-
-
-
-
-  // const alterarStatus = (id) => {
-  //   axios.patch(`${API_URL}/${id}`, null, {
-  //     headers: { 'x-tenant-id': localStorage.getItem('email_usuario_logado') }
-  //   }).then(response => {
-  //     const lista = [...tarefas]
-  //     lista.forEach(tarefa => {
-  //       if (tarefa.id === id) {
-  //         tarefa.done = true;
-  //       }
-  //     })
-  //     setTarefas(lista);
-  //     setMensagem("Status atualizado com sucesso!")
-  //     setOpenDialog(true)
-  //   }).catch(erro => {
-  //     setMensagem("Ocorreu um erro ao mudar o status da tarefa. Tente novamente!")
-  //     setOpenDialog(true)
-  //   })
-  // }
-
-
-
-  // const deletar = (id) => {
-  //   axios.delete(`${API_URL}/${id}`, {
-  //     headers: { 'x-tenant-id': localStorage.getItem('email_usuario_logado') }
-  //   })
-  //     .then(response => {
-  //       const lista = tarefas.filter(tarefa => tarefa.id !== id)
-  //       setTarefas(lista)
-  //       setMensagem("Tarefa deletada com sucesso!")
-  //       setOpenDialog(true)
-  //     }).catch(erro => {
-  //       setMensagem("Erro ao deletar a tarefa. Tente novamente!")
-  //     })
-  // }
 
 
   useEffect(() => {
@@ -156,7 +83,7 @@ const mapStateToProps = state => ({
   openDialog: state.mensagens.mostrarMensagem
 })
 
-const mapDispatchToDrops = dispatch =>
+const mapDispatchToProps = dispatch =>
   bindActionCreators({
     listar,
     salvar,
@@ -165,4 +92,4 @@ const mapDispatchToDrops = dispatch =>
     esconderMensagem
   }, dispatch)
 
-export default connect(mapStateToProps, mapDispatchToDrops)(PedidoList);
+export default connect(mapStateToProps, mapDispatchToProps)(PedidoList);

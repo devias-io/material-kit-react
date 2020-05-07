@@ -27,9 +27,9 @@ const Profile = props => {
   const classes = useStyles();
 
   const user = {
-    name: localStorage.getItem('email_usuario_logado'),
+    name: localStorage.getItem('username'),
     avatar: '/images/avatars/avatar_11.png',
-    bio: 'Logado no Sistema'
+    bio: localStorage.getItem('email')
   };
 
   return (

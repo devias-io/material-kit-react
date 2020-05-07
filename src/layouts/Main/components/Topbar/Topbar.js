@@ -29,7 +29,9 @@ const Topbar = props => {
   const [notifications] = useState([]);
 
   const logout = () =>{ 
-    localStorage.removeItem('email_usuario_logado')
+    localStorage.removeItem('username')
+    localStorage.removeItem('email')
+    localStorage.removeItem('password')
     props.history.push('/login')
   }
 

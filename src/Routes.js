@@ -1,7 +1,10 @@
 import React from 'react';
-import { Switch, Redirect } from 'react-router-dom';
+
+import {BrowserRouter, Route ,Switch, Redirect } from 'react-router-dom';  ///////////////////////////////////
 
 import { RouteWithLayout } from './components';
+import { PrivateRoute } from './components';
+
 import { Main as MainLayout, Minimal as MinimalLayout } from './layouts';
 
 import {
@@ -19,62 +22,73 @@ import {
   // NotFound as NotFoundView
 } from './views';
 
+
 const Routes = () => {
   return (
+  <BrowserRouter>
     <Switch>
       <Redirect
         exact
         from="/"
         to="/login"
       />
-      <RouteWithLayout
+
+      {/* <RouteWithLayout
         component={DashboardView}
-        exact
         layout={MainLayout}
         path="/dashboard"
+      /> */}
+
+      <PrivateRoute
+        path="/dashboard"
+        exact
+        component={DashboardView}
+        layout={MainLayout}
+        
       />
-      <RouteWithLayout
+
+      <PrivateRoute
         component={TarefaListView}
         exact
         layout={MainLayout}
         path="/tarefas"
       />
 
-      <RouteWithLayout
+      <PrivateRoute
         component={ClientesView}
         exact
         layout={MainLayout}
         path="/clientes"
       />
 
-      <RouteWithLayout
+      <PrivateRoute
         component={ProdutoListView}
         exact
         layout={MainLayout}
         path="/produtos"
       />
 
-      <RouteWithLayout
+      <PrivateRoute
         component={FornecedorListView}
         exact
         layout={MainLayout}
         path="/fornecedores"
       />
 
-      <RouteWithLayout
+      <RouteWithLayout   // rota que não precisa passa por autenticação para ser acessada
         component={SignUpView}
         exact
         layout={MinimalLayout}
         path="/sign-up"
       />
-      <RouteWithLayout
+      <RouteWithLayout    // rota que não precisa passa por autenticação para ser acessada
         component={SignInView}
         exact
         layout={MinimalLayout}
         path="/login"
       />
 
-      <RouteWithLayout
+      <PrivateRoute
         component={AddFornecedoresView}
         exact
         layout={MainLayout}
@@ -84,7 +98,8 @@ const Routes = () => {
 
 
       <Redirect to="/not-found" />
-    </Switch>
+     </Switch>
+  </BrowserRouter>
   );
 };
 

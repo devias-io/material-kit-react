@@ -12,6 +12,19 @@ import './assets/scss/index.scss';
 import validators from './common/validators';
 import Routes from './Routes';
 
+
+
+// const App = () => <Routes />;
+// export default App;
+
+
+
+
+
+
+
+
+
 const browserHistory = createBrowserHistory();
 
 Chart.helpers.extend(Chart.elements.Rectangle.prototype, {
