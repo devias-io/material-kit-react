@@ -48,9 +48,6 @@
     "validate.js": "^0.13.1"
   },
   "devDependencies": {
-    "eslint": "5.16.0",
-    "eslint-plugin-prettier": "^3.0.1",
-    "eslint-plugin-react": "^7.12.4",
     "prettier": "^1.17.1",
     "prettier-eslint": "^8.8.2",
     "prettier-eslint-cli": "^4.7.1",
