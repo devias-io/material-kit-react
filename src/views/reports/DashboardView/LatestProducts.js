@@ -105,7 +105,7 @@ const LatestProducts = ({ className, ...rest }) => {
       <Divider />
       <Box
         display="flex"
-        justifyContent="center"
+        justifyContent="flex-end"
         p={2}
       >
         <Button

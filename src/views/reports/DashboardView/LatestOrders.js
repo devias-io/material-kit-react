@@ -162,7 +162,7 @@ const LatestOrders = ({ className, ...rest }) => {
       </PerfectScrollbar>
       <Box
         display="flex"
-        justifyContent="center"
+        justifyContent="flex-end"
         p={2}
       >
         <Button

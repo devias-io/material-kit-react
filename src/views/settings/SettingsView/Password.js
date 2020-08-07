@@ -45,6 +45,7 @@ const Password = ({ className, ...rest }) => {
           <TextField
             fullWidth
             label="Password"
+            margin="normal"
             name="password"
             onChange={handleChange}
             type="password"
@@ -54,9 +55,9 @@ const Password = ({ className, ...rest }) => {
           <TextField
             fullWidth
             label="Confirm password"
+            margin="normal"
             name="confirm"
             onChange={handleChange}
-            style={{ marginTop: '1rem' }}
             type="password"
             value={values.confirm}
             variant="outlined"
@@ -70,7 +71,7 @@ const Password = ({ className, ...rest }) => {
         >
           <Button
             color="primary"
-            variant="outlined"
+            variant="contained"
           >
             Update
           </Button>
