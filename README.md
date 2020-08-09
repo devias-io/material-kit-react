@@ -21,7 +21,7 @@
 We also have a pro version of this product which bundles even more pages and components if you want to save more time and design efforts :)
 
 
-| Devias Demo              | [Devias Kit PRO](https://themes.material-ui.com/previews/devias-kit-pro/) |
+| Devias Demo              | [Devias Kit PRO](https://react-material-kit.devias.io/) |
 | ------------------------ | :----------------------------------------------------------- |
 | **7** Demo Pages         | **32** demo pages
 | -                        | ✔ Dark & light mode
