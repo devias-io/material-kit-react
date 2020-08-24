@@ -15,7 +15,7 @@ We also have a pro version of this product which bundles even more pages and com
 | ------------------------ | :----------------------------------------------------------- |
 | **7** Demo Pages         | **32** demo pages
 | -                        | ✔ Dark & light mode
-| -                        | ✔ Authtentication with **Auth0** & **Firebase**  
+| -                        | ✔ Authentication with **Auth0** & **Firebase**  
 | -                        | ✔ TypeScript version                                                                                   
 | -                        | ✔ Design files (sketch & figma) - for extended license       
 | -                        | ✔ Complete users flows                                       
