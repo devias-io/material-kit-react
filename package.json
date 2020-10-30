@@ -30,7 +30,7 @@
     "@material-ui/icons": "^4.9.1",
     "@material-ui/lab": "^4.0.0-alpha.56",
     "@material-ui/styles": "^4.10.0",
-    "chart.js": "^2.9.3",
+    "chart.js": "^2.9.4",
     "clsx": "^1.1.1",
     "formik": "^2.1.5",
     "history": "^5.0.0",
@@ -46,19 +46,19 @@
     "react-perfect-scrollbar": "^1.5.8",
     "react-router": "^6.0.0-beta.0",
     "react-router-dom": "^6.0.0-beta.0",
-    "react-scripts": "^3.4.1",
+    "react-scripts": "^4.0.0",
     "uuid": "^8.3.0",
     "yup": "^0.29.3"
   },
   "devDependencies": {
-    "eslint": "^6.8.0",
+    "eslint": "^7.11.0",
     "eslint-config-airbnb": "^18.2.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-jsx-a11y": "^6.3.1",
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-react": "^7.20.3",
-    "eslint-plugin-react-hooks": "^2.5.1",
+    "eslint-plugin-react-hooks": "^4.0.8",
     "prettier": "^1.19.1"
   }
 }
