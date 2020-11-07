@@ -18,9 +18,11 @@ import {
   Lock as LockIcon,
   Settings as SettingsIcon,
   ShoppingBag as ShoppingBagIcon,
+  Calendar as CalendarIcon,
   User as UserIcon,
   UserPlus as UserPlusIcon,
-  Users as UsersIcon
+  Users as UsersIcon,
+  LogOut as LogoutIcon
 } from 'react-feather';
 import NavItem from './NavItem';
 
@@ -43,8 +45,8 @@ const items = [
   },
   {
     href: '/app/products',
-    icon: ShoppingBagIcon,
-    title: 'Products'
+    icon: CalendarIcon,
+    title: 'Events'
   },
   {
     href: '/app/account',
@@ -56,21 +58,22 @@ const items = [
     icon: SettingsIcon,
     title: 'Settings'
   },
+  // },
   {
     href: '/login',
-    icon: LockIcon,
-    title: 'Login'
+    icon: LogoutIcon,
+    title: 'Logout'
   },
-  {
-    href: '/register',
-    icon: UserPlusIcon,
-    title: 'Register'
-  },
-  {
-    href: '/404',
-    icon: AlertCircleIcon,
-    title: 'Error'
-  }
+  // {
+  //   href: '/register',
+  //   icon: UserPlusIcon,
+  //   title: 'Register'
+  // },
+  // {
+  //   href: '/404',
+  //   icon: AlertCircleIcon,
+  //   title: 'Error'
+  // }
 ];
 
 const useStyles = makeStyles(() => ({

@@ -9,10 +9,16 @@ import {
   Divider,
   Grid,
   Typography,
-  makeStyles
+  makeStyles,
+  CardMedia
 } from '@material-ui/core';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import GetAppIcon from '@material-ui/icons/GetApp';
+
+import {
+  Users as UsersIcon
+} from 'react-feather';
+// import AttendantIcon from '@material-ui/icons/Users';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -25,7 +31,12 @@ const useStyles = makeStyles((theme) => ({
   },
   statsIcon: {
     marginRight: theme.spacing(1)
-  }
+  },
+  media: {
+    height: 0,
+    paddingTop: '56.25%', // 16:9
+    alignItems: 'center'
+  },
 }));
 
 const ProductCard = ({ className, product, ...rest }) => {
@@ -37,17 +48,19 @@ const ProductCard = ({ className, product, ...rest }) => {
       {...rest}
     >
       <CardContent>
-        <Box
+        {/* <Box
           display="flex"
           justifyContent="center"
           mb={3}
-        >
-          <Avatar
-            alt="Product"
-            src={product.media}
-            variant="square"
-          />
-        </Box>
+        > */}
+        <CardMedia
+          // alt="Product"
+          image={product.media}
+          // variant="square"
+          className={classes.media}
+          title={product.title}
+        />
+        {/* </Box> */}
         <Typography
           align="center"
           color="textPrimary"
@@ -92,9 +105,9 @@ const ProductCard = ({ className, product, ...rest }) => {
             className={classes.statsItem}
             item
           >
-            <GetAppIcon
+            <UsersIcon
               className={classes.statsIcon}
-              color="action"
+              color="grey"
             />
             <Typography
               color="textSecondary"
@@ -103,7 +116,7 @@ const ProductCard = ({ className, product, ...rest }) => {
             >
               {product.totalDownloads}
               {' '}
-              Downloads
+              Attendants
             </Typography>
           </Grid>
         </Grid>

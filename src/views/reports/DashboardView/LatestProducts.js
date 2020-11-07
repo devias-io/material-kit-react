@@ -57,8 +57,8 @@ const useStyles = makeStyles(({
     height: '100%'
   },
   image: {
-    height: 48,
-    width: 48
+    height: 320,
+    width: 480
   }
 }));
 
