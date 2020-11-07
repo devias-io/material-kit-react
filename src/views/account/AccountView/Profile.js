@@ -16,11 +16,11 @@ import {
 
 const user = {
   avatar: '/static/images/avatars/avatar_6.png',
-  city: 'Los Angeles',
-  country: 'USA',
-  jobTitle: 'Senior Developer',
-  name: 'Katarina Smith',
-  timezone: 'GTM-7'
+  city: 'Nelson',
+  country: 'New Zealand',
+  jobTitle: 'President',
+  name: 'Amelia Crundwell',
+  timezone: 'GTM+12'
 };
 
 const useStyles = makeStyles(() => ({
