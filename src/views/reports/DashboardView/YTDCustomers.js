@@ -19,7 +19,7 @@ const useStyles = makeStyles((theme) => ({
     height: '100%'
   },
   avatar: {
-    backgroundColor: colors.indigo[500],
+    backgroundColor: colors.green[600],
     height: 56,
     width: 56
   },
@@ -32,7 +32,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const TotalCustomers = ({ className, ...rest }) => {
+const YTDCustomers = ({ className, ...rest }) => {
   const classes = useStyles();
 
   return (
@@ -52,13 +52,13 @@ const TotalCustomers = ({ className, ...rest }) => {
               gutterBottom
               variant="h6"
             >
-              Total Parents (YoY)
+              TOTAL Parents
             </Typography>
             <Typography
               color="textPrimary"
               variant="h3"
             >
-              322
+              160
             </Typography>
           </Grid>
           <Grid item>
@@ -77,13 +77,13 @@ const TotalCustomers = ({ className, ...rest }) => {
             className={classes.differenceValue}
             variant="body2"
           >
-            34%
+            16%
           </Typography>
           <Typography
             color="textSecondary"
             variant="caption"
           >
-            YoY
+            Since 1 March 2020
           </Typography>
         </Box>
       </CardContent>
@@ -91,8 +91,8 @@ const TotalCustomers = ({ className, ...rest }) => {
   );
 };
 
-TotalCustomers.propTypes = {
+YTDCustomers.propTypes = {
   className: PropTypes.string
 };
 
-export default TotalCustomers;
+export default YTDCustomers;

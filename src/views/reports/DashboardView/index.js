@@ -11,6 +11,8 @@ import LatestProducts from './LatestProducts';
 import Sales from './Sales';
 import TasksProgress from './TasksProgress';
 import TotalCustomers from './TotalCustomers';
+import YTDCustomers from './YTDCustomers';
+import MonthlyCustomers from './MonthlyCustomers';
 import TotalProfit from './TotalProfit';
 import TrafficByDevice from './TrafficByDevice';
 
@@ -43,15 +45,6 @@ const Dashboard = () => {
             xl={3}
             xs={12}
           >
-            <Budget />
-          </Grid>
-          <Grid
-            item
-            lg={3}
-            sm={6}
-            xl={3}
-            xs={12}
-          >
             <TotalCustomers />
           </Grid>
           <Grid
@@ -61,7 +54,7 @@ const Dashboard = () => {
             xl={3}
             xs={12}
           >
-            <TasksProgress />
+            <YTDCustomers />
           </Grid>
           <Grid
             item
@@ -70,8 +63,9 @@ const Dashboard = () => {
             xl={3}
             xs={12}
           >
-            <TotalProfit />
+            <MonthlyCustomers />
           </Grid>
+
           <Grid
             item
             lg={8}
@@ -81,7 +75,7 @@ const Dashboard = () => {
           >
             <Sales />
           </Grid>
-          <Grid
+          {/* <Grid
             item
             lg={4}
             md={6}
@@ -89,7 +83,7 @@ const Dashboard = () => {
             xs={12}
           >
             <TrafficByDevice />
-          </Grid>
+          </Grid> */}
           {/* <Grid
             item
             lg={4}
@@ -98,16 +92,16 @@ const Dashboard = () => {
             xs={12}
           > */}
           {/* <LatestProducts /> */}
-        {/* </Grid> */}
-        <Grid
-          item
-          lg={8}
-          md={12}
-          xl={9}
-          xs={12}
-        >
-          <LatestOrders />
-        </Grid>
+          {/* </Grid> */}
+          <Grid
+            item
+            lg={8}
+            md={12}
+            xl={9}
+            xs={12}
+          >
+            <LatestOrders />
+          </Grid>
         </Grid>
       </Container>
     </Page >

@@ -17,10 +17,18 @@ import InputIcon from '@material-ui/icons/Input';
 import Logo from 'src/components/Logo';
 
 const useStyles = makeStyles(() => ({
-  root: {},
+  root: {
+    backgroundColor: '#3c3961'
+  },
   avatar: {
     width: 60,
     height: 60
+  },
+  heading: {
+    color: '#ffffff',
+    font: 'Arial',
+    fontSize: '16px',
+    fontWeight: 300
   }
 }));
 
@@ -42,8 +50,11 @@ const TopBar = ({
         <RouterLink to="/">
           <Logo />
         </RouterLink>
-        <Box flexGrow={1} />
-        {/* <Hidden mdDown>
+        {/* <Box flexGrow={1} /> */}
+        <Box component="span" m={1} className={classes.heading}>
+          Nelson District Parents Centre Volunteer's Portal
+          </Box>
+      {/* <Hidden mdDown>
           <IconButton color="inherit">
             <Badge
               badgeContent={notifications.length}
@@ -66,7 +77,7 @@ const TopBar = ({
           </IconButton>
         </Hidden> */}
       </Toolbar>
-    </AppBar>
+    </AppBar >
   );
 };
 

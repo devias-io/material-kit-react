@@ -28,16 +28,16 @@ const Sales = ({ className, ...rest }) => {
     datasets: [
       {
         backgroundColor: colors.indigo[500],
-        data: [18, 5, 19, 27, 29, 19, 20],
-        label: 'This year'
+        data: [18, 16, 20],
+        label: 'This cycle'
       },
       {
-        backgroundColor: colors.grey[200],
-        data: [11, 20, 12, 29, 30, 25, 13],
-        label: 'Last year'
+        backgroundColor: '#faaf00',
+        data: [11, 16, 12],
+        label: 'Last cycle'
       }
     ],
-    labels: ['3 Nov', '4 Nov', '5 Nov', '6 Nov', '7 Nov', '8 Nov']
+    labels: ['Antenatal (Nelson)', 'Antenatal (Motueka)', 'Baby & You']
   };
 
   const options = {
@@ -101,16 +101,16 @@ const Sales = ({ className, ...rest }) => {
       {...rest}
     >
       <CardHeader
-        action={(
-          <Button
-            endIcon={<ArrowDropDownIcon />}
-            size="small"
-            variant="text"
-          >
-            Last 7 days
-          </Button>
-        )}
-        title="No. of Registration"
+        // action={(
+        //   <Button
+        //     endIcon={<ArrowDropDownIcon />}
+        //     size="small"
+        //     variant="text"
+        //   >
+        //     Last 7 days
+        //   </Button>
+        // )}
+        title="Attendants of each event"
       />
       <Divider />
       <CardContent>
@@ -125,7 +125,7 @@ const Sales = ({ className, ...rest }) => {
         </Box>
       </CardContent>
       <Divider />
-      <Box
+      {/* <Box
         display="flex"
         justifyContent="flex-end"
         p={2}
@@ -138,7 +138,7 @@ const Sales = ({ className, ...rest }) => {
         >
           Overview
         </Button>
-      </Box>
+      </Box> */}
     </Card>
   );
 };
