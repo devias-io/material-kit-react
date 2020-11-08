@@ -1,4 +1,6 @@
 import React from 'react';
+import moment from 'moment';
+import clsx from 'clsx';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardActions from '@material-ui/core/CardActions';
@@ -12,10 +14,24 @@ const useStyles = makeStyles(() =>
     card: {
       minWidth: '300px',
       width: '100%',
-      maxWidth: '500px'
+      maxWidth: '400px'
     },
-    bodytext: {
-      fontSize: '1.15rem'
+    imgContainer: {
+      height: '250px',
+      overflow: 'hidden'
+    },
+    caption: {
+      opacity: '.8',
+      fontSize: '1rem'
+    },
+    name: {
+      marginBottom: '1rem'
+    },
+    desc: {
+      marginBottom: '2rem'
+    },
+    actions: {
+      padding: '8px 16px 20px'
     }
   })
 );
@@ -24,23 +40,36 @@ const Event = ({ data }) => {
   const classes = useStyles();
   return (
     <Card className={classes.card} elevation={8}>
-      {data.logo?.original?.url ? (
-        <Image styles={{ width: '100%' }} src={data.logo.original.url} />
-      ) : (
-        <Image src="/assets/placeholder.jpg" />
-      )}
+      <div className={classes.imgContainer}>
+        {data.logo?.original?.url ? (
+          <Image styles={{ width: '100%' }} src={data.logo.original.url} />
+        ) : (
+          <Image src="/assets/placeholder.jpg" />
+        )}
+      </div>
       <CardContent>
-        <Typography variant="h4">{data.name.text}</Typography>
-        <Typography variant="h5">{data.description.text}</Typography>
-        <Typography variant="h5">
-          {new Date(data.start.utc).toLocaleDateString()}
+        <Typography variant="caption" className={classes.caption}>
+          {formatDate(data.start.utc)}
+        </Typography>
+        <Typography variant="h5" className={classes.name}>
+          {data.name.text}
+        </Typography>
+        <Typography className={clsx(classes.caption, classes.desc)}>
+          {data.description.text}
         </Typography>
       </CardContent>
-      <CardActions>
-        <Button onClick={() => (document.location = data.url)}>Sign up</Button>
+      <CardActions className={classes.actions}>
+        <Button onClick={() => (document.location = data.url)}>
+          Buy Tickets
+        </Button>
       </CardActions>
     </Card>
   );
 };
 
 export default Event;
+
+function formatDate(date) {
+  const toString = moment(date).format('ddd, MMM D, LT');
+  return toString;
+}
