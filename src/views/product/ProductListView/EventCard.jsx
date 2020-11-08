@@ -14,7 +14,7 @@ const useStyles = makeStyles(() =>
     card: {
       minWidth: '300px',
       width: '100%',
-      maxWidth: '400px'
+      maxWidth: '650px'
     },
     imgContainer: {
       height: '250px',
