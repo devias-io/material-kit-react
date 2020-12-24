@@ -4,25 +4,17 @@
     "es6": true,
     "browser": true
   },
-  "extends": [
-    "airbnb",
-    "airbnb/hooks",
-    "eslint:recommended"
-  ],
+  "extends": ["airbnb", "airbnb/hooks", "eslint:recommended"],
   "settings": {
     "import/resolver": {
       "node": {
-        "paths": [
-          "src"
-        ],
-        "extensions": [
-          ".js",
-          ".jsx"
-        ]
+        "paths": ["src"],
+        "extensions": [".js", ".jsx"]
       }
     }
   },
   "rules": {
+    "no-underscore-dangle": "off",
     "arrow-body-style": "off",
     "comma-dangle": "off",
     "import/no-unresolved": "off",
