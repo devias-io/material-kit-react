@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -14,7 +14,10 @@ import {
 } from '@material-ui/core';
 import FacebookIcon from 'src/icons/Facebook';
 import GoogleIcon from 'src/icons/Google';
+import { useSelector, useDispatch } from 'react-redux';
 import Page from 'src/components/Page';
+import { SetSesion } from '../../lib/redux/me';
+import { loginWithGoogle } from '../../utils/firebase';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -26,14 +29,44 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const LoginView = () => {
+  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const { me } = useSelector((state) => state.Sesion);
+  console.log(me);
   const classes = useStyles();
   const navigate = useNavigate();
+
+  const loginGoogle = () => {
+    setLoading(true);
+
+    try {
+      loginWithGoogle()
+        .then(async (user) => {
+          const GoogleMe = {
+            email: user.email,
+            password: undefined,
+            avatar: user.photoURL,
+            userName: user.displayName,
+            provider: 'google',
+          };
+
+          dispatch(SetSesion(GoogleMe));
+          navigate('/app/dashboard');
+        })
+        .catch((error) => console.log(error.message));
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.log(error.message);
+    }
+  };
 
   return (
     <Page
       className={classes.root}
       title="Login"
     >
+      {loading}
       <Box
         display="flex"
         flexDirection="column"
@@ -107,7 +140,7 @@ const LoginView = () => {
                     <Button
                       fullWidth
                       startIcon={<GoogleIcon />}
-                      onClick={handleSubmit}
+                      onClick={loginGoogle}
                       size="large"
                       variant="contained"
                     >
