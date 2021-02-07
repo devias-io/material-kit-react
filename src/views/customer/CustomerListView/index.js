@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+/* eslint-disable no-unused-expressions */
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Box,
   Container,
   makeStyles
 } from '@material-ui/core';
 import Page from 'src/components/Page';
+import { TokenContext } from '../../../lib/context/contextToken';
 import Results from './Results';
 import Toolbar from './Toolbar';
-import data from './data';
+import { GetUsers } from '../../../api/users';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -19,18 +21,36 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const CustomerListView = () => {
+  const { token } = useContext(TokenContext);
   const classes = useStyles();
-  const [customers] = useState(data);
+  const [customers, setCustomers] = useState([]);
+  const [actualizarUser, setActualizarUser] = useState(false);
+  const [searchUser, setSearchUser] = useState('');
+
+  useEffect(() => {
+    try {
+      const fetchUsers = async () => {
+        const { users } = await (await GetUsers(token)).data;
+        setCustomers(users);
+      };
+
+      fetchUsers();
+
+      actualizarUser && setActualizarUser(false);
+    } catch (error) {
+      console.log(error.message);
+    }
+  }, [actualizarUser]);
 
   return (
     <Page
       className={classes.root}
-      title="Customers"
+      title="Clientes"
     >
       <Container maxWidth={false}>
-        <Toolbar />
+        <Toolbar setActualizarUser={setActualizarUser} setSearchUser={setSearchUser} />
         <Box mt={3}>
-          <Results customers={customers} />
+          <Results customers={customers} searchUser={searchUser} />
         </Box>
       </Container>
     </Page>

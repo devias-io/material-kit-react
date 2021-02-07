@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import React from 'react';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import PropTypes from 'prop-types';
 import {
   AppBar,
-  Badge,
   Box,
   Hidden,
   IconButton,
@@ -12,9 +11,9 @@ import {
   makeStyles
 } from '@material-ui/core';
 import MenuIcon from '@material-ui/icons/Menu';
-import NotificationsIcon from '@material-ui/icons/NotificationsOutlined';
 import InputIcon from '@material-ui/icons/Input';
 import Logo from 'src/components/Logo';
+import Cookies from 'js-cookie';
 
 const useStyles = makeStyles(() => ({
   root: {},
@@ -29,8 +28,13 @@ const TopBar = ({
   onMobileNavOpen,
   ...rest
 }) => {
+  const navigate = useNavigate();
   const classes = useStyles();
-  const [notifications] = useState([]);
+
+  const closeSesion = () => {
+    Cookies.remove('access-token');
+    navigate('/login');
+  };
 
   return (
     <AppBar
@@ -44,16 +48,7 @@ const TopBar = ({
         </RouterLink>
         <Box flexGrow={1} />
         <Hidden mdDown>
-          <IconButton color="inherit">
-            <Badge
-              badgeContent={notifications.length}
-              color="primary"
-              variant="dot"
-            >
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
-          <IconButton color="inherit">
+          <IconButton color="inherit" onClick={closeSesion}>
             <InputIcon />
           </IconButton>
         </Hidden>

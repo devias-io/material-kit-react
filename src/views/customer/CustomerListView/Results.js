@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React, { useState } from 'react';
 import clsx from 'clsx';
 import PropTypes from 'prop-types';
@@ -26,7 +27,9 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const Results = ({ className, customers, ...rest }) => {
+const Results = ({
+  className, customers, searchUser, ...rest
+}) => {
   const classes = useStyles();
   const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);
   const [limit, setLimit] = useState(10);
@@ -100,7 +103,7 @@ const Results = ({ className, customers, ...rest }) => {
                   Email
                 </TableCell>
                 <TableCell>
-                  Location
+                  Proveedor
                 </TableCell>
                 <TableCell>
                   Phone
@@ -111,16 +114,18 @@ const Results = ({ className, customers, ...rest }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {customers.slice(0, limit).map((customer) => (
+              {customers.filter((item) => {
+                return item.userName.toLowerCase().includes(searchUser.toLowerCase());
+              }).map((customer) => (
                 <TableRow
                   hover
-                  key={customer.id}
-                  selected={selectedCustomerIds.indexOf(customer.id) !== -1}
+                  key={customer.idUser}
+                  selected={selectedCustomerIds.indexOf(customer.idUser) !== -1}
                 >
                   <TableCell padding="checkbox">
                     <Checkbox
-                      checked={selectedCustomerIds.indexOf(customer.id) !== -1}
-                      onChange={(event) => handleSelectOne(event, customer.id)}
+                      checked={selectedCustomerIds.indexOf(customer.idUser) !== -1}
+                      onChange={(event) => handleSelectOne(event, customer.idUser)}
                       value="true"
                     />
                   </TableCell>
@@ -131,15 +136,15 @@ const Results = ({ className, customers, ...rest }) => {
                     >
                       <Avatar
                         className={classes.avatar}
-                        src={customer.avatarUrl}
+                        src={customer.avatar}
                       >
-                        {getInitials(customer.name)}
+                        {getInitials(customer.userName)}
                       </Avatar>
                       <Typography
                         color="textPrimary"
                         variant="body1"
                       >
-                        {customer.name}
+                        {customer.userName}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -147,13 +152,13 @@ const Results = ({ className, customers, ...rest }) => {
                     {customer.email}
                   </TableCell>
                   <TableCell>
-                    {`${customer.address.city}, ${customer.address.state}, ${customer.address.country}`}
+                    {customer.provider}
                   </TableCell>
                   <TableCell>
-                    {customer.phone}
+                    {customer.Phone || 'Ninnguno'}
                   </TableCell>
                   <TableCell>
-                    {moment(customer.createdAt).format('DD/MM/YYYY')}
+                    {moment(customer.created_at).format('DD/MM/YYYY')}
                   </TableCell>
                 </TableRow>
               ))}

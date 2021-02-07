@@ -1,4 +1,5 @@
-import React from 'react';
+/* eslint-disable react/prop-types */
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import {
@@ -12,6 +13,8 @@ import {
   makeStyles
 } from '@material-ui/core';
 import { Search as SearchIcon } from 'react-feather';
+import CreateNewClient from '../../../components/newClient';
+import ModalElement from '../../../components/Modal';
 
 const useStyles = makeStyles((theme) => ({
   root: {},
@@ -23,7 +26,10 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const Toolbar = ({ className, ...rest }) => {
+const Toolbar = ({
+  className, setActualizarUser, setSearchUser, ...rest
+}) => {
+  const [modal, setModal] = useState(false);
   const classes = useStyles();
 
   return (
@@ -35,17 +41,12 @@ const Toolbar = ({ className, ...rest }) => {
         display="flex"
         justifyContent="flex-end"
       >
-        <Button className={classes.importButton}>
-          Import
-        </Button>
-        <Button className={classes.exportButton}>
-          Export
-        </Button>
         <Button
           color="primary"
           variant="contained"
+          onClick={() => setModal(true)}
         >
-          Add customer
+          Nuevo cliente
         </Button>
       </Box>
       <Box mt={3}>
@@ -54,6 +55,7 @@ const Toolbar = ({ className, ...rest }) => {
             <Box maxWidth={500}>
               <TextField
                 fullWidth
+                onChange={(event) => setSearchUser(event.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -66,13 +68,17 @@ const Toolbar = ({ className, ...rest }) => {
                     </InputAdornment>
                   )
                 }}
-                placeholder="Search customer"
+                placeholder="Buscar Cliente"
                 variant="outlined"
               />
             </Box>
           </CardContent>
         </Card>
       </Box>
+
+      <ModalElement visible={modal} setVisible={setModal}>
+        <CreateNewClient setActualizarUser={setActualizarUser} />
+      </ModalElement>
     </div>
   );
 };

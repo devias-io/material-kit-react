@@ -1,5 +1,5 @@
 const initialData = {
-  me: { id: 'efwf' },
+  me: {},
 };
 
 const SET_SESION = 'SET_SESION';

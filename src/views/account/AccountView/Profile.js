@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
-import moment from 'moment';
+import { useSelector } from 'react-redux';
 import {
   Avatar,
   Box,
@@ -14,15 +14,6 @@ import {
   makeStyles
 } from '@material-ui/core';
 
-const user = {
-  avatar: '/static/images/avatars/avatar_6.png',
-  city: 'Los Angeles',
-  country: 'USA',
-  jobTitle: 'Senior Developer',
-  name: 'Katarina Smith',
-  timezone: 'GTM-7'
-};
-
 const useStyles = makeStyles(() => ({
   root: {},
   avatar: {
@@ -32,6 +23,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 const Profile = ({ className, ...rest }) => {
+  const { me } = useSelector((state) => state.Sesion);
   const classes = useStyles();
 
   return (
@@ -47,27 +39,28 @@ const Profile = ({ className, ...rest }) => {
         >
           <Avatar
             className={classes.avatar}
-            src={user.avatar}
+            src={me.avatar}
           />
           <Typography
             color="textPrimary"
             gutterBottom
             variant="h3"
           >
-            {user.name}
-          </Typography>
-          <Typography
-            color="textSecondary"
-            variant="body1"
-          >
-            {`${user.city} ${user.country}`}
+            {me.userName}
           </Typography>
           <Typography
             className={classes.dateText}
             color="textSecondary"
             variant="body1"
           >
-            {`${moment().format('hh:mm A')} ${user.timezone}`}
+            {me.email}
+          </Typography>
+          <Typography
+            className={classes.dateText}
+            color="textSecondary"
+            variant="body1"
+          >
+            {me.created_at}
           </Typography>
         </Box>
       </CardContent>

@@ -1,10 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import {
   Avatar,
   Box,
-  Button,
   Divider,
   Drawer,
   Hidden,
@@ -12,65 +11,50 @@ import {
   Typography,
   makeStyles
 } from '@material-ui/core';
+import Pest from '@material-ui/icons/Pets';
 import {
-  AlertCircle as AlertCircleIcon,
   BarChart as BarChartIcon,
-  Lock as LockIcon,
   Settings as SettingsIcon,
   ShoppingBag as ShoppingBagIcon,
   User as UserIcon,
-  UserPlus as UserPlusIcon,
   Users as UsersIcon
 } from 'react-feather';
+import { useSelector } from 'react-redux';
+import { TokenContext } from '../../../lib/context/contextToken';
 import NavItem from './NavItem';
-
-const user = {
-  avatar: '/static/images/avatars/avatar_6.png',
-  jobTitle: 'Senior Developer',
-  name: 'Katarina Smith'
-};
 
 const items = [
   {
     href: '/app/dashboard',
     icon: BarChartIcon,
-    title: 'Dashboard'
+    title: 'Panel'
   },
   {
     href: '/app/customers',
     icon: UsersIcon,
-    title: 'Customers'
+    title: 'Clientes'
   },
   {
     href: '/app/products',
     icon: ShoppingBagIcon,
-    title: 'Products'
+    title: 'Productos'
+  },
+
+  {
+    href: '/app/pacient',
+    icon: Pest,
+    title: 'Pacientes'
   },
   {
     href: '/app/account',
     icon: UserIcon,
-    title: 'Account'
+    title: 'Mi cuenta'
   },
   {
     href: '/app/settings',
     icon: SettingsIcon,
-    title: 'Settings'
+    title: 'Ajustes'
   },
-  {
-    href: '/login',
-    icon: LockIcon,
-    title: 'Login'
-  },
-  {
-    href: '/register',
-    icon: UserPlusIcon,
-    title: 'Register'
-  },
-  {
-    href: '/404',
-    icon: AlertCircleIcon,
-    title: 'Error'
-  }
 ];
 
 const useStyles = makeStyles(() => ({
@@ -90,6 +74,8 @@ const useStyles = makeStyles(() => ({
 }));
 
 const NavBar = ({ onMobileClose, openMobile }) => {
+  const { token } = useContext(TokenContext);
+  const { me } = useSelector((state) => state.Sesion);
   const classes = useStyles();
   const location = useLocation();
 
@@ -115,7 +101,7 @@ const NavBar = ({ onMobileClose, openMobile }) => {
         <Avatar
           className={classes.avatar}
           component={RouterLink}
-          src={user.avatar}
+          src={me.avatar}
           to="/app/account"
         />
         <Typography
@@ -123,19 +109,19 @@ const NavBar = ({ onMobileClose, openMobile }) => {
           color="textPrimary"
           variant="h5"
         >
-          {user.name}
+          {me.userName}
         </Typography>
         <Typography
           color="textSecondary"
           variant="body2"
         >
-          {user.jobTitle}
+          {me.email}
         </Typography>
       </Box>
       <Divider />
       <Box p={2}>
         <List>
-          {items.map((item) => (
+          {token && items.map((item) => (
             <NavItem
               href={item.href}
               key={item.title}
@@ -146,39 +132,6 @@ const NavBar = ({ onMobileClose, openMobile }) => {
         </List>
       </Box>
       <Box flexGrow={1} />
-      <Box
-        p={2}
-        m={2}
-        bgcolor="background.dark"
-      >
-        <Typography
-          align="center"
-          gutterBottom
-          variant="h4"
-        >
-          Need more?
-        </Typography>
-        <Typography
-          align="center"
-          variant="body2"
-        >
-          Upgrade to PRO version and access 20 more screens
-        </Typography>
-        <Box
-          display="flex"
-          justifyContent="center"
-          mt={2}
-        >
-          <Button
-            color="primary"
-            component="a"
-            href="https://react-material-kit.devias.io"
-            variant="contained"
-          >
-            See PRO version
-          </Button>
-        </Box>
-      </Box>
     </Box>
   );
 
