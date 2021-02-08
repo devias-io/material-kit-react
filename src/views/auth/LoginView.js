@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import {
   Box,
@@ -29,7 +28,6 @@ const LoginView = () => {
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const classes = useStyles();
-  const navigate = useNavigate();
 
   const loginGoogle = () => {
     setLoading(true);
@@ -47,7 +45,7 @@ const LoginView = () => {
           const responseLogin = await LoginUser(GoogleMe);
           Cookies.set('access-token', responseLogin.data.me.token);
           dispatch(SetSesion(GoogleMe));
-          navigate('/app/dashboard');
+          window.location.href = '/app/dashboard';
         })
         .catch((error) => console.log(error.message));
       setLoading(false);

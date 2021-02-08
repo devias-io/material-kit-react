@@ -149,7 +149,7 @@ const CreateNewClient = ({ setActualizarUser }) => {
                 type="submit"
                 variant="contained"
               >
-                Sign up now
+                Registrar
               </Button>
             </Box>
           </form>

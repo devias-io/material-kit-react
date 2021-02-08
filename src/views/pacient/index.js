@@ -6,10 +6,10 @@ import {
   makeStyles
 } from '@material-ui/core';
 import Page from 'src/components/Page';
-import { TokenContext } from '../../../lib/context/contextToken';
+import { TokenContext } from '../../lib/context/contextToken';
 import Results from './Results';
 import Toolbar from './Toolbar';
-import { GetUsers } from '../../../api/users';
+import { GetPacients } from '../../api/pacient';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -20,41 +20,41 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const PacientListView = () => {
+const CustomerListView = () => {
   const { token } = useContext(TokenContext);
   const classes = useStyles();
-  const [customers, setCustomers] = useState([]);
-  const [actualizarUser, setActualizarUser] = useState(false);
-  const [searchUser, setSearchUser] = useState('');
+  const [pacient, setPacient] = useState([]);
+  const [actualizarPacient, setActualizarPacient] = useState(false);
+  const [searchPacient, setSearchPacient] = useState('');
 
   useEffect(() => {
     try {
       const fetchUsers = async () => {
-        const { users } = await (await GetUsers(token)).data;
-        setCustomers(users);
+        const { users } = await (await GetPacients(token)).data;
+        setPacient(users);
       };
 
       fetchUsers();
 
-      actualizarUser && setActualizarUser(false);
+      actualizarPacient && setActualizarPacient(false);
     } catch (error) {
       console.log(error.message);
     }
-  }, [actualizarUser]);
+  }, [actualizarPacient]);
 
   return (
     <Page
       className={classes.root}
-      title="Clientes"
+      title="Pacientes"
     >
       <Container maxWidth={false}>
-        <Toolbar setActualizarUser={setActualizarUser} setSearchUser={setSearchUser} />
+        <Toolbar setActualizarPacient={setActualizarPacient} setSearchPacient={setSearchPacient} />
         <Box mt={3}>
-          <Results customers={customers} searchUser={searchUser} />
+          <Results pacient={pacient} searchPacient={searchPacient} />
         </Box>
       </Container>
     </Page>
   );
 };
 
-export default PacientListView;
+export default CustomerListView;

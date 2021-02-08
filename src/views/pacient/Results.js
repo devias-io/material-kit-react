@@ -10,7 +10,6 @@ import {
   Card,
   Checkbox,
   Table,
-  Button,
   TableBody,
   TableCell,
   TableHead,
@@ -29,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Results = ({
-  className, customers, searchUser, ...rest
+  className, pacient, searchPacient, ...rest
 }) => {
   const classes = useStyles();
   const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);
@@ -40,7 +39,7 @@ const Results = ({
     let newSelectedCustomerIds;
 
     if (event.target.checked) {
-      newSelectedCustomerIds = customers.map((customer) => customer.id);
+      newSelectedCustomerIds = pacient.map((customer) => customer.id);
     } else {
       newSelectedCustomerIds = [];
     }
@@ -88,11 +87,11 @@ const Results = ({
               <TableRow>
                 <TableCell padding="checkbox">
                   <Checkbox
-                    checked={selectedCustomerIds.length === customers.length}
+                    checked={selectedCustomerIds.length === pacient.length}
                     color="primary"
                     indeterminate={
                       selectedCustomerIds.length > 0
-                      && selectedCustomerIds.length < customers.length
+                      && selectedCustomerIds.length < pacient.length
                     }
                     onChange={handleSelectAll}
                   />
@@ -101,35 +100,35 @@ const Results = ({
                   Name
                 </TableCell>
                 <TableCell>
-                  Email
+                  Email Dueño
                 </TableCell>
                 <TableCell>
-                  Proveedor
+                  Altura
                 </TableCell>
                 <TableCell>
-                  Phone
+                  Peso
                 </TableCell>
                 <TableCell>
-                  Registration date
+                  Animal de
                 </TableCell>
                 <TableCell>
-                  Opciones
+                  Registrado el
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {customers.filter((item) => {
-                return item.userName.toLowerCase().includes(searchUser.toLowerCase());
-              }).map((customer) => (
+              {pacient.filter((item) => {
+                return item.userName.toLowerCase().includes(searchPacient.toLowerCase());
+              }).map((paciente) => (
                 <TableRow
                   hover
-                  key={customer.idUser}
-                  selected={selectedCustomerIds.indexOf(customer.idUser) !== -1}
+                  key={paciente.idUser}
+                  selected={selectedCustomerIds.indexOf(paciente.idUser) !== -1}
                 >
                   <TableCell padding="checkbox">
                     <Checkbox
-                      checked={selectedCustomerIds.indexOf(customer.idUser) !== -1}
-                      onChange={(event) => handleSelectOne(event, customer.idUser)}
+                      checked={selectedCustomerIds.indexOf(paciente.idUser) !== -1}
+                      onChange={(event) => handleSelectOne(event, paciente.idUser)}
                       value="true"
                     />
                   </TableCell>
@@ -140,38 +139,32 @@ const Results = ({
                     >
                       <Avatar
                         className={classes.avatar}
-                        src={customer.avatar}
+                        src={paciente.avatar}
                       >
-                        {getInitials(customer.userName)}
+                        {getInitials(paciente.userName)}
                       </Avatar>
                       <Typography
                         color="textPrimary"
                         variant="body1"
                       >
-                        {customer.userName}
+                        {paciente.userName || 'Sin Nombre'}
                       </Typography>
                     </Box>
                   </TableCell>
                   <TableCell>
-                    {customer.email}
+                    {paciente.email || 'Sin Dueño'}
                   </TableCell>
                   <TableCell>
-                    {customer.provider}
+                    {paciente.altura}
                   </TableCell>
                   <TableCell>
-                    {customer.Phone || 'Ninnguno'}
+                    {paciente.peso}
                   </TableCell>
                   <TableCell>
-                    {moment(customer.created_at).format('DD/MM/YYYY')}
+                    {paciente.Phone || 'Ninnguno'}
                   </TableCell>
                   <TableCell>
-                    <Button size="small" variant="contained" color="primary">
-                      Editar
-                    </Button>
-                    &nbsp; &nbsp;
-                    <Button size="small" variant="contained">
-                      ELiminar
-                    </Button>
+                    {moment(paciente.created_at).format('DD/MM/YYYY')}
                   </TableCell>
                 </TableRow>
               ))}
@@ -181,7 +174,7 @@ const Results = ({
       </PerfectScrollbar>
       <TablePagination
         component="div"
-        count={customers.length}
+        count={pacient.length}
         onChangePage={handlePageChange}
         onChangeRowsPerPage={handleLimitChange}
         page={page}

@@ -38,3 +38,13 @@ export const GetUsers = async (token) => {
   });
   return response;
 };
+
+export const UpdateMeUser = async (token, data) => {
+  api.defaults.headers['access-token'] = token;
+  const response = await api({
+    method: 'PUT',
+    url: '/users/me',
+    data,
+  });
+  return response;
+};
