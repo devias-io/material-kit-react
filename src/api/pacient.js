@@ -9,3 +9,13 @@ export const GetPacients = async (token) => {
   });
   return response;
 };
+
+export const NewPacients = async (token, data) => {
+  api.defaults.headers['access-token'] = token;
+  const response = await api({
+    method: 'POST',
+    url: '/pacients',
+    data,
+  });
+  return response;
+};

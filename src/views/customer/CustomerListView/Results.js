@@ -119,7 +119,8 @@ const Results = ({
             </TableHead>
             <TableBody>
               {customers.filter((item) => {
-                return item.userName.toLowerCase().includes(searchUser.toLowerCase());
+                return item.userName.toLowerCase().includes(searchUser.toLowerCase())
+                || item.email.toLowerCase().includes(searchUser.toLowerCase());
               }).map((customer) => (
                 <TableRow
                   hover

@@ -13,6 +13,7 @@ import {
   makeStyles
 } from '@material-ui/core';
 import { Search as SearchIcon } from 'react-feather';
+import NewPacient from '../../components/newPacient';
 import ModalElement from '../../components/Modal';
 
 const useStyles = makeStyles((theme) => ({
@@ -76,7 +77,7 @@ const Toolbar = ({
       </Box>
 
       <ModalElement visible={modal} setVisible={setModal}>
-        <p>efjijfir</p>
+        <NewPacient />
       </ModalElement>
     </div>
   );
