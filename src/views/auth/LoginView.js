@@ -3,10 +3,12 @@ import Cookies from 'js-cookie';
 import {
   Box,
   Button,
+  Snackbar,
   Container,
   Grid,
   makeStyles
 } from '@material-ui/core';
+import Alert from '@material-ui/lab/Alert';
 import FacebookIcon from 'src/icons/Facebook';
 import GoogleIcon from 'src/icons/Google';
 import { useDispatch } from 'react-redux';
@@ -28,9 +30,20 @@ const LoginView = () => {
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const classes = useStyles();
+  const [visible, setVisible] = useState(false);
+  const [feedback, setFeedback] = useState({
+    type: '',
+    content: '',
+  });
 
   const loginGoogle = () => {
     setLoading(true);
+    setVisible(true);
+
+    setFeedback({
+      type: 'info',
+      content: 'Este acceso es solo para personas autorizadas o con mascotas registradas.'
+    });
 
     try {
       loginWithGoogle()
@@ -46,67 +59,85 @@ const LoginView = () => {
           Cookies.set('access-token', responseLogin.data.me.token);
           dispatch(SetSesion(GoogleMe));
           window.location.href = '/app/dashboard';
-        })
-        .catch((error) => console.log(error.message));
+        }).catch((error) => {
+          setLoading(false);
+          setVisible(true);
+          setFeedback({
+            type: 'error',
+            content: error.message
+          });
+        });
       setLoading(false);
     } catch (error) {
       setLoading(false);
-      console.log(error.message);
+      setVisible(true);
+      setFeedback({
+        type: 'error',
+        content: error.message
+      });
     }
   };
 
   return (
-    <Page
-      className={classes.root}
-      title="Login"
-    >
-      {loading}
-      <Box
-        display="flex"
-        flexDirection="column"
-        height="100%"
-        justifyContent="center"
+    <>
+      <Page
+        className={classes.root}
+        title="Login"
       >
-        <Container maxWidth="sm">
-          <Grid
-            container
-            spacing={3}
-          >
+        {loading}
+        <Box
+          display="flex"
+          flexDirection="column"
+          height="100%"
+          justifyContent="center"
+        >
+          <Container maxWidth="sm">
             <Grid
-              item
-              xs={12}
-              md={6}
+              container
+              spacing={3}
             >
-              <Button
-                color="primary"
-                fullWidth
-                startIcon={<FacebookIcon />}
-                onClick={() => false}
-                size="large"
-                variant="contained"
+              <Grid
+                item
+                xs={12}
+                md={6}
               >
-                Login with Facebook
-              </Button>
-            </Grid>
-            <Grid
-              item
-              xs={12}
-              md={6}
-            >
-              <Button
-                fullWidth
-                startIcon={<GoogleIcon />}
-                onClick={loginGoogle}
-                size="large"
-                variant="contained"
+                <Button
+                  color="primary"
+                  fullWidth
+                  startIcon={<FacebookIcon />}
+                  onClick={() => false}
+                  size="large"
+                  variant="contained"
+                >
+                  Login with Facebook
+                </Button>
+              </Grid>
+              <Grid
+                item
+                xs={12}
+                md={6}
               >
-                Login with Google
-              </Button>
+                <Button
+                  fullWidth
+                  startIcon={<GoogleIcon />}
+                  onClick={loginGoogle}
+                  size="large"
+                  variant="contained"
+                >
+                  Login with Google
+                </Button>
+              </Grid>
             </Grid>
-          </Grid>
-        </Container>
-      </Box>
-    </Page>
+          </Container>
+        </Box>
+      </Page>
+
+      <Snackbar open={visible} autoHideDuration={6000} onClose={() => setVisible(false)}>
+        <Alert onClose={() => setVisible(false)} severity={feedback.type}>
+          {feedback.content}
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 
