@@ -77,7 +77,7 @@ const Toolbar = ({
       </Box>
 
       <ModalElement visible={modal} setVisible={setModal}>
-        <NewPacient />
+        <NewPacient setActualizarPacient={setActualizarPacient} />
       </ModalElement>
     </div>
   );

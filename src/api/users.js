@@ -48,3 +48,12 @@ export const UpdateMeUser = async (token, data) => {
   });
   return response;
 };
+
+export const DeleteUser = async (token, idUser) => {
+  api.defaults.headers['access-token'] = token;
+  const response = await api({
+    method: 'DELETE',
+    url: `/users/${idUser}`,
+  });
+  return response;
+};

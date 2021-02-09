@@ -1,5 +1,6 @@
+/* eslint-disable no-unused-expressions */
 /* eslint-disable react/prop-types */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import clsx from 'clsx';
 import PropTypes from 'prop-types';
 import moment from 'moment';
@@ -20,6 +21,9 @@ import {
   makeStyles
 } from '@material-ui/core';
 import getInitials from 'src/utils/getInitials';
+import AlertDialog from '../../../components/dialogo';
+import { TokenContext } from '../../../lib/context/contextToken';
+import { DeleteUser } from '../../../api/users';
 
 const useStyles = makeStyles((theme) => ({
   root: {},
@@ -29,12 +33,16 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Results = ({
-  className, customers, searchUser, ...rest
+  className, customers, setActualizarUser, searchUser, ...rest
 }) => {
   const classes = useStyles();
+  const [dialogo, setDialogo] = useState(false);
+  const [isDelete, setIsDelete] = useState(false);
+  const [idUser, setIdUser] = useState('');
   const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);
   const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(0);
+  const { token } = useContext(TokenContext);
 
   const handleSelectAll = (event) => {
     let newSelectedCustomerIds;
@@ -75,6 +83,19 @@ const Results = ({
   const handlePageChange = (event, newPage) => {
     setPage(newPage);
   };
+
+  useEffect(() => {
+    try {
+      const deleteUser = async () => {
+        await DeleteUser(token, idUser);
+        setActualizarUser(true);
+      };
+
+      idUser && isDelete && deleteUser();
+    } catch (error) {
+      console.log(error.message);
+    }
+  }, [idUser, isDelete]);
 
   return (
     <Card
@@ -170,7 +191,14 @@ const Results = ({
                       Editar
                     </Button>
                     &nbsp; &nbsp;
-                    <Button size="small" variant="contained">
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => {
+                        setDialogo(true);
+                        setIdUser(customer.idUser);
+                      }}
+                    >
                       ELiminar
                     </Button>
                   </TableCell>
@@ -189,6 +217,9 @@ const Results = ({
         rowsPerPage={limit}
         rowsPerPageOptions={[5, 10, 25]}
       />
+      <AlertDialog visible={dialogo} setVisible={setDialogo} setIsDelete={setIsDelete}>
+        <p>Estas seguro que quieres eliminar este registro?, uns vez echo sera irrecuperable.</p>
+      </AlertDialog>
     </Card>
   );
 };

@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable no-unused-expressions */
 import React, { useState, useEffect, useContext } from 'react';
 import {
@@ -50,7 +51,7 @@ const PacientListView = () => {
       <Container maxWidth={false}>
         <Toolbar setActualizarUser={setActualizarUser} setSearchUser={setSearchUser} />
         <Box mt={3}>
-          <Results customers={customers} searchUser={searchUser} />
+          <Results customers={customers} searchUser={searchUser} setActualizarUser={setActualizarUser} />
         </Box>
       </Container>
     </Page>

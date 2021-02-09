@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+/* eslint-disable react/prop-types */
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Box,
   Button,
@@ -13,15 +14,49 @@ import {
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import Alert from '@material-ui/lab/Alert';
-// import { TokenContext } from '../lib/context/contextToken';
+import { NewPacients } from '../api/pacient';
+import { TokenContext } from '../lib/context/contextToken';
 
-const NewPacient = () => {
-// const { token } = useContext(TokenContext);
+const NewPacient = ({ setActualizarPacient }) => {
+  const { token } = useContext(TokenContext);
   const [visible, setVisible] = useState(false);
+  const [CategoryAnimal, setCategoryAnimal] = useState('');
+  const [TipoAnimal, setTipooAnimal] = useState([]);
   const [feedback, setFeedback] = useState({
     type: '',
     content: '',
   });
+
+  useEffect(() => {
+    switch (CategoryAnimal) {
+      case 'iiwnfiwls':
+        setTipooAnimal([
+          'Vacas y toros',
+          'Cabras y chivos',
+          'Cerdos',
+          'Ovejas',
+          'Aves de corral',
+          'Abejas',
+          'Peces'
+        ]);
+        break;
+      case 'fejfwnnau':
+        setTipooAnimal([
+          'Conejo',
+          'Rata',
+          'Hámster',
+          'Gato',
+          'Erizo',
+          'Perro',
+          'Loro',
+          'Palomas',
+          'Pavo',
+        ]);
+        break;
+      default:
+        setTipooAnimal([]);
+    }
+  }, [CategoryAnimal]);
 
   return (
     <>
@@ -39,8 +74,9 @@ const NewPacient = () => {
                 Yup.object().shape({
                   emailPerson: Yup.string().email('Must be a valid email').max(100).required('El email es requerido'),
                   tipo: Yup.string().max(100).required('El tipo de animal es requerido'),
-                  idCategory: Yup.string().max(10).required('El categoria del animal es requerido'),
+                  idCategory: Yup.string().max(25),
                   nombre: Yup.string().max(50),
+                  avatar: Yup.string().max(350),
                   altura: Yup.number().required('Esta opcion es requerida'),
                   peso: Yup.number().required('Esta opcion es requerida'),
                 })
@@ -48,13 +84,14 @@ const NewPacient = () => {
         onSubmit={(values, actions) => {
           setTimeout(async () => {
             console.log(values);
+            values.idCategory = CategoryAnimal;
             try {
-              // await NewPacients(token, values);
+              await NewPacients(token, values);
               setFeedback({
                 type: 'success',
                 content: 'Se registro un nuevo mascota.',
               });
-              // setActualizarUser(true);
+              setActualizarPacient(true);
             } catch (error) {
               setFeedback({
                 type: 'error',
@@ -88,41 +125,38 @@ const NewPacient = () => {
                 gutterBottom
                 variant="body2"
               >
-                Usa una direccion de correo activa y verificada
+                Registra alguna mascota con o sin dueño.
               </Typography>
             </Box>
             <FormControl style={{ width: 320, marginBottom: 20 }}>
               <InputLabel id="demo-simple-select-label">Categoria</InputLabel>
               <Select
                 error={Boolean(touched.idCategory && errors.idCategory)}
-                helperText={touched.idCategory && errors.idCategory}
                 labelId="demo-simple-select-label"
                 id="demo-simple-select"
-                value={0}
+                value={CategoryAnimal}
                 name="idCategory"
-                onChange={handleChange}
+                onChange={(e) => setCategoryAnimal(e.target.value)}
                 onBlur={handleBlur}
               >
-                <MenuItem value={10}>Ten</MenuItem>
-                <MenuItem value={20}>Twenty</MenuItem>
-                <MenuItem value={30}>Thirty</MenuItem>
+                <MenuItem value="fejfwnnau">De Compania</MenuItem>
+                <MenuItem value="iiwnfiwls">De Granja</MenuItem>
               </Select>
             </FormControl>
             <FormControl style={{ width: 320 }}>
               <InputLabel id="demo-simple-select-label">Tipo</InputLabel>
               <Select
                 error={Boolean(touched.tipo && errors.tipo)}
-                helperText={touched.tipo && errors.tipo}
                 labelId="demo-simple-select-label"
                 id="demo-simple-select"
-                value={0}
+                value={values.tipo}
                 name="tipo"
                 onChange={handleChange}
                 onBlur={handleBlur}
               >
-                <MenuItem value={10}>Ten</MenuItem>
-                <MenuItem value={20}>Twenty</MenuItem>
-                <MenuItem value={30}>Thirty</MenuItem>
+                {TipoAnimal.map((item) => (
+                  <MenuItem value={item}>{item}</MenuItem>
+                ))}
               </Select>
             </FormControl>
             <TextField
@@ -174,6 +208,18 @@ const NewPacient = () => {
               onChange={handleChange}
               type="email"
               value={values.Phone}
+              variant="outlined"
+            />
+            <TextField
+              error={Boolean(touched.avatar && errors.avatar)}
+              fullWidth
+              helperText={touched.avatar && errors.avatar}
+              label="Fotogracia de la mascota"
+              margin="normal"
+              name="avatar"
+              onBlur={handleBlur}
+              onChange={handleChange}
+              value={values.avatar}
               variant="outlined"
             />
             <Box my={2}>

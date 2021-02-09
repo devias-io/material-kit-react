@@ -109,7 +109,7 @@ const Results = ({
                   Peso
                 </TableCell>
                 <TableCell>
-                  Animal de
+                  Animal
                 </TableCell>
                 <TableCell>
                   Registrado el
@@ -118,7 +118,8 @@ const Results = ({
             </TableHead>
             <TableBody>
               {pacient.filter((item) => {
-                return item.userName.toLowerCase().includes(searchPacient.toLowerCase());
+                return item.nombre.toLowerCase().includes(searchPacient.toLowerCase())
+                || item.emailPerson.toLowerCase().includes(searchPacient.toLowerCase());
               }).map((paciente) => (
                 <TableRow
                   hover
@@ -141,18 +142,18 @@ const Results = ({
                         className={classes.avatar}
                         src={paciente.avatar}
                       >
-                        {getInitials(paciente.userName)}
+                        {getInitials(paciente.nombre)}
                       </Avatar>
                       <Typography
                         color="textPrimary"
                         variant="body1"
                       >
-                        {paciente.userName || 'Sin Nombre'}
+                        {paciente.nombre || 'Sin Nombre'}
                       </Typography>
                     </Box>
                   </TableCell>
                   <TableCell>
-                    {paciente.email || 'Sin Dueño'}
+                    {paciente.emailPerson || 'Sin Dueño'}
                   </TableCell>
                   <TableCell>
                     {paciente.altura}
@@ -161,7 +162,7 @@ const Results = ({
                     {paciente.peso}
                   </TableCell>
                   <TableCell>
-                    {paciente.Phone || 'Ninnguno'}
+                    {paciente.tipo}
                   </TableCell>
                   <TableCell>
                     {moment(paciente.created_at).format('DD/MM/YYYY')}
