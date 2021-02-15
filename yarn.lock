@@ -9754,6 +9754,11 @@ react-helmet@^6.1.0:
     react-fast-compare "^3.1.1"
     react-side-effect "^2.1.0"
 
+react-images-uploading@^3.1.2:
+  version "3.1.2"
+  resolved "https://registry.yarnpkg.com/react-images-uploading/-/react-images-uploading-3.1.2.tgz#c1636bab2cc709cdce47dba3f043a33a8ffe9edf"
+  integrity sha512-Yy7r+I/f1gPM1qN95uvAoHOTGMG23Bu4kgXQLJoS7rnAQ/InpI3y6U0S0QMMCX+85c1JNdNZl4Bn/Z4ge39emQ==
+
 react-is@^16.13.1, react-is@^16.7.0, react-is@^16.8.1:
   version "16.13.1"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
