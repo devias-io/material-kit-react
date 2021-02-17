@@ -9,63 +9,56 @@ import {
   Typography,
   Snackbar,
 } from '@material-ui/core';
-import ImageUploading from 'react-images-uploading';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import Alert from '@material-ui/lab/Alert';
-import { NewPacients } from '../api/pacient';
+import { newProduct } from '../api/products';
 import { TokenContext } from '../lib/context/contextToken';
 
-const NewProduct = ({ setActualizarPacient }) => {
+const NewProduct = ({ setActualizarProducts }) => {
   const { token } = useContext(TokenContext);
   const [visible, setVisible] = useState(false);
-  const [CategoryAnimal] = useState('');
-  const [images, setImages] = React.useState([]);
   const [feedback, setFeedback] = useState({
     type: '',
     content: '',
   });
 
-  const onChange = (imageList, addUpdateIndex) => {
-    // data for submit
-    console.log(imageList, addUpdateIndex);
-    setImages(imageList);
-  };
-
   return (
     <>
       <Formik
         initialValues={{
-          source: '',
           name: '',
-          stock: 0,
+          stock: '',
+          description: '',
         }}
         validationSchema={
                 Yup.object().shape({
-                  emailPerson: Yup.string().email('Must be a valid email').max(100).required('El email es requerido'),
-                  tipo: Yup.string().max(100).required('El tipo de animal es requerido'),
-                  idCategory: Yup.string().max(25),
-                  nombre: Yup.string().max(50),
-                  avatar: Yup.string().max(350),
-                  altura: Yup.number().required('Esta opcion es requerida'),
-                  peso: Yup.number().required('Esta opcion es requerida'),
+                  name: Yup.string().max(50),
+                  stock: Yup.number().required('Esta opcion es requerida'),
                 })
               }
         onSubmit={(values, actions) => {
           setTimeout(async () => {
-            console.log(values);
-            values.idCategory = CategoryAnimal;
+            const img = document.getElementById('foto');
+
+            const form = new FormData();
+            form.append('name', values.name);
+            form.append('stock', values.stock);
+            form.append('source', img.files[0]);
+            form.append('description', values.description);
+
             try {
-              await NewPacients(token, values);
+              await newProduct(token, form);
               setFeedback({
                 type: 'success',
-                content: 'Se registro un nuevo mascota.',
+                content: 'Se registro un nuevo producto.',
               });
-              setActualizarPacient(true);
+              setVisible(false);
+              setActualizarProducts(true);
             } catch (error) {
               setFeedback({
                 type: 'error',
-                content: `${error.message} Posiblemente esta mascota ya existe.`,
+                content: `${error.message} Posiblemente este producto ya existe.`,
               });
             }
             setVisible(true);
@@ -98,43 +91,7 @@ const NewProduct = ({ setActualizarPacient }) => {
                 Registra producto para mascotas.
               </Typography>
             </Box>
-            <ImageUploading
-              multiple
-              value={images}
-              onChange={onChange}
-              maxNumber={2}
-              dataURLKey="data_url"
-            >
-              {({
-                imageList,
-                onImageUpload,
-                onImageUpdate,
-                onImageRemove,
-                isDragging,
-                dragProps,
-              }) => (
-                // write your building UI
-                <div className="upload__image-wrapper">
-                  <button
-                    style={isDragging ? { color: 'red' } : undefined}
-                    onClick={onImageUpload}
-                    {...dragProps}
-                  >
-                    Seleccionar imagen
-                  </button>
-                    &nbsp;
-                  {imageList.map((image, index) => (
-                    <div key={index} className="image-item">
-                      <img src={image.data_url} alt="" width="100" />
-                      <div className="image-item__btn-wrapper">
-                        <button onClick={() => onImageUpdate(index)}>Cambiar</button>
-                        <button onClick={() => onImageRemove(index)}>Quitar</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ImageUploading>
+            <input type="file" id="foto" />
             <TextField
               error={Boolean(touched.name && errors.name)}
               fullWidth
@@ -151,13 +108,26 @@ const NewProduct = ({ setActualizarPacient }) => {
               error={Boolean(touched.stock && errors.stock)}
               fullWidth
               helperText={touched.stock && errors.stock}
-              label="Altura"
+              label="stock"
               margin="normal"
               name="stock"
               onBlur={handleBlur}
               onChange={handleChange}
               type="number"
               value={values.stock}
+              variant="outlined"
+            />
+            <TextField
+              error={Boolean(touched.description && errors.description)}
+              fullWidth
+              helperText={touched.description && errors.description}
+              label="Description"
+              margin="normal"
+              name="description"
+              onBlur={handleBlur}
+              onChange={handleChange}
+              type="text"
+              value={values.description}
               variant="outlined"
             />
             <Box my={2}>

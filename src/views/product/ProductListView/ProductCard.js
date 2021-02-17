@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
+import moment from 'moment';
 import {
   Avatar,
   Box,
@@ -12,7 +13,7 @@ import {
   makeStyles
 } from '@material-ui/core';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
-import GetAppIcon from '@material-ui/icons/GetApp';
+import { BASE_API } from '../../../api';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -43,8 +44,8 @@ const ProductCard = ({ className, product, ...rest }) => {
           mb={3}
         >
           <Avatar
-            alt="Product"
-            src={product.media}
+            alt={product.name}
+            src={`${BASE_API}/static/products/${product.source}`}
             variant="square"
           />
         </Box>
@@ -54,7 +55,7 @@ const ProductCard = ({ className, product, ...rest }) => {
           gutterBottom
           variant="h4"
         >
-          {product.title}
+          {product.name}
         </Typography>
         <Typography
           align="center"
@@ -85,25 +86,21 @@ const ProductCard = ({ className, product, ...rest }) => {
               display="inline"
               variant="body2"
             >
-              Updated 2hr ago
+              {moment(product.update_at).format('LL')}
             </Typography>
           </Grid>
           <Grid
             className={classes.statsItem}
             item
           >
-            <GetAppIcon
-              className={classes.statsIcon}
-              color="action"
-            />
             <Typography
               color="textSecondary"
               display="inline"
               variant="body2"
             >
-              {product.totalDownloads}
+              {product.stock}
               {' '}
-              Downloads
+              Stock
             </Typography>
           </Grid>
         </Grid>

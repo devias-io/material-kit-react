@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+/* eslint-disable max-len */
+/* eslint-disable no-unused-expressions */
+import React, { useEffect, useState, useContext } from 'react';
 import {
   Box,
   Container,
@@ -9,7 +11,8 @@ import { Pagination } from '@material-ui/lab';
 import Page from 'src/components/Page';
 import Toolbar from './Toolbar';
 import ProductCard from './ProductCard';
-import data from './data';
+import { getProducts } from '../../../api/products';
+import { TokenContext } from '../../../lib/context/contextToken';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -24,8 +27,26 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ProductList = () => {
+  const { token } = useContext(TokenContext);
   const classes = useStyles();
-  const [products] = useState(data);
+  const [DataProducts, setProducts] = useState([]);
+  const [actualizarProducts, setActualizarProducts] = useState(false);
+  const [SearchProducts, setSearchProducts] = useState('');
+
+  useEffect(() => {
+    try {
+      const fetchUsers = async () => {
+        const { products } = await (await getProducts(token)).data;
+        setProducts(products);
+      };
+
+      fetchUsers();
+
+      actualizarProducts && setActualizarProducts(false);
+    } catch (error) {
+      console.log(error.message);
+    }
+  }, [actualizarProducts]);
 
   return (
     <Page
@@ -33,13 +54,16 @@ const ProductList = () => {
       title="Products"
     >
       <Container maxWidth={false}>
-        <Toolbar />
+        <Toolbar setActualizarProducts={setActualizarProducts} setSearchProducts={setSearchProducts} />
         <Box mt={3}>
           <Grid
             container
             spacing={3}
           >
-            {products.map((product) => (
+            {DataProducts.filter((item) => {
+              return item.name.toLowerCase().includes(SearchProducts.toLowerCase())
+                || item.stock.toString().toLowerCase().includes(SearchProducts.toLowerCase());
+            }).map((product) => (
               <Grid
                 item
                 key={product.id}

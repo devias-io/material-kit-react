@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
@@ -25,7 +26,9 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const Toolbar = ({ className, ...rest }) => {
+const Toolbar = ({
+  className, setActualizarProducts, setSearchProducts, ...rest
+}) => {
   const [modal, setModal] = useState(false);
   const classes = useStyles();
 
@@ -52,6 +55,7 @@ const Toolbar = ({ className, ...rest }) => {
             <Box maxWidth={500}>
               <TextField
                 fullWidth
+                onChange={(event) => setSearchProducts(event.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -73,7 +77,7 @@ const Toolbar = ({ className, ...rest }) => {
       </Box>
 
       <ModalElement visible={modal} setVisible={setModal}>
-        <NewProduct />
+        <NewProduct setActualizarProducts={setActualizarProducts} />
       </ModalElement>
     </div>
   );
