@@ -112,7 +112,13 @@ const Results = ({
                   Animal
                 </TableCell>
                 <TableCell>
+                  Sexo
+                </TableCell>
+                <TableCell>
                   Registrado el
+                </TableCell>
+                <TableCell>
+                  Nacio el
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -165,7 +171,13 @@ const Results = ({
                     {paciente.tipo}
                   </TableCell>
                   <TableCell>
-                    {moment(paciente.created_at).format('DD/MM/YYYY')}
+                    {paciente.sexo}
+                  </TableCell>
+                  <TableCell>
+                    {moment(paciente.created_at).format('LLL')}
+                  </TableCell>
+                  <TableCell>
+                    {moment(paciente.nacimiento).format('LL')}
                   </TableCell>
                 </TableRow>
               ))}

@@ -10,6 +10,7 @@ import {
   InputLabel,
   MenuItem,
   Snackbar,
+  Grid,
 } from '@material-ui/core';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -65,15 +66,19 @@ const NewPacient = ({ setActualizarPacient }) => {
           tipo: '',
           idCategory: '',
           nombre: '',
-          altura: 0,
-          peso: 0,
+          altura: '',
+          peso: '',
+          sexo: '',
           emailPerson: '',
+          nacimiento: '',
           avatar: '',
         }}
         validationSchema={
                 Yup.object().shape({
                   emailPerson: Yup.string().email('Must be a valid email').max(100).required('El email es requerido'),
                   tipo: Yup.string().max(100).required('El tipo de animal es requerido'),
+                  nacimiento: Yup.string().max(100).required('El nacimiento del animal es requerido'),
+                  sexo: Yup.string().max(100).required('El sexo del animal es requerido'),
                   idCategory: Yup.string().max(25),
                   nombre: Yup.string().max(50),
                   avatar: Yup.string().max(350),
@@ -92,6 +97,7 @@ const NewPacient = ({ setActualizarPacient }) => {
                 content: 'Se registro un nuevo mascota.',
               });
               setActualizarPacient(true);
+              setVisible(true);
             } catch (error) {
               setFeedback({
                 type: 'error',
@@ -128,7 +134,7 @@ const NewPacient = ({ setActualizarPacient }) => {
                 Registra alguna mascota con o sin dueño.
               </Typography>
             </Box>
-            <FormControl style={{ width: 320, marginBottom: 20 }}>
+            <FormControl style={{ width: 320, marginBottom: 10 }}>
               <InputLabel id="demo-simple-select-label">Categoria</InputLabel>
               <Select
                 error={Boolean(touched.idCategory && errors.idCategory)}
@@ -143,7 +149,7 @@ const NewPacient = ({ setActualizarPacient }) => {
                 <MenuItem value="iiwnfiwls">De Granja</MenuItem>
               </Select>
             </FormControl>
-            <FormControl style={{ width: 320 }}>
+            <FormControl style={{ width: 320, marginBottom: 10 }}>
               <InputLabel id="demo-simple-select-label">Tipo</InputLabel>
               <Select
                 error={Boolean(touched.tipo && errors.tipo)}
@@ -159,69 +165,119 @@ const NewPacient = ({ setActualizarPacient }) => {
                 ))}
               </Select>
             </FormControl>
-            <TextField
-              error={Boolean(touched.nombre && errors.nombre)}
-              fullWidth
-              helperText={touched.nombre && errors.nombre}
-              label="Nombre"
-              margin="normal"
-              name="nombre"
-              onBlur={handleBlur}
-              onChange={handleChange}
-              value={values.nombre}
-              variant="outlined"
-            />
-            <TextField
-              error={Boolean(touched.altura && errors.altura)}
-              fullWidth
-              helperText={touched.altura && errors.altura}
-              label="Altura"
-              margin="normal"
-              name="altura"
-              onBlur={handleBlur}
-              onChange={handleChange}
-              type="number"
-              value={values.email}
-              variant="outlined"
-            />
-            <TextField
-              error={Boolean(touched.peso && errors.peso)}
-              fullWidth
-              helperText={touched.peso && errors.peso}
-              label="Peso"
-              margin="normal"
-              name="peso"
-              onBlur={handleBlur}
-              onChange={handleChange}
-              type="number"
-              value={values.Phone}
-              variant="outlined"
-            />
-            <TextField
-              error={Boolean(touched.emailPerson && errors.emailPerson)}
-              fullWidth
-              helperText={touched.emailPerson && errors.emailPerson}
-              label="Email del dueño"
-              margin="normal"
-              name="emailPerson"
-              onBlur={handleBlur}
-              onChange={handleChange}
-              type="email"
-              value={values.Phone}
-              variant="outlined"
-            />
-            <TextField
-              error={Boolean(touched.avatar && errors.avatar)}
-              fullWidth
-              helperText={touched.avatar && errors.avatar}
-              label="Fotogracia de la mascota"
-              margin="normal"
-              name="avatar"
-              onBlur={handleBlur}
-              onChange={handleChange}
-              value={values.avatar}
-              variant="outlined"
-            />
+            <FormControl style={{ width: 320, marginBottom: 10 }}>
+              <InputLabel id="demo-simple-select-label">Sexo</InputLabel>
+              <Select
+                error={Boolean(touched.sexo && errors.sexo)}
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={values.sexo}
+                name="sexo"
+                onChange={handleChange}
+                onBlur={handleBlur}
+              >
+                <MenuItem value="Macho">Macho</MenuItem>
+                <MenuItem value="Hembra">Hembra</MenuItem>
+              </Select>
+            </FormControl>
+            <Grid container spacing={3}>
+              <Grid item xs={6}>
+                <TextField
+                  error={Boolean(touched.nombre && errors.nombre)}
+                  fullWidth
+                  helperText={touched.nombre && errors.nombre}
+                  label="Nombre"
+                  margin="normal"
+                  name="nombre"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  value={values.nombre}
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  error={Boolean(touched.avatar && errors.avatar)}
+                  fullWidth
+                  helperText={touched.avatar && errors.avatar}
+                  label="Fotografia de la mascota"
+                  margin="normal"
+                  name="avatar"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  value={values.avatar}
+                  variant="outlined"
+                />
+              </Grid>
+            </Grid>
+            <Grid container spacing={3}>
+              <Grid item xs={6}>
+                <TextField
+                  error={Boolean(touched.altura && errors.altura)}
+                  fullWidth
+                  helperText={touched.altura && errors.altura}
+                  label="Altura"
+                  margin="normal"
+                  name="altura"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  type="number"
+                  value={values.altura}
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  error={Boolean(touched.peso && errors.peso)}
+                  fullWidth
+                  helperText={touched.peso && errors.peso}
+                  label="Peso"
+                  margin="normal"
+                  name="peso"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  type="number"
+                  value={values.peso}
+                  variant="outlined"
+                />
+              </Grid>
+            </Grid>
+            <Grid container spacing={3}>
+              <Grid item xs={6}>
+                <TextField
+                  error={Boolean(touched.emailPerson && errors.emailPerson)}
+                  fullWidth
+                  helperText={touched.emailPerson && errors.emailPerson}
+                  label="Email del dueño"
+                  margin="normal"
+                  name="emailPerson"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  type="email"
+                  value={values.emailPerson}
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  error={Boolean(touched.nacimiento && errors.nacimiento)}
+                  fullWidth
+                  helperText={touched.nacimiento && errors.nacimiento}
+                  id="date"
+                  label="Nacimiento"
+                  type="date"
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  margin="normal"
+                  name="nacimiento"
+                  defaultValue={values.nacimiento}
+                  variant="outlined"
+                />
+              </Grid>
+            </Grid>
             <Box my={2}>
               <Button
                 color="primary"
