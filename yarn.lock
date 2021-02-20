@@ -3587,6 +3587,11 @@ class-utils@^0.3.5:
     isobject "^3.0.0"
     static-extend "^0.1.1"
 
+classnames@^2.2.6:
+  version "2.2.6"
+  resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.2.6.tgz#43935bffdd291f326dad0a205309b38d00f650ce"
+  integrity sha512-JR/iSQOSt+LQIWwrwEzJ9uk0xfN3mTVYMwt1Ir5mUcSN6pU+V4zQFFaJsclJbPuAUQH+yfWef6tm7l1quW3C8Q==
+
 clean-css@^4.2.3:
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/clean-css/-/clean-css-4.2.3.tgz#507b5de7d97b48ee53d84adb0160ff6216380f78"
@@ -9673,6 +9678,15 @@ react-app-polyfill@^2.0.0:
     raf "^3.4.1"
     regenerator-runtime "^0.13.7"
     whatwg-fetch "^3.4.1"
+
+react-awesome-calendar@^1.0.14:
+  version "1.0.14"
+  resolved "https://registry.yarnpkg.com/react-awesome-calendar/-/react-awesome-calendar-1.0.14.tgz#b23d4e620ad2806e9d9dee08400faeba1551bd76"
+  integrity sha512-AlwFVoECJo7H9z4anVYrb21HVnrEE1iHtoh9V0Emi0dFKf5PGARzQX/8z/lPAB3cuwM/5rME81KqhU5ruiMVxQ==
+  dependencies:
+    classnames "^2.2.6"
+    react "^16.13.1"
+    react-dom "^16.13.1"
 
 react-chartjs-2@^2.10.0:
   version "2.11.1"
