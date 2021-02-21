@@ -17,7 +17,8 @@ import {
   Settings as SettingsIcon,
   ShoppingBag as ShoppingBagIcon,
   User as UserIcon,
-  Users as UsersIcon
+  Users as UsersIcon,
+  Calendar as CalendarIcon
 } from 'react-feather';
 import { useSelector } from 'react-redux';
 import { TokenContext } from '../../../lib/context/contextToken';
@@ -44,6 +45,11 @@ const items = [
     href: '/app/pacient',
     icon: Pest,
     title: 'Pacientes'
+  },
+  {
+    href: '/app/calendario',
+    icon: CalendarIcon,
+    title: 'Calendarios'
   },
   {
     href: '/app/account',

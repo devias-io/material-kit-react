@@ -112,6 +112,9 @@ const Results = ({
                   Animal
                 </TableCell>
                 <TableCell>
+                  Raza
+                </TableCell>
+                <TableCell>
                   Sexo
                 </TableCell>
                 <TableCell>
@@ -169,6 +172,9 @@ const Results = ({
                   </TableCell>
                   <TableCell>
                     {paciente.tipo}
+                  </TableCell>
+                  <TableCell>
+                    {paciente.raza}
                   </TableCell>
                   <TableCell>
                     {paciente.sexo}

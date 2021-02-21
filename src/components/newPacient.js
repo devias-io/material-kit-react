@@ -17,12 +17,15 @@ import { Formik } from 'formik';
 import Alert from '@material-ui/lab/Alert';
 import { NewPacients } from '../api/pacient';
 import { TokenContext } from '../lib/context/contextToken';
+import { razasPerro, razasGato } from '../utils/razas';
 
 const NewPacient = ({ setActualizarPacient }) => {
   const { token } = useContext(TokenContext);
   const [visible, setVisible] = useState(false);
   const [CategoryAnimal, setCategoryAnimal] = useState('');
+  const [selectTipo, setSelectTipo] = useState('');
   const [TipoAnimal, setTipooAnimal] = useState([]);
+  const [RazaAnimal, setRazaAnimal] = useState([]);
   const [feedback, setFeedback] = useState({
     type: '',
     content: '',
@@ -59,6 +62,19 @@ const NewPacient = ({ setActualizarPacient }) => {
     }
   }, [CategoryAnimal]);
 
+  useEffect(() => {
+    switch (selectTipo) {
+      case 'Perro':
+        setRazaAnimal(razasPerro);
+        break;
+      case 'Gato':
+        setRazaAnimal(razasGato);
+        break;
+      default:
+        setRazaAnimal([]);
+    }
+  }, [selectTipo]);
+
   return (
     <>
       <Formik
@@ -72,16 +88,18 @@ const NewPacient = ({ setActualizarPacient }) => {
           emailPerson: '',
           nacimiento: '',
           avatar: '',
+          raza: '',
         }}
         validationSchema={
                 Yup.object().shape({
                   emailPerson: Yup.string().email('Must be a valid email').max(100).required('El email es requerido'),
-                  tipo: Yup.string().max(100).required('El tipo de animal es requerido'),
+                  tipo: Yup.string().max(100),
                   nacimiento: Yup.string().max(100).required('El nacimiento del animal es requerido'),
                   sexo: Yup.string().max(100).required('El sexo del animal es requerido'),
                   idCategory: Yup.string().max(25),
                   nombre: Yup.string().max(50),
                   avatar: Yup.string().max(350),
+                  raza: Yup.string().required('Esta opcion es requerida'),
                   altura: Yup.number().required('Esta opcion es requerida'),
                   peso: Yup.number().required('Esta opcion es requerida'),
                 })
@@ -90,6 +108,8 @@ const NewPacient = ({ setActualizarPacient }) => {
           setTimeout(async () => {
             console.log(values);
             values.idCategory = CategoryAnimal;
+            values.tipo = selectTipo;
+
             try {
               await NewPacients(token, values);
               setFeedback({
@@ -134,52 +154,82 @@ const NewPacient = ({ setActualizarPacient }) => {
                 Registra alguna mascota con o sin dueño.
               </Typography>
             </Box>
-            <FormControl style={{ width: 320, marginBottom: 10 }}>
-              <InputLabel id="demo-simple-select-label">Categoria</InputLabel>
-              <Select
-                error={Boolean(touched.idCategory && errors.idCategory)}
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                value={CategoryAnimal}
-                name="idCategory"
-                onChange={(e) => setCategoryAnimal(e.target.value)}
-                onBlur={handleBlur}
-              >
-                <MenuItem value="fejfwnnau">De Compania</MenuItem>
-                <MenuItem value="iiwnfiwls">De Granja</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl style={{ width: 320, marginBottom: 10 }}>
-              <InputLabel id="demo-simple-select-label">Tipo</InputLabel>
-              <Select
-                error={Boolean(touched.tipo && errors.tipo)}
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                value={values.tipo}
-                name="tipo"
-                onChange={handleChange}
-                onBlur={handleBlur}
-              >
-                {TipoAnimal.map((item) => (
-                  <MenuItem value={item}>{item}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl style={{ width: 320, marginBottom: 10 }}>
-              <InputLabel id="demo-simple-select-label">Sexo</InputLabel>
-              <Select
-                error={Boolean(touched.sexo && errors.sexo)}
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                value={values.sexo}
-                name="sexo"
-                onChange={handleChange}
-                onBlur={handleBlur}
-              >
-                <MenuItem value="Macho">Macho</MenuItem>
-                <MenuItem value="Hembra">Hembra</MenuItem>
-              </Select>
-            </FormControl>
+            <Grid container spacing={1}>
+              <Grid item md={5}>
+                <FormControl style={{ width: 200, marginBottom: 10 }}>
+                  <InputLabel id="demo-simple-select-label">Categoria</InputLabel>
+                  <Select
+                    error={Boolean(touched.idCategory && errors.idCategory)}
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select"
+                    value={CategoryAnimal}
+                    name="idCategory"
+                    onChange={(e) => setCategoryAnimal(e.target.value)}
+                    onBlur={handleBlur}
+                  >
+                    <MenuItem value="fejfwnnau">De Compania</MenuItem>
+                    <MenuItem value="iiwnfiwls">De Granja</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item md={5}>
+                <FormControl style={{ width: 250, marginBottom: 10 }}>
+                  <InputLabel id="demo-simple-select-label">Tipo</InputLabel>
+                  <Select
+                    error={Boolean(touched.tipo && errors.tipo)}
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select"
+                    value={selectTipo}
+                    name="tipo"
+                    onChange={(e) => {
+                      setSelectTipo(e.target.value);
+                    }}
+                    onBlur={handleBlur}
+                  >
+                    {TipoAnimal.map((item) => (
+                      <MenuItem value={item}>{item}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+            <Grid container spacing={1}>
+              <Grid item md={5}>
+                <FormControl style={{ width: 200, marginBottom: 10 }}>
+                  <InputLabel id="demo-simple-select-label">Raza</InputLabel>
+                  <Select
+                    error={Boolean(touched.raza && errors.raza)}
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select"
+                    value={values.raza}
+                    name="raza"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  >
+                    {RazaAnimal.map((item) => (
+                      <MenuItem value={item}>{item}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item md={5}>
+                <FormControl style={{ width: 250, marginBottom: 10 }}>
+                  <InputLabel id="demo-simple-select-label">Sexo</InputLabel>
+                  <Select
+                    error={Boolean(touched.sexo && errors.sexo)}
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select"
+                    value={values.sexo}
+                    name="sexo"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  >
+                    <MenuItem value="Macho">Macho</MenuItem>
+                    <MenuItem value="Hembra">Hembra</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
             <Grid container spacing={3}>
               <Grid item xs={6}>
                 <TextField
