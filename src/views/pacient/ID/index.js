@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable camelcase */
 /* eslint-disable no-unused-expressions */
 import React, { useEffect, useState, useContext } from 'react';
@@ -16,6 +17,7 @@ import Page from 'src/components/Page';
 import Calendar from 'react-awesome-calendar';
 import { GetPacient } from '../../../api/pacient';
 import { GetVacunasByTipos } from '../../../api/vacunas';
+import TableMisVacunas from './table-mis-vacunas';
 import { TokenContext } from '../../../lib/context/contextToken';
 
 const useStyles = makeStyles((theme) => ({
@@ -45,7 +47,7 @@ const PacientView = () => {
       const fetchPacient = async () => {
         const { pacient } = await (await GetPacient(token, idPacient.idPacient)).data;
 
-        const { vacunas } = await (await GetVacunasByTipos(token, pacient.tipo)).data;
+        const { vacunas } = await (await GetVacunasByTipos(token, pacient.tipo, idPacient.idPacient)).data;
         setMisVacunas(vacunas);
 
         setPacient(pacient);
@@ -133,9 +135,7 @@ const PacientView = () => {
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  Mis vacunas
-                  {' '}
-                  {MisVacuas.length}
+                  <TableMisVacunas vacunas={MisVacuas} />
                 </AccordionDetails>
               </Accordion>
 
