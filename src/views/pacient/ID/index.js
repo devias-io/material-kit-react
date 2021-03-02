@@ -16,9 +16,10 @@ import { useParams } from 'react-router-dom';
 import Page from 'src/components/Page';
 import Calendar from 'react-awesome-calendar';
 import { GetPacient } from '../../../api/pacient';
-import { GetVacunasByTipos } from '../../../api/vacunas';
+import { GetVacunasByTipos, GetCalendarVacunas } from '../../../api/vacunas';
 import TableMisVacunas from './table-mis-vacunas';
 import { TokenContext } from '../../../lib/context/contextToken';
+import Toolbar from './Toolbar';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -33,6 +34,7 @@ const PacientView = () => {
   const { token } = useContext(TokenContext);
   const [Pacient, setPacient] = useState();
   const [MisVacuas, setMisVacunas] = useState([]);
+  const [MyCalendario, setCalendario] = useState([]);
   const classes = useStyles();
   const idPacient = useParams();
   const [expanded, setExpanded] = useState(false);
@@ -46,11 +48,14 @@ const PacientView = () => {
     try {
       const fetchPacient = async () => {
         const { pacient } = await (await GetPacient(token, idPacient.idPacient)).data;
+        setPacient(pacient);
 
         const { vacunas } = await (await GetVacunasByTipos(token, pacient.tipo, idPacient.idPacient)).data;
         setMisVacunas(vacunas);
 
-        setPacient(pacient);
+        const { calendario } = await (await GetCalendarVacunas(token, idPacient.idPacient)).data;
+        setCalendario(calendario);
+
         setLoading(false);
       };
 
@@ -60,26 +65,6 @@ const PacientView = () => {
       setLoading(false);
     }
   }, [idPacient]);
-
-  const events = [{
-    id: 1,
-    color: '#fd3153',
-    from: '2021-01-02T18:00:00+00:00',
-    to: '2019-05-05T19:00:00+00:00',
-    title: 'This is an event'
-  }, {
-    id: 2,
-    color: '#1ccb9e',
-    from: '2021-01-01T13:00:00+00:00',
-    to: '2019-05-05T14:00:00+00:00',
-    title: 'This is another event'
-  }, {
-    id: 3,
-    color: '#3694DF',
-    from: '2021-05-05T13:00:00+00:00',
-    to: '2019-05-05T20:00:00+00:00',
-    title: 'This is also another event'
-  }];
 
   const calendario_tipo_pacient = (tipo) => {
     switch (tipo) {
@@ -98,6 +83,7 @@ const PacientView = () => {
       title="Paciente"
     >
       <Container maxWidth={false}>
+        <Toolbar tipo={Pacient && Pacient.tipo} />
         <Box mt={3}>
           {loading ? (
             <h2>Cargando....</h2>
@@ -117,7 +103,7 @@ const PacientView = () => {
                 </AccordionSummary>
                 <AccordionDetails>
                   <Calendar
-                    events={events}
+                    events={MyCalendario}
                   />
                 </AccordionDetails>
               </Accordion>
