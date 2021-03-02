@@ -46,3 +46,12 @@ export const CreateVacunaPacient = async (token, data) => {
   });
   return response;
 };
+
+export const DeleteVacunaPacient = async (token, idVacuna) => {
+  api.defaults.headers['access-token'] = token;
+  const response = await api({
+    method: 'DELETE',
+    url: `/vacunas/${idVacuna}`,
+  });
+  return response;
+};

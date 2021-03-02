@@ -126,7 +126,7 @@ const PacientView = () => {
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <TableMisVacunas vacunas={MisVacuas} />
+                  <TableMisVacunas vacunas={MisVacuas} setActualizarCalendario={setActualizarCalendario} />
                 </AccordionDetails>
               </Accordion>
 

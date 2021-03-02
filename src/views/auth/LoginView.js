@@ -58,7 +58,7 @@ const LoginView = () => {
           const responseLogin = await LoginUser(GoogleMe);
           Cookies.set('access-token', responseLogin.data.me.token);
           dispatch(SetSesion(GoogleMe));
-          window.location.href = '/app/dashboard';
+          window.location.href = '/app/pacient';
         }).catch((error) => {
           setLoading(false);
           setVisible(true);

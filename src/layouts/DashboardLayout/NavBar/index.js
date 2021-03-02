@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import React, { useEffect, useContext } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
@@ -24,45 +25,6 @@ import { useSelector } from 'react-redux';
 import { TokenContext } from '../../../lib/context/contextToken';
 import NavItem from './NavItem';
 
-const items = [
-  {
-    href: '/app/dashboard',
-    icon: BarChartIcon,
-    title: 'Panel'
-  },
-  {
-    href: '/app/customers',
-    icon: UsersIcon,
-    title: 'Clientes'
-  },
-  {
-    href: '/app/products',
-    icon: ShoppingBagIcon,
-    title: 'Productos'
-  },
-
-  {
-    href: '/app/pacient',
-    icon: Pest,
-    title: 'Pacientes'
-  },
-  {
-    href: '/app/calendario',
-    icon: CalendarIcon,
-    title: 'Calendarios'
-  },
-  {
-    href: '/app/account',
-    icon: UserIcon,
-    title: 'Mi cuenta'
-  },
-  {
-    href: '/app/settings',
-    icon: SettingsIcon,
-    title: 'Ajustes'
-  },
-];
-
 const useStyles = makeStyles(() => ({
   mobileDrawer: {
     width: 256
@@ -84,6 +46,62 @@ const NavBar = ({ onMobileClose, openMobile }) => {
   const { me } = useSelector((state) => state.Sesion);
   const classes = useStyles();
   const location = useLocation();
+
+  let items;
+
+  if (me.isAdmin) {
+    items = [
+      {
+        href: '/app/dashboard',
+        icon: BarChartIcon,
+        title: 'Panel'
+      },
+      {
+        href: '/app/customers',
+        icon: UsersIcon,
+        title: 'Clientes'
+      },
+      {
+        href: '/app/products',
+        icon: ShoppingBagIcon,
+        title: 'Productos'
+      },
+
+      {
+        href: '/app/pacient',
+        icon: Pest,
+        title: 'Mascotas'
+      },
+      {
+        href: '/app/calendario',
+        icon: CalendarIcon,
+        title: 'Calendarios'
+      },
+      {
+        href: '/app/account',
+        icon: UserIcon,
+        title: 'Mi cuenta'
+      },
+      {
+        href: '/app/settings',
+        icon: SettingsIcon,
+        title: 'Ajustes'
+      },
+    ];
+  } else {
+    items = [
+      {
+        href: '/app/pacient',
+        icon: Pest,
+        title: 'Mis mascotas'
+      },
+      {
+        href: '/app/account',
+        icon: UserIcon,
+        title: 'Mi cuenta'
+      },
+    ];
+  }
 
   useEffect(() => {
     if (openMobile && onMobileClose) {
