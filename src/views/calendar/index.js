@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 /* eslint-disable no-unused-expressions */
-import React from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import Accordion from '@material-ui/core/Accordion';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
@@ -13,6 +13,8 @@ import {
 } from '@material-ui/core';
 import Calendar from 'react-awesome-calendar';
 import Page from 'src/components/Page';
+import { GetCalendario } from '../../api/vacunas';
+import { TokenContext } from '../../lib/context/contextToken';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -32,33 +34,33 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const events = [{
-  id: 1,
-  color: '#fd3153',
-  from: '2019-05-02T18:00:00+00:00',
-  to: '2019-05-05T19:00:00+00:00',
-  title: 'This is an event'
-}, {
-  id: 2,
-  color: '#1ccb9e',
-  from: '2019-05-01T13:00:00+00:00',
-  to: '2019-05-05T14:00:00+00:00',
-  title: 'This is another event'
-}, {
-  id: 3,
-  color: '#3694DF',
-  from: '2019-05-05T13:00:00+00:00',
-  to: '2019-05-05T20:00:00+00:00',
-  title: 'This is also another event'
-}];
-
 const CalendarView = () => {
+  const { token } = useContext(TokenContext);
   const classes = useStyles();
-  const [expanded, setExpanded] = React.useState(false);
+  const [dataCalendario, setCalendario] = useState([]);
+  const [expanded, setExpanded] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
   };
+
+  useEffect(() => {
+    setLoading(true);
+
+    try {
+      const fetchCalendario = async () => {
+        const { calendario } = await (await GetCalendario(token)).data;
+        setCalendario(calendario);
+        setLoading(false);
+      };
+
+      fetchCalendario();
+    } catch (error) {
+      console.log(error.message);
+      setLoading(false);
+    }
+  }, []);
 
   return (
     <Page
@@ -77,9 +79,11 @@ const CalendarView = () => {
               <Typography className={classes.secondaryHeading}>Ver todas las vacunas de mis pacientes</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Calendar
-                events={events}
-              />
+              {loading ? 'Cargando...' : (
+                <Calendar
+                  events={dataCalendario}
+                />
+              )}
             </AccordionDetails>
           </Accordion>
 

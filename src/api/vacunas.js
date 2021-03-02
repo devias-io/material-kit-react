@@ -19,11 +19,30 @@ export const GetCalendarVacunas = async (token, idPacient) => {
   return response;
 };
 
-export const GetVacunasTipos = async (token, tipo) => {
+export const GetCalendario = async (token) => {
   api.defaults.headers['access-token'] = token;
   const response = await api({
     method: 'GET',
-    url: `/vacunas/${tipo}`,
+    url: '/vacunas/calendario-general',
+  });
+  return response;
+};
+
+export const GetVacunasTipos = async (token, idPacient) => {
+  api.defaults.headers['access-token'] = token;
+  const response = await api({
+    method: 'GET',
+    url: `/vacunas/${idPacient}`,
+  });
+  return response;
+};
+
+export const CreateVacunaPacient = async (token, data) => {
+  api.defaults.headers['access-token'] = token;
+  const response = await api({
+    method: 'POST',
+    url: '/vacunas',
+    data,
   });
   return response;
 };

@@ -23,7 +23,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Toolbar = ({
-  className, setActualizarPacient, tipo, ...rest
+  className, setActualizarCalendario, tipo, idPacient, ...rest
 }) => {
   const [temperatura, setTemperatura] = useState(0);
   const [isValidate, setIsValidate] = useState(false);
@@ -71,7 +71,13 @@ const Toolbar = ({
               Validar
             </Button>
           </>
-        ) : <NewVacunaPacient tipo={tipo} /> }
+        ) : (
+          <NewVacunaPacient
+            tipo={tipo}
+            idPacient={idPacient}
+            setActualizarCalendario={setActualizarCalendario}
+          />
+        ) }
       </ModalElement>
     </div>
   );

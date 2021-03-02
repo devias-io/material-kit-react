@@ -39,6 +39,7 @@ const PacientView = () => {
   const idPacient = useParams();
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [ActualizarCalendario, setActualizarCalendario] = useState(false);
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
@@ -60,11 +61,15 @@ const PacientView = () => {
       };
 
       idPacient.idPacient && fetchPacient();
+
+      if (ActualizarCalendario) {
+        setActualizarCalendario(false);
+      }
     } catch (error) {
       console.log(error.message);
       setLoading(false);
     }
-  }, [idPacient]);
+  }, [idPacient, ActualizarCalendario]);
 
   const calendario_tipo_pacient = (tipo) => {
     switch (tipo) {
@@ -83,7 +88,7 @@ const PacientView = () => {
       title="Paciente"
     >
       <Container maxWidth={false}>
-        <Toolbar tipo={Pacient && Pacient.tipo} />
+        <Toolbar tipo={Pacient && Pacient.tipo} idPacient={idPacient.idPacient} setActualizarCalendario={setActualizarCalendario} />
         <Box mt={3}>
           {loading ? (
             <h2>Cargando....</h2>

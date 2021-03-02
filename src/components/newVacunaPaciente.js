@@ -15,12 +15,11 @@ import {
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import Alert from '@material-ui/lab/Alert';
-import { NewPacients } from '../api/pacient';
 import { TokenContext } from '../lib/context/contextToken';
-import { GetVacunasTipos } from '../api/vacunas';
+import { GetVacunasTipos, CreateVacunaPacient } from '../api/vacunas';
 import { getProducts } from '../api/products';
 
-const NewVacunaPacient = ({ setActualizarCalendario, tipo }) => {
+const NewVacunaPacient = ({ setActualizarCalendario, tipo, idPacient }) => {
   const { token } = useContext(TokenContext);
   const [visible, setVisible] = useState(false);
   const [SelectVacunas, setVacunas] = useState([]);
@@ -33,7 +32,7 @@ const NewVacunaPacient = ({ setActualizarCalendario, tipo }) => {
   useEffect(() => {
     try {
       const fetchVacunas = async () => {
-        const { vacunas } = await (await GetVacunasTipos(token, tipo)).data;
+        const { vacunas } = await (await GetVacunasTipos(token, idPacient)).data;
         setVacunas(vacunas);
 
         const { products } = await (await getProducts(token)).data;
@@ -61,10 +60,11 @@ const NewVacunaPacient = ({ setActualizarCalendario, tipo }) => {
               }
         onSubmit={(values, actions) => {
           setTimeout(async () => {
+            values.idPacient = idPacient;
             console.log(values);
 
             try {
-              await NewPacients(token, values);
+              await CreateVacunaPacient(token, values);
               setFeedback({
                 type: 'success',
                 content: 'Se registro la vacuna para la mascota.',
@@ -119,7 +119,7 @@ const NewVacunaPacient = ({ setActualizarCalendario, tipo }) => {
                     onBlur={handleBlur}
                   >
                     {SelectVacunas.map((vacuna) => (
-                      <MenuItem value={vacuna.id_vacuna}>{vacuna.nombres}</MenuItem>
+                      <MenuItem value={vacuna.id_vacuna}>{`${vacuna.nombres} - ${vacuna.edad}`}</MenuItem>
                     ))}
                   </Select>
                 </FormControl>

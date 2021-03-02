@@ -2,7 +2,6 @@
 /* eslint-disable no-unused-expressions */
 /* eslint-disable react/prop-types */
 import React from 'react';
-import moment from 'moment';
 import {
   Avatar,
   Box,
@@ -111,7 +110,7 @@ const TableMisVacunas = ({ vacunas }) => {
               {vacuna.count}
             </TableCell>
             <TableCell>
-              {vacuna.created_at ? moment(vacuna.created_at).format('LLL') : 'Sin fecha'}
+              {vacuna.created_at ? vacuna.created_at : 'Sin fecha'}
             </TableCell>
             <TableCell>
               <Alert severity={statusVacunas(vacuna.isVacuna)}>{vacuna.isVacuna}</Alert>
