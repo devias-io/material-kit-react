@@ -17,7 +17,7 @@ import { Formik } from 'formik';
 import Alert from '@material-ui/lab/Alert';
 import { TokenContext } from '../lib/context/contextToken';
 import { GetVacunasTipos, CreateVacunaPacient } from '../api/vacunas';
-import { getProducts } from '../api/products';
+import { getProductsByTipo } from '../api/products';
 
 const NewVacunaPacient = ({ setActualizarCalendario, tipo, idPacient }) => {
   const { token } = useContext(TokenContext);
@@ -35,7 +35,7 @@ const NewVacunaPacient = ({ setActualizarCalendario, tipo, idPacient }) => {
         const { vacunas } = await (await GetVacunasTipos(token, idPacient)).data;
         setVacunas(vacunas);
 
-        const { products } = await (await getProducts(token)).data;
+        const { products } = await (await getProductsByTipo(token, tipo)).data;
         setProductos(products);
       };
 

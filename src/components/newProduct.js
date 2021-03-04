@@ -5,7 +5,11 @@ import React, { useState, useContext } from 'react';
 import {
   Box,
   Button,
+  Select,
+  MenuItem,
+  InputLabel,
   TextField,
+  FormControl,
   Typography,
   Snackbar,
 } from '@material-ui/core';
@@ -30,6 +34,7 @@ const NewProduct = ({ setActualizarProducts }) => {
           name: '',
           stock: '',
           description: '',
+          tipo: '',
         }}
         validationSchema={
                 Yup.object().shape({
@@ -46,6 +51,7 @@ const NewProduct = ({ setActualizarProducts }) => {
             form.append('stock', values.stock);
             form.append('source', img.files[0]);
             form.append('description', values.description);
+            form.append('tipo', values.tipo);
 
             try {
               await newProduct(token, form);
@@ -130,6 +136,21 @@ const NewProduct = ({ setActualizarProducts }) => {
               value={values.description}
               variant="outlined"
             />
+            <FormControl style={{ width: 200, marginBottom: 10 }}>
+              <InputLabel id="demo-simple-select-label">Medicamento para</InputLabel>
+              <Select
+                error={Boolean(touched.tipo && errors.tipo)}
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={values.tipo}
+                name="tipo"
+                onChange={handleChange}
+                onBlur={handleBlur}
+              >
+                <MenuItem value="Gato">Gato</MenuItem>
+                <MenuItem value="Perro">Perro</MenuItem>
+              </Select>
+            </FormControl>
             <Box my={2}>
               <Button
                 color="primary"

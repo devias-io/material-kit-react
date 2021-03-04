@@ -47,6 +47,7 @@ const ProductCard = ({ className, product, ...rest }) => {
             alt={product.name}
             src={`${BASE_API}/static/products/${product.source}`}
             variant="square"
+            style={{ width: 100, height: 100 }}
           />
         </Box>
         <Typography
@@ -100,7 +101,9 @@ const ProductCard = ({ className, product, ...rest }) => {
             >
               {product.stock}
               {' '}
-              Stock
+              Stock - para
+              {' '}
+              <strong>{product.tipo}</strong>
             </Typography>
           </Grid>
         </Grid>

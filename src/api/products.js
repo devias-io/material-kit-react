@@ -19,3 +19,12 @@ export const getProducts = async (token) => {
   });
   return response;
 };
+
+export const getProductsByTipo = async (token, tipo) => {
+  api.defaults.headers['access-token'] = token;
+  const response = await api({
+    method: 'GET',
+    url: `/products/${tipo}`,
+  });
+  return response;
+};
