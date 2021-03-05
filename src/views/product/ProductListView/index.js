@@ -7,7 +7,6 @@ import {
   Grid,
   makeStyles
 } from '@material-ui/core';
-import { Pagination } from '@material-ui/lab';
 import Page from 'src/components/Page';
 import Toolbar from './Toolbar';
 import ProductCard from './ProductCard';
@@ -74,21 +73,11 @@ const ProductList = () => {
                 <ProductCard
                   className={classes.productCard}
                   product={product}
+                  setActualizarProducts={setActualizarProducts}
                 />
               </Grid>
             ))}
           </Grid>
-        </Box>
-        <Box
-          mt={3}
-          display="flex"
-          justifyContent="center"
-        >
-          <Pagination
-            color="primary"
-            count={3}
-            size="small"
-          />
         </Box>
       </Container>
     </Page>

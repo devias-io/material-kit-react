@@ -1,4 +1,5 @@
-import React from 'react';
+/* eslint-disable react/prop-types */
+import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import moment from 'moment';
@@ -6,6 +7,7 @@ import {
   Avatar,
   Box,
   Card,
+  Button,
   CardContent,
   Divider,
   Grid,
@@ -14,6 +16,8 @@ import {
 } from '@material-ui/core';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import { BASE_API } from '../../../api';
+import { deleteProduct } from '../../../api/products';
+import { TokenContext } from '../../../lib/context/contextToken';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -29,8 +33,25 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const ProductCard = ({ className, product, ...rest }) => {
+const ProductCard = ({
+  className, product, setActualizarProducts, ...rest
+}) => {
+  const { token } = useContext(TokenContext);
+  const [loading, setLoading] = useState(false);
   const classes = useStyles();
+
+  const RemoveProduct = async (idProducts) => {
+    setLoading(true);
+
+    try {
+      await deleteProduct(token, idProducts);
+      setLoading(false);
+      setActualizarProducts(true);
+    } catch (error) {
+      setLoading(false);
+      console.log(error.message);
+    }
+  };
 
   return (
     <Card
@@ -105,6 +126,24 @@ const ProductCard = ({ className, product, ...rest }) => {
               {' '}
               <strong>{product.tipo}</strong>
             </Typography>
+          </Grid>
+        </Grid>
+        <Grid
+          container
+          justify="space-between"
+          spacing={2}
+        >
+          <Grid
+            className={classes.statsItem}
+            item
+          >
+            <Button variant="contained" color="primary">Editar</Button>
+          </Grid>
+          <Grid
+            className={classes.statsItem}
+            item
+          >
+            <Button variant="contained" onClick={() => RemoveProduct(product.idProducts)}>{loading ? 'Cargando...' : 'Eliminar'}</Button>
           </Grid>
         </Grid>
       </Box>

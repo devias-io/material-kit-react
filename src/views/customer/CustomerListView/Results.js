@@ -20,6 +20,7 @@ import {
   makeStyles
 } from '@material-ui/core';
 import getInitials from 'src/utils/getInitials';
+import { useSelector } from 'react-redux';
 import AlertDialog from '../../../components/dialogo';
 import { TokenContext } from '../../../lib/context/contextToken';
 import { DeleteUser } from '../../../api/users';
@@ -41,6 +42,8 @@ const Results = ({
   const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(0);
   const { token } = useContext(TokenContext);
+
+  const { me } = useSelector((state) => state.Sesion);
 
   const handleLimitChange = (event) => {
     setLimit(event.target.value);
@@ -134,20 +137,24 @@ const Results = ({
                     {moment(customer.created_at).format('DD/MM/YYYY')}
                   </TableCell>
                   <TableCell>
-                    <Button size="small" variant="contained" color="primary">
-                      Editar
-                    </Button>
-                    &nbsp; &nbsp;
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => {
-                        setDialogo(true);
-                        setIdUser(customer.idUser);
-                      }}
-                    >
-                      ELiminar
-                    </Button>
+                    {me.idUser !== customer.idUser ? (
+                      <>
+                        <Button size="small" variant="contained" color="primary">
+                          Editar
+                        </Button>
+                        &nbsp; &nbsp;
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={() => {
+                            setDialogo(true);
+                            setIdUser(customer.idUser);
+                          }}
+                        >
+                          ELiminar
+                        </Button>
+                      </>
+                    ) : ''}
                   </TableCell>
                 </TableRow>
               ))}

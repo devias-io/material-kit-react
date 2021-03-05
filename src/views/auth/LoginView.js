@@ -67,7 +67,6 @@ const LoginView = () => {
             content: error.message
           });
         });
-      setLoading(false);
     } catch (error) {
       setLoading(false);
       setVisible(true);
@@ -124,7 +123,7 @@ const LoginView = () => {
                   size="large"
                   variant="contained"
                 >
-                  Login with Google
+                  {loading ? 'Cargando...' : 'Entrar con Google'}
                 </Button>
               </Grid>
             </Grid>
