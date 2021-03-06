@@ -15,7 +15,6 @@ import {
 import Pest from '@material-ui/icons/Pets';
 import {
   BarChart as BarChartIcon,
-  Settings as SettingsIcon,
   ShoppingBag as ShoppingBagIcon,
   User as UserIcon,
   Users as UsersIcon,
@@ -81,11 +80,6 @@ const NavBar = ({ onMobileClose, openMobile }) => {
         href: '/app/account',
         icon: UserIcon,
         title: 'Mi cuenta'
-      },
-      {
-        href: '/app/settings',
-        icon: SettingsIcon,
-        title: 'Ajustes'
       },
     ];
   } else {

@@ -10,7 +10,6 @@ import NotFoundView from 'src/views/errors/NotFoundView';
 import ProductListView from 'src/views/product/ProductListView';
 import PacientListView from 'src/views/pacient';
 import RegisterView from 'src/views/auth/RegisterView';
-import SettingsView from 'src/views/settings/SettingsView';
 import PacientView from 'src/views/pacient/ID';
 import CalendarView from 'src/views/calendar';
 import Cookies from 'js-cookie';
@@ -33,7 +32,6 @@ const routes = [
       { path: 'customers', element: PathSesion(CustomerListView) },
       { path: 'dashboard', element: PathSesion(DashboardView) },
       { path: 'products', element: PathSesion(ProductListView) },
-      { path: 'settings', element: PathSesion(SettingsView) },
       { path: 'pacient', element: PathSesion(PacientListView) },
       { path: 'calendario', element: PathSesion(CalendarView) },
       { path: 'pacient/:idPacient', element: PathSesion(PacientView) },

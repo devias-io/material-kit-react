@@ -43,12 +43,14 @@ const ProfileDetails = ({ className, ...rest }) => {
           email: '',
           userName: '',
           Phone: 0,
+          Cedula: '',
         }}
         validationSchema={
               Yup.object().shape({
                 email: Yup.string().email('Must be a valid email').max(100).required('El email es requerido'),
                 userName: Yup.string().max(100).required('El nombre de usuario es requerido'),
                 Phone: Yup.string().max(10).required('El telefono del usuario es requerido'),
+                Cedula: Yup.string().max(10).required('La cedula del usuario es requerido'),
               })
             }
         onSubmit={(values, actions) => {
@@ -110,8 +112,8 @@ const ProfileDetails = ({ className, ...rest }) => {
                       onChange={handleChange}
                       required
                       onBlur={handleBlur}
-                      value={me.userName}
                       variant="outlined"
+                      placeholder={me.userName || 'User Name'}
                     />
                   </Grid>
                   <Grid
@@ -138,9 +140,9 @@ const ProfileDetails = ({ className, ...rest }) => {
                       name="email"
                       required
                       onBlur={handleBlur}
-                      value={me.email}
                       variant="outlined"
                       onChange={handleChange}
+                      placeholder={me.email || 'Email'}
                     />
                   </Grid>
                   <Grid
@@ -155,10 +157,26 @@ const ProfileDetails = ({ className, ...rest }) => {
                       name="Phone"
                       onBlur={handleBlur}
                       type="number"
-                      value={me.Phone}
                       onChange={handleChange}
                       variant="outlined"
-                      placeholder="Phone"
+                      placeholder={me.Phone || 'Phone'}
+                    />
+                  </Grid>
+                  <Grid
+                    item
+                    md={6}
+                    xs={12}
+                  >
+                    <TextField
+                      error={Boolean(touched.Cedula && errors.Cedula)}
+                      helperText={touched.Cedula && errors.Cedula}
+                      fullWidth
+                      name="Cedula"
+                      onBlur={handleBlur}
+                      type="number"
+                      onChange={handleChange}
+                      variant="outlined"
+                      placeholder={me.cedula || 'Numero de identificacion'}
                     />
                   </Grid>
                 </Grid>

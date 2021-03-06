@@ -80,6 +80,9 @@ const Results = ({
                   Name
                 </TableCell>
                 <TableCell>
+                  Cedula
+                </TableCell>
+                <TableCell>
                   Email
                 </TableCell>
                 <TableCell>
@@ -123,6 +126,9 @@ const Results = ({
                         {customer.userName}
                       </Typography>
                     </Box>
+                  </TableCell>
+                  <TableCell>
+                    {customer.cedula || 'Sin Cedula'}
                   </TableCell>
                   <TableCell>
                     {customer.email}

@@ -28,7 +28,8 @@ const CreateNewClient = ({ setActualizarUser }) => {
         initialValues={{
           email: '',
           userName: '',
-          Phone: 0,
+          Phone: '',
+          Cedula: '',
           admin: false,
         }}
         validationSchema={
@@ -36,6 +37,7 @@ const CreateNewClient = ({ setActualizarUser }) => {
                 email: Yup.string().email('Must be a valid email').max(100).required('El email es requerido'),
                 userName: Yup.string().max(100).required('El nombre de usuario es requerido'),
                 Phone: Yup.string().max(10).required('El telefono del usuario es requerido'),
+                Cedula: Yup.string().max(10).required('La cedula del usuario es requerido'),
                 admin: Yup.string().required('Esta opcion es requerida'),
               })
             }
@@ -121,6 +123,19 @@ const CreateNewClient = ({ setActualizarUser }) => {
               onChange={handleChange}
               type="number"
               value={values.Phone}
+              variant="outlined"
+            />
+            <TextField
+              error={Boolean(touched.Cedula && errors.Cedula)}
+              fullWidth
+              helperText={touched.Cedula && errors.Cedula}
+              label="Cedula"
+              margin="normal"
+              name="Cedula"
+              onBlur={handleBlur}
+              onChange={handleChange}
+              type="number"
+              value={values.Cedula}
               variant="outlined"
             />
             <Box
