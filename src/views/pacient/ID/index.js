@@ -17,9 +17,11 @@ import Page from 'src/components/Page';
 import Calendar from 'react-awesome-calendar';
 import { GetPacient } from '../../../api/pacient';
 import { GetVacunasByTipos, GetCalendarVacunas } from '../../../api/vacunas';
+import { GetUserByPacient } from '../../../api/users';
 import TableMisVacunas from './table-mis-vacunas';
 import { TokenContext } from '../../../lib/context/contextToken';
 import Toolbar from './Toolbar';
+import HistorialClinico from './historial-clinico';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -35,6 +37,7 @@ const PacientView = () => {
   const [Pacient, setPacient] = useState();
   const [MisVacuas, setMisVacunas] = useState([]);
   const [MyCalendario, setCalendario] = useState([]);
+  const [User, setUser] = useState([]);
   const classes = useStyles();
   const idPacient = useParams();
   const [expanded, setExpanded] = useState(false);
@@ -56,6 +59,9 @@ const PacientView = () => {
 
         const { calendario } = await (await GetCalendarVacunas(token, idPacient.idPacient)).data;
         setCalendario(calendario);
+
+        const { user } = await (await GetUserByPacient(token, idPacient.idPacient)).data;
+        setUser(user);
 
         setLoading(false);
       };
@@ -146,6 +152,21 @@ const PacientView = () => {
                 </AccordionSummary>
                 <AccordionDetails>
                   {calendario_tipo_pacient(Pacient.tipo)}
+                </AccordionDetails>
+              </Accordion>
+
+              <Accordion expanded={expanded === 'panel4'} onChange={handleChange('panel4')}>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls="panel1bh-content"
+                  id="panel1bh-header"
+                >
+                  <Typography className={classes.heading}>
+                    Historial clinico
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <HistorialClinico Pacient={Pacient} User={User} classes={classes} />
                 </AccordionDetails>
               </Accordion>
             </>

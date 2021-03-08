@@ -39,6 +39,15 @@ export const GetUsers = async (token) => {
   return response;
 };
 
+export const GetUserByPacient = async (token, idPacient) => {
+  api.defaults.headers['access-token'] = token;
+  const response = await api({
+    method: 'GET',
+    url: `/users/byPacient/${idPacient}`,
+  });
+  return response;
+};
+
 export const UpdateMeUser = async (token, data) => {
   api.defaults.headers['access-token'] = token;
   const response = await api({
