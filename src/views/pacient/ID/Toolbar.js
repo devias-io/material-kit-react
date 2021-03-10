@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable no-alert */
 /* eslint-disable react/prop-types */
 import React, { useEffect, useState } from 'react';
@@ -29,7 +30,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Toolbar = ({
-  className, setActualizarCalendario, tipo, idPacient, ...rest
+  className, setActualizarCalendario, setActualizarSeguimiento, tipo, idPacient, ...rest
 }) => {
   const [temperatura, setTemperatura] = useState(0);
   const [selectSeguimiento, setSelectSeguimiento] = useState('');
@@ -104,7 +105,7 @@ const Toolbar = ({
 
       <ModalElement visible={modalSeguimiento} setVisible={setModalSeguimiento}>
         {selectSeguimiento ? (
-          <TipoSeguimiento select={selectSeguimiento} />
+          <TipoSeguimiento select={selectSeguimiento} idPacient={idPacient} setActualizarSeguimiento={setActualizarSeguimiento} />
         ) : (
           <>
             <Box mb={3}>
@@ -135,6 +136,11 @@ const Toolbar = ({
                 <MenuItem value="Enfermedades">Enfermedades</MenuItem>
                 <MenuItem value="Alergias">Alergias</MenuItem>
                 <MenuItem value="Antecedentes">Antecedentes</MenuItem>
+                <MenuItem value="Cirugias">Cirugias</MenuItem>
+                <MenuItem value="Actitud">Actitud</MenuItem>
+                <MenuItem value="Corporal">Condicion Corporal</MenuItem>
+                <MenuItem value="Hidratacion">Estado Hidratacion</MenuItem>
+                <MenuItem value="Mucosas">Mucosas</MenuItem>
               </Select>
             </FormControl>
           </>

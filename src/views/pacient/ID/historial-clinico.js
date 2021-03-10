@@ -2,22 +2,138 @@
 /* eslint-disable max-len */
 /* eslint-disable react/button-has-type */
 /* eslint-disable react/prop-types */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import moment from 'moment';
 import {
-  Grid, Avatar, List, ListItem, ListItemText, Chip
+  Grid, Avatar, List, ListItem, Chip
 } from '@material-ui/core';
+import Alert from '@material-ui/lab/Alert';
 import { calculaEdad } from '../../../helpers/Fechas';
 import getInitials from '../../../utils/getInitials';
+import ListSeguimiento from './list-seguimiento';
+import ListSeguimientoMucosas from './List-Seguimiento-Mucosas';
+import AlertDialog from '../../../components/dialogo';
+import { deleteSeguimiento } from '../../../api/seguimiento';
 
 const HistorialClinico = ({
-  Pacient, User, classes, HistoryVacunas
+  token, Pacient, User, classes, HistoryVacunas, Seguimiento, setActualizarSeguimiento
 }) => {
   const styles = {
     head: {
       padding: 10, backgroundColor: '#cdcdcd', fontWeight: 'bold'
     }
   };
+
+  const [dialogo, setDialogo] = useState(false);
+  const [isDelete, setIsDelete] = useState(false);
+  const [idSeguimiento, setIdSeguimiento] = useState('');
+
+  useEffect(() => {
+    try {
+      const fetchDeleteSeguimiento = async () => {
+        await deleteSeguimiento(token, idSeguimiento);
+        setActualizarSeguimiento(true);
+        setIdSeguimiento('');
+        setIsDelete(false);
+      };
+
+      if (idSeguimiento && !isDelete) {
+        setDialogo(true);
+      }
+
+      if (isDelete && idSeguimiento) {
+        fetchDeleteSeguimiento();
+      }
+    } catch (error) {
+      console.log(error.message);
+    }
+  }, [isDelete, idSeguimiento]);
+
+  const [Alimentacion, setAlimentacion] = useState([]);
+  const [Reproduccion, setReproducion] = useState([]);
+  const [Habitat, setHabitat] = useState([]);
+  const [Cirugias, setCirugias] = useState([]);
+  const [Alergias, setAlergias] = useState([]);
+  const [Enfermedades, setEnfermedades] = useState([]);
+  const [Antecedentes, setAntecedentes] = useState([]);
+  const [Actitud, setActitud] = useState([]);
+  const [Corporal, setCorporal] = useState([]);
+  const [Hidratacion, setHidratacion] = useState([]);
+  /* Mucosas */
+  const [SistemaNervioso, setSistemaNervioso] = useState([]);
+  const [Nodulos, setNodulos] = useState([]);
+  const [Conjuntival, setConjuntival] = useState([]);
+  const [Oral, setOral] = useState([]);
+  const [Oido, setOido] = useState([]);
+  const [Piel, setPiel] = useState([]);
+  const [Locomocion, setLocomocion] = useState([]);
+  const [Cardiovascular, setCardiovascular] = useState([]);
+  const [Respiratorio, setRespiratorio] = useState([]);
+  const [Digestivo, setDigestivo] = useState([]);
+
+  useEffect(() => {
+    const filterAlimentacion = Seguimiento.filter((item) => item.category === 'Alimentacion');
+    setAlimentacion(filterAlimentacion);
+
+    const filterReproduccion = Seguimiento.filter((item) => item.category === 'Reproduccion');
+    setReproducion(filterReproduccion);
+
+    const filterHabitat = Seguimiento.filter((item) => item.category === 'Habitat');
+    setHabitat(filterHabitat);
+
+    const filterCirugia = Seguimiento.filter((item) => item.category === 'Cirugia');
+    setCirugias(filterCirugia);
+
+    const filterAlergias = Seguimiento.filter((item) => item.category === 'Alergias');
+    setAlergias(filterAlergias);
+
+    const filterEnfermedades = Seguimiento.filter((item) => item.category === 'Enfermedad');
+    setEnfermedades(filterEnfermedades);
+
+    const filterAntecedentes = Seguimiento.filter((item) => item.category === 'Antecedentes');
+    setAntecedentes(filterAntecedentes);
+
+    const filterActitud = Seguimiento.filter((item) => item.category === 'Actitud');
+    setActitud(filterActitud);
+
+    const filterCorporal = Seguimiento.filter((item) => item.category === 'Corporal');
+    setCorporal(filterCorporal);
+
+    const filterHidratacion = Seguimiento.filter((item) => item.category === 'Hidratacion');
+    setHidratacion(filterHidratacion);
+
+    /* Mucosas */
+
+    const filterNervioso = Seguimiento.filter((item) => item.category === 'Muscosas - Sistema nervioso');
+    setSistemaNervioso(filterNervioso);
+
+    const filterNodulos = Seguimiento.filter((item) => item.category === 'Muscosas - Nodulos Linfaticos');
+    setNodulos(filterNodulos);
+
+    const filterConjuntival = Seguimiento.filter((item) => item.category === 'Muscosas - Conjuntival');
+    setConjuntival(filterConjuntival);
+
+    const filterOral = Seguimiento.filter((item) => item.category === 'Muscosas - Oral');
+    setOral(filterOral);
+
+    const filterOido = Seguimiento.filter((item) => item.category === 'Muscosas - Oido');
+    setOido(filterOido);
+
+    const filterPiel = Seguimiento.filter((item) => item.category === 'Muscosas - Oido');
+    setPiel(filterPiel);
+
+    const filterLocomocion = Seguimiento.filter((item) => item.category === 'Muscosas - Locomocion');
+    setLocomocion(filterLocomocion);
+
+    const filterCardiovascular = Seguimiento.filter((item) => item.category === 'Muscosas - A.Cardiovascular');
+    setCardiovascular(filterCardiovascular);
+
+    const filterRespiratorio = Seguimiento.filter((item) => item.category === 'Muscosas - A.Respiratorio');
+    setRespiratorio(filterRespiratorio);
+
+    const filterDigestivo = Seguimiento.filter((item) => item.category === 'Muscosas - A.Digestivo');
+    setDigestivo(filterDigestivo);
+  }, [Seguimiento]);
 
   return (
     <>
@@ -138,6 +254,7 @@ const HistorialClinico = ({
           <strong>Vacunas:</strong>
           <br />
           <List component="nav" aria-label="secondary mailbox folders">
+            {HistoryVacunas.length === 0 && <Alert severity="info">No tiene vacunas registradas</Alert>}
             {HistoryVacunas.map((history) => (
               <ListItem button>
                 <Chip label={history.nombres} />
@@ -153,104 +270,48 @@ const HistorialClinico = ({
         </Grid>
 
         <Grid item md={4}>
-          <strong>Ultima desparasitacion:</strong>
+          <strong>Ultimas desparasitacion:</strong>
           <br />
-          <List component="nav" aria-label="secondary mailbox folders">
-            <ListItem button>
-              <ListItemText primary="Trash" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Spam" />
-            </ListItem>
-          </List>
+          <ListSeguimiento data={[]} category="desparasitacion" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
         <Grid item md={4}>
           <strong>Alimentacion:</strong>
           <br />
-          <List component="nav" aria-label="secondary mailbox folders">
-            <ListItem button>
-              <ListItemText primary="Trash" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Spam" />
-            </ListItem>
-          </List>
+          <ListSeguimiento data={Alimentacion} category="Alimentacion" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
         <Grid item md={4}>
           <strong>Estado Reproductivo:</strong>
           <br />
-          <List component="nav" aria-label="secondary mailbox folders">
-            <ListItem button>
-              <ListItemText primary="Trash" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Spam" />
-            </ListItem>
-          </List>
+          <ListSeguimiento data={Reproduccion} category="Reproduccion" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
         <Grid item md={4}>
           <strong>Habitat:</strong>
           <br />
-          <List component="nav" aria-label="secondary mailbox folders">
-            <ListItem button>
-              <ListItemText primary="Trash" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Spam" />
-            </ListItem>
-          </List>
+          <ListSeguimiento data={Habitat} category="Habitat" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
         <Grid item md={4}>
           <strong>Cirugias:</strong>
           <br />
-          <List component="nav" aria-label="secondary mailbox folders">
-            <ListItem button>
-              <ListItemText primary="Trash" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Spam" />
-            </ListItem>
-          </List>
+          <ListSeguimiento data={Cirugias} category="Cirugia" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
         <Grid item md={4}>
           <strong>Alergias:</strong>
           <br />
-          <List component="nav" aria-label="secondary mailbox folders">
-            <ListItem button>
-              <ListItemText primary="Trash" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Spam" />
-            </ListItem>
-          </List>
+          <ListSeguimiento data={Alergias} category="Alergias" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
         <Grid item md={4}>
           <strong>Enfermedades:</strong>
           <br />
-          <List component="nav" aria-label="secondary mailbox folders">
-            <ListItem button>
-              <ListItemText primary="Trash" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Spam" />
-            </ListItem>
-          </List>
+          <ListSeguimiento data={Enfermedades} category="Enfermedad" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
         <Grid item md={4}>
           <strong>Antecedentes familiares:</strong>
           <br />
-          <List component="nav" aria-label="secondary mailbox folders">
-            <ListItem button>
-              <ListItemText primary="Trash" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Spam" />
-            </ListItem>
-          </List>
+          <ListSeguimiento data={Antecedentes} category="Antecedentes" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
         <br />
@@ -264,40 +325,19 @@ const HistorialClinico = ({
         <Grid item md={4}>
           <strong>Actitud:</strong>
           <br />
-          <List component="nav" aria-label="secondary mailbox folders">
-            <ListItem button>
-              <ListItemText primary="Trash" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Spam" />
-            </ListItem>
-          </List>
+          <ListSeguimiento data={Actitud} category="Actitud" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
         <Grid item md={4}>
           <strong>Condicion Corporal:</strong>
           <br />
-          <List component="nav" aria-label="secondary mailbox folders">
-            <ListItem button>
-              <ListItemText primary="Trash" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Spam" />
-            </ListItem>
-          </List>
+          <ListSeguimiento data={Corporal} category="Condicion corporal" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
         <Grid item md={4}>
           <strong>Estado de hidratacion:</strong>
           <br />
-          <List component="nav" aria-label="secondary mailbox folders">
-            <ListItem button>
-              <ListItemText primary="Trash" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Spam" />
-            </ListItem>
-          </List>
+          <ListSeguimiento data={Hidratacion} category="Hidratacion" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
         <br />
@@ -308,68 +348,71 @@ const HistorialClinico = ({
           Mucosas:
         </Grid>
 
-        <Grid item md={2}>
+        <Grid item md={12}>
           <strong>Conjuntival:</strong>
           <br />
-          <span>No</span>
+          <ListSeguimientoMucosas data={Conjuntival} category="Conjuntival" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={7}>
+        <Grid item md={12}>
           <strong>Oral:</strong>
           <br />
-          <span>Si</span>
-          <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+          <ListSeguimientoMucosas data={Oral} category="Oral" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={2}>
+        <Grid item md={12}>
           <strong>Oido:</strong>
           <br />
-          <span>No</span>
+          <ListSeguimientoMucosas data={Oido} category="Oido" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={2}>
+        <Grid item md={12}>
           <strong>Nodulos Linfaticos:</strong>
           <br />
-          <span>No</span>
+          <ListSeguimientoMucosas data={Nodulos} category="Nodulos Linfaticos" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={2}>
+        <Grid item md={12}>
           <strong>Piel y Anexos:</strong>
           <br />
-          <span>No</span>
+          <ListSeguimientoMucosas data={Piel} category="Piel y Anexos" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={2}>
+        <Grid item md={12}>
           <strong>Locomocion:</strong>
           <br />
-          <span>No</span>
+          <ListSeguimientoMucosas data={Locomocion} category="Locomocion" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={2}>
+        <Grid item md={12}>
           <strong>Sistema nervioso:</strong>
           <br />
-          <span>No</span>
+          <ListSeguimientoMucosas data={SistemaNervioso} category="Sistema nervioso" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={2}>
+        <Grid item md={12}>
           <strong>A.Cardiovascular:</strong>
           <br />
-          <span>No</span>
+          <ListSeguimientoMucosas data={Cardiovascular} category="A.Cardiovascular" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={2}>
+        <Grid item md={12}>
           <strong>A.Respiratorio:</strong>
           <br />
-          <span>No</span>
+          <ListSeguimientoMucosas data={Respiratorio} category="A.Respiratorio" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={2}>
+        <Grid item md={12}>
           <strong>A.Digestivo:</strong>
           <br />
-          <span>No</span>
+          <ListSeguimientoMucosas data={Digestivo} category="A.Digestivo" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
       </Grid>
+
+      <AlertDialog visible={dialogo} setVisible={setDialogo} setIsDelete={setIsDelete}>
+        <p>Estas seguro que quieres eliminar este registro?, uns vez echo sera irrecuperable.</p>
+      </AlertDialog>
     </>
   );
 };

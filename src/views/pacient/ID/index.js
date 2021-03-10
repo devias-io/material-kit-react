@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 /* eslint-disable max-len */
 /* eslint-disable camelcase */
 /* eslint-disable no-unused-expressions */
@@ -17,6 +18,7 @@ import Page from 'src/components/Page';
 import Calendar from 'react-awesome-calendar';
 import { GetPacient } from '../../../api/pacient';
 import { GetVacunasByTipos, GetCalendarVacunas, GetVacunasHistory } from '../../../api/vacunas';
+import { getSeguimiento } from '../../../api/seguimiento';
 import { GetUserByPacient } from '../../../api/users';
 import TableMisVacunas from './table-mis-vacunas';
 import { TokenContext } from '../../../lib/context/contextToken';
@@ -39,11 +41,13 @@ const PacientView = () => {
   const [MyCalendario, setCalendario] = useState([]);
   const [User, setUser] = useState([]);
   const [HistoryVacunas, setHistoryVacunas] = useState([]);
+  const [Seguimiento, setSeguimiento] = useState([]);
   const classes = useStyles();
   const idPacient = useParams();
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [ActualizarCalendario, setActualizarCalendario] = useState(false);
+  const [ActualizarSeguimiento, setActualizarSeguimiento] = useState(false);
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
@@ -52,6 +56,8 @@ const PacientView = () => {
   useEffect(() => {
     try {
       const fetchPacient = async () => {
+        setLoading(true);
+
         const { pacient } = await (await GetPacient(token, idPacient.idPacient)).data;
         setPacient(pacient);
 
@@ -67,6 +73,8 @@ const PacientView = () => {
         const { HistoriVacunas } = await (await GetVacunasHistory(token, idPacient.idPacient)).data;
         setHistoryVacunas(HistoriVacunas);
 
+        fetchSeguimiento();
+
         setLoading(false);
       };
 
@@ -80,6 +88,20 @@ const PacientView = () => {
       setLoading(false);
     }
   }, [idPacient, ActualizarCalendario]);
+
+  useEffect(() => {
+    if (ActualizarSeguimiento) {
+      fetchSeguimiento();
+      setActualizarSeguimiento(false);
+      setLoading(false);
+    }
+  }, [ActualizarSeguimiento]);
+
+  const fetchSeguimiento = async () => {
+    setLoading(true);
+    const { MisSeguimientos } = await (await getSeguimiento(token, idPacient.idPacient)).data;
+    setSeguimiento(MisSeguimientos);
+  };
 
   const calendario_tipo_pacient = (tipo) => {
     switch (tipo) {
@@ -98,7 +120,7 @@ const PacientView = () => {
       title="Paciente"
     >
       <Container maxWidth={false}>
-        <Toolbar tipo={Pacient && Pacient.tipo} idPacient={idPacient.idPacient} setActualizarCalendario={setActualizarCalendario} />
+        <Toolbar tipo={Pacient && Pacient.tipo} idPacient={idPacient.idPacient} setActualizarCalendario={setActualizarCalendario} setActualizarSeguimiento={setActualizarSeguimiento} />
         <Box mt={3}>
           {loading ? (
             <h2>Cargando....</h2>
@@ -170,7 +192,7 @@ const PacientView = () => {
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <HistorialClinico Pacient={Pacient} User={User} classes={classes} HistoryVacunas={HistoryVacunas} />
+                  <HistorialClinico token={token} Pacient={Pacient} User={User} classes={classes} HistoryVacunas={HistoryVacunas} Seguimiento={Seguimiento} setActualizarSeguimiento={setActualizarSeguimiento} />
                 </AccordionDetails>
               </Accordion>
             </>
