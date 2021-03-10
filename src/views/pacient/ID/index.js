@@ -16,7 +16,7 @@ import { useParams } from 'react-router-dom';
 import Page from 'src/components/Page';
 import Calendar from 'react-awesome-calendar';
 import { GetPacient } from '../../../api/pacient';
-import { GetVacunasByTipos, GetCalendarVacunas } from '../../../api/vacunas';
+import { GetVacunasByTipos, GetCalendarVacunas, GetVacunasHistory } from '../../../api/vacunas';
 import { GetUserByPacient } from '../../../api/users';
 import TableMisVacunas from './table-mis-vacunas';
 import { TokenContext } from '../../../lib/context/contextToken';
@@ -38,6 +38,7 @@ const PacientView = () => {
   const [MisVacuas, setMisVacunas] = useState([]);
   const [MyCalendario, setCalendario] = useState([]);
   const [User, setUser] = useState([]);
+  const [HistoryVacunas, setHistoryVacunas] = useState([]);
   const classes = useStyles();
   const idPacient = useParams();
   const [expanded, setExpanded] = useState(false);
@@ -62,6 +63,9 @@ const PacientView = () => {
 
         const { user } = await (await GetUserByPacient(token, idPacient.idPacient)).data;
         setUser(user);
+
+        const { HistoriVacunas } = await (await GetVacunasHistory(token, idPacient.idPacient)).data;
+        setHistoryVacunas(HistoriVacunas);
 
         setLoading(false);
       };
@@ -166,7 +170,7 @@ const PacientView = () => {
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <HistorialClinico Pacient={Pacient} User={User} classes={classes} />
+                  <HistorialClinico Pacient={Pacient} User={User} classes={classes} HistoryVacunas={HistoryVacunas} />
                 </AccordionDetails>
               </Accordion>
             </>

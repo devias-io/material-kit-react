@@ -1,14 +1,20 @@
 /* eslint-disable no-alert */
 /* eslint-disable react/prop-types */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import {
   Box,
+  InputLabel,
+  Typography,
+  FormControl,
+  Select,
+  MenuItem,
   Button,
   TextField,
   makeStyles
 } from '@material-ui/core';
+import TipoSeguimiento from './tipo-seguimiento';
 import NewVacunaPacient from '../../../components/newVacunaPaciente';
 import ModalElement from '../../../components/Modal';
 
@@ -26,8 +32,10 @@ const Toolbar = ({
   className, setActualizarCalendario, tipo, idPacient, ...rest
 }) => {
   const [temperatura, setTemperatura] = useState(0);
+  const [selectSeguimiento, setSelectSeguimiento] = useState('');
   const [isValidate, setIsValidate] = useState(false);
   const [modal, setModal] = useState(false);
+  const [modalSeguimiento, setModalSeguimiento] = useState(false);
   const classes = useStyles();
 
   const validar = () => {
@@ -38,6 +46,12 @@ const Toolbar = ({
     }
   };
 
+  useEffect(() => {
+    if (!modalSeguimiento) {
+      setSelectSeguimiento('');
+    }
+  }, [modalSeguimiento]);
+
   return (
     <div
       className={clsx(classes.root, className)}
@@ -47,6 +61,14 @@ const Toolbar = ({
         display="flex"
         justifyContent="flex-end"
       >
+        <Button
+          color="primary"
+          variant="contained"
+          onClick={() => setModalSeguimiento(true)}
+        >
+          Seguimiento
+        </Button>
+        &nbsp; &nbsp;
         <Button
           color="primary"
           variant="contained"
@@ -78,6 +100,45 @@ const Toolbar = ({
             setActualizarCalendario={setActualizarCalendario}
           />
         ) }
+      </ModalElement>
+
+      <ModalElement visible={modalSeguimiento} setVisible={setModalSeguimiento}>
+        {selectSeguimiento ? (
+          <TipoSeguimiento select={selectSeguimiento} />
+        ) : (
+          <>
+            <Box mb={3}>
+              <Typography
+                color="textPrimary"
+                variant="h2"
+              >
+                Seguimientos
+              </Typography>
+              <Typography
+                color="textSecondary"
+                gutterBottom
+                variant="body2"
+              >
+                Seleccione la categoria.
+              </Typography>
+            </Box>
+            <FormControl style={{ width: 200, marginBottom: 10 }}>
+              <InputLabel id="demo-simple-select-label">Categoria</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                onChange={(e) => setSelectSeguimiento(e.target.value)}
+              >
+                <MenuItem value="Alimentacion">Alimentación</MenuItem>
+                <MenuItem value="Reproduccion">Reproducción</MenuItem>
+                <MenuItem value="Habitat">Habitat</MenuItem>
+                <MenuItem value="Enfermedades">Enfermedades</MenuItem>
+                <MenuItem value="Alergias">Alergias</MenuItem>
+                <MenuItem value="Antecedentes">Antecedentes</MenuItem>
+              </Select>
+            </FormControl>
+          </>
+        )}
       </ModalElement>
     </div>
   );

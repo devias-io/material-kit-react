@@ -5,12 +5,14 @@
 import React from 'react';
 import moment from 'moment';
 import {
-  Grid, Avatar, List, ListItem, ListItemText, Button
+  Grid, Avatar, List, ListItem, ListItemText, Chip
 } from '@material-ui/core';
 import { calculaEdad } from '../../../helpers/Fechas';
 import getInitials from '../../../utils/getInitials';
 
-const HistorialClinico = ({ Pacient, User, classes }) => {
+const HistorialClinico = ({
+  Pacient, User, classes, HistoryVacunas
+}) => {
   const styles = {
     head: {
       padding: 10, backgroundColor: '#cdcdcd', fontWeight: 'bold'
@@ -20,9 +22,9 @@ const HistorialClinico = ({ Pacient, User, classes }) => {
   return (
     <>
       <Grid container spacing={1} direction="row">
-        <Grid item xs={12}>
+        {/* <Grid item xs={12}>
           <Button variant="contained" color="primary">Obtener historial clinico</Button>
-        </Grid>
+        </Grid> */}
         <Grid item xs={12} style={styles.head}>
           Reseña del paciente
         </Grid>
@@ -136,12 +138,17 @@ const HistorialClinico = ({ Pacient, User, classes }) => {
           <strong>Vacunas:</strong>
           <br />
           <List component="nav" aria-label="secondary mailbox folders">
-            <ListItem button>
-              <ListItemText primary="Trash" />
-            </ListItem>
-            <ListItem button>
-              <ListItemText primary="Spam" />
-            </ListItem>
+            {HistoryVacunas.map((history) => (
+              <ListItem button>
+                <Chip label={history.nombres} />
+                {' '}
+                -
+                <Chip label={history.name} color="primary" />
+                {' '}
+                -
+                <Chip label={moment(history.created_at).format('LL')} color="secondary" />
+              </ListItem>
+            ))}
           </List>
         </Grid>
 
