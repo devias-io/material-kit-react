@@ -10,11 +10,11 @@ import {
   Box,
   Card,
   Table,
+  Popover,
   Button,
   TableBody,
   TableCell,
   TableHead,
-  TablePagination,
   TableRow,
   Typography,
   makeStyles
@@ -24,12 +24,20 @@ import getInitials from 'src/utils/getInitials';
 import AlertDialog from '../../components/dialogo';
 import { RemovePacient } from '../../api/pacient';
 import { TokenContext } from '../../lib/context/contextToken';
+import ModalElement from '../../components/Modal';
+import CambiarDueno from './cambio-dueno';
 
 const useStyles = makeStyles((theme) => ({
   root: {},
   avatar: {
     marginRight: theme.spacing(2)
-  }
+  },
+  popover: {
+    pointerEvents: 'none',
+  },
+  paper: {
+    padding: theme.spacing(1),
+  },
 }));
 
 const Results = ({
@@ -38,18 +46,21 @@ const Results = ({
   const { token } = useContext(TokenContext);
   const classes = useStyles();
   const [dialogo, setDialogo] = useState(false);
+  const [modal, setModal] = useState(false);
   const [IsDelete, setIsDelete] = useState(false);
   const [IdPacient, setIdPacient] = useState('');
-  const [limit, setLimit] = useState(10);
-  const [page, setPage] = useState(0);
 
-  const handleLimitChange = (event) => {
-    setLimit(event.target.value);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handlePopoverOpen = (event) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  const handlePageChange = (event, newPage) => {
-    setPage(newPage);
+  const handlePopoverClose = () => {
+    setAnchorEl(null);
   };
+
+  const open = Boolean(anchorEl);
 
   useEffect(() => {
     try {
@@ -59,10 +70,12 @@ const Results = ({
       };
 
       IsDelete && IdPacient && DeletePacient();
+
+      !modal && setIdPacient('');
     } catch (error) {
       console.log(error.message);
     }
-  }, [IsDelete, IdPacient]);
+  }, [IsDelete, IdPacient, modal]);
 
   return (
     <>
@@ -133,7 +146,40 @@ const Results = ({
                       </Box>
                     </TableCell>
                     <TableCell>
-                      {paciente.emailPerson || 'Sin Dueño'}
+                      <span
+                        style={{ cursor: 'pointer' }}
+                        aria-owns={open ? 'mouse-over-popover' : undefined}
+                        aria-haspopup="true"
+                        onMouseEnter={handlePopoverOpen}
+                        onMouseLeave={handlePopoverClose}
+                        onClick={() => {
+                          setModal(true);
+                          setIdPacient(paciente.idPacient);
+                        }}
+                      >
+                        {paciente.emailPerson || 'Sin Dueño'}
+                      </span>
+                      <Popover
+                        id="mouse-over-popover"
+                        className={classes.popover}
+                        classes={{
+                          paper: classes.paper,
+                        }}
+                        open={open}
+                        anchorEl={anchorEl}
+                        anchorOrigin={{
+                          vertical: 'bottom',
+                          horizontal: 'left',
+                        }}
+                        transformOrigin={{
+                          vertical: 'top',
+                          horizontal: 'left',
+                        }}
+                        onClose={handlePopoverClose}
+                        disableRestoreFocus
+                      >
+                        <Typography>Cambiar de dueño.</Typography>
+                      </Popover>
                     </TableCell>
                     <TableCell>
                       {paciente.altura}
@@ -183,20 +229,15 @@ const Results = ({
             </Table>
           </Box>
         </PerfectScrollbar>
-        <TablePagination
-          component="div"
-          count={pacient.length}
-          onChangePage={handlePageChange}
-          onChangeRowsPerPage={handleLimitChange}
-          page={page}
-          rowsPerPage={limit}
-          rowsPerPageOptions={[5, 10, 25]}
-        />
       </Card>
 
       <AlertDialog visible={dialogo} setVisible={setDialogo} setIsDelete={setIsDelete}>
         <p>¿Estás seguro que quieres eliminar este registro?, una vez hecho será irrecuperable.</p>
       </AlertDialog>
+
+      <ModalElement visible={modal} setVisible={setModal}>
+        <CambiarDueno IdPacient={IdPacient} setActualizarPacient={setActualizarPacient} />
+      </ModalElement>
     </>
   );
 };

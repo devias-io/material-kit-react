@@ -29,6 +29,18 @@ export const NewPacients = async (token, data) => {
   return response;
 };
 
+export const ChangeDuenoPacient = async (token, idPaciente, emailPerson) => {
+  api.defaults.headers['access-token'] = token;
+  const response = await api({
+    method: 'PUT',
+    url: `/pacients/dueno/${idPaciente}`,
+    data: {
+      emailPerson,
+    }
+  });
+  return response;
+};
+
 export const RemovePacient = async (token, idPaciente) => {
   api.defaults.headers['access-token'] = token;
   const response = await api({
