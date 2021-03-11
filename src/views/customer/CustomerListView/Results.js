@@ -178,7 +178,7 @@ const Results = ({
         rowsPerPageOptions={[5, 10, 25]}
       />
       <AlertDialog visible={dialogo} setVisible={setDialogo} setIsDelete={setIsDelete}>
-        <p>Estas seguro que quieres eliminar este registro?, uns vez echo sera irrecuperable.</p>
+        <p>¿Estás seguro que quieres eliminar este registro?, una vez hecho será irrecuperable.</p>
       </AlertDialog>
     </Card>
   );

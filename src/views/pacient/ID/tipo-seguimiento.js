@@ -55,7 +55,6 @@ const TipoSeguimiento = ({ select, idPacient, setActualizarSeguimiento }) => {
               <MenuItem value="Nodulos Linfaticos">Nodulos Linfaticos</MenuItem>
               <MenuItem value="Piel y Anexos">Piel y Anexos</MenuItem>
               <MenuItem value="Sistema nervioso">Sistema nervioso</MenuItem>
-              <MenuItem value="Sistema nervioso">Sistema nervioso</MenuItem>
               <MenuItem value="A.Cardiovascular">A.Cardiovascular</MenuItem>
               <MenuItem value="A.Respiratorio">A.Respiratorio</MenuItem>
               <MenuItem value="A.Digestivo">A.Digestivo</MenuItem>

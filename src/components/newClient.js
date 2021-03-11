@@ -3,8 +3,11 @@ import React, { useState, useContext } from 'react';
 import {
   Box,
   Button,
-  Checkbox,
+  Select,
   TextField,
+  FormControl,
+  MenuItem,
+  InputLabel,
   Typography,
   Snackbar,
 } from '@material-ui/core';
@@ -30,7 +33,7 @@ const CreateNewClient = ({ setActualizarUser }) => {
           userName: '',
           Phone: '',
           Cedula: '',
-          admin: false,
+          admin: '',
         }}
         validationSchema={
               Yup.object().shape({
@@ -44,6 +47,7 @@ const CreateNewClient = ({ setActualizarUser }) => {
         onSubmit={(values, actions) => {
           setTimeout(async () => {
             console.log(values);
+            values.admin = values.admin === 'Administrador';
             try {
               await NewUser(token, values);
               setFeedback({
@@ -138,23 +142,20 @@ const CreateNewClient = ({ setActualizarUser }) => {
               value={values.Cedula}
               variant="outlined"
             />
-            <Box
-              alignItems="center"
-              display="flex"
-              ml={-1}
-            >
-              <Checkbox
-                checked={values.admin}
+            <FormControl style={{ width: 250, marginBottom: 10 }}>
+              <InputLabel id="demo-simple-select-label">Tipo de usuario</InputLabel>
+              <Select
+                error={Boolean(touched.admin && errors.admin)}
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
                 name="admin"
+                onBlur={handleBlur}
                 onChange={handleChange}
-              />
-              <Typography
-                color="textSecondary"
-                variant="body1"
               >
-                Administrador
-              </Typography>
-            </Box>
+                <MenuItem value="Cliente">Cliente</MenuItem>
+                <MenuItem value="Administrador">Administrador</MenuItem>
+              </Select>
+            </FormControl>
             <Box my={2}>
               <Button
                 color="primary"

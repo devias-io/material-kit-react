@@ -81,13 +81,13 @@ const HistorialClinico = ({
     const filterHabitat = Seguimiento.filter((item) => item.category === 'Habitat');
     setHabitat(filterHabitat);
 
-    const filterCirugia = Seguimiento.filter((item) => item.category === 'Cirugia');
+    const filterCirugia = Seguimiento.filter((item) => item.category === 'Cirugias');
     setCirugias(filterCirugia);
 
     const filterAlergias = Seguimiento.filter((item) => item.category === 'Alergias');
     setAlergias(filterAlergias);
 
-    const filterEnfermedades = Seguimiento.filter((item) => item.category === 'Enfermedad');
+    const filterEnfermedades = Seguimiento.filter((item) => item.category === 'Enfermedades');
     setEnfermedades(filterEnfermedades);
 
     const filterAntecedentes = Seguimiento.filter((item) => item.category === 'Antecedentes');
@@ -411,7 +411,7 @@ const HistorialClinico = ({
       </Grid>
 
       <AlertDialog visible={dialogo} setVisible={setDialogo} setIsDelete={setIsDelete}>
-        <p>Estas seguro que quieres eliminar este registro?, uns vez echo sera irrecuperable.</p>
+        <p>¿Estás seguro que quieres eliminar este registro?, una vez hecho será irrecuperable.</p>
       </AlertDialog>
     </>
   );
