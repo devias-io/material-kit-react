@@ -3,6 +3,7 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { useSelector } from 'react-redux';
 import clsx from 'clsx';
 import {
   Box,
@@ -39,6 +40,8 @@ const Toolbar = ({
   const [modalSeguimiento, setModalSeguimiento] = useState(false);
   const classes = useStyles();
 
+  const { me } = useSelector((state) => state.Sesion);
+
   const validar = () => {
     if (temperatura >= 37.5 && temperatura <= 39) {
       setIsValidate(true);
@@ -62,21 +65,25 @@ const Toolbar = ({
         display="flex"
         justifyContent="flex-end"
       >
-        <Button
-          color="primary"
-          variant="contained"
-          onClick={() => setModalSeguimiento(true)}
-        >
-          Seguimiento
-        </Button>
-        &nbsp; &nbsp;
-        <Button
-          color="primary"
-          variant="contained"
-          onClick={() => setModal(true)}
-        >
-          Registrar Vacuna
-        </Button>
+        {me.isAdmin ? (
+          <>
+            <Button
+              color="primary"
+              variant="contained"
+              onClick={() => setModalSeguimiento(true)}
+            >
+              Seguimiento
+            </Button>
+            &nbsp; &nbsp;
+            <Button
+              color="primary"
+              variant="contained"
+              onClick={() => setModal(true)}
+            >
+              Registrar Vacuna
+            </Button>
+          </>
+        ) : ''}
       </Box>
 
       <ModalElement visible={modal} setVisible={setModal}>
