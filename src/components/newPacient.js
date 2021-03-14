@@ -17,7 +17,9 @@ import { Formik } from 'formik';
 import Alert from '@material-ui/lab/Alert';
 import { NewPacients } from '../api/pacient';
 import { TokenContext } from '../lib/context/contextToken';
-import { razasPerro, razasGato } from '../utils/razas';
+import {
+  razasPerro, razasGato, razaConejo, razaGallo, razaLoros
+} from '../utils/razas';
 
 const NewPacient = ({ setActualizarPacient }) => {
   const { token } = useContext(TokenContext);
@@ -47,10 +49,8 @@ const NewPacient = ({ setActualizarPacient }) => {
       case 'fejfwnnau':
         setTipooAnimal([
           'Conejo',
-          'Rata',
-          'Hámster',
           'Gato',
-          'Erizo',
+          'Gallo',
           'Perro',
           'Loro',
           'Palomas',
@@ -69,6 +69,15 @@ const NewPacient = ({ setActualizarPacient }) => {
         break;
       case 'Gato':
         setRazaAnimal(razasGato);
+        break;
+      case 'Conejo':
+        setRazaAnimal(razaConejo);
+        break;
+      case 'Gallo':
+        setRazaAnimal(razaGallo);
+        break;
+      case 'Loro':
+        setRazaAnimal(razaLoros);
         break;
       default:
         setRazaAnimal([]);
