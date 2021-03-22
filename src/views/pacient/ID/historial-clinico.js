@@ -69,6 +69,7 @@ const HistorialClinico = ({
   const [Locomocion, setLocomocion] = useState([]);
   const [Cardiovascular, setCardiovascular] = useState([]);
   const [Respiratorio, setRespiratorio] = useState([]);
+  const [Desparatisacion, setDesparatisacion] = useState([]);
   const [Digestivo, setDigestivo] = useState([]);
 
   useEffect(() => {
@@ -101,6 +102,9 @@ const HistorialClinico = ({
 
     const filterHidratacion = Seguimiento.filter((item) => item.category === 'Hidratacion');
     setHidratacion(filterHidratacion);
+
+    const filterDesparasitacion = Seguimiento.filter((item) => item.category === 'Desparasitacion');
+    setDesparatisacion(filterDesparasitacion);
 
     /* Mucosas */
 
@@ -272,7 +276,7 @@ const HistorialClinico = ({
         <Grid item md={4}>
           <strong>Ultimas desparasitacion:</strong>
           <br />
-          <ListSeguimiento data={[]} category="desparasitacion" setIdSeguimiento={setIdSeguimiento} />
+          <ListSeguimiento data={Desparatisacion} category="desparasitacion" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
         <Grid item md={4}>

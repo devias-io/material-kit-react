@@ -11,7 +11,9 @@ import {
 } from '@material-ui/core';
 import FromCategory from '../seguimiento/form-category';
 
-const TipoSeguimiento = ({ select, idPacient, setActualizarSeguimiento }) => {
+const TipoSeguimiento = ({
+  select, tipo, idPacient, setActualizarSeguimiento
+}) => {
   const [SelectMucosa, setSelectMucosa] = useState(false);
   const [newSelect, setNewSelect] = useState('');
 
@@ -62,7 +64,7 @@ const TipoSeguimiento = ({ select, idPacient, setActualizarSeguimiento }) => {
           </FormControl>
         </>
       ) : (
-        <FromCategory select={newSelect || select} idPacient={idPacient} setActualizarSeguimiento={setActualizarSeguimiento} />
+        <FromCategory select={newSelect || select} tipo={tipo} idPacient={idPacient} setActualizarSeguimiento={setActualizarSeguimiento} />
       )}
     </>
   );

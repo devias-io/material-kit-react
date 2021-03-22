@@ -1,5 +1,7 @@
+/* eslint-disable no-alert */
+/* eslint-disable no-unused-expressions */
 /* eslint-disable react/prop-types */
-import React, { useState, useContext } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import Alert from '@material-ui/lab/Alert';
@@ -7,7 +9,10 @@ import {
   Box,
   Button,
   FormControl,
+  MenuItem,
+  InputLabel,
   RadioGroup,
+  Select,
   Radio,
   TextField,
   FormControlLabel,
@@ -16,14 +21,33 @@ import {
 } from '@material-ui/core';
 import { newSeguimiento } from '../../../api/seguimiento';
 import { TokenContext } from '../../../lib/context/contextToken';
+import { getProductsByTipo } from '../../../api/products';
 
-const Alimentacion = ({ select, idPacient, setActualizarSeguimiento }) => {
+const Alimentacion = ({
+  select, tipo, idPacient, setActualizarSeguimiento
+}) => {
   const { token } = useContext(TokenContext);
   const [visible, setVisible] = useState(false);
+  const [SelectProductos, setProductos] = useState([]);
+  const [ValueProducto, setValueProducto] = useState('');
+  const [ValueVia, setValueVia] = useState('');
   const [feedback, setFeedback] = useState({
     type: '',
     content: '',
   });
+
+  useEffect(() => {
+    try {
+      const fetchVacunas = async () => {
+        const { products } = await (await getProductsByTipo(token, tipo)).data;
+        setProductos(products);
+      };
+
+      tipo && fetchVacunas();
+    } catch (error) {
+      console.log(error.message);
+    }
+  }, [tipo]);
 
   const renderRadios = (handleChange) => {
     switch (select) {
@@ -80,6 +104,36 @@ const Alimentacion = ({ select, idPacient, setActualizarSeguimiento }) => {
             </RadioGroup>
           </FormControl>
         );
+      case 'Desparasitacion':
+        return (
+          <>
+            <FormControl style={{ width: 180, marginBottom: 10 }}>
+              <InputLabel id="demo-simple-select-label">Productos</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                onChange={(event) => setValueProducto(event.target.value)}
+              >
+                {SelectProductos.map((product) => (
+                  <MenuItem value={product.name}>{product.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl style={{ width: 180, marginBottom: 10 }}>
+              <InputLabel id="demo-simple-select-label">Via</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                onChange={(event) => setValueVia(event.target.value)}
+              >
+                <MenuItem value="Oral">Oral</MenuItem>
+                <MenuItem value="Suero">Suero</MenuItem>
+                <MenuItem value="Vacuna">Vacuna</MenuItem>
+              </Select>
+            </FormControl>
+          </>
+        );
       case 'Hidratacion':
         return (
           <FormControl component="fieldset">
@@ -113,12 +167,20 @@ const Alimentacion = ({ select, idPacient, setActualizarSeguimiento }) => {
         }}
         validationSchema={
               Yup.object().shape({
-                title: Yup.string().max(1000).required('Las opciones son requeridos'),
+                title: Yup.string().max(1000),
               })
             }
         onSubmit={(values, actions) => {
           setTimeout(async () => {
             console.log(values);
+
+            if (!values) {
+              alert('Las opciones son requeridos');
+            }
+
+            if (select === 'Desparasitacion') {
+              values.title = `Producto: ${ValueProducto} - Via: ${ValueVia}`;
+            }
 
             const data = {
               idPacient,

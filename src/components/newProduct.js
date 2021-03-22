@@ -149,6 +149,9 @@ const NewProduct = ({ setActualizarProducts }) => {
               >
                 <MenuItem value="Gato">Gato</MenuItem>
                 <MenuItem value="Perro">Perro</MenuItem>
+                <MenuItem value="Loro">Loro</MenuItem>
+                <MenuItem value="Gallo">Gallo</MenuItem>
+                <MenuItem value="Conejo">Conejo</MenuItem>
               </Select>
             </FormControl>
             <Box my={2}>

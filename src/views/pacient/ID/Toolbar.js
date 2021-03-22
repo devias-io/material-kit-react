@@ -112,7 +112,7 @@ const Toolbar = ({
 
       <ModalElement visible={modalSeguimiento} setVisible={setModalSeguimiento}>
         {selectSeguimiento ? (
-          <TipoSeguimiento select={selectSeguimiento} idPacient={idPacient} setActualizarSeguimiento={setActualizarSeguimiento} />
+          <TipoSeguimiento select={selectSeguimiento} tipo={tipo} idPacient={idPacient} setActualizarSeguimiento={setActualizarSeguimiento} />
         ) : (
           <>
             <Box mb={3}>
@@ -142,6 +142,7 @@ const Toolbar = ({
                 <MenuItem value="Habitat">Habitat</MenuItem>
                 <MenuItem value="Enfermedades">Enfermedades</MenuItem>
                 <MenuItem value="Alergias">Alergias</MenuItem>
+                <MenuItem value="Desparasitacion">Desparasitacion</MenuItem>
                 <MenuItem value="Antecedentes">Antecedentes</MenuItem>
                 <MenuItem value="Cirugias">Cirugias</MenuItem>
                 <MenuItem value="Actitud">Actitud</MenuItem>
