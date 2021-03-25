@@ -1,34 +1,35 @@
 {
-  "parser": "babel-eslint",
+  "root": true,
   "env": {
     "es6": true,
     "browser": true
   },
-  "extends": ["airbnb", "airbnb/hooks", "eslint:recommended"],
+  "extends": [
+    "airbnb"
+  ],
   "settings": {
     "import/resolver": {
       "node": {
-        "paths": ["src"],
-        "extensions": [".js", ".jsx"]
+        "paths": [
+          "."
+        ],
+        "extensions": [
+          ".js",
+          ".jsx"
+        ]
       }
     }
   },
   "rules": {
-    "no-underscore-dangle": "off",
-    "arrow-body-style": "off",
     "comma-dangle": "off",
-    "import/no-unresolved": "off",
     "jsx-a11y/anchor-is-valid": "off",
-    "jsx-a11y/click-events-have-key-events": "off",
-    "jsx-a11y/control-has-associated-label": "off",
-    "jsx-a11y/no-static-element-interactions": "off",
+    "max-len": "off",
     "no-console": "off",
-    "no-param-reassign": "off",
     "no-plusplus": "off",
-    "react-hooks/exhaustive-deps": "off",
     "react/forbid-prop-types": "off",
     "react/jsx-filename-extension": "off",
     "react/jsx-props-no-spreading": "off",
+    "react/react-in-jsx-scope": "off",
     "react/require-default-props": "off"
   }
 }
