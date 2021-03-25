@@ -1,9 +1,9 @@
+import { Helmet } from 'react-helmet';
 import {
   Box,
   Container,
   makeStyles
 } from '@material-ui/core';
-import Page from 'src/components/Page';
 import Notifications from './Notifications';
 import Password from './Password';
 
@@ -20,17 +20,19 @@ const SettingsView = () => {
   const classes = useStyles();
 
   return (
-    <Page
-      className={classes.root}
-      title="Settings"
-    >
-      <Container maxWidth="lg">
-        <Notifications />
-        <Box sx={{ pt: 3 }}>
-          <Password />
-        </Box>
-      </Container>
-    </Page>
+    <>
+      <Helmet>
+        <title>Settings</title>
+      </Helmet>
+      <Box className={classes.root}>
+        <Container maxWidth="lg">
+          <Notifications />
+          <Box sx={{ pt: 3 }}>
+            <Password />
+          </Box>
+        </Container>
+      </Box>
+    </>
   );
 };
 
