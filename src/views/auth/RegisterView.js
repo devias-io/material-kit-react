@@ -17,7 +17,7 @@ import Page from 'src/components/Page';
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    backgroundColor: theme.palette.background.dark,
+    backgroundColor: theme.palette.background.default,
     height: '100%',
     paddingBottom: theme.spacing(3),
     paddingTop: theme.spacing(3)
@@ -34,10 +34,12 @@ const RegisterView = () => {
       title="Register"
     >
       <Box
-        display="flex"
-        flexDirection="column"
-        height="100%"
-        justifyContent="center"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          justifyContent: 'center'
+        }}
       >
         <Container maxWidth="sm">
           <Formik
@@ -71,7 +73,7 @@ const RegisterView = () => {
               values
             }) => (
               <form onSubmit={handleSubmit}>
-                <Box mb={3}>
+                <Box sx={{ mb: 3 }}>
                   <Typography
                     color="textPrimary"
                     variant="h2"
@@ -137,9 +139,11 @@ const RegisterView = () => {
                   variant="outlined"
                 />
                 <Box
-                  alignItems="center"
-                  display="flex"
-                  ml={-1}
+                  sx={{
+                    alignItems: 'center',
+                    display: 'flex',
+                    ml: -1
+                  }}
                 >
                   <Checkbox
                     checked={values.policy}
@@ -168,7 +172,7 @@ const RegisterView = () => {
                     {errors.policy}
                   </FormHelperText>
                 )}
-                <Box my={2}>
+                <Box sx={{ py: 2 }}>
                   <Button
                     color="primary"
                     disabled={isSubmitting}

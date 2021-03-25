@@ -38,9 +38,11 @@ const ProductCard = ({ className, product, ...rest }) => {
     >
       <CardContent>
         <Box
-          display="flex"
-          justifyContent="center"
-          mb={3}
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            pb: 3
+          }}
         >
           <Avatar
             alt="Product"
@@ -64,13 +66,13 @@ const ProductCard = ({ className, product, ...rest }) => {
           {product.description}
         </Typography>
       </CardContent>
-      <Box flexGrow={1} />
+      <Box sx={{ flexGrow: 1 }} />
       <Divider />
-      <Box p={2}>
+      <Box sx={{ p: 2 }}>
         <Grid
           container
-          justify="space-between"
           spacing={2}
+          sx={{ justifyContent: 'space-between' }}
         >
           <Grid
             className={classes.statsItem}

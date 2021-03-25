@@ -174,9 +174,11 @@ const ProfileDetails = ({ className, ...rest }) => {
         </CardContent>
         <Divider />
         <Box
-          display="flex"
-          justifyContent="flex-end"
-          p={2}
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            p: 2
+          }}
         >
           <Button
             color="primary"

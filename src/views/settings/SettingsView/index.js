@@ -10,7 +10,7 @@ import Password from './Password';
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    backgroundColor: theme.palette.background.dark,
+    backgroundColor: theme.palette.background.default,
     minHeight: '100%',
     paddingBottom: theme.spacing(3),
     paddingTop: theme.spacing(3)
@@ -27,7 +27,7 @@ const SettingsView = () => {
     >
       <Container maxWidth="lg">
         <Notifications />
-        <Box mt={3}>
+        <Box sx={{ pt: 3 }}>
           <Password />
         </Box>
       </Container>

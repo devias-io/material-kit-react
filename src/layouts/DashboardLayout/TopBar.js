@@ -42,7 +42,7 @@ const TopBar = ({
         <RouterLink to="/">
           <Logo />
         </RouterLink>
-        <Box flexGrow={1} />
+        <Box sx={{ flexGrow: 1 }} />
         <Hidden mdDown>
           <IconButton color="inherit">
             <Badge

@@ -43,8 +43,8 @@ const TotalCustomers = ({ className, ...rest }) => {
       <CardContent>
         <Grid
           container
-          justify="space-between"
           spacing={3}
+          sx={{ justifyContent: 'space-between' }}
         >
           <Grid item>
             <Typography
@@ -68,9 +68,11 @@ const TotalCustomers = ({ className, ...rest }) => {
           </Grid>
         </Grid>
         <Box
-          mt={2}
-          display="flex"
-          alignItems="center"
+          sx={{
+            alignItems: 'center',
+            display: 'flex',
+            pt: 2
+          }}
         >
           <ArrowUpwardIcon className={classes.differenceIcon} />
           <Typography

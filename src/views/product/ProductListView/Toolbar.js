@@ -32,8 +32,10 @@ const Toolbar = ({ className, ...rest }) => {
       {...rest}
     >
       <Box
-        display="flex"
-        justifyContent="flex-end"
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }}
       >
         <Button className={classes.importButton}>
           Import
@@ -48,10 +50,10 @@ const Toolbar = ({ className, ...rest }) => {
           Add product
         </Button>
       </Box>
-      <Box mt={3}>
+      <Box sx={{ mt: 3 }}>
         <Card>
           <CardContent>
-            <Box maxWidth={500}>
+            <Box sx={{ maxWidth: 500 }}>
               <TextField
                 fullWidth
                 InputProps={{

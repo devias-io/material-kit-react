@@ -83,7 +83,7 @@ const Sales = ({ className, ...rest }) => {
       ]
     },
     tooltips: {
-      backgroundColor: theme.palette.background.default,
+      backgroundColor: theme.palette.background.paper,
       bodyFontColor: theme.palette.text.secondary,
       borderColor: theme.palette.divider,
       borderWidth: 1,
@@ -115,8 +115,10 @@ const Sales = ({ className, ...rest }) => {
       <Divider />
       <CardContent>
         <Box
-          height={400}
-          position="relative"
+          sx={{
+            height: 400,
+            position: 'relative'
+          }}
         >
           <Bar
             data={data}
@@ -126,9 +128,11 @@ const Sales = ({ className, ...rest }) => {
       </CardContent>
       <Divider />
       <Box
-        display="flex"
-        justifyContent="flex-end"
-        p={2}
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          p: 2
+        }}
       >
         <Button
           color="primary"

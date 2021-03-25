@@ -36,8 +36,8 @@ const TasksProgress = ({ className, ...rest }) => {
       <CardContent>
         <Grid
           container
-          justify="space-between"
           spacing={3}
+          sx={{ justifyContent: 'space-between' }}
         >
           <Grid item>
             <Typography
@@ -60,7 +60,7 @@ const TasksProgress = ({ className, ...rest }) => {
             </Avatar>
           </Grid>
         </Grid>
-        <Box mt={3}>
+        <Box sx={{ pt: 3 }}>
           <LinearProgress
             value={75.5}
             variant="determinate"
