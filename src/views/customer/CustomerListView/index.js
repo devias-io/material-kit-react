@@ -11,7 +11,7 @@ import data from './data';
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    backgroundColor: theme.palette.background.dark,
+    backgroundColor: theme.palette.background.default,
     minHeight: '100%',
     paddingBottom: theme.spacing(3),
     paddingTop: theme.spacing(3)
@@ -29,7 +29,7 @@ const CustomerListView = () => {
     >
       <Container maxWidth={false}>
         <Toolbar />
-        <Box mt={3}>
+        <Box sx={{ mt: 3 }}>
           <Results customers={customers} />
         </Box>
       </Container>

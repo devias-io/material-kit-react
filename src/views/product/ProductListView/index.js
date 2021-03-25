@@ -13,7 +13,7 @@ import data from './data';
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    backgroundColor: theme.palette.background.dark,
+    backgroundColor: theme.palette.background.default,
     minHeight: '100%',
     paddingBottom: theme.spacing(3),
     paddingTop: theme.spacing(3)
@@ -34,7 +34,7 @@ const ProductList = () => {
     >
       <Container maxWidth={false}>
         <Toolbar />
-        <Box mt={3}>
+        <Box sx={{ pt: 3 }}>
           <Grid
             container
             spacing={3}
@@ -56,9 +56,11 @@ const ProductList = () => {
           </Grid>
         </Box>
         <Box
-          mt={3}
-          display="flex"
-          justifyContent="center"
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            pt: 3
+          }}
         >
           <Pagination
             color="primary"

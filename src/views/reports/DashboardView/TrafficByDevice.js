@@ -54,7 +54,7 @@ const TrafficByDevice = ({ className, ...rest }) => {
     maintainAspectRatio: false,
     responsive: true,
     tooltips: {
-      backgroundColor: theme.palette.background.default,
+      backgroundColor: theme.palette.background.paper,
       bodyFontColor: theme.palette.text.secondary,
       borderColor: theme.palette.divider,
       borderWidth: 1,
@@ -96,8 +96,10 @@ const TrafficByDevice = ({ className, ...rest }) => {
       <Divider />
       <CardContent>
         <Box
-          height={300}
-          position="relative"
+          sx={{
+            height: 300,
+            position: 'relative'
+          }}
         >
           <Doughnut
             data={data}
@@ -105,9 +107,11 @@ const TrafficByDevice = ({ className, ...rest }) => {
           />
         </Box>
         <Box
-          display="flex"
-          justifyContent="center"
-          mt={2}
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            pt: 2
+          }}
         >
           {devices.map(({
             color,
@@ -117,8 +121,10 @@ const TrafficByDevice = ({ className, ...rest }) => {
           }) => (
             <Box
               key={title}
-              p={1}
-              textAlign="center"
+              sx={{
+                p: 1,
+                textAlign: 'center'
+              }}
             >
               <Icon color="action" />
               <Typography

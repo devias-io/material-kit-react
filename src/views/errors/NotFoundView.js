@@ -9,7 +9,7 @@ import Page from 'src/components/Page';
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    backgroundColor: theme.palette.background.dark,
+    backgroundColor: theme.palette.background.default,
     height: '100%',
     paddingBottom: theme.spacing(3),
     paddingTop: theme.spacing(3)
@@ -31,10 +31,12 @@ const NotFoundView = () => {
       title="404"
     >
       <Box
-        display="flex"
-        flexDirection="column"
-        height="100%"
-        justifyContent="center"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          justifyContent: 'center'
+        }}
       >
         <Container maxWidth="md">
           <Typography
@@ -52,7 +54,7 @@ const NotFoundView = () => {
             You either tried some shady route or you came here by mistake.
             Whichever it is, try using the navigation
           </Typography>
-          <Box textAlign="center">
+          <Box sx={{ textAlign: 'center' }}>
             <img
               alt="Under development"
               className={classes.image}

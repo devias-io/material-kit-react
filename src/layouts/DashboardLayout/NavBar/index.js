@@ -102,15 +102,19 @@ const NavBar = ({ onMobileClose, openMobile }) => {
 
   const content = (
     <Box
-      height="100%"
-      display="flex"
-      flexDirection="column"
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%'
+      }}
     >
       <Box
-        alignItems="center"
-        display="flex"
-        flexDirection="column"
-        p={2}
+        sx={{
+          alignItems: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          p: 2
+        }}
       >
         <Avatar
           className={classes.avatar}
@@ -133,7 +137,7 @@ const NavBar = ({ onMobileClose, openMobile }) => {
         </Typography>
       </Box>
       <Divider />
-      <Box p={2}>
+      <Box sx={{ p: 2 }}>
         <List>
           {items.map((item) => (
             <NavItem
@@ -145,11 +149,13 @@ const NavBar = ({ onMobileClose, openMobile }) => {
           ))}
         </List>
       </Box>
-      <Box flexGrow={1} />
+      <Box sx={{ flexGrow: 1 }} />
       <Box
-        p={2}
-        m={2}
-        bgcolor="background.dark"
+        sx={{
+          backgroundColor: 'background.default',
+          m: 2,
+          p: 2
+        }}
       >
         <Typography
           align="center"
@@ -165,9 +171,11 @@ const NavBar = ({ onMobileClose, openMobile }) => {
           Upgrade to PRO version and access 20 more screens
         </Typography>
         <Box
-          display="flex"
-          justifyContent="center"
-          mt={2}
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            pt: 2
+          }}
         >
           <Button
             color="primary"
@@ -215,7 +223,7 @@ NavBar.propTypes = {
 };
 
 NavBar.defaultProps = {
-  onMobileClose: () => {},
+  onMobileClose: () => { },
   openMobile: false
 };
 

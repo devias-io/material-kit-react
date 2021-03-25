@@ -104,7 +104,7 @@ const LatestOrders = ({ className, ...rest }) => {
       <CardHeader title="Latest Orders" />
       <Divider />
       <PerfectScrollbar>
-        <Box minWidth={800}>
+        <Box sx={{ minWidth: 800 }}>
           <Table>
             <TableHead>
               <TableRow>
@@ -161,9 +161,11 @@ const LatestOrders = ({ className, ...rest }) => {
         </Box>
       </PerfectScrollbar>
       <Box
-        display="flex"
-        justifyContent="flex-end"
-        p={2}
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          p: 2
+        }}
       >
         <Button
           color="primary"

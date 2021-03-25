@@ -34,8 +34,8 @@ const TotalProfit = ({ className, ...rest }) => {
       <CardContent>
         <Grid
           container
-          justify="space-between"
           spacing={3}
+          sx={{ justifyContent: 'space-between' }}
         >
           <Grid item>
             <Typography

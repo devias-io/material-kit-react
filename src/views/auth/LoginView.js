@@ -18,7 +18,7 @@ import Page from 'src/components/Page';
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    backgroundColor: theme.palette.background.dark,
+    backgroundColor: theme.palette.background.default,
     height: '100%',
     paddingBottom: theme.spacing(3),
     paddingTop: theme.spacing(3)
@@ -35,10 +35,12 @@ const LoginView = () => {
       title="Login"
     >
       <Box
-        display="flex"
-        flexDirection="column"
-        height="100%"
-        justifyContent="center"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          justifyContent: 'center'
+        }}
       >
         <Container maxWidth="sm">
           <Formik
@@ -64,7 +66,7 @@ const LoginView = () => {
               values
             }) => (
               <form onSubmit={handleSubmit}>
-                <Box mb={3}>
+                <Box sx={{ mb: 3 }}>
                   <Typography
                     color="textPrimary"
                     variant="h2"
@@ -116,8 +118,10 @@ const LoginView = () => {
                   </Grid>
                 </Grid>
                 <Box
-                  mt={3}
-                  mb={1}
+                  sx={{
+                    pb: 1,
+                    pt: 3
+                  }}
                 >
                   <Typography
                     align="center"
@@ -153,7 +157,7 @@ const LoginView = () => {
                   value={values.password}
                   variant="outlined"
                 />
-                <Box my={2}>
+                <Box sx={{ py: 2 }}>
                   <Button
                     color="primary"
                     disabled={isSubmitting}

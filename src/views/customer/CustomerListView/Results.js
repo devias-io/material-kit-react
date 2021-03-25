@@ -78,7 +78,7 @@ const Results = ({ className, customers, ...rest }) => {
       {...rest}
     >
       <PerfectScrollbar>
-        <Box minWidth={1050}>
+        <Box sx={{ minWidth: 1050 }}>
           <Table>
             <TableHead>
               <TableRow>
@@ -126,8 +126,10 @@ const Results = ({ className, customers, ...rest }) => {
                   </TableCell>
                   <TableCell>
                     <Box
-                      alignItems="center"
-                      display="flex"
+                      sx={{
+                        alignItems: 'center',
+                        display: 'flex'
+                      }}
                     >
                       <Avatar
                         className={classes.avatar}
