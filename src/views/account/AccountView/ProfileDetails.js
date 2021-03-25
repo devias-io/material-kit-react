@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import clsx from 'clsx';
-import PropTypes from 'prop-types';
 import {
   Box,
   Button,
@@ -9,8 +7,7 @@ import {
   CardHeader,
   Divider,
   Grid,
-  TextField,
-  makeStyles
+  TextField
 } from '@material-ui/core';
 
 const states = [
@@ -28,12 +25,7 @@ const states = [
   }
 ];
 
-const useStyles = makeStyles(() => ({
-  root: {}
-}));
-
-const ProfileDetails = ({ className, ...rest }) => {
-  const classes = useStyles();
+const ProfileDetails = (props) => {
   const [values, setValues] = useState({
     firstName: 'Katarina',
     lastName: 'Smith',
@@ -54,8 +46,7 @@ const ProfileDetails = ({ className, ...rest }) => {
     <form
       autoComplete="off"
       noValidate
-      className={clsx(classes.root, className)}
-      {...rest}
+      {...props}
     >
       <Card>
         <CardHeader
@@ -190,10 +181,6 @@ const ProfileDetails = ({ className, ...rest }) => {
       </Card>
     </form>
   );
-};
-
-ProfileDetails.propTypes = {
-  className: PropTypes.string
 };
 
 export default ProfileDetails;

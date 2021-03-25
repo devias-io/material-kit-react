@@ -1,5 +1,3 @@
-import clsx from 'clsx';
-import PropTypes from 'prop-types';
 import { Bar } from 'react-chartjs-2';
 import {
   Box,
@@ -9,18 +7,12 @@ import {
   CardHeader,
   Divider,
   useTheme,
-  makeStyles,
   colors
 } from '@material-ui/core';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ArrowRightIcon from '@material-ui/icons/ArrowRight';
 
-const useStyles = makeStyles(() => ({
-  root: {}
-}));
-
-const Sales = ({ className, ...rest }) => {
-  const classes = useStyles();
+const Sales = (props) => {
   const theme = useTheme();
 
   const data = {
@@ -95,10 +87,7 @@ const Sales = ({ className, ...rest }) => {
   };
 
   return (
-    <Card
-      className={clsx(classes.root, className)}
-      {...rest}
-    >
+    <Card {...props}>
       <CardHeader
         action={(
           <Button
@@ -144,10 +133,6 @@ const Sales = ({ className, ...rest }) => {
       </Box>
     </Card>
   );
-};
-
-Sales.propTypes = {
-  className: PropTypes.string
 };
 
 export default Sales;

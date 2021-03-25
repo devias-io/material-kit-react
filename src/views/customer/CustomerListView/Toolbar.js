@@ -1,5 +1,3 @@
-import PropTypes from 'prop-types';
-import clsx from 'clsx';
 import {
   Box,
   Button,
@@ -7,79 +5,57 @@ import {
   CardContent,
   TextField,
   InputAdornment,
-  SvgIcon,
-  makeStyles
+  SvgIcon
 } from '@material-ui/core';
 import { Search as SearchIcon } from 'react-feather';
 
-const useStyles = makeStyles((theme) => ({
-  root: {},
-  importButton: {
-    marginRight: theme.spacing(1)
-  },
-  exportButton: {
-    marginRight: theme.spacing(1)
-  }
-}));
-
-const Toolbar = ({ className, ...rest }) => {
-  const classes = useStyles();
-
-  return (
-    <div
-      className={clsx(classes.root, className)}
-      {...rest}
+const Toolbar = (props) => (
+  <Box {...props}>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'flex-end'
+      }}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }}
+      <Button>
+        Import
+      </Button>
+      <Button sx={{ mx: 1 }}>
+        Export
+      </Button>
+      <Button
+        color="primary"
+        variant="contained"
       >
-        <Button className={classes.importButton}>
-          Import
-        </Button>
-        <Button className={classes.exportButton}>
-          Export
-        </Button>
-        <Button
-          color="primary"
-          variant="contained"
-        >
-          Add customer
-        </Button>
-      </Box>
-      <Box sx={{ mt: 3 }}>
-        <Card>
-          <CardContent>
-            <Box sx={{ maxWidth: 500 }}>
-              <TextField
-                fullWidth
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SvgIcon
-                        fontSize="small"
-                        color="action"
-                      >
-                        <SearchIcon />
-                      </SvgIcon>
-                    </InputAdornment>
-                  )
-                }}
-                placeholder="Search customer"
-                variant="outlined"
-              />
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
-    </div>
-  );
-};
-
-Toolbar.propTypes = {
-  className: PropTypes.string
-};
+        Add customer
+      </Button>
+    </Box>
+    <Box sx={{ mt: 3 }}>
+      <Card>
+        <CardContent>
+          <Box sx={{ maxWidth: 500 }}>
+            <TextField
+              fullWidth
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SvgIcon
+                      fontSize="small"
+                      color="action"
+                    >
+                      <SearchIcon />
+                    </SvgIcon>
+                  </InputAdornment>
+                )
+              }}
+              placeholder="Search customer"
+              variant="outlined"
+            />
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
+  </Box>
+);
 
 export default Toolbar;

@@ -1,6 +1,3 @@
-import { useState } from 'react';
-import clsx from 'clsx';
-import PropTypes from 'prop-types';
 import { v4 as uuid } from 'uuid';
 import moment from 'moment';
 import {
@@ -13,13 +10,12 @@ import {
   List,
   ListItem,
   ListItemAvatar,
-  ListItemText,
-  makeStyles
+  ListItemText
 } from '@material-ui/core';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import ArrowRightIcon from '@material-ui/icons/ArrowRight';
 
-const data = [
+const products = [
   {
     id: uuid(),
     name: 'Dropbox',
@@ -52,79 +48,60 @@ const data = [
   }
 ];
 
-const useStyles = makeStyles(({
-  root: {
-    height: '100%'
-  },
-  image: {
-    height: 48,
-    width: 48
-  }
-}));
-
-const LatestProducts = ({ className, ...rest }) => {
-  const classes = useStyles();
-  const [products] = useState(data);
-
-  return (
-    <Card
-      className={clsx(classes.root, className)}
-      {...rest}
-    >
-      <CardHeader
-        subtitle={`${products.length} in total`}
-        title="Latest Products"
-      />
-      <Divider />
-      <List>
-        {products.map((product, i) => (
-          <ListItem
-            divider={i < products.length - 1}
-            key={product.id}
-          >
-            <ListItemAvatar>
-              <img
-                alt="Product"
-                className={classes.image}
-                src={product.imageUrl}
-              />
-            </ListItemAvatar>
-            <ListItemText
-              primary={product.name}
-              secondary={`Updated ${product.updatedAt.fromNow()}`}
-            />
-            <IconButton
-              edge="end"
-              size="small"
-            >
-              <MoreVertIcon />
-            </IconButton>
-          </ListItem>
-        ))}
-      </List>
-      <Divider />
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          p: 2
-        }}
-      >
-        <Button
-          color="primary"
-          endIcon={<ArrowRightIcon />}
-          size="small"
-          variant="text"
+const LatestProducts = (props) => (
+  <Card {...props}>
+    <CardHeader
+      subtitle={`${products.length} in total`}
+      title="Latest Products"
+    />
+    <Divider />
+    <List>
+      {products.map((product, i) => (
+        <ListItem
+          divider={i < products.length - 1}
+          key={product.id}
         >
-          View all
-        </Button>
-      </Box>
-    </Card>
-  );
-};
-
-LatestProducts.propTypes = {
-  className: PropTypes.string
-};
+          <ListItemAvatar>
+            <img
+              alt={product.name}
+              src={product.imageUrl}
+              style={{
+                height: 48,
+                width: 48
+              }}
+            />
+          </ListItemAvatar>
+          <ListItemText
+            primary={product.name}
+            secondary={`Updated ${product.updatedAt.fromNow()}`}
+          />
+          <IconButton
+            edge="end"
+            size="small"
+          >
+            <MoreVertIcon />
+          </IconButton>
+        </ListItem>
+      ))}
+    </List>
+    <Divider />
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        p: 2
+      }}
+    >
+      <Button
+        color="primary"
+        endIcon={<ArrowRightIcon />}
+        size="small"
+        variant="text"
+      >
+        View all
+      </Button>
+    </Box>
+  </Card>
+);
 
 export default LatestProducts;

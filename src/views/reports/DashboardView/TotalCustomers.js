@@ -1,99 +1,76 @@
-import clsx from 'clsx';
-import PropTypes from 'prop-types';
 import {
   Avatar,
   Box,
   Card,
   CardContent,
   Grid,
-  Typography,
-  colors,
-  makeStyles
+  Typography
 } from '@material-ui/core';
+import { green } from '@material-ui/core/colors';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import PeopleIcon from '@material-ui/icons/PeopleOutlined';
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    height: '100%'
-  },
-  avatar: {
-    backgroundColor: colors.green[600],
-    height: 56,
-    width: 56
-  },
-  differenceIcon: {
-    color: colors.green[900]
-  },
-  differenceValue: {
-    color: colors.green[900],
-    marginRight: theme.spacing(1)
-  }
-}));
-
-const TotalCustomers = ({ className, ...rest }) => {
-  const classes = useStyles();
-
-  return (
-    <Card
-      className={clsx(classes.root, className)}
-      {...rest}
-    >
-      <CardContent>
-        <Grid
-          container
-          spacing={3}
-          sx={{ justifyContent: 'space-between' }}
-        >
-          <Grid item>
-            <Typography
-              color="textSecondary"
-              gutterBottom
-              variant="h6"
-            >
-              TOTAL CUSTOMERS
-            </Typography>
-            <Typography
-              color="textPrimary"
-              variant="h3"
-            >
-              1,600
-            </Typography>
-          </Grid>
-          <Grid item>
-            <Avatar className={classes.avatar}>
-              <PeopleIcon />
-            </Avatar>
-          </Grid>
-        </Grid>
-        <Box
-          sx={{
-            alignItems: 'center',
-            display: 'flex',
-            pt: 2
-          }}
-        >
-          <ArrowUpwardIcon className={classes.differenceIcon} />
-          <Typography
-            className={classes.differenceValue}
-            variant="body2"
-          >
-            16%
-          </Typography>
+const TotalCustomers = (props) => (
+  <Card {...props}>
+    <CardContent>
+      <Grid
+        container
+        spacing={3}
+        sx={{ justifyContent: 'space-between' }}
+      >
+        <Grid item>
           <Typography
             color="textSecondary"
-            variant="caption"
+            gutterBottom
+            variant="h6"
           >
-            Since last month
+            TOTAL CUSTOMERS
           </Typography>
-        </Box>
-      </CardContent>
-    </Card>
-  );
-};
-
-TotalCustomers.propTypes = {
-  className: PropTypes.string
-};
+          <Typography
+            color="textPrimary"
+            variant="h3"
+          >
+            1,600
+          </Typography>
+        </Grid>
+        <Grid item>
+          <Avatar
+            sx={{
+              backgroundColor: green[600],
+              height: 56,
+              width: 56
+            }}
+          >
+            <PeopleIcon />
+          </Avatar>
+        </Grid>
+      </Grid>
+      <Box
+        sx={{
+          alignItems: 'center',
+          display: 'flex',
+          pt: 2
+        }}
+      >
+        <ArrowUpwardIcon sx={{ color: green[900] }} />
+        <Typography
+          variant="body2"
+          sx={{
+            color: green[900],
+            mr: 1
+          }}
+        >
+          16%
+        </Typography>
+        <Typography
+          color="textSecondary"
+          variant="caption"
+        >
+          Since last month
+        </Typography>
+      </Box>
+    </CardContent>
+  </Card>
+);
 
 export default TotalCustomers;

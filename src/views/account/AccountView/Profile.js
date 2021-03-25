@@ -1,5 +1,3 @@
-import PropTypes from 'prop-types';
-import clsx from 'clsx';
 import moment from 'moment';
 import {
   Avatar,
@@ -9,8 +7,7 @@ import {
   CardActions,
   CardContent,
   Divider,
-  Typography,
-  makeStyles
+  Typography
 } from '@material-ui/core';
 
 const user = {
@@ -22,72 +19,55 @@ const user = {
   timezone: 'GTM-7'
 };
 
-const useStyles = makeStyles(() => ({
-  root: {},
-  avatar: {
-    height: 100,
-    width: 100
-  }
-}));
-
-const Profile = ({ className, ...rest }) => {
-  const classes = useStyles();
-
-  return (
-    <Card
-      className={clsx(classes.root, className)}
-      {...rest}
-    >
-      <CardContent>
-        <Box
+const Profile = (props) => (
+  <Card {...props}>
+    <CardContent>
+      <Box
+        sx={{
+          alignItems: 'center',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        <Avatar
+          src={user.avatar}
           sx={{
-            alignItems: 'center',
-            display: 'flex',
-            flexDirection: 'column'
+            height: 100,
+            width: 100
           }}
+        />
+        <Typography
+          color="textPrimary"
+          gutterBottom
+          variant="h3"
         >
-          <Avatar
-            className={classes.avatar}
-            src={user.avatar}
-          />
-          <Typography
-            color="textPrimary"
-            gutterBottom
-            variant="h3"
-          >
-            {user.name}
-          </Typography>
-          <Typography
-            color="textSecondary"
-            variant="body1"
-          >
-            {`${user.city} ${user.country}`}
-          </Typography>
-          <Typography
-            className={classes.dateText}
-            color="textSecondary"
-            variant="body1"
-          >
-            {`${moment().format('hh:mm A')} ${user.timezone}`}
-          </Typography>
-        </Box>
-      </CardContent>
-      <Divider />
-      <CardActions>
-        <Button
-          color="primary"
-          fullWidth
-          variant="text"
+          {user.name}
+        </Typography>
+        <Typography
+          color="textSecondary"
+          variant="body1"
         >
-          Upload picture
-        </Button>
-      </CardActions>
-    </Card>
-  );
-};
-
-Profile.propTypes = {
-  className: PropTypes.string
-};
+          {`${user.city} ${user.country}`}
+        </Typography>
+        <Typography
+          color="textSecondary"
+          variant="body1"
+        >
+          {`${moment().format('hh:mm A')} ${user.timezone}`}
+        </Typography>
+      </Box>
+    </CardContent>
+    <Divider />
+    <CardActions>
+      <Button
+        color="primary"
+        fullWidth
+        variant="text"
+      >
+        Upload picture
+      </Button>
+    </CardActions>
+  </Card>
+);
 
 export default Profile;

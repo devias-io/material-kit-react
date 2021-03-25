@@ -4,27 +4,13 @@ import {
   Box,
   Container,
   Grid,
-  Pagination,
-  makeStyles
+  Pagination
 } from '@material-ui/core';
 import Toolbar from './Toolbar';
 import ProductCard from './ProductCard';
 import data from './data';
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    backgroundColor: theme.palette.background.default,
-    minHeight: '100%',
-    paddingBottom: theme.spacing(3),
-    paddingTop: theme.spacing(3)
-  },
-  productCard: {
-    height: '100%'
-  }
-}));
-
 const ProductList = () => {
-  const classes = useStyles();
   const [products] = useState(data);
 
   return (
@@ -32,7 +18,13 @@ const ProductList = () => {
       <Helmet>
         <title>Products</title>
       </Helmet>
-      <Box className={classes.root}>
+      <Box
+        sx={{
+          backgroundColor: 'background.default',
+          minHeight: '100%',
+          py: 3
+        }}
+      >
         <Container maxWidth={false}>
           <Toolbar />
           <Box sx={{ pt: 3 }}>
@@ -49,8 +41,8 @@ const ProductList = () => {
                   xs={12}
                 >
                   <ProductCard
-                    className={classes.productCard}
                     product={product}
+                    sx={{ height: '100%' }}
                   />
                 </Grid>
               ))}
