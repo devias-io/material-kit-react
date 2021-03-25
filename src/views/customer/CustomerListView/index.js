@@ -1,10 +1,10 @@
 import { useState } from 'react';
+import { Helmet } from 'react-helmet';
 import {
   Box,
   Container,
   makeStyles
 } from '@material-ui/core';
-import Page from 'src/components/Page';
 import Results from './Results';
 import Toolbar from './Toolbar';
 import data from './data';
@@ -23,17 +23,19 @@ const CustomerListView = () => {
   const [customers] = useState(data);
 
   return (
-    <Page
-      className={classes.root}
-      title="Customers"
-    >
-      <Container maxWidth={false}>
-        <Toolbar />
-        <Box sx={{ mt: 3 }}>
-          <Results customers={customers} />
-        </Box>
-      </Container>
-    </Page>
+    <>
+      <Helmet>
+        <title>Customers</title>
+      </Helmet>
+      <Box className={classes.root}>
+        <Container maxWidth={false}>
+          <Toolbar />
+          <Box sx={{ mt: 3 }}>
+            <Results customers={customers} />
+          </Box>
+        </Container>
+      </Box>
+    </>
   );
 };
 

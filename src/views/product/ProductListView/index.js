@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Helmet } from 'react-helmet';
 import {
   Box,
   Container,
@@ -6,7 +7,6 @@ import {
   Pagination,
   makeStyles
 } from '@material-ui/core';
-import Page from 'src/components/Page';
 import Toolbar from './Toolbar';
 import ProductCard from './ProductCard';
 import data from './data';
@@ -28,48 +28,50 @@ const ProductList = () => {
   const [products] = useState(data);
 
   return (
-    <Page
-      className={classes.root}
-      title="Products"
-    >
-      <Container maxWidth={false}>
-        <Toolbar />
-        <Box sx={{ pt: 3 }}>
-          <Grid
-            container
-            spacing={3}
+    <>
+      <Helmet>
+        <title>Products</title>
+      </Helmet>
+      <Box className={classes.root}>
+        <Container maxWidth={false}>
+          <Toolbar />
+          <Box sx={{ pt: 3 }}>
+            <Grid
+              container
+              spacing={3}
+            >
+              {products.map((product) => (
+                <Grid
+                  item
+                  key={product.id}
+                  lg={4}
+                  md={6}
+                  xs={12}
+                >
+                  <ProductCard
+                    className={classes.productCard}
+                    product={product}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              pt: 3
+            }}
           >
-            {products.map((product) => (
-              <Grid
-                item
-                key={product.id}
-                lg={4}
-                md={6}
-                xs={12}
-              >
-                <ProductCard
-                  className={classes.productCard}
-                  product={product}
-                />
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            pt: 3
-          }}
-        >
-          <Pagination
-            color="primary"
-            count={3}
-            size="small"
-          />
-        </Box>
-      </Container>
-    </Page>
+            <Pagination
+              color="primary"
+              count={3}
+              size="small"
+            />
+          </Box>
+        </Container>
+      </Box>
+    </>
   );
 };
 
