@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import { Chart } from 'react-chartjs-2';
 
 // ChartJS extension rounded bar chart
