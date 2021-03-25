@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import clsx from 'clsx';
 import moment from 'moment';
 import { v4 as uuid } from 'uuid';
