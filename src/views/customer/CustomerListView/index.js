@@ -1,25 +1,11 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import {
-  Box,
-  Container,
-  makeStyles
-} from '@material-ui/core';
+import { Box, Container } from '@material-ui/core';
 import Results from './Results';
 import Toolbar from './Toolbar';
 import data from './data';
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    backgroundColor: theme.palette.background.default,
-    minHeight: '100%',
-    paddingBottom: theme.spacing(3),
-    paddingTop: theme.spacing(3)
-  }
-}));
-
 const CustomerListView = () => {
-  const classes = useStyles();
   const [customers] = useState(data);
 
   return (
@@ -27,10 +13,16 @@ const CustomerListView = () => {
       <Helmet>
         <title>Customers</title>
       </Helmet>
-      <Box className={classes.root}>
+      <Box
+        sx={{
+          backgroundColor: 'background.default',
+          minHeight: '100%',
+          py: 3
+        }}
+      >
         <Container maxWidth={false}>
           <Toolbar />
-          <Box sx={{ mt: 3 }}>
+          <Box sx={{ pt: 3 }}>
             <Results customers={customers} />
           </Box>
         </Container>

@@ -1,72 +1,56 @@
-import { NavLink as RouterLink } from 'react-router-dom';
-import clsx from 'clsx';
-import PropTypes from 'prop-types';
 import {
-  Button,
-  ListItem,
-  makeStyles
-} from '@material-ui/core';
-
-const useStyles = makeStyles((theme) => ({
-  item: {
-    display: 'flex',
-    paddingTop: 0,
-    paddingBottom: 0
-  },
-  button: {
-    color: theme.palette.text.secondary,
-    fontWeight: theme.typography.fontWeightMedium,
-    justifyContent: 'flex-start',
-    letterSpacing: 0,
-    padding: '10px 8px',
-    textTransform: 'none',
-    width: '100%'
-  },
-  icon: {
-    marginRight: theme.spacing(1)
-  },
-  title: {
-    marginRight: 'auto'
-  },
-  active: {
-    color: theme.palette.primary.main,
-    '& $title': {
-      fontWeight: theme.typography.fontWeightMedium
-    },
-    '& $icon': {
-      color: theme.palette.primary.main
-    }
-  }
-}));
+  NavLink as RouterLink,
+  matchPath,
+  useLocation
+} from 'react-router-dom';
+import PropTypes from 'prop-types';
+import { Button, ListItem } from '@material-ui/core';
 
 const NavItem = ({
-  className,
   href,
   icon: Icon,
   title,
   ...rest
 }) => {
-  const classes = useStyles();
+  const location = useLocation();
+
+  const active = href ? !!matchPath({
+    path: href,
+    end: false
+  }, location.pathname) : false;
 
   return (
     <ListItem
-      className={clsx(classes.item, className)}
       disableGutters
+      sx={{
+        display: 'flex',
+        py: 0
+      }}
       {...rest}
     >
       <Button
-        activeClassName={classes.active}
-        className={classes.button}
         component={RouterLink}
+        sx={{
+          color: 'text.secondary',
+          fontWeight: 'medium',
+          justifyContent: 'flex-start',
+          letterSpacing: 0,
+          py: 1.25,
+          textTransform: 'none',
+          width: '100%',
+          ...(active && {
+            color: 'primary.main'
+          }),
+          '& svg': {
+            mr: 1
+          }
+        }}
         to={href}
       >
         {Icon && (
-          <Icon
-            className={classes.icon}
-            size="20"
-          />
+          <Icon size="20" />
         )}
-        <span className={classes.title}>
+        <span>
           {title}
         </span>
       </Button>
@@ -75,7 +59,6 @@ const NavItem = ({
 };
 
 NavItem.propTypes = {
-  className: PropTypes.string,
   href: PropTypes.string,
   icon: PropTypes.elementType,
   title: PropTypes.string

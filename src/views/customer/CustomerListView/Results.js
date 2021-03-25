@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import clsx from 'clsx';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import PerfectScrollbar from 'react-perfect-scrollbar';
@@ -14,20 +13,11 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  Typography,
-  makeStyles
+  Typography
 } from '@material-ui/core';
 import getInitials from 'src/utils/getInitials';
 
-const useStyles = makeStyles((theme) => ({
-  root: {},
-  avatar: {
-    marginRight: theme.spacing(2)
-  }
-}));
-
-const Results = ({ className, customers, ...rest }) => {
-  const classes = useStyles();
+const Results = ({ customers, ...rest }) => {
   const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);
   const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(0);
@@ -73,10 +63,7 @@ const Results = ({ className, customers, ...rest }) => {
   };
 
   return (
-    <Card
-      className={clsx(classes.root, className)}
-      {...rest}
-    >
+    <Card {...rest}>
       <PerfectScrollbar>
         <Box sx={{ minWidth: 1050 }}>
           <Table>
@@ -132,8 +119,8 @@ const Results = ({ className, customers, ...rest }) => {
                       }}
                     >
                       <Avatar
-                        className={classes.avatar}
                         src={customer.avatarUrl}
+                        sx={{ mr: 2 }}
                       >
                         {getInitials(customer.name)}
                       </Avatar>
@@ -177,7 +164,6 @@ const Results = ({ className, customers, ...rest }) => {
 };
 
 Results.propTypes = {
-  className: PropTypes.string,
   customers: PropTypes.array.isRequired
 };
 

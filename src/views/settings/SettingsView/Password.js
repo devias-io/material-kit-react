@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import clsx from 'clsx';
 import {
   Box,
   Button,
@@ -8,16 +7,10 @@ import {
   CardContent,
   CardHeader,
   Divider,
-  TextField,
-  makeStyles
+  TextField
 } from '@material-ui/core';
 
-const useStyles = makeStyles(({
-  root: {}
-}));
-
-const Password = ({ className, ...rest }) => {
-  const classes = useStyles();
+const Password = (props) => {
   const [values, setValues] = useState({
     password: '',
     confirm: ''
@@ -31,11 +24,8 @@ const Password = ({ className, ...rest }) => {
   };
 
   return (
-    <form
-      className={clsx(classes.root, className)}
-      {...rest}
-    >
-      <Card>
+    <Card {...props}>
+      <form>
         <CardHeader
           subheader="Update password"
           title="Password"
@@ -78,8 +68,8 @@ const Password = ({ className, ...rest }) => {
             Update
           </Button>
         </Box>
-      </Card>
-    </form>
+      </form>
+    </Card>
   );
 };
 

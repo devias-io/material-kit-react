@@ -1,69 +1,50 @@
-import clsx from 'clsx';
-import PropTypes from 'prop-types';
 import {
   Avatar,
   Card,
   CardContent,
   Grid,
-  Typography,
-  makeStyles,
-  colors
+  Typography
 } from '@material-ui/core';
+import { indigo } from '@material-ui/core/colors';
 import AttachMoneyIcon from '@material-ui/icons/AttachMoney';
 
-const useStyles = makeStyles(() => ({
-  root: {
-    height: '100%'
-  },
-  avatar: {
-    backgroundColor: colors.indigo[600],
-    height: 56,
-    width: 56
-  }
-}));
-
-const TotalProfit = ({ className, ...rest }) => {
-  const classes = useStyles();
-
-  return (
-    <Card
-      className={clsx(classes.root, className)}
-      {...rest}
-    >
-      <CardContent>
-        <Grid
-          container
-          spacing={3}
-          sx={{ justifyContent: 'space-between' }}
-        >
-          <Grid item>
-            <Typography
-              color="textSecondary"
-              gutterBottom
-              variant="h6"
-            >
-              TOTAL PROFIT
-            </Typography>
-            <Typography
-              color="textPrimary"
-              variant="h3"
-            >
-              $23,200
-            </Typography>
-          </Grid>
-          <Grid item>
-            <Avatar className={classes.avatar}>
-              <AttachMoneyIcon />
-            </Avatar>
-          </Grid>
+const TotalProfit = (props) => (
+  <Card {...props}>
+    <CardContent>
+      <Grid
+        container
+        spacing={3}
+        sx={{ justifyContent: 'space-between' }}
+      >
+        <Grid item>
+          <Typography
+            color="textSecondary"
+            gutterBottom
+            variant="h6"
+          >
+            TOTAL PROFIT
+          </Typography>
+          <Typography
+            color="textPrimary"
+            variant="h3"
+          >
+            $23,200
+          </Typography>
         </Grid>
-      </CardContent>
-    </Card>
-  );
-};
-
-TotalProfit.propTypes = {
-  className: PropTypes.string
-};
+        <Grid item>
+          <Avatar
+            sx={{
+              backgroundColor: indigo[600],
+              height: 56,
+              width: 56
+            }}
+          >
+            <AttachMoneyIcon />
+          </Avatar>
+        </Grid>
+      </Grid>
+    </CardContent>
+  </Card>
+);
 
 export default TotalProfit;

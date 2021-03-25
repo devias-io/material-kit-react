@@ -9,8 +9,7 @@ import {
   Drawer,
   Hidden,
   List,
-  Typography,
-  makeStyles
+  Typography
 } from '@material-ui/core';
 import {
   AlertCircle as AlertCircleIcon,
@@ -73,24 +72,7 @@ const items = [
   }
 ];
 
-const useStyles = makeStyles(() => ({
-  mobileDrawer: {
-    width: 256
-  },
-  desktopDrawer: {
-    width: 256,
-    top: 64,
-    height: 'calc(100% - 64px)'
-  },
-  avatar: {
-    cursor: 'pointer',
-    width: 64,
-    height: 64
-  }
-}));
-
 const NavBar = ({ onMobileClose, openMobile }) => {
-  const classes = useStyles();
   const location = useLocation();
 
   useEffect(() => {
@@ -116,13 +98,16 @@ const NavBar = ({ onMobileClose, openMobile }) => {
         }}
       >
         <Avatar
-          className={classes.avatar}
           component={RouterLink}
           src={user.avatar}
+          sx={{
+            cursor: 'pointer',
+            width: 64,
+            height: 64
+          }}
           to="/app/account"
         />
         <Typography
-          className={classes.name}
           color="textPrimary"
           variant="h5"
         >
@@ -194,10 +179,14 @@ const NavBar = ({ onMobileClose, openMobile }) => {
       <Hidden lgUp>
         <Drawer
           anchor="left"
-          classes={{ paper: classes.mobileDrawer }}
           onClose={onMobileClose}
           open={openMobile}
           variant="temporary"
+          PaperProps={{
+            sx: {
+              width: 256
+            }
+          }}
         >
           {content}
         </Drawer>
@@ -205,9 +194,15 @@ const NavBar = ({ onMobileClose, openMobile }) => {
       <Hidden mdDown>
         <Drawer
           anchor="left"
-          classes={{ paper: classes.desktopDrawer }}
           open
           variant="persistent"
+          PaperProps={{
+            sx: {
+              width: 256,
+              top: 64,
+              height: 'calc(100% - 64px)'
+            }
+          }}
         >
           {content}
         </Drawer>

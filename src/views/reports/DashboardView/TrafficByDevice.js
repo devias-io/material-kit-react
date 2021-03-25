@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import PropTypes from 'prop-types';
 import { Doughnut } from 'react-chartjs-2';
 import {
@@ -9,21 +8,13 @@ import {
   Divider,
   Typography,
   colors,
-  makeStyles,
   useTheme
 } from '@material-ui/core';
 import LaptopMacIcon from '@material-ui/icons/LaptopMac';
 import PhoneIcon from '@material-ui/icons/Phone';
 import TabletIcon from '@material-ui/icons/Tablet';
 
-const useStyles = makeStyles(() => ({
-  root: {
-    height: '100%'
-  }
-}));
-
-const TrafficByDevice = ({ className, ...rest }) => {
-  const classes = useStyles();
+const TrafficByDevice = (props) => {
   const theme = useTheme();
 
   const data = {
@@ -87,10 +78,7 @@ const TrafficByDevice = ({ className, ...rest }) => {
   ];
 
   return (
-    <Card
-      className={clsx(classes.root, className)}
-      {...rest}
-    >
+    <Card {...props}>
       <CardHeader title="Traffic by Device" />
       <Divider />
       <CardContent>

@@ -1,5 +1,3 @@
-import clsx from 'clsx';
-import PropTypes from 'prop-types';
 import {
   Avatar,
   Box,
@@ -7,71 +5,57 @@ import {
   CardContent,
   Grid,
   LinearProgress,
-  Typography,
-  makeStyles,
-  colors
+  Typography
 } from '@material-ui/core';
+import { orange } from '@material-ui/core/colors';
 import InsertChartIcon from '@material-ui/icons/InsertChartOutlined';
 
-const useStyles = makeStyles(() => ({
-  root: {
-    height: '100%'
-  },
-  avatar: {
-    backgroundColor: colors.orange[600],
-    height: 56,
-    width: 56
-  }
-}));
-
-const TasksProgress = ({ className, ...rest }) => {
-  const classes = useStyles();
-
-  return (
-    <Card
-      className={clsx(classes.root, className)}
-      {...rest}
-    >
-      <CardContent>
-        <Grid
-          container
-          spacing={3}
-          sx={{ justifyContent: 'space-between' }}
-        >
-          <Grid item>
-            <Typography
-              color="textSecondary"
-              gutterBottom
-              variant="h6"
-            >
-              TASKS PROGRESS
-            </Typography>
-            <Typography
-              color="textPrimary"
-              variant="h3"
-            >
-              75.5%
-            </Typography>
-          </Grid>
-          <Grid item>
-            <Avatar className={classes.avatar}>
-              <InsertChartIcon />
-            </Avatar>
-          </Grid>
+const TasksProgress = (props) => (
+  <Card
+    sx={{ height: '100%' }}
+    {...props}
+  >
+    <CardContent>
+      <Grid
+        container
+        spacing={3}
+        sx={{ justifyContent: 'space-between' }}
+      >
+        <Grid item>
+          <Typography
+            color="textSecondary"
+            gutterBottom
+            variant="h6"
+          >
+            TASKS PROGRESS
+          </Typography>
+          <Typography
+            color="textPrimary"
+            variant="h3"
+          >
+            75.5%
+          </Typography>
         </Grid>
-        <Box sx={{ pt: 3 }}>
-          <LinearProgress
-            value={75.5}
-            variant="determinate"
-          />
-        </Box>
-      </CardContent>
-    </Card>
-  );
-};
-
-TasksProgress.propTypes = {
-  className: PropTypes.string
-};
+        <Grid item>
+          <Avatar
+            sx={{
+              backgroundColor: orange[600],
+              height: 56,
+              width: 56
+            }}
+          >
+            <InsertChartIcon />
+          </Avatar>
+        </Grid>
+      </Grid>
+      <Box sx={{ pt: 3 }}>
+        <LinearProgress
+          value={75.5}
+          variant="determinate"
+        />
+      </Box>
+    </CardContent>
+  </Card>
+);
 
 export default TasksProgress;
