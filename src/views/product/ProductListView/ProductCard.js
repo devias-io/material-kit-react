@@ -12,7 +12,14 @@ import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import GetAppIcon from '@material-ui/icons/GetApp';
 
 const ProductCard = ({ product, ...rest }) => (
-  <Card {...rest}>
+  <Card
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%'
+    }}
+    {...rest}
+  >
     <CardContent>
       <Box
         sx={{

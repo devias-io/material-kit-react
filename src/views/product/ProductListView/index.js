@@ -40,10 +40,7 @@ const ProductList = () => {
                   md={6}
                   xs={12}
                 >
-                  <ProductCard
-                    product={product}
-                    sx={{ height: '100%' }}
-                  />
+                  <ProductCard product={product} />
                 </Grid>
               ))}
             </Grid>

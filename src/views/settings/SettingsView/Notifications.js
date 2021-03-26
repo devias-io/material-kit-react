@@ -12,8 +12,8 @@ import {
 } from '@material-ui/core';
 
 const Notifications = (props) => (
-  <Card {...props}>
-    <form>
+  <form {...props}>
+    <Card>
       <CardHeader
         subheader="Manage the notifications"
         title="Notifications"
@@ -116,8 +116,8 @@ const Notifications = (props) => (
           Save
         </Button>
       </Box>
-    </form>
-  </Card>
+    </Card>
+  </form>
 );
 
 export default Notifications;
