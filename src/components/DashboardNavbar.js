@@ -27,7 +27,7 @@ const DashboardNavbar = ({ onMobileNavOpen, ...rest }) => {
           <Logo />
         </RouterLink>
         <Box sx={{ flexGrow: 1 }} />
-        <Hidden mdDown>
+        <Hidden lgDown>
           <IconButton color="inherit">
             <Badge
               badgeContent={notifications.length}
