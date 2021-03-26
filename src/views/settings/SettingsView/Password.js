@@ -24,8 +24,8 @@ const Password = (props) => {
   };
 
   return (
-    <Card {...props}>
-      <form>
+    <form {...props}>
+      <Card>
         <CardHeader
           subheader="Update password"
           title="Password"
@@ -68,8 +68,8 @@ const Password = (props) => {
             Update
           </Button>
         </Box>
-      </form>
-    </Card>
+      </Card>
+    </form>
   );
 };
 

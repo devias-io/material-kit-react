@@ -1,48 +1,47 @@
 import { Outlet } from 'react-router-dom';
-import { makeStyles } from '@material-ui/core';
+import { experimentalStyled } from '@material-ui/core';
 import TopBar from './TopBar';
 
-const useStyles = makeStyles((theme) => ({
-  root: {
+const MainLayoutRoot = experimentalStyled('div')(
+  ({ theme }) => ({
     backgroundColor: theme.palette.background.paper,
     display: 'flex',
     height: '100%',
     overflow: 'hidden',
     width: '100%'
-  },
-  wrapper: {
-    display: 'flex',
-    flex: '1 1 auto',
-    overflow: 'hidden',
-    paddingTop: 64
-  },
-  contentContainer: {
-    display: 'flex',
-    flex: '1 1 auto',
-    overflow: 'hidden'
-  },
-  content: {
-    flex: '1 1 auto',
-    height: '100%',
-    overflow: 'auto'
-  }
-}));
+  })
+);
 
-const MainLayout = () => {
-  const classes = useStyles();
+const MainLayoutWrapper = experimentalStyled('div')({
+  display: 'flex',
+  flex: '1 1 auto',
+  overflow: 'hidden',
+  paddingTop: 64
+});
 
-  return (
-    <div className={classes.root}>
-      <TopBar />
-      <div className={classes.wrapper}>
-        <div className={classes.contentContainer}>
-          <div className={classes.content}>
-            <Outlet />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+const MainLayoutContainer = experimentalStyled('div')({
+  display: 'flex',
+  flex: '1 1 auto',
+  overflow: 'hidden'
+});
+
+const MainLayoutContent = experimentalStyled('div')({
+  flex: '1 1 auto',
+  height: '100%',
+  overflow: 'auto'
+});
+
+const MainLayout = () => (
+  <MainLayoutRoot>
+    <TopBar />
+    <MainLayoutWrapper>
+      <MainLayoutContainer>
+        <MainLayoutContent>
+          <Outlet />
+        </MainLayoutContent>
+      </MainLayoutContainer>
+    </MainLayoutWrapper>
+  </MainLayoutRoot>
+);
 
 export default MainLayout;
