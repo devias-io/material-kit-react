@@ -44,13 +44,19 @@ const SettingsNotifications = (props) => (
             </Typography>
             <FormControlLabel
               control={(
-                <Checkbox defaultChecked />
+                <Checkbox
+                  color="primary"
+                  defaultChecked
+                />
               )}
               label="Email"
             />
             <FormControlLabel
               control={(
-                <Checkbox defaultChecked />
+                <Checkbox
+                  color="primary"
+                  defaultChecked
+                />
               )}
               label="Push Notifications"
             />
@@ -60,7 +66,10 @@ const SettingsNotifications = (props) => (
             />
             <FormControlLabel
               control={(
-                <Checkbox defaultChecked />
+                <Checkbox
+                  color="primary"
+                  defaultChecked
+                />
               )}
               label="Phone calls"
             />
@@ -84,7 +93,10 @@ const SettingsNotifications = (props) => (
             </Typography>
             <FormControlLabel
               control={(
-                <Checkbox defaultChecked />
+                <Checkbox
+                  color="primary"
+                  defaultChecked
+                />
               )}
               label="Email"
             />
@@ -94,7 +106,10 @@ const SettingsNotifications = (props) => (
             />
             <FormControlLabel
               control={(
-                <Checkbox defaultChecked />
+                <Checkbox
+                  color="primary"
+                  defaultChecked
+                />
               )}
               label="Phone calls"
             />
