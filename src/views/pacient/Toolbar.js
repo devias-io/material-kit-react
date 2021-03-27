@@ -68,7 +68,7 @@ const Toolbar = ({
                     </InputAdornment>
                   )
                 }}
-                placeholder="Buscar pacientes"
+                placeholder="Buscar animales por: categoria, sexo, nombre, raza o email del dueño"
                 variant="outlined"
               />
             </Box>

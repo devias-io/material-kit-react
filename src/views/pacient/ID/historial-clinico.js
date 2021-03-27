@@ -244,7 +244,7 @@ const HistorialClinico = ({
           Historial del paciente
         </Grid>
 
-        <Grid item md={2}>
+        <Grid item md={6}>
           <strong>Foto</strong>
           <br />
           <Avatar
@@ -273,46 +273,46 @@ const HistorialClinico = ({
           </List>
         </Grid>
 
-        <Grid item md={4}>
+        <Grid item md={6}>
           <strong>Ultimas desparasitacion:</strong>
           <br />
           <ListSeguimiento data={Desparatisacion} category="desparasitacion" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={4}>
+        <Grid item md={6}>
           <strong>Alimentacion:</strong>
           <br />
           <ListSeguimiento data={Alimentacion} category="Alimentacion" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={4}>
+        <Grid item md={6}>
           <strong>Estado Reproductivo:</strong>
           <br />
           <ListSeguimiento data={Reproduccion} category="Reproduccion" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
-        <Grid item md={4}>
+        <Grid item md={6}>
           <strong>Habitat:</strong>
           <br />
           <ListSeguimiento data={Habitat} category="Habitat" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={4}>
+        <Grid item md={6}>
           <strong>Cirugias:</strong>
           <br />
           <ListSeguimiento data={Cirugias} category="Cirugia" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
-        <Grid item md={4}>
+        <Grid item md={6}>
           <strong>Alergias:</strong>
           <br />
           <ListSeguimiento data={Alergias} category="Alergias" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={4}>
+        <Grid item md={6}>
           <strong>Enfermedades:</strong>
           <br />
           <ListSeguimiento data={Enfermedades} category="Enfermedad" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
-        <Grid item md={4}>
+        <Grid item md={6}>
           <strong>Antecedentes familiares:</strong>
           <br />
           <ListSeguimiento data={Antecedentes} category="Antecedentes" setIdSeguimiento={setIdSeguimiento} />
@@ -326,19 +326,19 @@ const HistorialClinico = ({
           Examen Clinico
         </Grid>
 
-        <Grid item md={4}>
+        <Grid item md={6}>
           <strong>Actitud:</strong>
           <br />
           <ListSeguimiento data={Actitud} category="Actitud" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={4}>
+        <Grid item md={6}>
           <strong>Condicion Corporal:</strong>
           <br />
           <ListSeguimiento data={Corporal} category="Condicion corporal" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
 
-        <Grid item md={4}>
+        <Grid item md={6}>
           <strong>Estado de hidratacion:</strong>
           <br />
           <ListSeguimiento data={Hidratacion} category="Hidratacion" setIdSeguimiento={setIdSeguimiento} />

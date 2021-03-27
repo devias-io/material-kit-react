@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+/* eslint-disable no-alert */
 /* eslint-disable consistent-return */
 /* eslint-disable no-unused-expressions */
 /* eslint-disable react/prop-types */
@@ -18,7 +20,9 @@ import Alert from '@material-ui/lab/Alert';
 import AlertDialog from '../../../components/dialogo';
 import getInitials from '../../../utils/getInitials';
 import { TokenContext } from '../../../lib/context/contextToken';
-import { DeleteVacunaPacient } from '../../../api/vacunas';
+import { DeleteVacunaPacient, UpdateDateVacunaPacient } from '../../../api/vacunas';
+import { fecha_actual } from '../../../utils/fechas';
+import ModalElement from '../../../components/Modal';
 
 const useStyles = makeStyles((theme) => ({
   root: {},
@@ -44,7 +48,9 @@ const TableMisVacunas = ({ vacunas, setActualizarCalendario }) => {
   const [dialogo, setDialogo] = useState(false);
   const [isDelete, setIsDelete] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState(false);
   const [IdVacuna, setIdVacuna] = useState('');
+  const [changeDate, setChangeDate] = useState('');
   const classes = useStyles();
 
   useEffect(() => {
@@ -64,6 +70,22 @@ const TableMisVacunas = ({ vacunas, setActualizarCalendario }) => {
     }
   }, [IdVacuna, isDelete]);
 
+  const handleChangeDate = async () => {
+    setLoading(true);
+
+    try {
+      await UpdateDateVacunaPacient(token, changeDate, IdVacuna);
+      setLoading(false);
+      setModal(false);
+      setIdVacuna('');
+
+      setActualizarCalendario(true);
+    } catch (error) {
+      console.log(error.message);
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <Table>
@@ -82,7 +104,7 @@ const TableMisVacunas = ({ vacunas, setActualizarCalendario }) => {
               Vacuna
             </TableCell>
             <TableCell>
-              Fecha para vacuna
+              Proxima vacuna
             </TableCell>
             <TableCell>
               Cantidad
@@ -135,8 +157,17 @@ const TableMisVacunas = ({ vacunas, setActualizarCalendario }) => {
               <TableCell>
                 {vacuna.count}
               </TableCell>
-              <TableCell>
-                {vacuna.created_at ? vacuna.created_at : 'Sin fecha'}
+              <TableCell onClick={() => {
+                if (vacuna.created_at) {
+                  setModal(true);
+                  console.log(vacuna.id_vacunas_pacient);
+                  setIdVacuna(vacuna.id_vacunas_pacient);
+                } else {
+                  alert('Registre una vacuna primero.');
+                }
+              }}
+              >
+                {vacuna.created_at || 'Sin fecha'}
               </TableCell>
               <TableCell>
                 <Alert severity={statusVacunas(vacuna.isVacuna)}>{vacuna.isVacuna}</Alert>
@@ -163,6 +194,46 @@ const TableMisVacunas = ({ vacunas, setActualizarCalendario }) => {
       <AlertDialog visible={dialogo} setVisible={setDialogo} setIsDelete={setIsDelete}>
         <p>Estas seguro que quieres eliminar este registro?, uns vez echo sera irrecuperable.</p>
       </AlertDialog>
+
+      <ModalElement visible={modal} setVisible={setModal}>
+        <Box mb={3}>
+          <Typography
+            color="textPrimary"
+            variant="h2"
+          >
+            Cambio de fecha
+          </Typography>
+          <Typography
+            color="textSecondary"
+            gutterBottom
+            variant="body2"
+          >
+            Escoja la fecha que se le aplico esta vacuna.
+          </Typography>
+        </Box>
+
+        <input
+          id="date"
+          label="vacunado"
+          type="date"
+          max={fecha_actual()}
+          defaultValue={new Date()}
+          onChange={(event) => setChangeDate(event.target.value)}
+          className={classes.textField}
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+
+        <Button
+          variant="contained"
+          color="primary"
+          disabled={changeDate === ''}
+          onClick={handleChangeDate}
+        >
+          Actualizar
+        </Button>
+      </ModalElement>
     </>
   );
 };

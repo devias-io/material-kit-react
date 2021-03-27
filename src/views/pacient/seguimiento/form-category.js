@@ -148,13 +148,30 @@ const Alimentacion = ({
         );
       default:
         return (
-          <TextField
-            fullWidth
-            margin="normal"
-            name="title"
-            onChange={handleChange}
-            variant="outlined"
-          />
+          <>
+            <TextField
+              fullWidth
+              margin="normal"
+              name="title"
+              onChange={handleChange}
+              variant="outlined"
+            />
+
+            {select === 'Enfermedades' ? (
+              <FormControl style={{ width: 180, marginBottom: 10 }}>
+                <InputLabel id="demo-simple-select-label">Productos</InputLabel>
+                <Select
+                  labelId="demo-simple-select-label"
+                  id="demo-simple-select"
+                  onChange={(event) => setValueProducto(event.target.value)}
+                >
+                  {SelectProductos.map((product) => (
+                    <MenuItem value={product.name}>{product.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : ''}
+          </>
         );
     }
   };
@@ -163,7 +180,8 @@ const Alimentacion = ({
     <>
       <Formik
         initialValues={{
-          title: ''
+          title: '',
+          producto: '',
         }}
         validationSchema={
               Yup.object().shape({
@@ -180,12 +198,19 @@ const Alimentacion = ({
 
             if (select === 'Desparasitacion') {
               values.title = `Producto: ${ValueProducto} - Via: ${ValueVia}`;
+              values.producto = ValueProducto;
+            }
+
+            if (select === 'Enfermedades') {
+              values.title = `${values.title} - Producto: (${ValueProducto})`;
+              values.producto = ValueProducto;
             }
 
             const data = {
               idPacient,
               title: values.title,
               category: select,
+              producto: values.producto
             };
 
             try {

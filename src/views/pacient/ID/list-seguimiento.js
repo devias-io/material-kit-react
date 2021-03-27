@@ -5,6 +5,8 @@ import {
 } from '@material-ui/core';
 import Alert from '@material-ui/lab/Alert';
 import moment from 'moment';
+import DeleteIcon from '@material-ui/icons/Delete';
+import EditIcon from '@material-ui/icons/Edit';
 
 const ListSeguimiento = ({ data, category, setIdSeguimiento }) => {
   const [loading, setLoading] = useState(false);
@@ -27,6 +29,16 @@ const ListSeguimiento = ({ data, category, setIdSeguimiento }) => {
           -
           <Chip label={moment(item.created_at).format('LL')} />
           <Button
+            style={{ color: 'orange' }}
+            onClick={() => {
+              // setIdSeguimiento(item.id_seguimiento);
+              setLoading(true);
+              setTimeout(() => setLoading(false), 2000);
+            }}
+          >
+            {loading ? '....' : <EditIcon />}
+          </Button>
+          <Button
             style={{ color: 'red' }}
             onClick={() => {
               setIdSeguimiento(item.id_seguimiento);
@@ -34,7 +46,7 @@ const ListSeguimiento = ({ data, category, setIdSeguimiento }) => {
               setTimeout(() => setLoading(false), 2000);
             }}
           >
-            {loading ? 'Cargando...' : 'Eliminar'}
+            {loading ? '....' : <DeleteIcon />}
           </Button>
         </ListItem>
       ))}

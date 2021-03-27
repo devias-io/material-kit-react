@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* eslint-disable import/prefer-default-export */
 import { api } from '.';
 
@@ -52,6 +53,18 @@ export const CreateVacunaPacient = async (token, data) => {
     method: 'POST',
     url: '/vacunas',
     data,
+  });
+  return response;
+};
+
+export const UpdateDateVacunaPacient = async (token, date, id_vacunas_pacient) => {
+  api.defaults.headers['access-token'] = token;
+  const response = await api({
+    method: 'PUT',
+    url: `/vacunas/date/${id_vacunas_pacient}`,
+    data: {
+      date,
+    },
   });
   return response;
 };

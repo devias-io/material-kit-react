@@ -1,3 +1,4 @@
+/* eslint-disable no-alert */
 /* eslint-disable no-unused-expressions */
 /* eslint-disable react/prop-types */
 import React, { useEffect, useState, useContext } from 'react';
@@ -21,6 +22,7 @@ import {
 } from '@material-ui/core';
 import { Link } from 'react-router-dom';
 import getInitials from 'src/utils/getInitials';
+import { useSelector } from 'react-redux';
 import AlertDialog from '../../components/dialogo';
 import { RemovePacient } from '../../api/pacient';
 import { TokenContext } from '../../lib/context/contextToken';
@@ -45,6 +47,7 @@ const Results = ({
 }) => {
   const { token } = useContext(TokenContext);
   const classes = useStyles();
+  const { me } = useSelector((state) => state.Sesion);
   const [dialogo, setDialogo] = useState(false);
   const [modal, setModal] = useState(false);
   const [IsDelete, setIsDelete] = useState(false);
@@ -120,7 +123,10 @@ const Results = ({
               <TableBody>
                 {pacient.filter((item) => {
                   return item.nombre.toLowerCase().includes(searchPacient.toLowerCase())
-                  || item.emailPerson.toLowerCase().includes(searchPacient.toLowerCase());
+                  || item.emailPerson.toLowerCase().includes(searchPacient.toLowerCase())
+                  || item.sexo.toLowerCase().includes(searchPacient.toLowerCase())
+                  || item.raza.toLowerCase().includes(searchPacient.toLowerCase())
+                  || item.tipo.toLowerCase().includes(searchPacient.toLowerCase());
                 }).map((paciente) => (
                   <TableRow
                     hover
@@ -153,8 +159,12 @@ const Results = ({
                         onMouseEnter={handlePopoverOpen}
                         onMouseLeave={handlePopoverClose}
                         onClick={() => {
-                          setModal(true);
-                          setIdPacient(paciente.idPacient);
+                          if (me.isAdmin) {
+                            setModal(true);
+                            setIdPacient(paciente.idPacient);
+                          } else {
+                            alert('Solo adminiistradores pueden cambiar de dueño');
+                          }
                         }}
                       >
                         {paciente.emailPerson || 'Sin Dueño'}
