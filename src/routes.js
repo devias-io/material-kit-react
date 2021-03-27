@@ -13,6 +13,7 @@ import RegisterView from 'src/views/auth/RegisterView';
 import PacientView from 'src/views/pacient/ID';
 import CalendarView from 'src/views/calendar';
 import Cookies from 'js-cookie';
+import CitasView from 'src/views/citas';
 
 const token = Cookies.get('access-token');
 
@@ -35,6 +36,7 @@ const routes = [
       { path: 'pacient', element: PathSesion(PacientListView) },
       { path: 'calendario', element: PathSesion(CalendarView) },
       { path: 'pacient/:idPacient', element: PathSesion(PacientView) },
+      { path: 'citas', element: PathSesion(CitasView) },
       { path: '*', element: <Navigate to="/404" /> }
     ]
   },

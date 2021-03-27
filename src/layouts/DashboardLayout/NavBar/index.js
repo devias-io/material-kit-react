@@ -21,6 +21,7 @@ import {
   Calendar as CalendarIcon
 } from 'react-feather';
 import { useSelector } from 'react-redux';
+import LibraryBooksIcon from '@material-ui/icons/LibraryBooks';
 import { TokenContext } from '../../../lib/context/contextToken';
 import NavItem from './NavItem';
 
@@ -77,6 +78,11 @@ const NavBar = ({ onMobileClose, openMobile }) => {
         title: 'Calendarios'
       },
       {
+        href: '/app/citas',
+        icon: LibraryBooksIcon,
+        title: 'Citas'
+      },
+      {
         href: '/app/account',
         icon: UserIcon,
         title: 'Mi cuenta'
@@ -88,6 +94,11 @@ const NavBar = ({ onMobileClose, openMobile }) => {
         href: '/app/pacient',
         icon: Pest,
         title: 'Mis mascotas'
+      },
+      {
+        href: '/app/citas',
+        icon: LibraryBooksIcon,
+        title: 'Mis Citas'
       },
       {
         href: '/app/account',
