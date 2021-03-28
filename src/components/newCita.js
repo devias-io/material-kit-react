@@ -76,6 +76,7 @@ const NewCitas = ({ setActualizarCitas }) => {
             try {
               if (values.solicitado <= fecha_actual()) {
                 alert('Escoja una fecha mayor');
+                actions.setSubmitting(false);
                 return false;
               }
 

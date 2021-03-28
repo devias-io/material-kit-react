@@ -40,3 +40,12 @@ export const UpdateAsistirCita = async (token, status, idSolocitud) => {
   });
   return response;
 };
+
+export const DeleteCita = async (token, idSolocitud) => {
+  api.defaults.headers['access-token'] = token;
+  const response = await api({
+    method: 'DELETE',
+    url: `/citas/${idSolocitud}`,
+  });
+  return response;
+};

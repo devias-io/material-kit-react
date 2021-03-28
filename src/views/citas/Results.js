@@ -4,6 +4,7 @@
 import React, { useState, useContext } from 'react';
 import clsx from 'clsx';
 import PropTypes from 'prop-types';
+import Alert from '@material-ui/lab/Alert';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import {
   Box,
@@ -20,7 +21,7 @@ import {
 import { Link } from 'react-router-dom';
 import moment from 'moment';
 import { useSelector } from 'react-redux';
-import { UpdateAsistirCita } from '../../api/citas';
+import { UpdateAsistirCita, DeleteCita } from '../../api/citas';
 import AlertDialog from '../../components/dialogo';
 import { TokenContext } from '../../lib/context/contextToken';
 import getInitials from '../../utils/getInitials';
@@ -59,6 +60,16 @@ const Results = ({
   const changeAsistir = async (idSolicitud, status) => {
     try {
       await UpdateAsistirCita(token, renderStatus(status), idSolicitud);
+      setActualizarCitas(true);
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  const deleteCita = async (idSolicitud) => {
+    console.log(idSolicitud);
+    try {
+      await DeleteCita(token, idSolicitud);
       setActualizarCitas(true);
     } catch (error) {
       console.log(error.message);
@@ -155,11 +166,19 @@ const Results = ({
                 <Divider />
                 <br />
                 {me.isAdmin ? (
-                  <Button onClick={() => changeAsistir(item.idSolicitud, item.status)} color="secondary">{renderStatus(item.status) === 'Cancelado' ? 'Cancelar' : renderStatus(item.status)}</Button>
-                ) : ''}
+                  <>
+                    {renderStatus(item.status) !== 'Asistir' && (
+                      <Button onClick={() => changeAsistir(item.idSolicitud, item.status)} color="secondary">{renderStatus(item.status) === 'Cancelado' ? 'Cancelar' : renderStatus(item.status)}</Button>
+                    )}
+                  </>
+                ) : <Button style={{ color: 'red' }} onClick={() => deleteCita(item.idSolicitud)}>Eliminar</Button>}
               </CardContent>
             </Card>
           ))}
+
+          {Citas.length === 0 && (
+            <Alert severity="info">No hay citas</Alert>
+          )}
         </Box>
       </PerfectScrollbar>
       <AlertDialog visible={dialogo} setVisible={setDialogo} setIsDelete={0}>
