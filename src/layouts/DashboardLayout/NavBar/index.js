@@ -14,7 +14,6 @@ import {
 } from '@material-ui/core';
 import Pest from '@material-ui/icons/Pets';
 import {
-  BarChart as BarChartIcon,
   ShoppingBag as ShoppingBagIcon,
   User as UserIcon,
   Users as UsersIcon,
@@ -51,11 +50,6 @@ const NavBar = ({ onMobileClose, openMobile }) => {
 
   if (me.isAdmin) {
     items = [
-      {
-        href: '/app/dashboard',
-        icon: BarChartIcon,
-        title: 'Panel'
-      },
       {
         href: '/app/customers',
         icon: UsersIcon,

@@ -20,6 +20,18 @@ export const getSeguimiento = async (token, idPacient) => {
   return response;
 };
 
+export const updateSeguimiento = async (token, title, idSeguimiento) => {
+  api.defaults.headers['access-token'] = token;
+  const response = await api({
+    method: 'PUT',
+    url: `/seguimiento/${idSeguimiento}`,
+    data: {
+      title,
+    }
+  });
+  return response;
+};
+
 export const deleteSeguimiento = async (token, idSeguimiento) => {
   api.defaults.headers['access-token'] = token;
   const response = await api({
