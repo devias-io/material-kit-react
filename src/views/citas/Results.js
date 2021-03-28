@@ -1,3 +1,4 @@
+/* eslint-disable no-mixed-operators */
 /* eslint-disable max-len */
 /* eslint-disable no-unused-expressions */
 /* eslint-disable react/prop-types */
@@ -42,6 +43,7 @@ const Results = ({
   const classes = useStyles();
   const { token } = useContext(TokenContext);
   const [dialogo, setDialogo] = useState(false);
+  const [Loading, setLoading] = useState(false);
   const { me } = useSelector((state) => state.Sesion);
 
   const renderStatus = (status) => {
@@ -58,21 +60,28 @@ const Results = ({
   };
 
   const changeAsistir = async (idSolicitud, status) => {
+    setLoading(true);
+
     try {
       await UpdateAsistirCita(token, renderStatus(status), idSolicitud);
       setActualizarCitas(true);
+      setLoading(false);
     } catch (error) {
       console.log(error.message);
+      setLoading(false);
     }
   };
 
   const deleteCita = async (idSolicitud) => {
-    console.log(idSolicitud);
+    setLoading(true);
+
     try {
       await DeleteCita(token, idSolicitud);
       setActualizarCitas(true);
+      setLoading(false);
     } catch (error) {
       console.log(error.message);
+      setLoading(false);
     }
   };
 
@@ -167,11 +176,11 @@ const Results = ({
                 <br />
                 {me.isAdmin ? (
                   <>
-                    {renderStatus(item.status) !== 'Asistir' && (
-                      <Button onClick={() => changeAsistir(item.idSolicitud, item.status)} color="secondary">{renderStatus(item.status) === 'Cancelado' ? 'Cancelar' : renderStatus(item.status)}</Button>
+                    {(renderStatus(item.status) === 'Asistir' || me.idUser === item.idUser) && (
+                      Loading ? 'Procesando...' : <Button onClick={() => changeAsistir(item.idSolicitud, item.status)} color="secondary">{renderStatus(item.status) === 'Cancelado' ? 'Cancelar' : renderStatus(item.status)}</Button>
                     )}
                   </>
-                ) : <Button style={{ color: 'red' }} onClick={() => deleteCita(item.idSolicitud)}>Eliminar</Button>}
+                ) : <Button style={{ color: 'red' }} onClick={() => deleteCita(item.idSolicitud)}>{Loading ? 'Procesando...' : 'Eliminar'}</Button>}
               </CardContent>
             </Card>
           ))}

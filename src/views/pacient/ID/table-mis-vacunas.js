@@ -37,7 +37,7 @@ const statusVacunas = (status) => {
       return 'warning';
     case 'Completado':
       return 'success';
-    case 'Retrasado':
+    case 'Atrasado':
       return 'error';
     default: 'info';
   }
