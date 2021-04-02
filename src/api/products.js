@@ -29,6 +29,16 @@ export const getProductsByTipo = async (token, tipo) => {
   return response;
 };
 
+export const UpdateProduct = async (token, idProduct, data) => {
+  api.defaults.headers['access-token'] = token;
+  const response = await api({
+    method: 'PUT',
+    url: `/products/${idProduct}`,
+    data,
+  });
+  return response;
+};
+
 export const deleteProduct = async (token, idProduct) => {
   api.defaults.headers['access-token'] = token;
   const response = await api({

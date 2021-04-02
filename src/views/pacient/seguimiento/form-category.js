@@ -65,7 +65,7 @@ const Alimentacion = ({
         return (
           <FormControl component="fieldset">
             <RadioGroup aria-label="gender" name="title" onChange={handleChange}>
-              <FormControlLabel value="Castrado" control={<Radio />} label="Castrado" />
+              <FormControlLabel value="Castrado" control={<Radio />} label="Esterilizad@" />
               <FormControlLabel value="Gestacion" control={<Radio />} label="Gestacion" />
               <FormControlLabel value="Entero" control={<Radio />} label="Entero" />
               <FormControlLabel value="Lactancia" control={<Radio />} label="Lactancia" />
@@ -77,10 +77,7 @@ const Alimentacion = ({
           <FormControl component="fieldset">
             <RadioGroup aria-label="gender" name="title" onChange={handleChange}>
               <FormControlLabel value="Casa" control={<Radio />} label="Casa" />
-              <FormControlLabel value="Lote" control={<Radio />} label="Lote" />
               <FormControlLabel value="Finca" control={<Radio />} label="Finca" />
-              <FormControlLabel value="Taller" control={<Radio />} label="Taller" />
-              <FormControlLabel value="Otro" control={<Radio />} label="Otro" />
             </RadioGroup>
           </FormControl>
         );

@@ -7,6 +7,9 @@ import {
   Button,
   FormControl,
   TextField,
+  Card,
+  Avatar,
+  CardHeader,
   Select,
   Typography,
   InputLabel,
@@ -17,8 +20,13 @@ import {
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import Alert from '@material-ui/lab/Alert';
+import moment from 'moment';
+import { useSelector } from 'react-redux';
 import { NewPacients } from '../api/pacient';
+import { GetUsers } from '../api/users';
 import { fecha_actual } from '../utils/fechas';
+import getInitials from '../utils/getInitials';
+import ModalElement from './Modal';
 import { TokenContext } from '../lib/context/contextToken';
 import {
   razasPerro, razasGato, razaConejo, razaGallo, razaLoros, razaCerdos
@@ -26,11 +34,17 @@ import {
 
 const NewPacient = ({ setActualizarPacient }) => {
   const { token } = useContext(TokenContext);
+  const { me } = useSelector((state) => state.Sesion);
+  const [Modal, setModal] = useState(false);
   const [visible, setVisible] = useState(false);
   const [CategoryAnimal, setCategoryAnimal] = useState('');
   const [selectTipo, setSelectTipo] = useState('');
+  const [EmailPerson, setEmailPerson] = useState('');
   const [TipoAnimal, setTipooAnimal] = useState([]);
   const [RazaAnimal, setRazaAnimal] = useState([]);
+  const [SelectUser, setSelectUser] = useState();
+  const [User, setUser] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState({
     type: '',
     content: '',
@@ -93,6 +107,25 @@ const NewPacient = ({ setActualizarPacient }) => {
     }
   }, [selectTipo]);
 
+  useEffect(() => {
+    try {
+      const fetchUser = async () => {
+        const { users } = await (await GetUsers(token)).data;
+        setUser(users);
+        setLoading(false);
+      };
+
+      fetchUser();
+    } catch (error) {
+      console.log(error.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    const findUser = User.find((item) => item.email === EmailPerson);
+    setSelectUser(findUser);
+  }, [EmailPerson]);
+
   return (
     <>
       <Formik
@@ -110,7 +143,7 @@ const NewPacient = ({ setActualizarPacient }) => {
         }}
         validationSchema={
                 Yup.object().shape({
-                  emailPerson: Yup.string().email('Must be a valid email').max(100).required('El email es requerido'),
+                  emailPerson: Yup.string().email('Must be a valid email').max(100),
                   tipo: Yup.string().max(100),
                   nacimiento: Yup.string().max(100).required('El nacimiento del animal es requerido'),
                   sexo: Yup.string().max(100).required('El sexo del animal es requerido'),
@@ -127,9 +160,10 @@ const NewPacient = ({ setActualizarPacient }) => {
             console.log(values);
             values.idCategory = CategoryAnimal;
             values.tipo = selectTipo;
+            values.emailPerson = me.isAdmin ? EmailPerson : me.email;
 
             if (new Date(fecha_actual()).getTime() < new Date(values.nacimiento).getTime()) {
-              alert('La fecha de naciemiento tiene que ser manor a la fecha actual');
+              alert('La fecha de nacimiento tiene que ser menor a la fecha actual');
               actions.setSubmitting(false);
               return;
             }
@@ -290,7 +324,7 @@ const NewPacient = ({ setActualizarPacient }) => {
                   error={Boolean(touched.altura && errors.altura)}
                   fullWidth
                   helperText={touched.altura && errors.altura}
-                  label="Altura"
+                  label="Altura en centimetros"
                   margin="normal"
                   name="altura"
                   onBlur={handleBlur}
@@ -305,7 +339,7 @@ const NewPacient = ({ setActualizarPacient }) => {
                   error={Boolean(touched.peso && errors.peso)}
                   fullWidth
                   helperText={touched.peso && errors.peso}
-                  label="Peso"
+                  label="Peso en kilos"
                   margin="normal"
                   name="peso"
                   onBlur={handleBlur}
@@ -317,21 +351,29 @@ const NewPacient = ({ setActualizarPacient }) => {
               </Grid>
             </Grid>
             <Grid container spacing={3}>
-              <Grid item xs={6}>
-                <TextField
-                  error={Boolean(touched.emailPerson && errors.emailPerson)}
-                  fullWidth
-                  helperText={touched.emailPerson && errors.emailPerson}
-                  label="Email del dueño"
-                  margin="normal"
-                  name="emailPerson"
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  type="email"
-                  value={values.emailPerson}
-                  variant="outlined"
-                />
-              </Grid>
+              {me.isAdmin ? (
+                <Grid item xs={6}>
+                  {loading ? 'Cargando...' : (
+                    <FormControl style={{ width: 200, marginBottom: 10 }}>
+                      <InputLabel id="demo-simple-select-label">Email del dueño</InputLabel>
+                      <Select
+                        labelId="demo-simple-select-label"
+                        name="emailPerson"
+                        id="demo-simple-select"
+                        onBlur={handleBlur}
+                        onChange={(event) => {
+                          setEmailPerson(event.target.value);
+                          setModal(true);
+                        }}
+                      >
+                        {User.map((user) => (
+                          <MenuItem value={user.email}>{user.email}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                </Grid>
+              ) : ''}
               <Grid item xs={6}>
                 <TextField
                   error={Boolean(touched.nacimiento && errors.nacimiento)}
@@ -373,6 +415,28 @@ const NewPacient = ({ setActualizarPacient }) => {
           {feedback.content}
         </Alert>
       </Snackbar>
+
+      <ModalElement visible={Modal} setVisible={setModal}>
+        <Box mb={3}>
+          <Typography
+            color="textPrimary"
+            variant="h2"
+          >
+            Esta email pertenece:
+          </Typography>
+        </Box>
+        <Card>
+          <CardHeader
+            avatar={(
+              <Avatar aria-label="recipe" src={SelectUser?.avatar}>
+                {getInitials(SelectUser?.userName)}
+              </Avatar>
+            )}
+            title={SelectUser?.userName}
+            subheader={moment(SelectUser?.created_at).format('LL')}
+          />
+        </Card>
+      </ModalElement>
     </>
   );
 };

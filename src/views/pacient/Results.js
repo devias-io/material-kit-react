@@ -51,6 +51,7 @@ const Results = ({
   const [dialogo, setDialogo] = useState(false);
   const [modal, setModal] = useState(false);
   const [IsDelete, setIsDelete] = useState(false);
+  const [Loading, setLoading] = useState(false);
   const [IdPacient, setIdPacient] = useState('');
 
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -68,8 +69,11 @@ const Results = ({
   useEffect(() => {
     try {
       const DeletePacient = async () => {
+        setLoading(true);
+
         await RemovePacient(token, IdPacient);
         setActualizarPacient(true);
+        setLoading(false);
       };
 
       IsDelete && IdPacient && DeletePacient();
@@ -193,9 +197,13 @@ const Results = ({
                     </TableCell>
                     <TableCell>
                       {paciente.altura}
+                      {' '}
+                      CM
                     </TableCell>
                     <TableCell>
                       {paciente.peso}
+                      {' '}
+                      KL
                     </TableCell>
                     <TableCell>
                       {paciente.tipo}
@@ -230,7 +238,7 @@ const Results = ({
                           setIdPacient(paciente.idPacient);
                         }}
                       >
-                        ELiminar
+                        {Loading ? 'Cargando...' : 'ELiminar'}
                       </Button>
                     </TableCell>
                   </TableRow>

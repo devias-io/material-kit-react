@@ -1,8 +1,8 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable react-hooks/rules-of-hooks */
 import React, { useContext, useState } from 'react';
 import clsx from 'clsx';
 import PropTypes from 'prop-types';
-import { useSelector } from 'react-redux';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import Alert from '@material-ui/lab/Alert';
@@ -18,16 +18,17 @@ import {
   TextField,
   makeStyles
 } from '@material-ui/core';
-import { TokenContext } from '../../../lib/context/contextToken';
-import { UpdateMeUser } from '../../../api/users';
+import { TokenContext } from '../lib/context/contextToken';
+import { UpdateUser } from '../api/users';
 
 const useStyles = makeStyles(() => ({
   root: {}
 }));
 
-const ProfileDetails = ({ className, ...rest }) => {
+const UpdateFormUser = ({
+  user, setActualizarUser, className, ...rest
+}) => {
   const classes = useStyles();
-  const { me } = useSelector((state) => state.Sesion);
 
   const { token } = useContext(TokenContext);
   const [visible, setVisible] = useState(false);
@@ -47,21 +48,38 @@ const ProfileDetails = ({ className, ...rest }) => {
         }}
         validationSchema={
               Yup.object().shape({
-                email: Yup.string().email('Must be a valid email').max(100).required('El email es requerido'),
-                userName: Yup.string().max(100).required('El nombre de usuario es requerido'),
-                Phone: Yup.string().max(10).required('El telefono del usuario es requerido'),
-                cedula: Yup.string().max(10).required('La cedula del usuario es requerido'),
+                email: Yup.string().email('Must be a valid email').max(100),
+                userName: Yup.string().max(100),
+                Phone: Yup.string().max(10),
+                cedula: Yup.string().max(10),
               })
             }
         onSubmit={(values, actions) => {
           setTimeout(async () => {
-            console.log(values);
+            if (values.email) {
+              user.email = values.email;
+            }
+
+            if (values.Cedula) {
+              user.Cedula = values.Cedula;
+            }
+
+            if (values.userName) {
+              user.userName = values.userName;
+            }
+
+            if (values.Phone) {
+              user.Phone = values.Phone;
+            }
+
             try {
-              await UpdateMeUser(token, values);
+              await UpdateUser(token, user, user.idUser);
               setFeedback({
                 type: 'success',
-                content: 'Se actualizo su perfil.',
+                content: 'Se actualizo el usuario.',
               });
+
+              setActualizarUser(true);
             } catch (error) {
               setFeedback({
                 type: 'error',
@@ -113,7 +131,7 @@ const ProfileDetails = ({ className, ...rest }) => {
                       required
                       onBlur={handleBlur}
                       variant="outlined"
-                      placeholder={me.userName || 'User Name'}
+                      placeholder={user.userName || 'User Name'}
                     />
                   </Grid>
                   <Grid
@@ -124,7 +142,7 @@ const ProfileDetails = ({ className, ...rest }) => {
                     <TextField
                       fullWidth
                       disabled
-                      value={me.created_at}
+                      value={user.created_at}
                       variant="outlined"
                     />
                   </Grid>
@@ -142,7 +160,7 @@ const ProfileDetails = ({ className, ...rest }) => {
                       onBlur={handleBlur}
                       variant="outlined"
                       onChange={handleChange}
-                      placeholder={me.email || 'Email'}
+                      placeholder={user.email || 'Email'}
                     />
                   </Grid>
                   <Grid
@@ -159,7 +177,7 @@ const ProfileDetails = ({ className, ...rest }) => {
                       type="number"
                       onChange={handleChange}
                       variant="outlined"
-                      placeholder={me.Phone || 'Phone'}
+                      placeholder={user.Phone || 'Phone'}
                     />
                   </Grid>
                   <Grid
@@ -176,7 +194,7 @@ const ProfileDetails = ({ className, ...rest }) => {
                       type="number"
                       onChange={handleChange}
                       variant="outlined"
-                      placeholder={me.cedula || 'Numero de identificacion'}
+                      placeholder={user.cedula || 'Numero de identificacion'}
                     />
                   </Grid>
                 </Grid>
@@ -195,7 +213,7 @@ const ProfileDetails = ({ className, ...rest }) => {
                   type="submit"
                   variant="contained"
                 >
-                  Actualizar detalles
+                  Actualizar datos
                 </Button>
               </Box>
             </Card>
@@ -212,8 +230,8 @@ const ProfileDetails = ({ className, ...rest }) => {
   );
 };
 
-ProfileDetails.propTypes = {
+UpdateFormUser.propTypes = {
   className: PropTypes.string
 };
 
-export default ProfileDetails;
+export default UpdateFormUser;
