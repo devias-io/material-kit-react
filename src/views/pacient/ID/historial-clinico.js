@@ -313,7 +313,7 @@ const HistorialClinico = ({
           <ListSeguimiento data={Enfermedades} category="Enfermedad" setIdSeguimiento={setIdSeguimiento} />
         </Grid>
         <Grid item md={6}>
-          <strong>Antecedentes familiares:</strong>
+          <strong>Antecedentes:</strong>
           <br />
           <ListSeguimiento data={Antecedentes} category="Antecedentes" setIdSeguimiento={setIdSeguimiento} />
         </Grid>

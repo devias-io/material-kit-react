@@ -4,3 +4,4 @@ export const razasGato = ['Ninguna', 'Persa', 'Maine Coon', 'Bengala', 'British'
 export const razaConejo = ['Belier Holandes', 'Cabeza de leon', 'Californiano', 'Mini Rex', 'Mini Lop', 'Jersey Wooly', 'Arlequin'];
 export const razaGallo = ['Plymouth Rock', 'Rhode Island Colorada', 'Leghorm', 'Gallina sussex', 'Poloca', 'Ameraucana'];
 export const razaLoros = ['Cacatua', 'Guacamayo', 'Cotorra', 'Yaco', 'Amazonas', 'Insepearables'];
+export const razaCerdos = ['Large white', 'Duroc', 'Berkshire', 'Miniatura', 'Hampshire', 'Large black', 'Tamworth', 'Mangalica', 'Gloucester', 'Chester'];

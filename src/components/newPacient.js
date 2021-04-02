@@ -1,3 +1,5 @@
+/* eslint-disable no-alert */
+/* eslint-disable camelcase */
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect, useContext } from 'react';
 import {
@@ -16,9 +18,10 @@ import * as Yup from 'yup';
 import { Formik } from 'formik';
 import Alert from '@material-ui/lab/Alert';
 import { NewPacients } from '../api/pacient';
+import { fecha_actual } from '../utils/fechas';
 import { TokenContext } from '../lib/context/contextToken';
 import {
-  razasPerro, razasGato, razaConejo, razaGallo, razaLoros
+  razasPerro, razasGato, razaConejo, razaGallo, razaLoros, razaCerdos
 } from '../utils/razas';
 
 const NewPacient = ({ setActualizarPacient }) => {
@@ -36,7 +39,7 @@ const NewPacient = ({ setActualizarPacient }) => {
   useEffect(() => {
     switch (CategoryAnimal) {
       case 'iiwnfiwls':
-        setTipooAnimal([
+        /* setTipooAnimal([
           'Vacas y toros',
           'Cabras y chivos',
           'Cerdos',
@@ -44,6 +47,9 @@ const NewPacient = ({ setActualizarPacient }) => {
           'Aves de corral',
           'Abejas',
           'Peces'
+        ]); */
+        setTipooAnimal([
+          'Cerdo',
         ]);
         break;
       case 'fejfwnnau':
@@ -78,6 +84,9 @@ const NewPacient = ({ setActualizarPacient }) => {
         break;
       case 'Loro':
         setRazaAnimal(razaLoros);
+        break;
+      case 'Cerdo':
+        setRazaAnimal(razaCerdos);
         break;
       default:
         setRazaAnimal([]);
@@ -118,6 +127,12 @@ const NewPacient = ({ setActualizarPacient }) => {
             console.log(values);
             values.idCategory = CategoryAnimal;
             values.tipo = selectTipo;
+
+            if (new Date(fecha_actual()).getTime() < new Date(values.nacimiento).getTime()) {
+              alert('La fecha de naciemiento tiene que ser manor a la fecha actual');
+              actions.setSubmitting(false);
+              return;
+            }
 
             try {
               await NewPacients(token, values);
