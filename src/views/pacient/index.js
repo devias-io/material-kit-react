@@ -24,23 +24,29 @@ const useStyles = makeStyles((theme) => ({
 const CustomerListView = () => {
   const { token } = useContext(TokenContext);
   const classes = useStyles();
+  const [Loading, setLoading] = useState(false);
   const [pacient, setPacient] = useState([]);
   const [actualizarPacient, setActualizarPacient] = useState(false);
   const [searchPacient, setSearchPacient] = useState('');
 
   useEffect(() => {
-    try {
-      const fetchUsers = async () => {
+    const fetchUsers = async () => {
+      setLoading(true);
+
+      try {
         const { users } = await (await GetPacients(token)).data;
+
         setPacient(users);
-      };
+        setLoading(false);
+      } catch (error) {
+        console.log(error.message);
+        setLoading(false);
+      }
+    };
 
-      fetchUsers();
+    fetchUsers();
 
-      actualizarPacient && setActualizarPacient(false);
-    } catch (error) {
-      console.log(error.message);
-    }
+    actualizarPacient && setActualizarPacient(false);
   }, [actualizarPacient]);
 
   return (
@@ -49,10 +55,14 @@ const CustomerListView = () => {
       title="Pacientes"
     >
       <Container maxWidth={false}>
-        <Toolbar setActualizarPacient={setActualizarPacient} setSearchPacient={setSearchPacient} />
-        <Box mt={3}>
-          <Results pacient={pacient} searchPacient={searchPacient} setActualizarPacient={setActualizarPacient} />
-        </Box>
+        {Loading && pacient.length === 0 ? 'Cargando...' : (
+          <>
+            <Toolbar setActualizarPacient={setActualizarPacient} setSearchPacient={setSearchPacient} />
+            <Box mt={3}>
+              <Results pacient={pacient} searchPacient={searchPacient} setActualizarPacient={setActualizarPacient} />
+            </Box>
+          </>
+        )}
       </Container>
     </Page>
   );

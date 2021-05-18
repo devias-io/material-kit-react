@@ -67,21 +67,22 @@ const Results = ({
   const open = Boolean(anchorEl);
 
   useEffect(() => {
-    try {
-      const DeletePacient = async () => {
-        setLoading(true);
+    const DeletePacient = async () => {
+      setLoading(true);
 
+      try {
         await RemovePacient(token, IdPacient);
         setActualizarPacient(true);
         setLoading(false);
-      };
+      } catch (error) {
+        console.log(error.message);
+        setLoading(false);
+      }
+    };
 
-      IsDelete && IdPacient && DeletePacient();
+    !dialogo && setIdPacient('');
 
-      !modal && setIdPacient('');
-    } catch (error) {
-      console.log(error.message);
-    }
+    IsDelete && IdPacient && DeletePacient();
   }, [IsDelete, IdPacient, modal]);
 
   return (
@@ -126,7 +127,7 @@ const Results = ({
               </TableHead>
               <TableBody>
                 {pacient.filter((item) => {
-                  return item.nombre.toLowerCase().includes(searchPacient.toLowerCase())
+                  return item.nombre?.toLowerCase().includes(searchPacient.toLowerCase())
                   || item.emailPerson.toLowerCase().includes(searchPacient.toLowerCase())
                   || item.sexo.toLowerCase().includes(searchPacient.toLowerCase())
                   || item.raza.toLowerCase().includes(searchPacient.toLowerCase())
@@ -145,7 +146,7 @@ const Results = ({
                           className={classes.avatar}
                           src={paciente.avatar}
                         >
-                          {getInitials(paciente.nombre)}
+                          {getInitials(paciente.nombre || '')}
                         </Avatar>
                         <Typography
                           color="textPrimary"
