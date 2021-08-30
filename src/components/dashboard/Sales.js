@@ -19,13 +19,23 @@ const Sales = (props) => {
     datasets: [
       {
         backgroundColor: colors.indigo[500],
+        barPercentage: 0.5,
+        barThickness: 12,
+        borderRadius: 4,
+        categoryPercentage: 0.5,
         data: [18, 5, 19, 27, 29, 19, 20],
-        label: 'This year'
+        label: 'This year',
+        maxBarThickness: 10
       },
       {
         backgroundColor: colors.grey[200],
+        barPercentage: 0.5,
+        barThickness: 12,
+        borderRadius: 4,
+        categoryPercentage: 0.5,
         data: [11, 20, 12, 29, 30, 25, 13],
-        label: 'Last year'
+        label: 'Last year',
+        maxBarThickness: 10
       }
     ],
     labels: ['1 Aug', '2 Aug', '3 Aug', '4 Aug', '5 Aug', '6 Aug']
@@ -41,10 +51,6 @@ const Sales = (props) => {
     scales: {
       xAxes: [
         {
-          barThickness: 12,
-          maxBarThickness: 10,
-          barPercentage: 0.5,
-          categoryPercentage: 0.5,
           ticks: {
             fontColor: theme.palette.text.secondary
           },

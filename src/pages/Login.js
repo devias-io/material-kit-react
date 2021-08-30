@@ -11,8 +11,8 @@ import {
   TextField,
   Typography
 } from '@material-ui/core';
-import FacebookIcon from 'src/icons/Facebook';
-import GoogleIcon from 'src/icons/Google';
+import FacebookIcon from '../icons/Facebook';
+import GoogleIcon from '../icons/Google';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -164,11 +164,7 @@ const Login = () => {
                 >
                   Don&apos;t have an account?
                   {' '}
-                  <Link
-                    component={RouterLink}
-                    to="/register"
-                    variant="h6"
-                  >
+                  <Link component={RouterLink} to="/register" variant="h6" underline="hover">
                     Sign up
                   </Link>
                 </Typography>

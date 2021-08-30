@@ -40,14 +40,14 @@ const Register = () => {
               policy: false
             }}
             validationSchema={
-              Yup.object().shape({
-                email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
-                firstName: Yup.string().max(255).required('First name is required'),
-                lastName: Yup.string().max(255).required('Last name is required'),
-                password: Yup.string().max(255).required('password is required'),
-                policy: Yup.boolean().oneOf([true], 'This field must be checked')
-              })
-            }
+            Yup.object().shape({
+              email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
+              firstName: Yup.string().max(255).required('First name is required'),
+              lastName: Yup.string().max(255).required('Last name is required'),
+              password: Yup.string().max(255).required('password is required'),
+              policy: Yup.boolean().oneOf([true], 'This field must be checked')
+            })
+          }
             onSubmit={() => {
               navigate('/app/dashboard', { replace: true });
             }}
@@ -157,9 +157,9 @@ const Register = () => {
                   </Typography>
                 </Box>
                 {Boolean(touched.policy && errors.policy) && (
-                  <FormHelperText error>
-                    {errors.policy}
-                  </FormHelperText>
+                <FormHelperText error>
+                  {errors.policy}
+                </FormHelperText>
                 )}
                 <Box sx={{ py: 2 }}>
                   <Button
@@ -179,11 +179,7 @@ const Register = () => {
                 >
                   Have an account?
                   {' '}
-                  <Link
-                    component={RouterLink}
-                    to="/login"
-                    variant="h6"
-                  >
+                  <Link component={RouterLink} to="/login" variant="h6" underline="hover">
                     Sign in
                   </Link>
                 </Typography>
