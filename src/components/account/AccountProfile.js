@@ -48,11 +48,6 @@ const AccountProfile = (props) => (
         >
           {`${user.city} ${user.country}`}
         </Typography>
-        {/* <Typography
-          color="textSecondary"
-          variant="body1"
-        >
-        </Typography> */}
       </Box>
     </CardContent>
     <Divider />

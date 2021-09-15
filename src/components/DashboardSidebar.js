@@ -23,7 +23,7 @@ import NavItem from './NavItem';
 const user = {
   avatar: '/static/images/avatars/avatar_6.png',
   jobTitle: 'Agent',
-  name: 'Jean Mukendi'
+  name: 'Nsimba mboyo'
 };
 
 const items = [
