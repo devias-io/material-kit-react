@@ -23,22 +23,22 @@ const Sales = (props) => {
         barThickness: 12,
         borderRadius: 4,
         categoryPercentage: 0.5,
-        data: [18, 5, 19, 27, 29, 19, 20],
+        data: [18, 5, 19, 27, 29, 19, 20, 5, 19, 27, 29, 19, 20],
         label: 'This year',
         maxBarThickness: 10
       },
       {
-        backgroundColor: colors.grey[200],
+        backgroundColor: colors.red[600],
         barPercentage: 0.5,
         barThickness: 12,
         borderRadius: 4,
         categoryPercentage: 0.5,
-        data: [11, 20, 12, 29, 30, 25, 13],
+        data: [11, 10, 14, 15, 20, 25, 13, 20, 25, 13, 25, 13],
         label: 'Last year',
         maxBarThickness: 10
       }
     ],
-    labels: ['1 Aug', '2 Aug', '3 Aug', '4 Aug', '5 Aug', '6 Aug']
+    labels: ['janvier', 'Fevrier', 'Mars', 'Avril', 'Mais', 'Juin', 'Juillet', 'Août', 'Sep', 'Oct', 'Nov', 'Dec']
   };
 
   const options = {
@@ -101,10 +101,10 @@ const Sales = (props) => {
             size="small"
             variant="text"
           >
-            Last 7 days
+            2021
           </Button>
         )}
-        title="Latest Sales"
+        title="Histogramme recouvrement de facture"
       />
       <Divider />
       <CardContent>
@@ -134,7 +134,7 @@ const Sales = (props) => {
           size="small"
           variant="text"
         >
-          Overview
+          Rapport
         </Button>
       </Box>
     </Card>

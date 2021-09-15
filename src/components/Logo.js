@@ -1,9 +1,6 @@
-const Logo = (props) => (
-  <img
-    alt="Logo"
-    src="/static/logo.svg"
-    {...props}
-  />
+const Logo = () => (
+  <>
+  </>
 );
 
 export default Logo;

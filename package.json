@@ -1,18 +1,14 @@
 {
-  "name": "react-material-dashboard",
+  "name": "application",
   "author": "DeviasIO",
   "licence": "MIT",
   "version": "1.0.0",
   "private": false,
   "scripts": {
-    "eslint": "eslint ./src",
-    "eslint-fix": "eslint --fix ./src",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",    
-    "lint": "eslint ./",
-    "lint-fix": "eslint ./ --fix"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": "react-app"

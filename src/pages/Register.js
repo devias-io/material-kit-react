@@ -1,11 +1,9 @@
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import {
   Box,
   Button,
-  Checkbox,
   Container,
   FormHelperText,
   Link,
@@ -18,9 +16,6 @@ const Register = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Register | Material Kit</title>
-      </Helmet>
       <Box
         sx={{
           backgroundColor: 'background.default',
@@ -40,14 +35,14 @@ const Register = () => {
               policy: false
             }}
             validationSchema={
-            Yup.object().shape({
-              email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
-              firstName: Yup.string().max(255).required('First name is required'),
-              lastName: Yup.string().max(255).required('Last name is required'),
-              password: Yup.string().max(255).required('password is required'),
-              policy: Yup.boolean().oneOf([true], 'This field must be checked')
-            })
-          }
+              Yup.object().shape({
+                email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
+                firstName: Yup.string().max(255).required('First name is required'),
+                lastName: Yup.string().max(255).required('Last name is required'),
+                password: Yup.string().max(255).required('password is required'),
+                policy: Yup.boolean().oneOf([true], 'This field must be checked')
+              })
+            }
             onSubmit={() => {
               navigate('/app/dashboard', { replace: true });
             }}
@@ -67,21 +62,21 @@ const Register = () => {
                     color="textPrimary"
                     variant="h2"
                   >
-                    Create new account
+                    Nouveau compte
                   </Typography>
                   <Typography
                     color="textSecondary"
                     gutterBottom
                     variant="body2"
                   >
-                    Use your email to create new account
+                    Utilisez votre email pour créer un nouveau compte
                   </Typography>
                 </Box>
                 <TextField
                   error={Boolean(touched.firstName && errors.firstName)}
                   fullWidth
                   helperText={touched.firstName && errors.firstName}
-                  label="First name"
+                  label="Prenom"
                   margin="normal"
                   name="firstName"
                   onBlur={handleBlur}
@@ -93,7 +88,7 @@ const Register = () => {
                   error={Boolean(touched.lastName && errors.lastName)}
                   fullWidth
                   helperText={touched.lastName && errors.lastName}
-                  label="Last name"
+                  label="Nom"
                   margin="normal"
                   name="lastName"
                   onBlur={handleBlur}
@@ -105,7 +100,7 @@ const Register = () => {
                   error={Boolean(touched.email && errors.email)}
                   fullWidth
                   helperText={touched.email && errors.email}
-                  label="Email Address"
+                  label="Email"
                   margin="normal"
                   name="email"
                   onBlur={handleBlur}
@@ -133,33 +128,11 @@ const Register = () => {
                     display: 'flex',
                     ml: -1
                   }}
-                >
-                  <Checkbox
-                    checked={values.policy}
-                    name="policy"
-                    onChange={handleChange}
-                  />
-                  <Typography
-                    color="textSecondary"
-                    variant="body1"
-                  >
-                    I have read the
-                    {' '}
-                    <Link
-                      color="primary"
-                      component={RouterLink}
-                      to="#"
-                      underline="always"
-                      variant="h6"
-                    >
-                      Terms and Conditions
-                    </Link>
-                  </Typography>
-                </Box>
+                />
                 {Boolean(touched.policy && errors.policy) && (
-                <FormHelperText error>
-                  {errors.policy}
-                </FormHelperText>
+                  <FormHelperText error>
+                    {errors.policy}
+                  </FormHelperText>
                 )}
                 <Box sx={{ py: 2 }}>
                   <Button
@@ -170,17 +143,17 @@ const Register = () => {
                     type="submit"
                     variant="contained"
                   >
-                    Sign up now
+                    Confirmer
                   </Button>
                 </Box>
                 <Typography
                   color="textSecondary"
                   variant="body1"
                 >
-                  Have an account?
+                  Si vous avez un compte
                   {' '}
                   <Link component={RouterLink} to="/login" variant="h6" underline="hover">
-                    Sign in
+                    Click ici
                   </Link>
                 </Typography>
               </form>

@@ -27,7 +27,7 @@ const Budget = (props) => (
             gutterBottom
             variant="h6"
           >
-            BUDGET
+            Facture Total non payer
           </Typography>
           <Typography
             color="textPrimary"
@@ -69,7 +69,7 @@ const Budget = (props) => (
           color="textSecondary"
           variant="caption"
         >
-          Since last month
+          par apport au mois passer
         </Typography>
       </Box>
     </CardContent>

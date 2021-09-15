@@ -1,4 +1,4 @@
-import moment from 'moment';
+// import moment from 'moment';
 import {
   Avatar,
   Box,
@@ -12,11 +12,10 @@ import {
 
 const user = {
   avatar: '/static/images/avatars/avatar_6.png',
-  city: 'Los Angeles',
-  country: 'USA',
-  jobTitle: 'Senior Developer',
-  name: 'Katarina Smith',
-  timezone: 'GTM-7'
+  city: 'Kinshasa',
+  country: 'RDcongo',
+  jobTitle: 'Agent',
+  name: 'Carine'
 };
 
 const AccountProfile = (props) => (
@@ -49,12 +48,11 @@ const AccountProfile = (props) => (
         >
           {`${user.city} ${user.country}`}
         </Typography>
-        <Typography
+        {/* <Typography
           color="textSecondary"
           variant="body1"
         >
-          {`${moment().format('hh:mm A')} ${user.timezone}`}
-        </Typography>
+        </Typography> */}
       </Box>
     </CardContent>
     <Divider />
@@ -64,7 +62,7 @@ const AccountProfile = (props) => (
         fullWidth
         variant="text"
       >
-        Upload picture
+        télécharger
       </Button>
     </CardActions>
   </Card>

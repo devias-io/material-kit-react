@@ -18,7 +18,7 @@ const CustomerListToolbar = (props) => (
       }}
     >
       <Button>
-        Import
+        Importer
       </Button>
       <Button sx={{ mx: 1 }}>
         Export
@@ -27,7 +27,7 @@ const CustomerListToolbar = (props) => (
         color="primary"
         variant="contained"
       >
-        Add customer
+        Ajouter
       </Button>
     </Box>
     <Box sx={{ mt: 3 }}>

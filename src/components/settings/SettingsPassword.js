@@ -33,7 +33,7 @@ const SettingsPassword = (props) => {
         <CardContent>
           <TextField
             fullWidth
-            label="Password"
+            label="Mot de pass"
             margin="normal"
             name="password"
             onChange={handleChange}
@@ -43,7 +43,7 @@ const SettingsPassword = (props) => {
           />
           <TextField
             fullWidth
-            label="Confirm password"
+            label="Confirm le mot de pass"
             margin="normal"
             name="confirm"
             onChange={handleChange}
@@ -64,7 +64,7 @@ const SettingsPassword = (props) => {
             color="primary"
             variant="contained"
           >
-            Update
+            Mettre à jour
           </Button>
         </Box>
       </Card>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+// import moment from 'moment';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import {
   Avatar,
@@ -81,19 +81,22 @@ const CustomerListResults = ({ customers, ...rest }) => {
                   />
                 </TableCell>
                 <TableCell>
-                  Name
+                  Nom
                 </TableCell>
                 <TableCell>
-                  Email
+                  Adresse
                 </TableCell>
                 <TableCell>
-                  Location
+                  Quantité ( KW )
                 </TableCell>
                 <TableCell>
-                  Phone
+                  Montant a payé
                 </TableCell>
                 <TableCell>
-                  Registration date
+                  Montant payer
+                </TableCell>
+                <TableCell>
+                  Reste a payé
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -133,16 +136,19 @@ const CustomerListResults = ({ customers, ...rest }) => {
                     </Box>
                   </TableCell>
                   <TableCell>
-                    {customer.email}
+                    {`${customer.address.Commune} ${customer.address.Quartier}`}
                   </TableCell>
                   <TableCell>
-                    {`${customer.address.city}, ${customer.address.state}, ${customer.address.country}`}
+                    {customer.quantite}
                   </TableCell>
                   <TableCell>
-                    {customer.phone}
+                    {customer.montantApaye}
                   </TableCell>
                   <TableCell>
-                    {moment(customer.createdAt).format('DD/MM/YYYY')}
+                    {customer.montantPaye}
+                  </TableCell>
+                  <TableCell>
+                    {customer.reste}
                   </TableCell>
                 </TableRow>
               ))}
