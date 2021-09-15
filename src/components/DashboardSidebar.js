@@ -13,7 +13,7 @@ import {
 } from '@material-ui/core';
 import {
   BarChart as BarChartIcon,
-  Lock as LockIcon,
+  // Lock as LockIcon,
   User as UserIcon,
   UserPlus as UserPlusIcon,
   Users as UsersIcon
@@ -42,11 +42,11 @@ const items = [
     icon: UserIcon,
     title: 'Compte Agent'
   },
-  {
-    href: '/login',
-    icon: LockIcon,
-    title: 'Connexion'
-  },
+  // {
+  //   href: '/login',
+  //   icon: LockIcon,
+  //   title: 'Connexion'
+  // },
   {
     href: '/register',
     icon: UserPlusIcon,
