@@ -4,32 +4,30 @@
 
 [![Material Kit - React](https://s3.eu-west-2.amazonaws.com/devias/products/react-material-dashboard/react-material-free-xl.jpg)](https://react-material-dashboard.devias.io/)
 
-> Free React Admin Dashboard made with [Material UI's](https://material-ui.com/?ref=devias-io) components, [React](https://reactjs.org/?ref=devias-io) and of course [create-react-app](https://facebook.github.io/create-react-app/?ref=devias-io) to boost your app development process! We'll launch a pro version soon, so if you are interested subscribe to our personal emailing list on [https://devias.io/](https://devias.io/)
+> Free React Admin Dashboard made with [Material UI's](https://material-ui.com/?ref=devias-io) components, [React](https://reactjs.org/?ref=devias-io) and of course [Next.js](https://github.com/vercel/next.js/?ref=devias-io) to boost your app development process! We'll launch a pro version soon, so if you are interested subscribe to our personal emailing list on [https://devias.io/](https://devias.io/)
+
+## Demo
+
+- [Dashboard Page](https://material-kit-react.devias.io)
+- [Users Page](https://material-kit-react.devias.io/customers)
+- [Products Page](https://material-kit-react.devias.io/products)
+- [Register Page](https://material-kit-react.devias.io/register)
+- [Login Page](https://material-kit-react.devias.io/login)
+- [Account Page](https://material-kit-react.devias.io/account)
+- [Settings Page](https://material-kit-react.devias.io/settings)
 
 ## Upgrade to PRO Version
 
 We also have a pro version of this product which bundles even more pages and components if you want to save more time and design efforts :)
 
-
-| Free Version (this one)              | [Material Kit Pro - React](https://material-ui.com/store/items/devias-kit-pro/) |
+| Free Version (this one)  | [Material Kit Pro - React](https://material-ui.com/store/items/devias-kit-pro/) |
 | ------------------------ | :----------------------------------------------------------- |
-| **7** Demo Pages         | **32** demo pages
+| **7** Demo Pages         | **40+** demo pages
 | -                        | ✔ Dark & light mode
-| -                        | ✔ Authentication with *Amplify**, **Auth0** and **Firebase**  
-| -                        | ✔ TypeScript version                                                                                   
-| -                        | ✔ Design files (sketch & figma) - for extended license       
-| -                        | ✔ Complete users flows                                       
-
-## Demo
-
-- [Dashboard Page](https://material-kit-react.devias.io/app/dashboard)
-- [Users Page](https://material-kit-react.devias.io/app/customers)
-- [Products Page](https://material-kit-react.devias.io/app/products)
-- [Register Page](https://material-kit-react.devias.io/register)
-- [Login Page](https://material-kit-react.devias.io/login)
-- [Account Page](https://material-kit-react.devias.io/app/account)
-- [Settings Page](https://material-kit-react.devias.io/app/settings)
-
+| -                        | ✔ Authentication with *Amplify**, **Auth0**, **JWT** and **Firebase**
+| -                        | ✔ TypeScript version - for Standard Plus and Extended license
+| -                        | ✔ Design files (sketch & figma) - for Standard Plus and Extended license
+| -                        | ✔ Complete users flows
 
 ## Quick start
 
@@ -39,55 +37,42 @@ We also have a pro version of this product which bundles even more pages and com
 
 - Install dependencies: `npm install` or `yarn`
 
-- Start the server: `npm run start` or `yarn start`
+- Start the server: `npm run dev` or `yarn dev`
 
 - Views are on: `localhost:3000`
-
-## 🖌 Design Files
-
-👉[Download Sketch file](https://s3.eu-west-2.amazonaws.com/devias/products/react-material-dashboard/react-material-dashboard-free.sketch)
-
-👉[Download Figma file](https://devias.s3.eu-west-2.amazonaws.com/products/react-material-dashboard/react-material-dashboard-free.fig)
 
 ## File Structure
 
 Within the download you'll find the following directories and files:
 
 ```
-material-react-dashboard
+material-kit-react
 
-├── .eslintrc
+┌── .eslintrc.json
 ├── .gitignore
-├── .prettierrc
 ├── CHANGELOG.md
 ├── jsconfig.json
 ├── LICENSE.md
 ├── package.json
 ├── README.md
 ├── public
-├── docs
 └── src
-	├── assets
-	├── common
+	├── __mocks__
 	├── components
-	├── helpers
 	├── icons
-	├── layouts
 	├── theme
-	├── views
-	│	├── Account
-	│	├── Dashboard
-	│	├── Icons
-	│	├── NotFound
-	│	├── ProductList
-	│	├── Settings
-	│	├── SignIn
-	│	├── SignUp
-	│	├── Typography
-	│	└── UserList
-	├── App.jsx
-	├── index.jsx
-	└── Routes.jsx
+	├── utils
+	└── pages
+		├── 404.js
+		├── _app.js
+		├── _document.js
+		├── account.js
+		├── customers.js
+		├── index.js
+		├── login.js
+		├── products.js
+		├── register.js
+		└── settings.js
 ```
 
 ## Resources
