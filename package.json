@@ -1,59 +1,42 @@
 {
-  "name": "react-material-dashboard",
-  "author": "DeviasIO",
+  "name": "material-kit-react",
+  "author": "Devias IO",
   "licence": "MIT",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": false,
   "scripts": {
-    "eslint": "eslint ./src",
-    "eslint-fix": "eslint --fix ./src",
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",    
-    "lint": "eslint ./",
-    "lint-fix": "eslint ./ --fix"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "dev": "next",
+    "build": "next build",
+    "start": "next start",
+    "export": "next export",
+    "lint": "next lint",
+    "lint-fix": "next lint --fix"
   },
   "dependencies": {
-    "@emotion/react": "^11.4.1",
+    "@emotion/cache": "^11.5.0",
+    "@emotion/react": "^11.5.0",
+    "@emotion/server": "^11.4.0",
     "@emotion/styled": "^11.3.0",
-    "@material-ui/core": "^5.0.0-beta.5",
-    "@material-ui/icons": "^5.0.0-beta.5",
-    "@material-ui/styles": "^5.0.0-beta.5",
+    "@mui/icons-material": "^5.0.5",
+    "@mui/lab": "^5.0.0-alpha.53",
+    "@mui/material": "^5.0.6",
+    "@mui/styles": "^5.0.2",
     "chart.js": "^3.5.1",
+    "date-fns": "^2.25.0",
     "formik": "^2.1.5",
     "history": "^5.0.0",
-    "moment": "^2.27.0",
+    "next": "^12.0.3-canary.7",
     "nprogress": "^0.2.0",
     "prop-types": "^15.7.2",
     "react": "^17.0.2",
     "react-chartjs-2": "^3.0.4",
     "react-dom": "^17.0.2",
-    "react-feather": "^2.0.8",
-    "react-helmet": "^6.1.0",
     "react-perfect-scrollbar": "^1.5.8",
-    "react-router": "^6.0.0-beta.0",
-    "react-router-dom": "^6.0.0-beta.0",
-    "react-scripts": "^4.0.3",
     "uuid": "^8.3.0",
     "yup": "^0.32.9"
   },
   "devDependencies": {
-    "eslint-config-airbnb": "^18.2.1"
+    "eslint": "^7.32.0",
+    "eslint-config-next": "12.0.3-canary.7"
   }
 }

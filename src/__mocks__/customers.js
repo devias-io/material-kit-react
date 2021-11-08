@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 
-export default [
+export const customers = [
   {
     id: uuid(),
     address: {
