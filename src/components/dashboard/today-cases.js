@@ -2,20 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Avatar, Box, Card, CardContent, Grid, Typography } from '@mui/material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import MoneyIcon from '@mui/icons-material/Money';
+import { toNiceNumber } from "src/utils/toNiceNumber";
 
 export function TodayCases (props) {
-  const [todayCases, setTodayCases] = useState("");
-  useEffect(() => {
-    fetch("https://disease.sh/v3/covid-19/all")
-      .then((res) => res.json())
-      .then((data) => {
-        setTodayCases(data.todayCases);
-      });
-  }, []);
+  const {todayCases} = props
   return(
   <Card
     sx={{ height: '100%' }}
-    {...props}
   >
     <CardContent>
       <Grid
@@ -35,7 +28,7 @@ export function TodayCases (props) {
             color="textPrimary"
             variant="h4"
           >
-            {todayCases}
+            {toNiceNumber(todayCases)}
           </Typography>
         </Grid>
       </Grid>

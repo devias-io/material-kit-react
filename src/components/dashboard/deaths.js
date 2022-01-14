@@ -1,16 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Avatar, Box, Card, CardContent, Grid, Typography } from '@mui/material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import { toNiceNumber } from "src/utils/toNiceNumber";
 
 export function Deaths (props) {
-  const [deaths, setDeaths] = useState("");
-  useEffect(() => {
-    fetch("https://disease.sh/v3/covid-19/all")
-      .then((res) => res.json())
-      .then((data) => {
-        setDeaths(data.deaths);
-      });
-  }, []);
+  
   return(
   <Card
     sx={{ height: '100%' }}
@@ -34,7 +28,7 @@ export function Deaths (props) {
             color="textPrimary"
             variant="h4"
           >
-            {deaths}
+            {toNiceNumber(props.deaths)}
           </Typography>
         </Grid>
       </Grid>

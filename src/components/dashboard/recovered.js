@@ -2,16 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Avatar, Box, Card, CardContent, Grid, Typography } from '@mui/material';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import MoneyIcon from '@mui/icons-material/Money';
+import { toNiceNumber } from "src/utils/toNiceNumber";
 
 export function Recovered (props) {
-  const [recovered, setRecovered] = useState("");
-  useEffect(() => {
-    fetch("https://disease.sh/v3/covid-19/all")
-      .then((res) => res.json())
-      .then((data) => {
-        setRecovered(data.recovered);
-      });
-  }, []);
+  
   return(
   <Card
     sx={{ height: '100%' }}
@@ -35,7 +29,7 @@ export function Recovered (props) {
             color="textPrimary"
             variant="h4"
           >
-            {recovered}
+            {toNiceNumber(props.recovered)}
           </Typography>
         </Grid>
       </Grid>
