@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import { Box, Container } from '@mui/material';
-import { BoardsListResults } from '../components/board/board-list-results';
+import { BoardListResults } from '../components/board/board-list-results';
 import { BoardListToolbar } from '../components/board/board-list-toolbar';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { boards } from '../__mocks__/boards';
