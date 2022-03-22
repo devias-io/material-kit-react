@@ -29,18 +29,7 @@ export const BoardListToolbar = (props) => (
         Board
       </Typography>
       <Box sx={{ m: 1 }}>
-        <Button
-          startIcon={(<UploadIcon fontSize="small" />)}
-          sx={{ mr: 1 }}
-        >
-          Import
-        </Button>
-        <Button
-          startIcon={(<DownloadIcon fontSize="small" />)}
-          sx={{ mr: 1 }}
-        >
-          Export
-        </Button>
+
         <Button
           color="primary"
           variant="contained"
@@ -54,7 +43,7 @@ export const BoardListToolbar = (props) => (
         <CardContent>
           <Box sx={{ maxWidth: 500 }}>
             <TextField
-              fullWidth
+
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -69,7 +58,14 @@ export const BoardListToolbar = (props) => (
               }}
               placeholder="Search board"
               variant="outlined"
+
             />
+            <Button
+              color="primary"
+              variant="contained"
+            >
+              글찾기
+            </Button>
           </Box>
         </CardContent>
       </Card>
