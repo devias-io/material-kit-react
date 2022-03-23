@@ -14,12 +14,13 @@ import {
   Typography
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import axios from 'axios';
 
 const Register = () => {
   const router = useRouter();
   const formik = useFormik({
     initialValues: {
-      email: '',
+      email: 'mail@tarun.com',
       firstName: '',
       lastName: '',
       password: '',
@@ -55,8 +56,15 @@ const Register = () => {
           'This field must be checked'
         )
     }),
-    onSubmit: () => {
-      router.push('/');
+    onSubmit: ({values}) => {
+      console.log(values);
+      axios.post(`https://bigbbe.herokuapp.com/users/`, values )
+      .then(res => {
+        console.log(res);
+        console.log(res.data);
+        router.push('/login');
+ 
+      })
     }
   });
 
