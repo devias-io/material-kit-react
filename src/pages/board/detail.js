@@ -9,7 +9,7 @@ const Board = () => (
   <>
     <Head>
       <title>
-        Board | chester lee (Material Kit)
+        Board | chester lee
       </title>
     </Head>
     <Box

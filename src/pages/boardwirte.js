@@ -3,13 +3,13 @@ import { Box, Container } from '@mui/material';
 import { BoardListResults } from '../components/board/board-list-results';
 import { BoardListToolbar } from '../components/board/board-list-toolbar';
 import { DashboardLayout } from '../components/dashboard-layout';
-import { boards } from '../__mocks__/boards';
 
-const Boards = () => (
+
+const boardwrite = () => (
   <>
     <Head>
       <title>
-        Board | chester lee (Material Kit)
+        write | chester lee
       </title>
     </Head>
     <Box
@@ -22,16 +22,16 @@ const Boards = () => (
       <Container maxWidth={false}>
         <BoardListToolbar />
         <Box sx={{ mt: 3 }}>
-          <BoardListResults boards={boards} />
+          <BoardListResults board={board} />
         </Box>
       </Container>
     </Box>
   </>
 );
-Boards.getLayout = (page) => (
+Board.getLayout = (page) => (
   <DashboardLayout>
     {page}
   </DashboardLayout>
 );
 
-export default Boards;
+export default boardwrite;

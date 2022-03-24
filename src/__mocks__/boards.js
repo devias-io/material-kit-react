@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 
-export const boards = [
+export const board = [
   {
     id: uuid(),
     address: {

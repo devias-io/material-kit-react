@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { getInitials } from '../../utils/get-initials';
 
-export const BoardListResults = ({ boards, ...rest }) => {
+export const BoardListResults = ({ board, ...rest }) => {
   const [selectedBoardIds, setSelectedBoardIds] = useState([]);
   const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(0);
@@ -26,7 +26,7 @@ export const BoardListResults = ({ boards, ...rest }) => {
     let newSelectedBoardIds;
 
     if (event.target.checked) {
-      newSelectedBoardIds = boards.map((board) => board.id);
+      newSelectedBoardIds = board.map((board) => board.id);
     } else {
       newSelectedBoardIds = [];
     }
@@ -71,11 +71,11 @@ export const BoardListResults = ({ boards, ...rest }) => {
               <TableRow>
                 <TableCell padding="checkbox">
                   <Checkbox
-                    checked={selectedBoardIds.length === boards.length}
+                    checked={selectedBoardIds.length === board.length}
                     color="primary"
                     indeterminate={
                       selectedBoardIds.length > 0
-                      && selectedBoardIds.length < boards.length
+                      && selectedBoardIds.length < board.length
                     }
                     onChange={handleSelectAll}
                   />
@@ -86,19 +86,14 @@ export const BoardListResults = ({ boards, ...rest }) => {
                 <TableCell>
                   제목
                 </TableCell>
-                <TableCell>
-                  Location
-                </TableCell>
-                <TableCell>
-                  Phone
-                </TableCell>
+               
                 <TableCell>
                   작성일
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {boards.slice(0, limit).map((board) => (
+              {board.slice(0, limit).map((board) => (
                 <TableRow
                   hover
                   key={board.id}
@@ -152,7 +147,7 @@ export const BoardListResults = ({ boards, ...rest }) => {
       </PerfectScrollbar>
       <TablePagination
         component="div"
-        count={boards.length}
+        count={board.length}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleLimitChange}
         page={page}
@@ -164,5 +159,5 @@ export const BoardListResults = ({ boards, ...rest }) => {
 };
 
 BoardListResults.propTypes = {
-  boards: PropTypes.array.isRequired
+  board: PropTypes.array.isRequired
 };

@@ -8,10 +8,16 @@ import {
   SvgIcon, Typography
 } from '@mui/material';
 import { Search as SearchIcon } from '../../icons/search';
-import { Upload as UploadIcon } from '../../icons/upload';
-import { Download as DownloadIcon } from '../../icons/download';
+import { NavItem } from '../nav-item';
+
+// export const NavItem = (props) => {
+//   const { href, icon, title, ...others } = props;
+//   const router = useRouter();
+//   const active = href ? (router.pathname === href) : false;
+
 
 export const BoardListToolbar = (props) => (
+
   <Box {...props}>
     <Box
       sx={{
@@ -29,10 +35,10 @@ export const BoardListToolbar = (props) => (
         Board
       </Typography>
       <Box sx={{ m: 1 }}>
-
         <Button
           color="primary"
           variant="contained"
+          href='boardwrite'
         >
           글쓰기
         </Button>
@@ -72,3 +78,4 @@ export const BoardListToolbar = (props) => (
     </Box>
   </Box>
 );
+
