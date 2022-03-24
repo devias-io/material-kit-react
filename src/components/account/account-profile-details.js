@@ -27,7 +27,7 @@ const states = [
 
 export const AccountProfileDetails = (props) => {
   const [values, setValues] = useState({
-    firstName: 'Katarina',
+    firstName: props.data.firstName,
     lastName: 'Smith',
     email: 'demo@devias.io',
     phone: '',

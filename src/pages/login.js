@@ -9,13 +9,15 @@ import { Facebook as FacebookIcon } from '../icons/facebook';
 import { Google as GoogleIcon } from '../icons/google';
 import { ImportExport } from '@mui/icons-material';
 import axios from "axios"
+import qs from 'qs';
+
 const Login = () => {
   const router = useRouter();
   const formik = useFormik({
     initialValues: {
       // full_name : "",
-      email: '',
-      password: ""
+      username: "s@mail.com",
+      password: "123"
     },
     validationSchema: Yup.object({
       // full_name: Yup
@@ -23,7 +25,7 @@ const Login = () => {
       //   .max(255)
       //   .required(
       //     'First name is required'),
-      email: Yup
+      username: Yup
         .string()
         .email(
           'Must be a valid email')
@@ -39,10 +41,13 @@ const Login = () => {
     onSubmit: values => {
       console.log(JSON.stringify(values))
       axios.post(
-        `https://de53-103-224-35-38.ngrok.io/token`,values)
+        `http://localhost:8000/token`, qs.stringify(values))
           .then(res => {
           console.log(res);
           console.log(res.data);  
+          localStorage.setItem("token", res.data.access_token);
+          router.push('/');
+
       })
     }
   });
@@ -154,16 +159,16 @@ const Login = () => {
               variant="outlined"
             /> */}
             <TextField
-              error={Boolean(formik.touched.email && formik.errors.email)}
+              error={Boolean(formik.touched.username && formik.errors.username)}
               fullWidth
-              helperText={formik.touched.email && formik.errors.email}
+              helperText={formik.touched.username && formik.errors.username}
               label="Email Address"
               margin="normal"
-              name="email"
+              name="username"
               onBlur={formik.handleBlur}
               onChange={formik.handleChange}
               type="email"
-              value={formik.values.email}
+              value={formik.values.username}
               variant="outlined"
             />
             <TextField
