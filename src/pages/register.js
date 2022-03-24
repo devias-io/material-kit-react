@@ -20,11 +20,11 @@ const Register = () => {
   const router = useRouter();
   const formik = useFormik({
     initialValues: {
-      email: 'mail@tarun.com',
-      firstName: '',
-      lastName: '',
+      email: '',
+      full_name: '',
+      // lastName: '',
       password: '',
-      policy: false
+      // policy: false
     },
     validationSchema: Yup.object({
       email: Yup
@@ -34,36 +34,29 @@ const Register = () => {
         .max(255)
         .required(
           'Email is required'),
-      firstName: Yup
+      full_name: Yup
         .string()
         .max(255)
         .required(
           'First name is required'),
-      lastName: Yup
-        .string()
-        .max(255)
-        .required(
-          'Last name is required'),
+      // lastName: Yup
+      //   .string()
+      //   .max(255)
+      //   .required(
+      //     'Last name is required'),
       password: Yup
         .string()
         .max(255)
         .required(
           'Password is required'),
-      policy: Yup
-        .boolean()
-        .oneOf(
-          [true],
-          'This field must be checked'
-        )
-    }),
-    onSubmit: ({values}) => {
-      console.log(values);
-      axios.post(`https://bigbbe.herokuapp.com/users/`, values )
-      .then(res => {
-        console.log(res);
-        console.log(res.data);
-        router.push('/login');
- 
+      }),  
+    onSubmit: values => {
+      console.log(JSON.stringify(values))
+      axios.post(
+        `https://de53-103-224-35-38.ngrok.io/users/`,values)
+          .then(res => {
+          console.log(res);
+          console.log(res.data);  
       })
     }
   });
@@ -113,18 +106,18 @@ const Register = () => {
               </Typography>
             </Box>
             <TextField
-              error={Boolean(formik.touched.firstName && formik.errors.firstName)}
+              error={Boolean(formik.touched.full_name && formik.errors.full_name)}
               fullWidth
-              helperText={formik.touched.firstName && formik.errors.firstName}
+              helperText={formik.touched.full_name && formik.errors.full_name}
               label="First Name"
               margin="normal"
-              name="firstName"
+              name="full_name"
               onBlur={formik.handleBlur}
               onChange={formik.handleChange}
-              value={formik.values.firstName}
+              value={formik.values.full_name}
               variant="outlined"
             />
-            <TextField
+            {/* <TextField
               error={Boolean(formik.touched.lastName && formik.errors.lastName)}
               fullWidth
               helperText={formik.touched.lastName && formik.errors.lastName}
@@ -135,7 +128,7 @@ const Register = () => {
               onChange={formik.handleChange}
               value={formik.values.lastName}
               variant="outlined"
-            />
+            /> */}
             <TextField
               error={Boolean(formik.touched.email && formik.errors.email)}
               fullWidth
@@ -169,12 +162,12 @@ const Register = () => {
                 ml: -1
               }}
             >
-              <Checkbox
+              {/* <Checkbox
                 checked={formik.values.policy}
                 name="policy"
                 onChange={formik.handleChange}
-              />
-              <Typography
+              /> */}
+              {/* <Typography
                 color="textSecondary"
                 variant="body2"
               >
@@ -192,13 +185,13 @@ const Register = () => {
                     Terms and Conditions
                   </Link>
                 </NextLink>
-              </Typography>
+              </Typography> */}
             </Box>
-            {Boolean(formik.touched.policy && formik.errors.policy) && (
+            {/* {Boolean(formik.touched.policy && formik.errors.policy) && (
               <FormHelperText error>
                 {formik.errors.policy}
               </FormHelperText>
-            )}
+            )} */}
             <Box sx={{ py: 2 }}>
               <Button
                 color="primary"

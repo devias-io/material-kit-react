@@ -7,15 +7,22 @@ import { Box, Button, Container, Grid, Link, TextField, Typography } from '@mui/
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Facebook as FacebookIcon } from '../icons/facebook';
 import { Google as GoogleIcon } from '../icons/google';
-
+import { ImportExport } from '@mui/icons-material';
+import axios from "axios"
 const Login = () => {
   const router = useRouter();
   const formik = useFormik({
     initialValues: {
-      email: 'demo@devias.io',
-      password: 'Password123'
+      // full_name : "",
+      email: '',
+      password: ""
     },
     validationSchema: Yup.object({
+      // full_name: Yup
+      //   .string()
+      //   .max(255)
+      //   .required(
+      //     'First name is required'),
       email: Yup
         .string()
         .email(
@@ -29,13 +36,20 @@ const Login = () => {
         .required(
           'Password is required')
     }),
-    onSubmit: () => {
-      router.push('/');
+    onSubmit: values => {
+      console.log(JSON.stringify(values))
+      axios.post(
+        `https://de53-103-224-35-38.ngrok.io/token`,values)
+          .then(res => {
+          console.log(res);
+          console.log(res.data);  
+      })
     }
   });
 
   return (
     <>
+
       <Head>
         <title>Login | Material Kit</title>
       </Head>
@@ -85,7 +99,7 @@ const Login = () => {
                 xs={12}
                 md={6}
               >
-                <Button
+                {/* <Button
                   color="info"
                   fullWidth
                   startIcon={<FacebookIcon />}
@@ -94,7 +108,7 @@ const Login = () => {
                   variant="contained"
                 >
                   Login with Facebook
-                </Button>
+                </Button> */}
               </Grid>
               <Grid
                 item
@@ -127,6 +141,18 @@ const Login = () => {
                 or login with email address
               </Typography>
             </Box>
+            {/* <TextField
+              error={Boolean(formik.touched.full_name && formik.errors.full_name)}
+              fullWidth
+              helperText={formik.touched.full_name && formik.errors.full_name}
+              label="First Name"
+              margin="normal"
+              name="full_name"
+              onBlur={formik.handleBlur}
+              onChange={formik.handleChange}
+              value={formik.values.full_name}
+              variant="outlined"
+            /> */}
             <TextField
               error={Boolean(formik.touched.email && formik.errors.email)}
               fullWidth
