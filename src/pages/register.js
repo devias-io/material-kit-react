@@ -22,9 +22,7 @@ const Register = () => {
     initialValues: {
       email: '',
       full_name: '',
-      // lastName: '',
       password: '',
-      // policy: false
     },
     validationSchema: Yup.object({
       email: Yup
@@ -53,7 +51,7 @@ const Register = () => {
     onSubmit: values => {
       console.log(JSON.stringify(values))
       axios.post(
-        `https://de53-103-224-35-38.ngrok.io/users/`,values)
+        `https://5952-103-224-35-112.ngrok.io/users/`,values)
           .then(res => {
           console.log(res);
           console.log(res.data);  

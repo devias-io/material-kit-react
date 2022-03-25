@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { Box, Container, Grid, Typography } from '@mui/material';
 import { AccountProfile } from '../components/account/account-profile';
-import { AccountProfileDetails } from '../components/account/account-profile-details';
+import {UserReports} from "../components/reports/user-reports"
 import { DashboardLayout } from '../components/dashboard-layout';
 import { useEffect } from 'react';
 import axios from 'axios';
@@ -19,7 +19,7 @@ const Account = () => {
     console.log(token);
 
     axios.get(
-      `http://localhost:8000/users/me/`, {headers: {
+      ``, {headers: {
         'Authorization': `bearer ${token}` 
       }})
         .then(res => {
@@ -50,27 +50,20 @@ const Account = () => {
           sx={{ mb: 3 }}
           variant="h4"
         >
-          Account
+          Add Report
         </Typography>
         <Grid
           container
           spacing={3}
         >
+      
           <Grid
             item
-            lg={4}
+            lg={18}
             md={6}
             xs={12}
           >
-            <AccountProfile />
-          </Grid>
-          <Grid
-            item
-            lg={8}
-            md={6}
-            xs={12}
-          >
-            <AccountProfileDetails data={{"firstName": firstName}}/>
+            <UserReports/>
           </Grid>
         </Grid>
       </Container>

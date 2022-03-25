@@ -9,7 +9,8 @@ import React, { useState } from 'react';
 
 const Account = () => {
 
-  const [firstName, setfirstName] = useState("");
+  const [fullName, setFullname] = useState("");
+  const [email,setEmail] = useState("")
 
   useEffect (() => {
 
@@ -19,14 +20,15 @@ const Account = () => {
     console.log(token);
 
     axios.get(
-      `http://localhost:8000/users/me/`, {headers: {
+      `https://5952-103-224-35-112.ngrok.io/users/me/`, {headers: {
         'Authorization': `bearer ${token}` 
       }})
         .then(res => {
         console.log(res);
         console.log(res.data);  
-        setfirstName(res.data.full_name);
-        console.log("#######", firstName);
+        setFullname(res.data.full_name);
+        setEmail(res.data.email)
+        console.log("#######", fullName);
     })
 
   })
@@ -62,7 +64,7 @@ const Account = () => {
             md={6}
             xs={12}
           >
-            <AccountProfile />
+            <AccountProfile name={fullName} email={email} />
           </Grid>
           <Grid
             item
@@ -70,9 +72,10 @@ const Account = () => {
             md={6}
             xs={12}
           >
-            <AccountProfileDetails data={{"firstName": firstName}}/>
+            <AccountProfileDetails name={fullName} email={email} />
           </Grid>
         </Grid>
+        
       </Container>
     </Box>
   </>

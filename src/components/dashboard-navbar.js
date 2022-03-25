@@ -6,7 +6,9 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Bell as BellIcon } from '../icons/bell';
 import { UserCircle as UserCircleIcon } from '../icons/user-circle';
 import { Users as UsersIcon } from '../icons/users';
-
+import { useEffect } from 'react';
+import axios from 'axios';
+import React, { useState } from 'react';
 const DashboardNavbarRoot = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
   boxShadow: theme.shadows[3]
@@ -15,6 +17,30 @@ const DashboardNavbarRoot = styled(AppBar)(({ theme }) => ({
 export const DashboardNavbar = (props) => {
   const { onSidebarOpen, ...other } = props;
 
+  
+  const [fullName, setFullname] = useState("");
+  const [email,setEmail] = useState("")
+
+  // useEffect (() => {
+
+  //   console.log("Im here")
+
+  //   const token = localStorage.getItem('token');
+  //   console.log(token);
+
+  //   axios.get(
+  //     `https://614c-103-224-35-112.ngrok.io/users/me/`, {headers: {
+  //       'Authorization': `bearer ${token}` 
+  //     }})
+  //       .then(res => {
+  //       console.log(res);
+  //       console.log(res.data);  
+  //       setFullname(res.data.full_name);
+  //       setEmail(res.data.email)
+  //       console.log("#######", fullName);
+  //   })
+
+  // })
   return (
     <>
       <DashboardNavbarRoot
@@ -46,37 +72,17 @@ export const DashboardNavbar = (props) => {
           >
             <MenuIcon fontSize="small" />
           </IconButton>
-          <Tooltip title="Search">
-            <IconButton sx={{ ml: 1 }}>
-              <SearchIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
           <Box sx={{ flexGrow: 1 }} />
-          <Tooltip title="Contacts">
-            <IconButton sx={{ ml: 1 }}>
-              <UsersIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Notifications">
-            <IconButton sx={{ ml: 1 }}>
-              <Badge
-                badgeContent={4}
-                color="primary"
-                variant="dot"
-              >
-                <BellIcon fontSize="small" />
-              </Badge>
-            </IconButton>
-          </Tooltip>
+
           <Avatar
             sx={{
+              bgcolor : "error.main",
               height: 40,
               width: 40,
               ml: 1
             }}
-            src="/static/images/avatars/avatar_1.png"
           >
-            <UserCircleIcon fontSize="small" />
+           {fullName.charAt(0).toUpperCase()} 
           </Avatar>
         </Toolbar>
       </DashboardNavbarRoot>
