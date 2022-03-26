@@ -12,7 +12,7 @@ import { Upload as UploadIcon } from '../../icons/upload';
 import { Download as DownloadIcon } from '../../icons/download';
 import router from 'next/router';
 
-export const CustomerListToolbar = (props) => {
+export const ReportListToolbar = (props) => {
 
   function onClickHandle(e) {
     router.push('/report');
@@ -35,7 +35,7 @@ export const CustomerListToolbar = (props) => {
         sx={{ m: 1 }}
         variant="h4"
       >
-        Customers
+        Reports
       </Typography>
       <Box sx={{ m: 1 }}>
         <Button
@@ -81,7 +81,7 @@ export const CustomerListToolbar = (props) => {
                   </InputAdornment>
                 )
               }}
-              placeholder="Search customer"
+              placeholder="Search report"
               variant="outlined"
             />
           </Box>

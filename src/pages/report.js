@@ -1,24 +1,27 @@
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { Box, Container, Grid, Typography } from '@mui/material';
 import { AccountProfile } from '../components/account/account-profile';
 import {UserReports} from "../components/reports/user-reports"
 import { DashboardLayout } from '../components/dashboard-layout';
-import { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import React, { useState } from 'react';
 
 const Account = () => {
+  const router = useRouter();
 
   const [userId, setUserId] = useState(null);
 
   const getData = (values) => {
     console.log(values)
+    console.log(userId)
 
     api.post(
       `users/${userId}/report`,values)
         .then(res => {
         console.log(res);
-        console.log(res.data);  
+        console.log(res.data);
+        router.push('/reports');  
     })
   }
 
