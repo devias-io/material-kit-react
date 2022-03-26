@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 
 const ReportList = () => {
 
-  const [id,setId] = useState(0)
+  const [id, setId] = useState(0)
   const [userReports,setUserReports] = useState([])
 
   useEffect (() => {

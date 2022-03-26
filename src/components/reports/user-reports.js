@@ -14,11 +14,7 @@ import {
     MenuItem,
     
   } from '@mui/material';
-  import Stack from '@mui/material/Stack';
-
-  import { useEffect } from 'react';
-  import api from '../utils/api';
-  
+  import Stack from '@mui/material/Stack';  
 
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -27,27 +23,10 @@ export const UserReports = (props) => {
 
   const [id, setId] = useState("");
   console.log(id)
-  useEffect (() => {
 
-    console.log("Im here")
-
-    const token = localStorage.getItem('token');
-    console.log(token);
-
-    api.get(
-      `users/me/`, {headers: {
-        'Authorization': `bearer ${token}` 
-      }})
-        .then(res => { 
-        setId(res.data.id)
-      
-    })
-
-  })
-  const [value, setValue] = useState(new Date('2014-08-18T21:11:54'));
     const formik = useFormik({
         initialValues: {
-          taskType: '',
+          task_type: '',
           title: '',
           start_time : '',
           stop_time : '',
@@ -55,7 +34,7 @@ export const UserReports = (props) => {
           
         },
         validationSchema: Yup.object({
-            taskType: Yup
+            task_type: Yup
             .string()
             .max(255)
             .required(
@@ -86,20 +65,13 @@ export const UserReports = (props) => {
         onSubmit: values => {
           //console.log(JSON.stringify(values))
           console.log(values)
-          api.post(
-            `users/${id}/report`,values)
-              .then(res => {
-              console.log(res);
-              console.log(res.data);  
-          })
+          props.getData(values);
+          
         }
       });
 
-    const states = [
-      {
-        value: '',
-        label: ''
-      },
+    const task_types = [
+   
         {
           value: 'learning',
           label: 'Leaning'
@@ -135,19 +107,19 @@ export const UserReports = (props) => {
               xs={12}
             >
                <TextField
-                error={Boolean(formik.touched.taskType && formik.errors.taskType)}
+                error={Boolean(formik.touched.task_type && formik.errors.task_type)}
                 fullWidth
-                helperText={formik.touched.taskType && formik.errors.taskType}
+                helperText={formik.touched.task_type && formik.errors.task_type}
                 label="Task type"
-                name="taskType"
+                name="task_type"
                 onBlur={formik.handleBlur}
                 onChange={formik.handleChange}
                 select
                 SelectProps={{ native: true }}
-                value={formik.values.taskType}
+                value={formik.values.task_type}
                 variant="outlined"
               >
-                {states.map((option) => (
+                {task_types.map((option) => (
                   <option
                     key={option.value}
                     value={option.value}

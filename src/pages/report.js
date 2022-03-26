@@ -9,27 +9,28 @@ import React, { useState } from 'react';
 
 const Account = () => {
 
-  const [firstName, setfirstName] = useState("");
+  const [userId, setUserId] = useState(null);
+
+  const getData = (values) => {
+    console.log(values)
+
+    api.post(
+      `users/${userId}/report`,values)
+        .then(res => {
+        console.log(res);
+        console.log(res.data);  
+    })
+  }
 
   useEffect (() => {
 
     console.log("Im here")
 
-    const token = localStorage.getItem('token');
-    console.log(token);
+    const user = localStorage.getItem('user');
+    setUserId(JSON.parse(user).user_id);
 
-    api.get(
-      ``, {headers: {
-        'Authorization': `bearer ${token}` 
-      }})
-        .then(res => {
-        console.log(res);
-        console.log(res.data);  
-        setfirstName(res.data.full_name);
-        console.log("#######", firstName);
-    })
 
-  })
+  }, [])
 
   return (
   <>
@@ -63,7 +64,7 @@ const Account = () => {
             md={6}
             xs={12}
           >
-            <UserReports/>
+            <UserReports getData={getData}/>
           </Grid>
         </Grid>
       </Container>

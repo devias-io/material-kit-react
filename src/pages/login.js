@@ -8,8 +8,18 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Facebook as FacebookIcon } from '../icons/facebook';
 import { Google as GoogleIcon } from '../icons/google';
 import { ImportExport } from '@mui/icons-material';
-import axios from "axios"
+import api from "../utils/api";
 import qs from 'qs';
+
+function parseJwt (token) {
+  var base64Url = token.split('.')[1];
+  var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+
+  return jsonPayload;
+};
 
 const Login = () => {
   const router = useRouter();
@@ -47,6 +57,7 @@ const Login = () => {
           console.log(res.data);  
           // console.log(res.data.access_token)
           localStorage.setItem("token", res.data.access_token);
+          localStorage.setItem("user", parseJwt(res.data.access_token));
           router.push('/');
           
       })
