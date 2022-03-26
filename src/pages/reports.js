@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { Box, Container } from '@mui/material';
 import { ReportListResults } from '../components/reports/reports-list-results';
-import { CustomerListToolbar } from '../components/customer/customer-list-toolbar';
+import { ReportListToolbar } from '../components/reports/report-list-toolbar';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { reports } from '../__mocks__/reports';
 import React, { useReducer, useState } from 'react';
@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 const ReportList = (props) => {
 
   const [userReports,setUserReports] = useState([])
+  const [userId, setUserId] = useState(null);
 
   useEffect (() => {
 
@@ -20,21 +21,29 @@ const ReportList = (props) => {
     const token = localStorage.getItem('token');
     console.log(token);
 
-    api.get(
-      `users/1/reports`, {headers: {
-        'Authorization': `bearer ${token}` 
-      }})
-        .then(res => {
-        console.log(res.data);
-        setUserReports(res.data);
-    })
+    const user = localStorage.getItem('user');
+    setUserId(JSON.parse(user).user_id);
 
-  }, [])
+    console.log(userId)
+    if(userId != null){
+      api.get(
+        `users/${userId}/reports`, {headers: {
+          'Authorization': `bearer ${token}` 
+        }})
+          .then(res => {
+          console.log(res.data);
+          setUserReports(res.data);
+      })
+    }
+
+
+  }, [userId])
+
   return (
   <>
     <Head>
       <title>
-        Customers | KGXperience
+        Reports | KGXperience
       </title>
     </Head>
     <Box
@@ -45,7 +54,7 @@ const ReportList = (props) => {
       }}
     >
       <Container maxWidth={false}>
-        <CustomerListToolbar />
+        <ReportListToolbar />
         <Box sx={{ mt: 3 }}>
           <ReportListResults reports={userReports} />
         </Box>

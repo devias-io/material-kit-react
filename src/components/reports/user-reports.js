@@ -100,7 +100,6 @@ export const UserReports = (props) => {
               container
               spacing={3}
             >
-            
               <Grid
               item
               md={6}
@@ -128,9 +127,7 @@ export const UserReports = (props) => {
                   </option>
                 ))}
               </TextField>
-              
-                
-               
+
             </Grid>
             <Grid
               item
@@ -150,28 +147,29 @@ export const UserReports = (props) => {
               />
                
             </Grid>
+
             <Grid
               item
               md={6}
               xs={12}
             >
-             <Stack component="form" noValidate spacing={3}>
-             <TextField
-             error={Boolean(formik.touched.start_time && formik.errors.start_time)}
-             fullWidth
-             helperText={formik.touched.start_time && formik.errors.start_time}
-              id="datetime-local"
-              name="start_time"
-              onBlur={formik.handleBlur}
-              onChange={formik.handleChange}        
-                type="datetime-local"
-                label="Start time"
-                sx={{ width: "100%" }}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-    </Stack>
+             <Stack  noValidate spacing={3}>
+                <TextField
+                error={Boolean(formik.touched.start_time && formik.errors.start_time)}
+                fullWidth
+                helperText={formik.touched.start_time && formik.errors.start_time}
+                  id="datetime-local"
+                  name="start_time"
+                  onBlur={formik.handleBlur}
+                  onChange={formik.handleChange}        
+                    type="datetime-local"
+                    label="Start time"
+                    sx={{ width: "100%" }}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
+             </Stack>
 
             </Grid>
             <Grid
@@ -179,23 +177,23 @@ export const UserReports = (props) => {
               md={6}
               xs={12}
             >
-             <Stack component="form" noValidate spacing={3}>
-      <TextField
-        error={Boolean(formik.touched.stop_time && formik.errors.stop_time)}
-        fullWidth
-        helperText={formik.touched.stop_time && formik.errors.stop_time}
-        id="datetime-local"
-        onBlur={formik.handleBlur}
-        onChange={formik.handleChange}
-        name="stop_time"
-        type="datetime-local"
-        label="Stop time"
-        sx={{ width: "100%" }}
-        InputLabelProps={{
-          shrink: true,
-        }}
-      />
-    </Stack>
+             <Stack  noValidate spacing={3}>
+                <TextField
+                  error={Boolean(formik.touched.stop_time && formik.errors.stop_time)}
+                  fullWidth
+                  helperText={formik.touched.stop_time && formik.errors.stop_time}
+                  id="datetime-local"
+                  onBlur={formik.handleBlur}
+                  onChange={formik.handleChange}
+                  name="stop_time"
+                  type="datetime-local"
+                  label="Stop time"
+                  sx={{ width: "100%" }}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                />
+              </Stack>
 
             </Grid>
             </Grid>
@@ -231,6 +229,7 @@ export const UserReports = (props) => {
             </Grid>
                 
           </CardContent>
+          
           <Divider />
           <Box
             sx={{
