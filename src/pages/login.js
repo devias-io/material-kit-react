@@ -68,7 +68,7 @@ const Login = () => {
     <>
 
       <Head>
-        <title>Login | Material Kit</title>
+        <title>Login | KGXperience</title>
       </Head>
       <Box
         component="main"

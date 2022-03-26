@@ -34,7 +34,7 @@ const ReportList = (props) => {
   <>
     <Head>
       <title>
-        Customers | Material Kit
+        Customers | KGXperience
       </title>
     </Head>
     <Box

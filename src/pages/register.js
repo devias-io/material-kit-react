@@ -63,7 +63,7 @@ const Register = () => {
     <>
       <Head>
         <title>
-          Register | Material Kit
+          Register | KGXperience
         </title>
       </Head>
       <Box

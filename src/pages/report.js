@@ -36,7 +36,7 @@ const Account = () => {
   <>
     <Head>
       <title>
-        Account | Material Kit
+        Account | KGXperience
       </title>
     </Head>
     <Box

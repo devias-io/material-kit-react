@@ -111,12 +111,11 @@ export const DashboardSidebar = (props) => {
               passHref
             >
               <a>
-                <Logo
-                  sx={{
-                    height: 42,
-                    width: 42
-                  }}
-                />
+              <img
+              alt="Go to pro"
+              src="/static/images/kgx.png"
+              width="170"
+            />
               </a>
             </NextLink>
           </Box>
