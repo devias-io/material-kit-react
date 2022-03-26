@@ -7,7 +7,7 @@ import { Bell as BellIcon } from '../icons/bell';
 import { UserCircle as UserCircleIcon } from '../icons/user-circle';
 import { Users as UsersIcon } from '../icons/users';
 import { useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import React, { useState } from 'react';
 const DashboardNavbarRoot = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
@@ -28,7 +28,7 @@ export const DashboardNavbar = (props) => {
   //   const token = localStorage.getItem('token');
   //   console.log(token);
 
-  //   axios.get(
+  //   api.get(
   //     `https://614c-103-224-35-112.ngrok.io/users/me/`, {headers: {
   //       'Authorization': `bearer ${token}` 
   //     }})

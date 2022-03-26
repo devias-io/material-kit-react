@@ -4,7 +4,7 @@ import { AccountProfile } from '../components/account/account-profile';
 import { AccountProfileDetails } from '../components/account/account-profile-details';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import React, { useState } from 'react';
 
 const Account = () => {
@@ -19,8 +19,8 @@ const Account = () => {
     const token = localStorage.getItem('token');
     console.log(token);
 
-    axios.get(
-      `https://5952-103-224-35-112.ngrok.io/users/me/`, {headers: {
+    api.get(
+      `users/me/`, {headers: {
         'Authorization': `bearer ${token}` 
       }})
         .then(res => {

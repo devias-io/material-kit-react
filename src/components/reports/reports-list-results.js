@@ -22,11 +22,54 @@ import {
 } from '@mui/material';
 
 
+function Row(props) {
+  const { row } = props;
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <React.Fragment>
+      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+      
+      
+        <TableCell align="right">{row.task_type}</TableCell>
+        <TableCell align="right">{row.title}</TableCell>
+        <TableCell align="right">{row.start_time}</TableCell>
+        <TableCell align="right">{row.stop_time}</TableCell>
+        <TableCell>
+          <IconButton
+            aria-label="expand row"
+            size="small"
+            onClick={() => setOpen(!open)}
+          >
+            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
+        </TableCell>
+      </TableRow>
+
+      <TableRow>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box sx={{ margin: 1 }}>
+              <Typography variant="h6" gutterBottom component="div">
+              {row.description}
+              </Typography>
+           
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </React.Fragment>
+  );
+}
+
+
 export const ReportListResults = ({ reports, ...rest }) => {
   const [open, setOpen] = useState(false);
+
   reports.map(item =>{
     console.log(item.title)
   })
+
   const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);
   const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(0);
@@ -94,104 +137,25 @@ export const ReportListResults = ({ reports, ...rest }) => {
                   Type
                 </TableCell>
                 <TableCell>
-                  title
+                  Title
                 </TableCell>
                 <TableCell>
-                  start Time
+                  Start Time
                 </TableCell>
                 <TableCell>
-                  stop time
+                  Stop Time
                 </TableCell>
                 <TableCell>
-                description
+                Description
                 </TableCell>
               </TableRow>
             </TableHead>
+
             <TableBody>
-              {reports.slice(0, limit).map((item) => (
-                <React.Fragment>
-                <TableRow
-                  hover
-                  
-                  selected={selectedCustomerIds.indexOf(item.type) !== -1}
-                >
-                  {/* <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={selectedCustomerIds.indexOf(customer.id) !== -1}
-                      onChange={(event) => handleSelectOne(event, customer.id)}
-                      value="true"
-                    />
-                  </TableCell> */}
-                  <TableCell>
-                    <Box
-                      sx={{
-                        alignItems: 'center',
-                        display: 'flex'
-                      }}
-                    >
-                      <Typography
-                        color="textPrimary"
-                        variant="body1"
-                      >
-                        {item.type}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    {item.title}
-                  </TableCell>
-                  <TableCell>
-                    {item.start_time}
-                  </TableCell>
-                  <TableCell>
-                    {item.stop_time}
-                  </TableCell>
-                  <TableCell>
-                  <IconButton
-                    aria-label="expand row"
-                    size="small"
-                    onClick={() => setOpen(!open)}
-                  >
-                   {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                  </IconButton>
-                  </TableCell>
-                </TableRow>
-                
-                
-                <TableRow>
-                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-                  <Collapse in={open} timeout="auto" unmountOnExit>
-                    <Box sx={{ margin: 1 }}>
-                      <Typography variant="h4" gutterBottom component="div">
-                        Discription
-                      </Typography>
-                      <Typography
-                        variant="h6"
-                        gutterBottom
-                        component="paragraph"
-                        style={{ width: "20%" }}
-                      >
-                        Download from GitHub or clone the repo: git clone
-                        https://github.com/devias-io/material-kit-react.git Make sure
-                        your Node.js and npm versions are up to date Install
-                        dependencies: npm install or yarn Start the server: npm run
-                        start or yarn start Views are on: localhost:3000 Download from
-                        GitHub or clone the repo: git clone
-                        https://github.com/devias-io/material-kit-react.git Make sure
-                        your Node.js and npm versions are up to date Install
-                        dependencies: npm install or yarn Start the server: npm run
-                        start or yarn start Views are on: localhost:3000
-                      </Typography>
-                    </Box>
-                  </Collapse>
-                </TableCell>
-              </TableRow>
-              </React.Fragment>
+              {reports.slice(0, limit).map((item, index) => (     
 
+                <Row key={index} row={item} />
 
-
-                
-                
               ))}
               
             </TableBody>

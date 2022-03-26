@@ -6,8 +6,7 @@ import {
   CardActions,
   CardContent,
   Divider,
-  Typography,
-  Theme
+  Typography
 } from '@mui/material';
 
 const user = {
@@ -19,7 +18,6 @@ const user = {
   timezone: 'GTM-7'
 };
 
-let classNameHolder = ["primary.main","secondary.main","error.main"];
 export const AccountProfile = (props) => (
   <Card {...props}>
     <CardContent>
@@ -31,36 +29,43 @@ export const AccountProfile = (props) => (
         }}
       >
         <Avatar
+          src={user.avatar}
           sx={{
-            bgcolor : "error.main",
             height: 64,
             mb: 2,
             width: 64
           }}
-        >
-          { props.name[0]}
-        </Avatar>
+        />
         <Typography
           color="textPrimary"
           gutterBottom
           variant="h5"
         >
-          {props.name}
+          {user.name}
         </Typography>
         <Typography
           color="textSecondary"
           variant="body2"
         >
-          {`${props.email}`}
+          {`${user.city} ${user.country}`}
         </Typography>
         <Typography
           color="textSecondary"
           variant="body2"
         >
-          KGX innovation
+          {user.timezone}
         </Typography>
       </Box>
     </CardContent>
     <Divider />
+    <CardActions>
+      <Button
+        color="primary"
+        fullWidth
+        variant="text"
+      >
+        Upload picture
+      </Button>
+    </CardActions>
   </Card>
 );

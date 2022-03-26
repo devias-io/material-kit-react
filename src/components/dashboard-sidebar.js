@@ -28,6 +28,11 @@ const items = [
     title: 'All reports'
   },
   {
+    href: '/customers',
+    icon: (<UsersIcon fontSize="small" />),
+    title: 'Customers'
+  },
+  {
     href: '/products',
     icon: (<ShoppingBagIcon fontSize="small" />),
     title: 'Products'

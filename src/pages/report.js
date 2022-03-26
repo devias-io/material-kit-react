@@ -4,7 +4,7 @@ import { AccountProfile } from '../components/account/account-profile';
 import {UserReports} from "../components/reports/user-reports"
 import { DashboardLayout } from '../components/dashboard-layout';
 import { useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import React, { useState } from 'react';
 
 const Account = () => {
@@ -18,7 +18,7 @@ const Account = () => {
     const token = localStorage.getItem('token');
     console.log(token);
 
-    axios.get(
+    api.get(
       ``, {headers: {
         'Authorization': `bearer ${token}` 
       }})

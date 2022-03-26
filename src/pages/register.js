@@ -14,7 +14,7 @@ import {
   Typography
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import axios from 'axios';
+import api from '../utils/api';
 
 const Register = () => {
   const router = useRouter();
@@ -50,8 +50,8 @@ const Register = () => {
       }),  
     onSubmit: values => {
       console.log(JSON.stringify(values))
-      axios.post(
-        `https://5952-103-224-35-112.ngrok.io/users/`,values)
+      api.post(
+        `users/`,values)
           .then(res => {
           console.log(res);
           console.log(res.data);  

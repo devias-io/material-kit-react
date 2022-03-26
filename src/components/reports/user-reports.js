@@ -17,7 +17,7 @@ import {
   import Stack from '@mui/material/Stack';
 
   import { useEffect } from 'react';
-  import axios from 'axios';
+  import api from '../utils/api';
   
 
 import { useFormik } from 'formik';
@@ -34,8 +34,8 @@ export const UserReports = (props) => {
     const token = localStorage.getItem('token');
     console.log(token);
 
-    axios.get(
-      `https://5952-103-224-35-112.ngrok.io/users/me/`, {headers: {
+    api.get(
+      `users/me/`, {headers: {
         'Authorization': `bearer ${token}` 
       }})
         .then(res => { 
@@ -86,8 +86,8 @@ export const UserReports = (props) => {
         onSubmit: values => {
           //console.log(JSON.stringify(values))
           console.log(values)
-          axios.post(
-            `https://5952-103-224-35-112.ngrok.io/users/${id}/report`,values)
+          api.post(
+            `users/${id}/report`,values)
               .then(res => {
               console.log(res);
               console.log(res.data);  

@@ -40,8 +40,8 @@ const Login = () => {
     }),
     onSubmit: values => {
       console.log(JSON.stringify(values))
-      axios.post(
-        `https://5952-103-224-35-112.ngrok.io/token/`, qs.stringify(values))
+      api.post(
+        `token/`, qs.stringify(values))
           .then(res => {
           console.log(res);
           console.log(res.data);  

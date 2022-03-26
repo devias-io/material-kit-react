@@ -1,41 +1,35 @@
 import Head from 'next/head';
 import { Box, Container } from '@mui/material';
-import { ReportListResults } from '../components/customer/reports-list-results';
+import { ReportListResults } from '../components/reports/reports-list-results';
 import { CustomerListToolbar } from '../components/customer/customer-list-toolbar';
 import { DashboardLayout } from '../components/dashboard-layout';
-import { reports } from '../__mocks__/customers';
+import { reports } from '../__mocks__/reports';
 import React, { useReducer, useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { useEffect } from 'react';
+
 const ReportList = () => {
+
   const [id,setId] = useState(0)
-  const [userReports,setUserReports] = useState({})
-  // useEffect (() => {
+  const [userReports,setUserReports] = useState([])
 
-  //   console.log("Im here")
+  useEffect (() => {
 
-  //   const token = localStorage.getItem('token');
-  //   console.log(token);
+    console.log("Im here")
 
-  //   // axios.get(
-  //   //   `https://5952-103-224-35-112.ngrok.io/users/me/`, {headers: {
-  //   //     'Authorization': `bearer ${token}` 
-  //   //   }})
-  //   //     .then(res => {
-  //   //     console.log(res);
-  //   //     setId(id)
-  //   // })
-    
-  //   // axios.get(
-  //   //   `https://5952-103-224-35-112.ngrok.io/users/${2}/reports`)
-  //   //     .then(res => {
-  //   //       setUserReports(res.data)
-  //   //     console.log(res);
-  //   // })
+    const token = localStorage.getItem('token');
+    console.log(token);
 
+    api.get(
+      `users/1/reports`, {headers: {
+        'Authorization': `bearer ${token}` 
+      }})
+        .then(res => {
+        console.log(res.data);
+        setUserReports(res.data);
+    })
 
-  // })
-  // console.log("@@@@@@@@@@@@@@@@@@@@@@@@",userReports)
+  }, [])
   return (
   <>
     <Head>
@@ -53,7 +47,7 @@ const ReportList = () => {
       <Container maxWidth={false}>
         <CustomerListToolbar />
         <Box sx={{ mt: 3 }}>
-          <ReportListResults reports={reports} />
+          <ReportListResults reports={userReports} />
         </Box>
       </Container>
     </Box>
