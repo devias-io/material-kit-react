@@ -25,7 +25,7 @@ const items = [
   {
     href: '/reportlist',
     icon: (<UsersIcon fontSize="small" />),
-    title: 'All reports'
+    title: 'Reports'
   },
   {
     href: '/customers',
@@ -56,11 +56,6 @@ const items = [
     href: '/register',
     icon: (<UserAddIcon fontSize="small" />),
     title: 'Register'
-  },
-  {
-    href: '/report',
-    icon: (<UserAddIcon fontSize="small" />),
-    title: 'Add report'
   },
   {
     href: '/404',

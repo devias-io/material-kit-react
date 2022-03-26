@@ -10,8 +10,17 @@ import {
 import { Search as SearchIcon } from '../../icons/search';
 import { Upload as UploadIcon } from '../../icons/upload';
 import { Download as DownloadIcon } from '../../icons/download';
+import router from 'next/router';
 
-export const CustomerListToolbar = (props) => (
+export const CustomerListToolbar = (props) => {
+
+  function onClickHandle(e) {
+    router.push('/report');
+    console.log('You clicked');
+  }
+
+
+  return (
   <Box {...props}>
     <Box
       sx={{
@@ -41,12 +50,17 @@ export const CustomerListToolbar = (props) => (
         >
           Export
         </Button>
+
+
         <Button
           color="primary"
           variant="contained"
+          onClick={onClickHandle}
         >
-          Add Customers
+          Add Reports
         </Button>
+
+
       </Box>
     </Box>
     <Box sx={{ mt: 3 }}>
@@ -76,3 +90,4 @@ export const CustomerListToolbar = (props) => (
     </Box>
   </Box>
 );
+            }
