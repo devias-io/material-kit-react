@@ -8,14 +8,14 @@ import React, { useReducer, useState } from 'react';
 import api from '../utils/api';
 import { useEffect } from 'react';
 
-const ReportList = () => {
+const ReportList = (props) => {
 
-  const [id, setId] = useState(0)
   const [userReports,setUserReports] = useState([])
 
   useEffect (() => {
 
     console.log("Im here")
+    console.log(props.nivu)
 
     const token = localStorage.getItem('token');
     console.log(token);

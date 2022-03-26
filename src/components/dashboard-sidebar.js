@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import PropTypes from 'prop-types';
@@ -77,8 +77,12 @@ export const DashboardSidebar = (props) => {
     noSsr: false
   });
 
+  const [user, setUser] = useState({'full_name': ' ', 'email': ' '});
+
   useEffect(
     () => {
+
+      setUser(JSON.parse(localStorage.getItem('user')));
       if (!router.isReady) {
         return;
       }
@@ -134,15 +138,13 @@ export const DashboardSidebar = (props) => {
                   color="inherit"
                   variant="subtitle1"
                 >
-                  Acme Inc
+                  {user.full_name}
                 </Typography>
                 <Typography
                   color="neutral.400"
                   variant="body2"
                 >
-                  Your tier
-                  {' '}
-                  : Premium
+                  {user.email}
                 </Typography>
               </div>
               <SelectorIcon

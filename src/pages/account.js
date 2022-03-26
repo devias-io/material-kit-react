@@ -22,8 +22,7 @@ const Account = () => {
     api.get(
       `users/me/`, {headers: {
         'Authorization': `bearer ${token}` 
-      }})
-        .then(res => {
+      }}).then(res => {
         console.log(res);
         console.log(res.data);  
         setFullname(res.data.full_name);

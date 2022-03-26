@@ -28,7 +28,8 @@ const App = (props) => {
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          {getLayout(<Component {...pageProps} />)}
+          {getLayout(<Component nivu={"nivu"} 
+          {...pageProps} />)}
         </ThemeProvider>
       </LocalizationProvider>
     </CacheProvider>
