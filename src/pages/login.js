@@ -79,7 +79,7 @@ const Login = () => {
                   size="large"
                   variant="contained"
                 >
-                  Masuk dengan akun Google
+                  Masuk dengan Google
                 </Button>
               </Grid>
             </Grid>
@@ -132,7 +132,7 @@ const Login = () => {
               </Button>
             </Box>
             <Typography color="textSecondary" variant="body2">
-              Sudah punya Akun?{" "}
+              Belum punya Akun?{" "}
               <NextLink href="/register">
                 <Link
                   to="/register"
