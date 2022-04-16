@@ -1,5 +1,3 @@
-// /tandai
-
 {
   "name": "material-kit-react",
   "author": "Devias IO",
@@ -25,6 +23,7 @@
     "@mui/styles": "^5.0.2",
     "chart.js": "^3.5.1",
     "date-fns": "^2.25.0",
+    "firebase": "^9.6.11",
     "formik": "^2.1.5",
     "history": "^5.0.0",
     "next": "^12.0.3-canary.7",
