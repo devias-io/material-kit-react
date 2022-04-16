@@ -1,47 +1,77 @@
-import PropTypes from 'prop-types';
-import styled from '@emotion/styled';
-import { AppBar, Avatar, Badge, Box, IconButton, Toolbar, Tooltip } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import SearchIcon from '@mui/icons-material/Search';
-import { Bell as BellIcon } from '../icons/bell';
-import { UserCircle as UserCircleIcon } from '../icons/user-circle';
-import { Users as UsersIcon } from '../icons/users';
+import PropTypes from "prop-types";
+import { useState } from "react";
+import { useRouter } from "next/router";
+import styled from "@emotion/styled";
+import {
+  AppBar,
+  Avatar,
+  Badge,
+  Box,
+  IconButton,
+  Menu,
+  MenuItem,
+  Toolbar,
+  Tooltip,
+  Button,
+  s,
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+import SearchIcon from "@mui/icons-material/Search";
+import { Bell as BellIcon } from "../icons/bell";
+import { UserCircle as UserCircleIcon } from "../icons/user-circle";
+import { Users as UsersIcon } from "../icons/users";
 
 const DashboardNavbarRoot = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
-  boxShadow: theme.shadows[3]
+  boxShadow: theme.shadows[3],
 }));
 
 export const DashboardNavbar = (props) => {
+  const router = useRouter();
   const { onSidebarOpen, ...other } = props;
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setAnchorEl(null);
+    router.push("/login");
+  };
 
   return (
     <>
       <DashboardNavbarRoot
         sx={{
           left: {
-            lg: 280
+            lg: 280,
           },
           width: {
-            lg: 'calc(100% - 280px)'
-          }
+            lg: "calc(100% - 280px)",
+          },
         }}
-        {...other}>
+        {...other}
+      >
         <Toolbar
           disableGutters
           sx={{
             minHeight: 64,
             left: 0,
-            px: 2
+            px: 2,
           }}
         >
           <IconButton
             onClick={onSidebarOpen}
             sx={{
               display: {
-                xs: 'inline-flex',
-                lg: 'none'
-              }
+                xs: "inline-flex",
+                lg: "none",
+              },
             }}
           >
             <MenuIcon fontSize="small" />
@@ -59,25 +89,41 @@ export const DashboardNavbar = (props) => {
           </Tooltip>
           <Tooltip title="Notifications">
             <IconButton sx={{ ml: 1 }}>
-              <Badge
-                badgeContent={4}
-                color="primary"
-                variant="dot"
-              >
+              <Badge badgeContent={4} color="primary" variant="dot">
                 <BellIcon fontSize="small" />
               </Badge>
             </IconButton>
           </Tooltip>
-          <Avatar
-            sx={{
-              height: 40,
-              width: 40,
-              ml: 1
-            }}
-            src="/static/images/avatars/avatar_1.png"
+          <Button
+            id="basic-button"
+            aria-controls={open ? "basic-menu" : undefined}
+            aria-haspopup="true"
+            aria-expanded={open ? "true" : undefined}
+            onClick={handleClick}
           >
-            <UserCircleIcon fontSize="small" />
-          </Avatar>
+            <Avatar
+              sx={{
+                height: 40,
+                width: 40,
+                ml: 1,
+              }}
+              src="/static/images/avatars/avatar_1.png"
+            >
+              <UserCircleIcon fontSize="small" />
+            </Avatar>
+          </Button>
+          <Menu
+            id="basic-menu"
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleClose}
+            MenuListProps={{
+              "aria-labelledby": "basic-button",
+            }}
+          >
+            <MenuItem onClick={handleClose}>Profile</MenuItem>
+            <MenuItem onClick={handleLogout}>Logout</MenuItem>
+          </Menu>
         </Toolbar>
       </DashboardNavbarRoot>
     </>
@@ -85,5 +131,5 @@ export const DashboardNavbar = (props) => {
 };
 
 DashboardNavbar.propTypes = {
-  onSidebarOpen: PropTypes.func
+  onSidebarOpen: PropTypes.func,
 };
