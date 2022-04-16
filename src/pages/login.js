@@ -25,7 +25,7 @@ const Login = () => {
       const { email, password } = value;
       try {
         const user = await signInWithEmailAndPassword(auth, email, password);
-        localStorage.setItem("sembakooEmail", email);
+        localStorage.setItem("bakoelUserId", user.user?.uid);
         router.push("/");
       } catch {
         alert("error");

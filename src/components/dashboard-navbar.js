@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import styled from "@emotion/styled";
 import {
@@ -14,12 +14,15 @@ import {
   Tooltip,
   Button,
   s,
+  Typography,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
 import { Bell as BellIcon } from "../icons/bell";
 import { UserCircle as UserCircleIcon } from "../icons/user-circle";
 import { Users as UsersIcon } from "../icons/users";
+import { database, dbRef } from "src/config/firebase";
+import { ref, child, get } from "firebase/database";
 
 const DashboardNavbarRoot = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
@@ -28,6 +31,7 @@ const DashboardNavbarRoot = styled(AppBar)(({ theme }) => ({
 
 export const DashboardNavbar = (props) => {
   const router = useRouter();
+  const [name, setName] = useState();
   const { onSidebarOpen, ...other } = props;
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -43,6 +47,21 @@ export const DashboardNavbar = (props) => {
     setAnchorEl(null);
     router.push("/login");
   };
+
+  useEffect(() => {
+    get(child(dbRef, "users/-N-jzVqtjMAK6gT4EWBk"))
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          const result = snapshot.val();
+          setName(result.value.name);
+        } else {
+          console.log("No data available");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
 
   return (
     <>
@@ -106,11 +125,15 @@ export const DashboardNavbar = (props) => {
                 height: 40,
                 width: 40,
                 ml: 1,
+                mr: 1,
               }}
               src="/static/images/avatars/avatar_1.png"
             >
               <UserCircleIcon fontSize="small" />
             </Avatar>
+            <Typography color="#111827" variant="h6">
+              {name}
+            </Typography>
           </Button>
           <Menu
             id="basic-menu"

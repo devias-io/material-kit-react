@@ -35,7 +35,7 @@ const Register = () => {
 
       try {
         const user = await createUserWithEmailAndPassword(auth, email, password);
-        localStorage.setItem("sembakooEmail", email);
+        localStorage.setItem("bakoelUserId", user.user?.uid);
         router.push("/");
       } catch {
         alert("eror");
