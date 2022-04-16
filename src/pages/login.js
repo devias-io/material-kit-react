@@ -36,7 +36,7 @@ const Login = () => {
   return (
     <>
       <Head>
-        <title>Login | Material Kit</title>
+        <title>Masuk | Bakoel</title>
       </Head>
       <Box
         component="main"
@@ -48,18 +48,13 @@ const Login = () => {
         }}
       >
         <Container maxWidth="sm">
-          <NextLink href="/" passHref>
-            <Button component="a" startIcon={<ArrowBackIcon fontSize="small" />}>
-              Dashboard
-            </Button>
-          </NextLink>
           <form onSubmit={formik.handleSubmit}>
             <Box sx={{ my: 3 }}>
               <Typography color="textPrimary" variant="h4">
-                Sign in
+                Masuk
               </Typography>
               <Typography color="textSecondary" gutterBottom variant="body2">
-                Sign in on the internal platform
+                Masuk di platform internal
               </Typography>
             </Box>
             <Grid container spacing={3}>
@@ -72,7 +67,7 @@ const Login = () => {
                   size="large"
                   variant="contained"
                 >
-                  Login with Facebook
+                  Masuk dengan Facebook
                 </Button>
               </Grid>
               <Grid item xs={12} md={6}>
@@ -84,7 +79,7 @@ const Login = () => {
                   size="large"
                   variant="contained"
                 >
-                  Login with Google
+                  Masuk dengan akun Google
                 </Button>
               </Grid>
             </Grid>
@@ -95,7 +90,7 @@ const Login = () => {
               }}
             >
               <Typography align="center" color="textSecondary" variant="body1">
-                or login with email address
+                atau masuk dengan Email
               </Typography>
             </Box>
             <TextField
@@ -133,11 +128,11 @@ const Login = () => {
                 type="submit"
                 variant="contained"
               >
-                Sign In Now
+                Masuk
               </Button>
             </Box>
             <Typography color="textSecondary" variant="body2">
-              Don&apos;t have an account?{" "}
+              Sudah punya Akun?{" "}
               <NextLink href="/register">
                 <Link
                   to="/register"
@@ -147,7 +142,7 @@ const Login = () => {
                     cursor: "pointer",
                   }}
                 >
-                  Sign Up
+                  Daftar
                 </Link>
               </NextLink>
             </Typography>

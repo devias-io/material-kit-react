@@ -46,7 +46,7 @@ const Register = () => {
   return (
     <>
       <Head>
-        <title>Register | Material Kit</title>
+        <title>Daftar | Bakoel</title>
       </Head>
       <Box
         component="main"
@@ -58,18 +58,13 @@ const Register = () => {
         }}
       >
         <Container maxWidth="sm">
-          <NextLink href="/" passHref>
-            <Button component="a" startIcon={<ArrowBackIcon fontSize="small" />}>
-              Dashboard
-            </Button>
-          </NextLink>
           <form onSubmit={formik.handleSubmit}>
             <Box sx={{ my: 3 }}>
               <Typography color="textPrimary" variant="h4">
-                Create a new account
+                Daftar Akun
               </Typography>
               <Typography color="textSecondary" gutterBottom variant="body2">
-                Use your email to create a new account
+                Gunakan email anda untuk mendaftarkan akun
               </Typography>
             </Box>
             <TextField
@@ -107,10 +102,10 @@ const Register = () => {
             >
               <Checkbox name="policy" />
               <Typography color="textSecondary" variant="body2">
-                I have read the{" "}
+                Saya akan menerima
                 <NextLink href="#" passHref>
                   <Link color="primary" underline="always" variant="subtitle2">
-                    Terms and Conditions
+                    syarat dan ketentuan
                   </Link>
                 </NextLink>
               </Typography>
@@ -127,14 +122,14 @@ const Register = () => {
                 type="submit"
                 variant="contained"
               >
-                Sign Up Now
+                Daftar
               </Button>
             </Box>
             <Typography color="textSecondary" variant="body2">
-              Have an account?{" "}
+              Sudah punya Akun?
               <NextLink href="/login" passHref>
                 <Link variant="subtitle2" underline="hover">
-                  Sign In
+                  Masuk
                 </Link>
               </NextLink>
             </Typography>
