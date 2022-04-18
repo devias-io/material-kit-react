@@ -3,9 +3,10 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "next/router";
 import { Box, Button, Container, TextField, Typography } from "@mui/material";
-import { supabase } from "src/utils/supabase";
+import { database } from "../config/firebase";
+import { ref, update } from "firebase/database";
 
-const CompleteProfile = () => {
+const UpdateProfile = () => {
   const router = useRouter();
   const formik = useFormik({
     initialValues: {
@@ -23,11 +24,12 @@ const CompleteProfile = () => {
       email: Yup.string().email("email tidak boleh kosong").max(255).required("Email is required"),
     }),
     onSubmit: async (value) => {
-      const { user, error } = await supabase.auth.update(value);
+      update(ref(database, "users"), {
+        value,
+      });
       try {
         alert("success");
         router.push("/");
-        console.log(user);
       } catch {
         alert("error");
       }
@@ -37,7 +39,7 @@ const CompleteProfile = () => {
   return (
     <>
       <Head>
-        <title>Complete Profile | Bakoel</title>
+        <title>Update Profile | Bakoel</title>
       </Head>
       <Box
         component="main"
@@ -52,7 +54,7 @@ const CompleteProfile = () => {
           <form onSubmit={formik.handleSubmit}>
             <Box sx={{ my: 3 }}>
               <Typography color="textPrimary" variant="h4">
-                Lengkapi Profil Anda
+                Ubah Profil Anda
               </Typography>
             </Box>
 
@@ -140,4 +142,4 @@ const CompleteProfile = () => {
   );
 };
 
-export default CompleteProfile;
+export default UpdateProfile;

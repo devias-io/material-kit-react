@@ -1,14 +1,13 @@
 import Head from "next/head";
 import NextLink from "next/link";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Box, Button, Container, Grid, Link, TextField, Typography } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Facebook as FacebookIcon } from "../icons/facebook";
 import { Google as GoogleIcon } from "../icons/google";
-import { auth } from "../config/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { supabase } from "src/utils/supabase";
 
 const Login = () => {
   const router = useRouter();
@@ -22,16 +21,21 @@ const Login = () => {
       password: Yup.string().max(255).required("Password is required"),
     }),
     onSubmit: async (value) => {
-      const { email, password } = value;
-      try {
-        const user = await signInWithEmailAndPassword(auth, email, password);
-        localStorage.setItem("bakoelUserId", user.user?.uid);
-        router.push("/");
-      } catch {
-        alert("error");
-      }
+      const { user, error } = await supabase.auth.signIn(value);
+      console.log(user);
+      localStorage.setItem("userId", user.id);
+      router.push("/");
     },
   });
+
+  useEffect(() => {
+    const account = localStorage.getItem("userId");
+    if (account) {
+      router.push("/");
+    } else {
+      router.push("/login");
+    }
+  }, []);
 
   return (
     <>

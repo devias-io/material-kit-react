@@ -17,7 +17,7 @@ const App = (props) => {
   const getLayout = Component.getLayout ?? ((page) => page);
 
   useEffect(() => {
-    const account = localStorage.getItem("bakoelUserId");
+    const account = localStorage.getItem("userId");
     if (account) {
       console.log("berhasil");
     } else {

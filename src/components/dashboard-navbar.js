@@ -21,8 +21,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { Bell as BellIcon } from "../icons/bell";
 import { UserCircle as UserCircleIcon } from "../icons/user-circle";
 import { Users as UsersIcon } from "../icons/users";
-import { database, dbRef } from "src/config/firebase";
-import { ref, child, get } from "firebase/database";
+import { supabase } from "src/utils/supabase";
 
 const DashboardNavbarRoot = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
@@ -41,7 +40,7 @@ export const DashboardNavbar = (props) => {
   const handleClose = () => {
     setAnchorEl(null);
   };
-
+  // console.log(name);
   const handleLogout = () => {
     localStorage.clear();
     setAnchorEl(null);
@@ -49,18 +48,8 @@ export const DashboardNavbar = (props) => {
   };
 
   useEffect(() => {
-    get(child(dbRef, "users/-N-jzVqtjMAK6gT4EWBk"))
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          const result = snapshot.val();
-          setName(result.value.name);
-        } else {
-          console.log("No data available");
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    const user = supabase.auth.user();
+    console.log(user);
   }, []);
 
   return (

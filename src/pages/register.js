@@ -13,9 +13,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { auth } from "../config/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { supabase } from "src/utils/supabase";
 
 const Register = () => {
   const router = useRouter();
@@ -31,14 +29,12 @@ const Register = () => {
       policy: Yup.boolean().oneOf([true], "This field must be checked"),
     }),
     onSubmit: async (value) => {
-      const { email, password } = value;
-
+      const { user, error } = await supabase.auth.signUp(value);
       try {
-        const user = await createUserWithEmailAndPassword(auth, email, password);
-        localStorage.setItem("bakoelUserId", user.user?.uid);
-        router.push("/");
+        localStorage.setItem("userId", user.id);
+        router.push("complete-profile");
       } catch {
-        alert("eror");
+        alert("error");
       }
     },
   });
@@ -100,11 +96,11 @@ const Register = () => {
                 ml: -1,
               }}
             >
-              <Checkbox name="policy" />
+              <Checkbox name="policy" onChange={formik.handleChange} />
               <Typography color="textSecondary" variant="body2">
                 Saya akan menerima
                 <NextLink href="#" passHref>
-                  <Link color="primary" underline="always" variant="subtitle2">
+                  <Link ml="4px" color="primary" underline="always" variant="subtitle2">
                     syarat dan ketentuan
                   </Link>
                 </NextLink>
