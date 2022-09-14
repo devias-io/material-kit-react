@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import NextLink from 'next/link';
-import { useRouter } from 'next/router';
+import Router from 'next/router';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -16,7 +16,6 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const Register = () => {
-  const router = useRouter();
   const formik = useFormik({
     initialValues: {
       email: '',
@@ -28,26 +27,22 @@ const Register = () => {
     validationSchema: Yup.object({
       email: Yup
         .string()
-        .email(
-          'Must be a valid email')
+        .email('Must be a valid email')
         .max(255)
         .required(
           'Email is required'),
       firstName: Yup
         .string()
         .max(255)
-        .required(
-          'First name is required'),
+        .required('First name is required'),
       lastName: Yup
         .string()
         .max(255)
-        .required(
-          'Last name is required'),
+        .required('Last name is required'),
       password: Yup
         .string()
         .max(255)
-        .required(
-          'Password is required'),
+        .required('Password is required'),
       policy: Yup
         .boolean()
         .oneOf(
@@ -56,7 +51,9 @@ const Register = () => {
         )
     }),
     onSubmit: () => {
-      router.push('/');
+      Router
+        .push('/')
+        .catch(console.error);
     }
   });
 

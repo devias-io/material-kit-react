@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import styled from '@emotion/styled';
 import { AppBar, Avatar, Badge, Box, IconButton, Toolbar, Tooltip } from '@mui/material';
@@ -6,6 +7,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Bell as BellIcon } from '../icons/bell';
 import { UserCircle as UserCircleIcon } from '../icons/user-circle';
 import { Users as UsersIcon } from '../icons/users';
+import { AccountPopover } from './account-popover';
 
 const DashboardNavbarRoot = styled(AppBar)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
@@ -14,6 +16,8 @@ const DashboardNavbarRoot = styled(AppBar)(({ theme }) => ({
 
 export const DashboardNavbar = (props) => {
   const { onSidebarOpen, ...other } = props;
+  const settingsRef = useRef(null);
+  const [openAccountPopover, setOpenAccountPopover] = useState(false);
 
   return (
     <>
@@ -69,7 +73,10 @@ export const DashboardNavbar = (props) => {
             </IconButton>
           </Tooltip>
           <Avatar
+            onClick={() => setOpenAccountPopover(true)}
+            ref={settingsRef}
             sx={{
+              cursor: 'pointer',
               height: 40,
               width: 40,
               ml: 1
@@ -80,6 +87,11 @@ export const DashboardNavbar = (props) => {
           </Avatar>
         </Toolbar>
       </DashboardNavbarRoot>
+      <AccountPopover
+        anchorEl={settingsRef.current}
+        open={openAccountPopover}
+        onClose={() => setOpenAccountPopover(false)}
+      />
     </>
   );
 };

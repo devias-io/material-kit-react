@@ -1,3 +1,17 @@
+## V2.1.0
+
+###### Sep 15, 2022
+
+- Integrate Zalter Authentication
+- Update dependencies
+
+## V2.0.0
+
+###### Nov 8, 2021
+
+- Migrate to Next.js
+- Update design system
+
 # Change Log
 
 ## V1.0.0
@@ -26,7 +40,7 @@
 - Remove unused `.scss` files from `assets` folder
 - Replace `.jsx` with `.js`
 - Replace Class Components with Function Components
-- Replace custom cumponents (Portlet) with Material-UI built-in components
+- Replace custom components (Portlet) with Material-UI built-in components
 - Replace dependency `classnames` with `clsx`
 - Update dependencies
 - Update the layout to match the PRO version

@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import NextLink from 'next/link';
-import { useRouter } from 'next/router';
+import Router from 'next/router';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Box, Button, Container, Grid, Link, TextField, Typography } from '@mui/material';
@@ -9,7 +9,6 @@ import { Facebook as FacebookIcon } from '../icons/facebook';
 import { Google as GoogleIcon } from '../icons/google';
 
 const Login = () => {
-  const router = useRouter();
   const formik = useFormik({
     initialValues: {
       email: 'demo@devias.io',
@@ -18,19 +17,18 @@ const Login = () => {
     validationSchema: Yup.object({
       email: Yup
         .string()
-        .email(
-          'Must be a valid email')
+        .email('Must be a valid email')
         .max(255)
-        .required(
-          'Email is required'),
+        .required('Email is required'),
       password: Yup
         .string()
         .max(255)
-        .required(
-          'Password is required')
+        .required('Password is required')
     }),
     onSubmit: () => {
-      router.push('/');
+      Router
+        .push('/')
+        .catch(console.error);
     }
   });
 
@@ -89,7 +87,7 @@ const Login = () => {
                   color="info"
                   fullWidth
                   startIcon={<FacebookIcon />}
-                  onClick={formik.handleSubmit}
+                  onClick={() => formik.handleSubmit()}
                   size="large"
                   variant="contained"
                 >
@@ -102,11 +100,11 @@ const Login = () => {
                 md={6}
               >
                 <Button
-                  fullWidth
                   color="error"
-                  startIcon={<GoogleIcon />}
-                  onClick={formik.handleSubmit}
+                  fullWidth
+                  onClick={() => formik.handleSubmit()}
                   size="large"
+                  startIcon={<GoogleIcon />}
                   variant="contained"
                 >
                   Login with Google

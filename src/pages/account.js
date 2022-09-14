@@ -4,7 +4,7 @@ import { AccountProfile } from '../components/account/account-profile';
 import { AccountProfileDetails } from '../components/account/account-profile-details';
 import { DashboardLayout } from '../components/dashboard-layout';
 
-const Account = () => (
+const Page = () => (
   <>
     <Head>
       <title>
@@ -51,10 +51,10 @@ const Account = () => (
   </>
 );
 
-Account.getLayout = (page) => (
+Page.getLayout = (page) => (
   <DashboardLayout>
     {page}
   </DashboardLayout>
 );
 
-export default Account;
+export default Page;

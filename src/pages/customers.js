@@ -5,7 +5,7 @@ import { CustomerListToolbar } from '../components/customer/customer-list-toolba
 import { DashboardLayout } from '../components/dashboard-layout';
 import { customers } from '../__mocks__/customers';
 
-const Customers = () => (
+const Page = () => (
   <>
     <Head>
       <title>
@@ -28,10 +28,11 @@ const Customers = () => (
     </Box>
   </>
 );
-Customers.getLayout = (page) => (
+
+Page.getLayout = (page) => (
   <DashboardLayout>
     {page}
   </DashboardLayout>
 );
 
-export default Customers;
+export default Page;

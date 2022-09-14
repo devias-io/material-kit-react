@@ -5,7 +5,7 @@ import { ProductListToolbar } from '../components/product/product-list-toolbar';
 import { ProductCard } from '../components/product/product-card';
 import { DashboardLayout } from '../components/dashboard-layout';
 
-const Products = () => (
+const Page = () => (
   <>
     <Head>
       <title>
@@ -57,10 +57,10 @@ const Products = () => (
   </>
 );
 
-Products.getLayout = (page) => (
+Page.getLayout = (page) => (
   <DashboardLayout>
     {page}
   </DashboardLayout>
 );
 
-export default Products;
+export default Page;

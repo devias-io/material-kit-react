@@ -4,7 +4,7 @@ import { DashboardLayout } from '../components/dashboard-layout';
 import { SettingsNotifications } from '../components/settings/settings-notifications';
 import { SettingsPassword } from '../components/settings/settings-password';
 
-const Settings = () => (
+const Page = () => (
   <>
     <Head>
       <title>
@@ -34,10 +34,10 @@ const Settings = () => (
   </>
 );
 
-Settings.getLayout = (page) => (
+Page.getLayout = (page) => (
   <DashboardLayout>
     {page}
   </DashboardLayout>
 );
 
-export default Settings;
+export default Page;

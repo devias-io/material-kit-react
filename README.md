@@ -4,7 +4,10 @@
 
 [![Material Kit - React](https://github.com/devias-io/material-kit-react/blob/main/public/static/thumbnail.png)](https://material-kit-react.devias.io/)
 
-> Free React Admin Dashboard made with [MUI's](https://mui.com/?ref=devias-io) components, [React](https://reactjs.org/?ref=devias-io) and of course [Next.js](https://github.com/vercel/next.js/?ref=devias-io) to boost your app development process!
+> Free React Admin Dashboard made with [MUI's](https://mui.com/?ref=devias-io)
+> components, [React](https://reactjs.org/?ref=devias-io) and of
+> course [Next.js](https://github.com/vercel/next.js/?ref=devias-io) to boost your app development
+> process!
 
 ## Demo
 
@@ -17,32 +20,55 @@
 - [Settings Page](https://material-kit-react.devias.io/settings)
 
 ## Free Figma Community File
- - [Duplicate File](https://www.figma.com/community/file/1039837897183395483/Devias-Dashboard-Design-Library-Kit)
+
+- [Duplicate File](https://www.figma.com/community/file/1039837897183395483/Devias-Dashboard-Design-Library-Kit)
 
 ## Upgrade to PRO Version
 
-We also have a pro version of this product which bundles even more pages and components if you want to save more time and design efforts :)
+We also have a pro version of this product which bundles even more pages and components if you want
+to save more time and design efforts :)
 
-| Free Version (this one)  | [Material Kit Pro - React](https://material-ui.com/store/items/devias-kit-pro/) |
-| ------------------------ | :----------------------------------------------------------- |
-| **7** Demo Pages         | **40+** demo pages
-| -                        | ✔ Dark & light mode
-| -                        | ✔ Authentication with *Amplify**, **Auth0**, **JWT** and **Firebase**
-| -                        | ✔ TypeScript version - for Standard Plus and Extended license
-| -                        | ✔ Design files (sketch & figma) - for Standard Plus and Extended license
-| -                        | ✔ Complete users flows
+| Free Version (this one)          | [Material Kit Pro - React](https://material-ui.com/store/items/devias-kit-pro/) |
+|----------------------------------| :----------------------------------------------------------- |
+| **9** Demo Pages                 | **40+** demo pages
+| ✔ Authentication with **Zalter** | ✔ Authentication with **Amplify**, **Auth0**, **JWT** and **Firebase**
+| -                                | ✔ Dark & light mode
+| -                                | ✔ TypeScript version - for Standard Plus and Extended license
+| -                                | ✔ Design files (sketch & figma) - for Standard Plus and Extended license
+| -                                | ✔ Complete users flows
 
 ## Quick start
 
-- [Download from Github](https://github.com/devias-io/material-kit-react/archive/master.zip) or [Download from Devias](https://devias.io/products/material-kit-react) or clone the repo: `git clone https://github.com/devias-io/material-kit-react.git`
+- [Download from Github](https://github.com/devias-io/material-kit-react/archive/master.zip)
+  or [Download from Devias](https://devias.io/products/material-kit-react) or clone the
+  repo: `git clone https://github.com/devias-io/material-kit-react.git`
 
-- Make sure your NodeJS and npm versions are up to date for `React 17`
+- Make sure your Node.js and npm versions are up to date for `React 18`
 
 - Install dependencies: `npm install` or `yarn`
 
 - Start the server: `npm run dev` or `yarn dev`
 
 - Views are on: `localhost:3000`
+
+## Setup authentication (optional)
+
+1. Sign in on **Zalter Dashboard** (https://dashboard.zalter.com) and create your **Zalter project**.
+
+2. Open your project settings and activate **Email Magic Link** authentication.
+This authentication method requires `redirect URIs` setup, so while in development you need to add `http://localhost:3000/sign-in/confirm`.
+For production replace `localhost:3000` with your own domain.
+
+3. Copy `.env.example` file and rename it to `.env`
+
+4. Open `.env` file and enable the Zalter authentication, then set your own Zalter project ID.
+
+```bash
+NEXT_PUBLIC_ENABLE_ZALTER_AUTH="true"
+NEXT_PUBLIC_ZALTER_PROJECT_ID="<your-project-id>"
+```
+
+For more information about Zalter Authentication access https://developer.zalter.com.
 
 ## File Structure
 
@@ -51,11 +77,12 @@ Within the download you'll find the following directories and files:
 ```
 material-kit-react
 
-┌── .eslintrc.json
+┌── .env.example
+├── .eslintrc.json
 ├── .gitignore
 ├── CHANGELOG.md
-├── jsconfig.json
 ├── LICENSE.md
+├── next.config.js
 ├── package.json
 ├── README.md
 ├── public
@@ -63,6 +90,7 @@ material-kit-react
 	├── __mocks__
 	├── components
 	├── icons
+	├── lib
 	├── theme
 	├── utils
 	└── pages
@@ -72,10 +100,13 @@ material-kit-react
 		├── account.js
 		├── customers.js
 		├── index.js
-		├── login.js
+		├── index.js
 		├── products.js
 		├── register.js
 		└── settings.js
+		└── sign-in
+			├── confirm.js
+			└── index.js
 ```
 
 ## Resources
@@ -93,4 +124,3 @@ material-kit-react
 ## Contact Us
 
 - Email Us: support@deviasio.zendesk.com
-- [Follow us on Instagram](https://www.instagram.com/deviasio/)

@@ -10,7 +10,7 @@ import { TotalProfit } from '../components/dashboard/total-profit';
 import { TrafficByDevice } from '../components/dashboard/traffic-by-device';
 import { DashboardLayout } from '../components/dashboard-layout';
 
-const Dashboard = () => (
+const Page = () => (
   <>
     <Head>
       <title>
@@ -107,10 +107,10 @@ const Dashboard = () => (
   </>
 );
 
-Dashboard.getLayout = (page) => (
+Page.getLayout = (page) => (
   <DashboardLayout>
     {page}
   </DashboardLayout>
 );
 
-export default Dashboard;
+export default Page;
