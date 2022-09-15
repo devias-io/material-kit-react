@@ -16,15 +16,17 @@ const initialState = {
 
 const handlers = {
   [HANDLERS.INITIALIZE]: (state, action) => {
+    const user = action.payload;
+
     return {
       ...state,
       ...(
         // if payload (user) is provided, then is authenticated
-        action.payload
+        user
           ? ({
             isAuthenticated: true,
             isLoading: false,
-            user: action.payload
+            user
           })
           : ({
             isLoading: false
@@ -33,10 +35,12 @@ const handlers = {
     };
   },
   [HANDLERS.SIGN_IN]: (state, action) => {
+    const user = action.payload;
+
     return {
       ...state,
       isAuthenticated: true,
-      user: action.payload
+      user
     };
   },
   [HANDLERS.SIGN_OUT]: (state) => {
@@ -69,12 +73,28 @@ export const AuthProvider = (props) => {
 
     initialized.current = true;
 
+    // Check if auth has been skipped
+    // From sign-in page we may have set "skip-auth" to "true"
+    const authSkipped = globalThis.sessionStorage.getItem('skip-auth') === 'true';
+
+    if (authSkipped) {
+      const user = {};
+
+      dispatch({
+        type: HANDLERS.INITIALIZE,
+        payload: user
+      });
+      return;
+    }
+
     // Check if authentication with Zalter is enabled
     // If not, then set user as authenticated
     if (!ENABLE_AUTH) {
+      const user = {};
+
       dispatch({
         type: HANDLERS.INITIALIZE,
-        payload: {}
+        payload: user
       });
       return;
     }
@@ -83,17 +103,19 @@ export const AuthProvider = (props) => {
       // Check if user is authenticated
       const isAuthenticated = await auth.isAuthenticated();
 
-      let user;
-
       if (isAuthenticated) {
         // Get user from your database
-        user = {};
-      }
+        const user = {};
 
-      dispatch({
-        type: HANDLERS.INITIALIZE,
-        payload: user
-      });
+        dispatch({
+          type: HANDLERS.INITIALIZE,
+          payload: user
+        });
+      } else {
+        dispatch({
+          type: HANDLERS.INITIALIZE
+        });
+      }
     } catch (err) {
       console.error(err);
       dispatch({
