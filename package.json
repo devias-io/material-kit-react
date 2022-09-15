@@ -2,7 +2,7 @@
   "name": "material-kit-react",
   "author": "Devias IO",
   "licence": "MIT",
-  "version": "2.0.0",
+  "version": "2.1.1",
   "private": false,
   "scripts": {
     "dev": "next",
