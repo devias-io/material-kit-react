@@ -17,7 +17,7 @@ export const ProductCard = ({ product, ...rest }) => (
         sx={{
           display: 'flex',
           justifyContent: 'center',
-          pb: 3
+          pb: 4
         }}
       >
         <Avatar
