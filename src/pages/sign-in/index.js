@@ -305,11 +305,10 @@ const Page = () => {
               >
                 Authentication sponsored by&nbsp;
                 <Box
-                  component="span"
-                  sx={{
-                    color: '#15B79E',
-                    borderBottom: '2px solid #15B79E'
-                  }}
+                  component="a"
+                  href="https://zalter.com?ref=devias-mk-react"
+                  sx={{ color: '#15B79E' }}
+                  target="_blank"
                 >
                   zalter.com
                 </Box>
