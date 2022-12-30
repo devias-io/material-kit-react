@@ -14,7 +14,7 @@ const Page = () => (
   <>
     <Head>
       <title>
-        Dashboard | Material Kit
+        Distrct 3 Developers
       </title>
     </Head>
     <Box
