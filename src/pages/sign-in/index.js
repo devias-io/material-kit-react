@@ -3,11 +3,11 @@ import Head from 'next/head';
 import NextLink from 'next/link';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { Box, Button, FormHelperText, Grid, Tab, Tabs, TextField, Typography } from '@mui/material';
+import { Box, Button, Grid, Tab, Tabs, TextField, Typography } from '@mui/material';
 import { auth, ENABLE_AUTH } from '../../lib/auth';
-import { Logo } from '../../components/logo';
 import { useAuthContext } from '../../contexts/auth-context';
 import Router from 'next/router';
+import Logod3d from '../../components/logod3d';
 
 const Page = () => {
   const [tab, setTab] = useState('email');
@@ -117,11 +117,9 @@ const Page = () => {
                 passHref
               >
                 <a>
-                  <Logo
-                    sx={{
-                      height: 42,
-                      width: 42
-                    }}
+                  <Logod3d
+                  width="60pt"
+                  height="60pt"
                   />
                 </a>
               </NextLink>
@@ -151,7 +149,7 @@ const Page = () => {
                       Confirm your email
                     </Typography>
                     <Typography>
-                      We emailed a magic link to&nbsp;
+                      Email has been sent to&nbsp;
                       <Box
                         component="span"
                         sx={{
@@ -209,10 +207,10 @@ const Page = () => {
                         label="Email"
                         value="email"
                       />
-                      <Tab
+                      {/* <Tab
                         label="Phone Number"
                         value="phoneNumber"
-                      />
+                      /> */}
                     </Tabs>
                     {tab === 'email' && (
                       <div>
@@ -228,9 +226,9 @@ const Page = () => {
                           value={formik.values.email}
                           variant="outlined"
                         />
-                        <FormHelperText sx={{ mt: 1 }}>
+                        {/* <FormHelperText sx={{ mt: 1 }}>
                           Enter a valid email since this is a fully integrated authentication system. Optionally you can skip.
-                        </FormHelperText>
+                        </FormHelperText> */}
                         {formik.errors.submit && (
                           <Typography
                             color="error"
@@ -242,7 +240,7 @@ const Page = () => {
                         )}
                         <Button
                           fullWidth
-                          size="large"
+                          size="medium"
                           sx={{ mt: 3 }}
                           onClick={() => formik.handleSubmit()}
                           variant="contained"
@@ -251,11 +249,13 @@ const Page = () => {
                         </Button>
                         <Button
                           fullWidth
-                          size="large"
+                          size="small"
+                          variant='text'
+                          color='warning'
                           sx={{ mt: 3 }}
                           onClick={handleSkip}
                         >
-                          Skip authentication
+                          Skip Signup
                         </Button>
                       </div>
                     )}
