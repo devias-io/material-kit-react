@@ -79,7 +79,7 @@ const Page = () => {
   return (
     <>
       <Head>
-        <title>Sign in | Material Kit</title>
+        <title>Sign in | District 3 Developers</title>
       </Head>
       <Box
         component="main"
@@ -118,8 +118,8 @@ const Page = () => {
               >
                 <a>
                   <Logod3d
-                  width="60pt"
-                  height="60pt"
+                  width="70"
+                  height="70"
                   />
                 </a>
               </NextLink>
@@ -250,8 +250,7 @@ const Page = () => {
                         <Button
                           fullWidth
                           size="small"
-                          variant='text'
-                          color='warning'
+                          variant='inherit'
                           sx={{ mt: 3 }}
                           onClick={handleSkip}
                         >
@@ -297,32 +296,39 @@ const Page = () => {
                 align="center"
                 color="inherit"
                 sx={{
-                  fontSize: '24px',
+                  fontSize: '35px',
                   lineHeight: '32px',
                   mb: 1
                 }}
                 variant="h1"
               >
-                Authentication sponsored by&nbsp;
+                District 3&nbsp;
                 <Box
                   component="a"
-                  href="https://zalter.com?ref=devias-mk-react"
+                  display='light'
                   sx={{ color: '#15B79E' }}
                   target="_blank"
                 >
-                  zalter.com
+                  Developers
                 </Box>
               </Typography>
               <Typography
                 align="center"
-                sx={{ mb: 3 }}
+                sx={{ mb: 5 }}
                 variant="subtitle1"
               >
-                Create secure, seamless user experiences with Zalter Passwordless Authentication.
+                Real Estate Advisor across&nbsp;
+                <Box
+                  component="h3"
+                  sx={{ color: '#15B79E' }}
+                >
+                  Islamabad and Rawalpindi{" "}
+                </Box>
               </Typography>
               <img
-                alt=""
-                src="/static/images/sign-in-illustration.svg"
+                alt="signin cover"
+                src="./static/images/SignupCover.jpg"
+                display="fluid"
               />
             </Box>
           </Grid>
