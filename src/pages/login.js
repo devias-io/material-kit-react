@@ -25,12 +25,12 @@ const Login = () => {
         .max(255)
         .required('Password is required')
     }),
-    onSubmit: () => {
+    onSubmit: async (values) => {
       fetch('https://api.platform-20.com:3000/api/user/login', {
         method: 'POST',
         body: {
-          email: 'Platform-20Demo@platform-20.com',
-          password: 'Platform-20Demo@@'
+          email: values.email,
+          password: values.password
         },
         headers: {
           'Content-Type': 'application/json'
@@ -38,6 +38,31 @@ const Login = () => {
       }).then(function (response) {
         console.log(response)
         return response.json()
+      }).then(function (response) {
+        if(response.user) {
+          // set the username in local storage
+          localStorage.setItem('username', response.user.name);
+          // set the account status in local storage
+          localStorage.setItem('accountStatus', response.user.role);
+          // set account subscription
+          localStorage.setItem('accountSubscription', response.user.subscription);
+          // set account subscription status
+          localStorage.setItem('accountSubscriptionStatus', response.user.subscriptionStatus);
+          // set account subscription expiration
+          localStorage.setItem('accountSubscriptionExpiration', response.user.subscriptionEndDate);
+          // set account email
+          localStorage.setItem('accountEmail', response.user.email);
+
+          Router.push('/');
+      }
+      if(response.twoFA === true) {
+        localStorage.setItem('twoFA', true);
+        openAuthPopup(response.message);
+        // do not continue
+        return;
+    }
+      }).catch(function (error) {
+        console.log(error)
       })
     }
   });
