@@ -14,7 +14,7 @@ const Page = () => (
   <>
     <Head>
       <title>
-        Dashboard | Material Kit
+        Dashboard | Platform-20 
       </title>
     </Head>
     <Box
@@ -90,7 +90,6 @@ const Page = () => (
             xl={3}
             xs={12}
           >
-            <LatestProducts sx={{ height: '100%' }} />
           </Grid>
           <Grid
             item
@@ -99,7 +98,6 @@ const Page = () => (
             xl={9}
             xs={12}
           >
-            <LatestOrders />
           </Grid>
         </Grid>
       </Container>

@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import NextLink from 'next/link';
 import Router from 'next/router';
-import { useFormik } from 'formik';
+import { Formik, useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Box, Button, Container, Grid, Link, TextField, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -11,8 +11,8 @@ import { Google as GoogleIcon } from '../icons/google';
 const Login = () => {
   const formik = useFormik({
     initialValues: {
-      email: 'demo@devias.io',
-      password: 'Password123'
+      email: 'Email address',
+      password: ''
     },
     validationSchema: Yup.object({
       email: Yup
@@ -26,16 +26,26 @@ const Login = () => {
         .required('Password is required')
     }),
     onSubmit: () => {
-      Router
-        .push('/')
-        .catch(console.error);
+      fetch('https://api.platform-20.com:3000/api/user/login', {
+        method: 'POST',
+        body: {
+          email: 'Platform-20Demo@platform-20.com',
+          password: 'Platform-20Demo@@'
+        },
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then(function (response) {
+        console.log(response)
+        return response.json()
+      })
     }
   });
 
   return (
     <>
       <Head>
-        <title>Login | Material Kit</title>
+        <title>Login | Platform-20</title>
       </Head>
       <Box
         component="main"
@@ -83,32 +93,12 @@ const Login = () => {
                 xs={12}
                 md={6}
               >
-                <Button
-                  color="info"
-                  fullWidth
-                  startIcon={<FacebookIcon />}
-                  onClick={() => formik.handleSubmit()}
-                  size="large"
-                  variant="contained"
-                >
-                  Login with Facebook
-                </Button>
               </Grid>
               <Grid
                 item
                 xs={12}
                 md={6}
               >
-                <Button
-                  color="error"
-                  fullWidth
-                  onClick={() => formik.handleSubmit()}
-                  size="large"
-                  startIcon={<GoogleIcon />}
-                  variant="contained"
-                >
-                  Login with Google
-                </Button>
               </Grid>
             </Grid>
             <Box
@@ -122,7 +112,7 @@ const Login = () => {
                 color="textSecondary"
                 variant="body1"
               >
-                or login with email address
+                Login with email address
               </Typography>
             </Box>
             <TextField
@@ -151,6 +141,19 @@ const Login = () => {
               value={formik.values.password}
               variant="outlined"
             />
+
+            <Typography>
+              <Button
+                color="secondary"
+                component="a"
+                href="https://portal.platform-20.com"
+                variant="body2"
+              >
+                Forgot password?
+              </Button>
+            </Typography>
+
+            
             <Box sx={{ py: 2 }}>
               <Button
                 color="primary"
@@ -163,27 +166,6 @@ const Login = () => {
                 Sign In Now
               </Button>
             </Box>
-            <Typography
-              color="textSecondary"
-              variant="body2"
-            >
-              Don&apos;t have an account?
-              {' '}
-              <NextLink
-                href="/register"
-              >
-                <Link
-                  to="/register"
-                  variant="subtitle2"
-                  underline="hover"
-                  sx={{
-                    cursor: 'pointer'
-                  }}
-                >
-                  Sign Up
-                </Link>
-              </NextLink>
-            </Typography>
           </form>
         </Container>
       </Box>

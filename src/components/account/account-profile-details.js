@@ -12,8 +12,8 @@ import {
 
 const states = [
   {
-    value: 'alabama',
-    label: 'Alabama'
+    value: 'noord-holland',
+    label: 'Noord-Holland'
   },
   {
     value: 'new-york',
@@ -27,12 +27,12 @@ const states = [
 
 export const AccountProfileDetails = (props) => {
   const [values, setValues] = useState({
-    firstName: 'Katarina',
-    lastName: 'Smith',
-    email: 'demo@devias.io',
-    phone: '',
-    state: 'Alabama',
-    country: 'USA'
+    firstName: 'Platform-20',
+    lastName: 'Demo',
+    email: 'Platform-20@demo.com',
+    phone: '--',
+    state: 'Noord-Holland',
+    country: 'NL'
   });
 
   const handleChange = (event) => {
@@ -50,7 +50,7 @@ export const AccountProfileDetails = (props) => {
     >
       <Card>
         <CardHeader
-          subheader="The information can be edited"
+          subheader="Edit your profile"
           title="Profile"
         />
         <Divider />

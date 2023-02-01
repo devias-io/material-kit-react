@@ -10,12 +10,12 @@ import {
 } from '@mui/material';
 
 const user = {
-  avatar: '/static/images/avatars/avatar_6.png',
-  city: 'Los Angeles',
-  country: 'USA',
-  jobTitle: 'Senior Developer',
-  name: 'Katarina Smith',
-  timezone: 'GTM-7'
+  avatar: '/static/images/avatars/avatar_12.png',
+  city: 'Amsterdam',
+  country: 'Netherlands',
+  jobTitle: 'Junior Developer',
+  name: 'Platform-20',
+  timezone: 'UTC-8:00'
 };
 
 export const AccountProfile = (props) => (
