@@ -1,9 +1,9 @@
 {
-  "name": "material-kit-react",
-  "author": "Devias IO",
+  "name": "platform-20-portal",
+  "author": "Kylian Ninaber",
   "licence": "MIT",
   "version": "2.1.1",
-  "private": false,
+  "private": true,
   "scripts": {
     "dev": "next",
     "build": "next build",
