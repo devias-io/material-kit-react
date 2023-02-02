@@ -5,8 +5,6 @@ import { Formik, useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Box, Button, Container, Grid, Link, TextField, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Facebook as FacebookIcon } from '../icons/facebook';
-import { Google as GoogleIcon } from '../icons/google';
 
 const Login = () => {
   const formik = useFormik({
@@ -26,7 +24,7 @@ const Login = () => {
         .required('Password is required')
     }),
     onSubmit: async (values) => {
-      fetch('https://api.platform-20.com:3000/api/user/login', {
+      await fetch('https://api.platform-20.com:3000/api/user/login', {
         method: 'POST',
         body: {
           email: values.email,
