@@ -46,6 +46,11 @@ const items = [
     href: '/login',
     icon: (<LockIcon fontSize="small" />),
     title: 'Login'
+  },
+  {
+    href: '/smb',
+    icon: (<SelectorIcon fontSize="small" />),
+    title: 'SMB'
   }
 ];
 
