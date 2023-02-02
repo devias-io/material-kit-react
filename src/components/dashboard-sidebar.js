@@ -51,6 +51,11 @@ const items = [
     href: '/smb',
     icon: (<SelectorIcon fontSize="small" />),
     title: 'SMB'
+  },
+  {
+    href: '/enterprise',
+    icon: (<SelectorIcon fontSize="small" />),
+    title: 'Enterprise'
   }
 ];
 
