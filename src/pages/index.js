@@ -9,8 +9,12 @@ import { TotalCustomers } from '../components/dashboard/total-customers';
 import { TotalProfit } from '../components/dashboard/total-profit';
 import { TrafficByDevice } from '../components/dashboard/traffic-by-device';
 import { DashboardLayout } from '../components/dashboard-layout';
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
+import { APP_ROUTES } from '../utils/constants';
+import SignIn from './SignIn';
+import { useUser } from '../lib/customHooks';
 
-const Page = () => (
+const Dashboard = () => (
   <>
     <Head>
       <title>
@@ -105,10 +109,14 @@ const Page = () => (
   </>
 );
 
-Page.getLayout = (page) => (
+Dashboard.getLayout = (page) => (
+  
+
+  <BrowserRouter>
   <DashboardLayout>
     {page}
   </DashboardLayout>
+  </BrowserRouter>
 );
 
-export default Page;
+export default Dashboard;

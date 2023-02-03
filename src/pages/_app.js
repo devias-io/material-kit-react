@@ -9,6 +9,12 @@ import { AuthConsumer, AuthProvider } from '../contexts/auth-context';
 import { createEmotionCache } from '../utils/create-emotion-cache';
 import { registerChartJs } from '../utils/register-chart-js';
 import { theme } from '../theme';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { APP_ROUTES } from '../utils/constants';
+import SignIn from './SignIn';
+import Dashboard from './index';
+import { useUser } from '../lib/customHooks';
+
 
 registerChartJs();
 
@@ -18,6 +24,14 @@ const App = (props) => {
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
 
   const getLayout = Component.getLayout ?? ((page) => page);
+
+  const { user, authenticated } = useUser();
+  if (!user || !authenticated) {
+    return <div className="p-16 bg-gray-800 h-screen">
+        <div className="text-2xl mb-4 font-bold text-white">Dashboard</div>
+        <div className="ml-2 w-8 h-8 border-l-2 rounded-full animate-spin border-white" />
+      </div>;
+  }
 
   return (
     <CacheProvider value={emotionCache}>
@@ -33,15 +47,12 @@ const App = (props) => {
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <AuthProvider>
-            <AuthConsumer>
-              {
-                (auth) => auth.isLoading
-                  ? <Fragment />
-                  : getLayout(<Component {...pageProps} />)
-              }
-            </AuthConsumer>
-          </AuthProvider>
+          <BrowserRouter>
+          <Routes>
+            <Route path={APP_ROUTES.SIGN_IN} element={<SignIn/>} />
+            <Route path="/dashboard" element={<Dashboard/>} />
+          </Routes>
+          </BrowserRouter>
         </ThemeProvider>
       </LocalizationProvider>
     </CacheProvider>

@@ -70,6 +70,11 @@ const Login = () => {
       <Head>
         <title>Login | Platform-20</title>
       </Head>
+      <ProtectedRoute
+  exact
+  path="/"
+  component={page}>
+      </ProtectedRoute>
       <Box
         component="main"
         sx={{
