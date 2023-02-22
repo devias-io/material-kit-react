@@ -1,13 +1,13 @@
 import Head from 'next/head';
 import NextLink from 'next/link';
-import { Box, Button, Container, Typography } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowLeftIcon from '@heroicons/react/24/solid/ArrowLeftIcon';
+import { Box, Button, Container, SvgIcon, Typography } from '@mui/material';
 
 const Page = () => (
   <>
     <Head>
       <title>
-        404 | Material Kit
+        404 | Devias Kit
       </title>
     </Head>
     <Box
@@ -27,46 +27,50 @@ const Page = () => (
             flexDirection: 'column'
           }}
         >
+          <Box
+            sx={{
+              mb: 3,
+              textAlign: 'center'
+            }}
+          >
+            <img
+              alt="Under development"
+              src="/assets/errors/error-404.png"
+              style={{
+                display: 'inline-block',
+                maxWidth: '100%',
+                width: 400
+              }}
+            />
+          </Box>
           <Typography
             align="center"
-            color="textPrimary"
-            variant="h1"
+            sx={{ mb: 3 }}
+            variant="h3"
           >
             404: The page you are looking for isn’t here
           </Typography>
           <Typography
             align="center"
-            color="textPrimary"
-            variant="subtitle2"
+            color="text.secondary"
+            variant="body1"
           >
             You either tried some shady route or you came here by mistake.
             Whichever it is, try using the navigation
           </Typography>
-          <Box sx={{ textAlign: 'center' }}>
-            <img
-              alt="Under development"
-              src="/static/images/undraw_page_not_found_su7k.svg"
-              style={{
-                marginTop: 50,
-                display: 'inline-block',
-                maxWidth: '100%',
-                width: 560
-              }}
-            />
-          </Box>
-          <NextLink
+          <Button
+            component={NextLink}
             href="/"
-            passHref
+            startIcon={(
+              <SvgIcon fontSize="small">
+                <ArrowLeftIcon />
+              </SvgIcon>
+            )}
+            sx={{ mt: 3 }}
+            variant="contained"
           >
-            <Button
-              component="a"
-              startIcon={(<ArrowBackIcon fontSize="small" />)}
-              sx={{ mt: 3 }}
-              variant="contained"
-            >
-              Go back to dashboard
-            </Button>
-          </NextLink>
+            Go back to dashboard
+          </Button>
         </Box>
       </Container>
     </Box>

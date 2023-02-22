@@ -1,11 +1,20 @@
-## V2.1.0
+## v3.0.0
+
+###### Feb 24, 2023
+
+- Update dependencies
+- Update design system
+- Refactor components
+- Replace authentication
+
+## v2.1.0
 
 ###### Sep 15, 2022
 
 - Integrate Zalter Authentication
 - Update dependencies
 
-## V2.0.0
+## v2.0.0
 
 ###### Nov 8, 2021
 
@@ -14,7 +23,7 @@
 
 # Change Log
 
-## V1.0.0
+## v1.0.0
 
 ###### Aug 7, 2020
 
@@ -29,7 +38,7 @@
 - Update folder structure to remove folder depth
 - Update theme configuration
 
-## V0.4.0
+## v0.4.0
 
 ###### Jul 24, 2019
 
@@ -45,7 +54,7 @@
 - Update dependencies
 - Update the layout to match the PRO version
 
-## V0.3.0
+## v0.3.0
 
 ###### May 13, 2019
 
@@ -56,7 +65,7 @@
 - Update React version to 16.8.6 to support React Hooks
 - Update to @material-ui to 4.0.0-beta
 
-## V0.2.0
+## v0.2.0
 
 ###### May 11, 2019
 
@@ -72,7 +81,7 @@
 - Remove unused scss from assets
 - Update README.md
 
-## V0.1.0
+## v0.1.0
 
 ###### May 2, 2019
 

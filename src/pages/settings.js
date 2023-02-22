@@ -1,14 +1,14 @@
 import Head from 'next/head';
-import { Box, Container, Typography } from '@mui/material';
-import { DashboardLayout } from '../components/dashboard-layout';
-import { SettingsNotifications } from '../components/settings/settings-notifications';
-import { SettingsPassword } from '../components/settings/settings-password';
+import { Box, Container, Stack, Typography } from '@mui/material';
+import { SettingsNotifications } from 'src/sections/settings/settings-notifications';
+import { SettingsPassword } from 'src/sections/settings/settings-password';
+import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 
 const Page = () => (
   <>
     <Head>
       <title>
-        Settings | Material Kit
+        Settings | Devias Kit
       </title>
     </Head>
     <Box
@@ -19,16 +19,13 @@ const Page = () => (
       }}
     >
       <Container maxWidth="lg">
-        <Typography
-          sx={{ mb: 3 }}
-          variant="h4"
-        >
-          Settings
-        </Typography>
-        <SettingsNotifications />
-        <Box sx={{ pt: 3 }}>
+        <Stack spacing={3}>
+          <Typography variant="h4">
+            Settings
+          </Typography>
+          <SettingsNotifications />
           <SettingsPassword />
-        </Box>
+        </Stack>
       </Container>
     </Box>
   </>

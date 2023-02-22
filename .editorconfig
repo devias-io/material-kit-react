@@ -3,19 +3,20 @@ charset = utf-8
 end_of_line = lf
 indent_size = 2
 indent_style = space
-insert_final_newline = true
+insert_final_newline = false
 max_line_length = 100
 tab_width = 2
-trim_trailing_whitespace = true
 ij_continuation_indent_size = 2
 ij_formatter_off_tag = @formatter:off
 ij_formatter_on_tag = @formatter:on
 ij_formatter_tags_enabled = true
 ij_smart_tabs = false
-ij_visual_guides = 80
+ij_visual_guides = 100
 ij_wrap_on_typing = false
 
 [*.css]
+ij_continuation_indent_size = 2
+ij_visual_guides = none
 ij_css_align_closing_brace_with_properties = false
 ij_css_blank_lines_around_nested_selector = 1
 ij_css_blank_lines_between_blocks = 1
@@ -34,16 +35,22 @@ ij_css_space_before_opening_brace = true
 ij_css_use_double_quotes = true
 ij_css_value_alignment = do_not_align
 
+[*.ejs]
+ij_visual_guides = none
+
 [*.feature]
-indent_size = 2
+tab_width = 4
+ij_visual_guides = none
 ij_gherkin_keep_indents_on_empty_lines = false
 
 [*.haml]
-indent_size = 2
+tab_width = 4
+ij_visual_guides = none
 ij_haml_keep_indents_on_empty_lines = false
 
 [*.less]
-indent_size = 2
+tab_width = 4
+ij_visual_guides = none
 ij_less_align_closing_brace_with_properties = false
 ij_less_blank_lines_around_nested_selector = 1
 ij_less_blank_lines_between_blocks = 1
@@ -63,7 +70,8 @@ ij_less_use_double_quotes = true
 ij_less_value_alignment = 0
 
 [*.sass]
-indent_size = 2
+tab_width = 4
+ij_visual_guides = none
 ij_sass_align_closing_brace_with_properties = false
 ij_sass_blank_lines_around_nested_selector = 1
 ij_sass_blank_lines_between_blocks = 1
@@ -83,7 +91,8 @@ ij_sass_use_double_quotes = true
 ij_sass_value_alignment = 0
 
 [*.scss]
-indent_size = 2
+tab_width = 4
+ij_visual_guides = none
 ij_scss_align_closing_brace_with_properties = false
 ij_scss_blank_lines_around_nested_selector = 1
 ij_scss_blank_lines_between_blocks = 1
@@ -103,7 +112,8 @@ ij_scss_use_double_quotes = true
 ij_scss_value_alignment = 0
 
 [*.styl]
-indent_size = 2
+tab_width = 4
+ij_visual_guides = none
 ij_stylus_align_closing_brace_with_properties = false
 ij_stylus_blank_lines_around_nested_selector = 1
 ij_stylus_blank_lines_between_blocks = 1
@@ -123,18 +133,18 @@ ij_stylus_use_double_quotes = true
 ij_stylus_value_alignment = 0
 
 [*.vue]
-indent_size = 2
-tab_width = 2
-ij_continuation_indent_size = 2
-ij_visual_guides = 80
+ij_continuation_indent_size = 4
+ij_visual_guides = none
 ij_vue_indent_children_of_top_level = template
-ij_vue_interpolation_new_line_after_start_delimiter = false
-ij_vue_interpolation_new_line_before_end_delimiter = false
+ij_vue_interpolation_new_line_after_start_delimiter = true
+ij_vue_interpolation_new_line_before_end_delimiter = true
 ij_vue_interpolation_wrap = off
 ij_vue_keep_indents_on_empty_lines = false
 ij_vue_spaces_within_interpolation_expressions = true
+ij_vue_uniform_indent = true
 
 [.editorconfig]
+ij_visual_guides = none
 ij_editorconfig_align_group_field_declarations = false
 ij_editorconfig_space_after_colon = false
 ij_editorconfig_space_after_comma = true
@@ -143,6 +153,9 @@ ij_editorconfig_space_before_comma = false
 ij_editorconfig_spaces_around_assignment_operators = true
 
 [{*.ant,*.fxml,*.jhm,*.jnlp,*.jrxml,*.rng,*.tld,*.wsdl,*.xml,*.xsd,*.xsl,*.xslt,*.xul}]
+indent_size = 4
+tab_width = 4
+ij_visual_guides = none
 ij_xml_align_attributes = true
 ij_xml_align_text = false
 ij_xml_attribute_wrap = normal
@@ -160,29 +173,27 @@ ij_xml_space_around_equals_in_attribute = false
 ij_xml_space_inside_empty_tag = false
 ij_xml_text_wrap = normal
 
-[{*.ats,*.ts}]
-indent_size = 2
-tab_width = 2
+[{*.ats,*.ts,*.tsx}]
 ij_continuation_indent_size = 2
-ij_visual_guides = 80
+ij_visual_guides = none
 ij_typescript_align_imports = false
 ij_typescript_align_multiline_array_initializer_expression = false
 ij_typescript_align_multiline_binary_operation = false
-ij_typescript_align_multiline_chained_methods = false
+ij_typescript_align_multiline_chained_methods = true
 ij_typescript_align_multiline_extends_list = false
-ij_typescript_align_multiline_for = true
-ij_typescript_align_multiline_parameters = true
+ij_typescript_align_multiline_for = false
+ij_typescript_align_multiline_parameters = false
 ij_typescript_align_multiline_parameters_in_calls = false
 ij_typescript_align_multiline_ternary_operation = false
 ij_typescript_align_object_properties = 0
 ij_typescript_align_union_types = false
 ij_typescript_align_var_statements = 0
-ij_typescript_array_initializer_new_line_after_left_brace = false
-ij_typescript_array_initializer_right_brace_on_new_line = false
-ij_typescript_array_initializer_wrap = off
-ij_typescript_assignment_wrap = off
-ij_typescript_binary_operation_sign_on_next_line = false
-ij_typescript_binary_operation_wrap = off
+ij_typescript_array_initializer_new_line_after_left_brace = true
+ij_typescript_array_initializer_right_brace_on_new_line = true
+ij_typescript_array_initializer_wrap = on_every_item
+ij_typescript_assignment_wrap = on_every_item
+ij_typescript_binary_operation_sign_on_next_line = true
+ij_typescript_binary_operation_wrap = on_every_item
 ij_typescript_blacklist_imports = rxjs/Rx,node_modules/**,**/node_modules/**,@angular/material,@angular/material/typings/**
 ij_typescript_blank_lines_after_imports = 1
 ij_typescript_blank_lines_around_class = 1
@@ -194,12 +205,12 @@ ij_typescript_blank_lines_around_method_in_interface = 1
 ij_typescript_block_brace_style = end_of_line
 ij_typescript_call_parameters_new_line_after_left_paren = false
 ij_typescript_call_parameters_right_paren_on_new_line = false
-ij_typescript_call_parameters_wrap = off
+ij_typescript_call_parameters_wrap = on_every_item
 ij_typescript_catch_on_new_line = false
 ij_typescript_chained_call_dot_on_new_line = true
 ij_typescript_class_brace_style = end_of_line
 ij_typescript_comma_on_new_line = false
-ij_typescript_do_while_brace_force = never
+ij_typescript_do_while_brace_force = always
 ij_typescript_else_on_new_line = false
 ij_typescript_enforce_trailing_comma = remove
 ij_typescript_extends_keyword_wrap = off
@@ -332,14 +343,12 @@ ij_typescript_while_on_new_line = false
 ij_typescript_wrap_comments = false
 
 [{*.bash,*.sh,*.zsh}]
-indent_size = 2
-tab_width = 2
+ij_visual_guides = none
 ij_shell_binary_ops_start_line = false
 ij_shell_keep_column_alignment_padding = false
 ij_shell_minify_program = false
 ij_shell_redirect_followed_by_space = false
 ij_shell_switch_cases_indented = false
-ij_shell_use_unix_line_separator = true
 
 [{*.cjs,*.js,*.mjs}]
 ij_continuation_indent_size = 2
@@ -423,8 +432,8 @@ ij_javascript_prefer_as_type_cast = false
 ij_javascript_prefer_explicit_types_function_expression_returns = false
 ij_javascript_prefer_explicit_types_function_returns = false
 ij_javascript_prefer_explicit_types_vars_fields = false
-ij_javascript_prefer_parameters_wrap = true
-ij_javascript_reformat_c_style_comments = false
+ij_javascript_prefer_parameters_wrap = false
+ij_javascript_reformat_c_style_comments = true
 ij_javascript_space_after_colon = true
 ij_javascript_space_after_comma = true
 ij_javascript_space_after_dots_in_rest_parameter = false
@@ -508,9 +517,8 @@ ij_javascript_while_on_new_line = false
 ij_javascript_wrap_comments = false
 
 [{*.cjsx,*.coffee}]
-indent_size = 2
-tab_width = 2
 ij_continuation_indent_size = 2
+ij_visual_guides = none
 ij_coffeescript_align_function_body = false
 ij_coffeescript_align_imports = false
 ij_coffeescript_align_multiline_array_initializer_expression = true
@@ -605,13 +613,14 @@ ij_coffeescript_use_semicolon_after_statement = false
 ij_coffeescript_var_declaration_wrap = normal
 
 [{*.har,*.jsb2,*.jsb3,*.json,.babelrc,.eslintrc,.prettierrc,.stylelintrc,bowerrc,jest.config}]
-indent_size = 2
+tab_width = 4
+ij_visual_guides = none
 ij_json_keep_blank_lines_in_code = 0
 ij_json_keep_indents_on_empty_lines = false
 ij_json_keep_line_breaks = true
 ij_json_space_after_colon = true
 ij_json_space_after_comma = true
-ij_json_space_before_colon = true
+ij_json_space_before_colon = false
 ij_json_space_before_comma = false
 ij_json_spaces_within_braces = false
 ij_json_spaces_within_brackets = false
@@ -621,7 +630,7 @@ ij_json_wrap_long_lines = false
 indent_size = 2
 tab_width = 2
 ij_continuation_indent_size = 2
-ij_visual_guides = 80
+ij_visual_guides = none
 ij_html_add_new_line_before_tags = body,div,p,form,h1,h2,h3
 ij_html_align_attributes = true
 ij_html_align_text = false
@@ -630,7 +639,7 @@ ij_html_block_comment_at_first_column = true
 ij_html_do_not_align_children_of_min_lines = 0
 ij_html_do_not_break_if_inline_tags = title,h1,h2,h3,h4,h5,h6,p
 ij_html_do_not_indent_children_of_tags = html,body,thead,tbody,tfoot
-ij_html_enforce_quotes = true
+ij_html_enforce_quotes = false
 ij_html_inline_tags = a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,small,span,strike,strong,sub,sup,textarea,tt,u,var
 ij_html_keep_blank_lines = 1
 ij_html_keep_indents_on_empty_lines = false
@@ -647,8 +656,18 @@ ij_html_space_after_tag_name = false
 ij_html_space_around_equality_in_attribute = false
 ij_html_space_inside_empty_tag = true
 ij_html_text_wrap = off
+ij_html_uniform_ident = false
 
-[{*.markdown,*.md,migrate-to-nextjs.md}]
+[{*.jade,*.pug}]
+indent_size = 4
+tab_width = 4
+ij_visual_guides = none
+
+[{*.markdown,*.md}]
+indent_size = 2
+tab_width = 2
+ij_continuation_indent_size = 2
+ij_visual_guides = none
 ij_markdown_force_one_space_after_blockquote_symbol = true
 ij_markdown_force_one_space_after_header_symbol = true
 ij_markdown_force_one_space_after_list_bullet = true
@@ -662,7 +681,7 @@ ij_markdown_min_lines_around_header = 1
 ij_markdown_min_lines_between_paragraphs = 1
 
 [{*.yaml,*.yml}]
-indent_size = 2
+ij_visual_guides = none
 ij_yaml_align_values_properties = do_not_align
 ij_yaml_autoinsert_sequence_marker = true
 ij_yaml_block_mapping_on_new_line = false

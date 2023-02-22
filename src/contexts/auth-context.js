@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { auth, ENABLE_AUTH } from '../lib/auth';
 
 const HANDLERS = {
   INITIALIZE: 'INITIALIZE',
@@ -73,66 +72,87 @@ export const AuthProvider = (props) => {
 
     initialized.current = true;
 
-    // Check if auth has been skipped
-    // From sign-in page we may have set "skip-auth" to "true"
-    const authSkipped = globalThis.sessionStorage.getItem('skip-auth') === 'true';
-
-    if (authSkipped) {
-      const user = {};
-
-      dispatch({
-        type: HANDLERS.INITIALIZE,
-        payload: user
-      });
-      return;
-    }
-
-    // Check if authentication with Zalter is enabled
-    // If not, then set user as authenticated
-    if (!ENABLE_AUTH) {
-      const user = {};
-
-      dispatch({
-        type: HANDLERS.INITIALIZE,
-        payload: user
-      });
-      return;
-    }
+    let isAuthenticated = false;
 
     try {
-      // Check if user is authenticated
-      const isAuthenticated = await auth.isAuthenticated();
-
-      if (isAuthenticated) {
-        // Get user from your database
-        const user = {};
-
-        dispatch({
-          type: HANDLERS.INITIALIZE,
-          payload: user
-        });
-      } else {
-        dispatch({
-          type: HANDLERS.INITIALIZE
-        });
-      }
+      isAuthenticated = window.sessionStorage.getItem('authenticated') === 'true';
     } catch (err) {
       console.error(err);
+    }
+
+    if (isAuthenticated) {
+      const user = {
+        id: '5e86809283e28b96d2d38537',
+        avatar: '/assets/avatars/avatar-anika-visser.png',
+        name: 'Anika Visser',
+        email: 'anika.visser@devias.io'
+      };
+
+      dispatch({
+        type: HANDLERS.INITIALIZE,
+        payload: user
+      });
+    } else {
       dispatch({
         type: HANDLERS.INITIALIZE
       });
     }
   };
 
-  useEffect(() => {
-    initialize().catch(console.error);
-  }, []);
+  useEffect(
+    () => {
+      initialize();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
-  const signIn = (user) => {
+  const skip = () => {
+    try {
+      window.sessionStorage.setItem('authenticated', 'true');
+    } catch (err) {
+      console.error(err);
+    }
+
+    const user = {
+      id: '5e86809283e28b96d2d38537',
+      avatar: '/assets/avatars/avatar-anika-visser.png',
+      name: 'Anika Visser',
+      email: 'anika.visser@devias.io'
+    };
+
     dispatch({
       type: HANDLERS.SIGN_IN,
       payload: user
     });
+  };
+
+  const signIn = async (email, password) => {
+    if (email !== 'demo@devias.io' || password !== 'Password123!') {
+      throw new Error('Please check your email and password');
+    }
+
+    try {
+      window.sessionStorage.setItem('authenticated', 'true');
+    } catch (err) {
+      console.error(err);
+    }
+
+    const user = {
+      id: '5e86809283e28b96d2d38537',
+      avatar: '/assets/avatars/avatar-anika-visser.png',
+      name: 'Anika Visser',
+      email: 'anika.visser@devias.io'
+    };
+
+    dispatch({
+      type: HANDLERS.SIGN_IN,
+      payload: user
+    });
+  };
+
+  const signUp = async (email, name, password) => {
+    throw new Error('Sign up is not implemented');
   };
 
   const signOut = () => {
@@ -145,7 +165,9 @@ export const AuthProvider = (props) => {
     <AuthContext.Provider
       value={{
         ...state,
+        skip,
         signIn,
+        signUp,
         signOut
       }}
     >
