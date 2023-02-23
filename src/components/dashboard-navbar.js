@@ -21,8 +21,6 @@ export const DashboardNavbar = (props) => {
   const [openAccountPopover, setOpenAccountPopover] = useState(false);
   const { user } = useContext(AuthContext);
 
-  console.log(user);
-
   return (
     <>
       <DashboardNavbarRoot

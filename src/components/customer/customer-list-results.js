@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import PerfectScrollbar from 'react-perfect-scrollbar';
-import PropTypes from 'prop-types';
-import { format } from 'date-fns';
+import { useState } from "react";
+import PerfectScrollbar from "react-perfect-scrollbar";
+import PropTypes from "prop-types";
+import { format } from "date-fns";
 import {
   Avatar,
   Box,
@@ -13,14 +13,15 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  Typography
-} from '@mui/material';
-import { getInitials } from '../../utils/get-initials';
+  Typography,
+} from "@mui/material";
+import { getInitials } from "../../utils/get-initials";
+import dayjs from "dayjs";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
 
-export const CustomerListResults = ({ customers, ...rest }) => {
+export const CustomerListResults = ({ customers, query, onQueryChange, total, ...rest }) => {
   const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);
-  const [limit, setLimit] = useState(10);
-  const [page, setPage] = useState(0);
 
   const handleSelectAll = (event) => {
     let newSelectedCustomerIds;
@@ -55,11 +56,11 @@ export const CustomerListResults = ({ customers, ...rest }) => {
   };
 
   const handleLimitChange = (event) => {
-    setLimit(event.target.value);
+    onQueryChange({ ...query, perPage: event.target.value });
   };
 
   const handlePageChange = (event, newPage) => {
-    setPage(newPage);
+    onQueryChange({ ...query, page: newPage });
   };
 
   return (
@@ -74,31 +75,24 @@ export const CustomerListResults = ({ customers, ...rest }) => {
                     checked={selectedCustomerIds.length === customers.length}
                     color="primary"
                     indeterminate={
-                      selectedCustomerIds.length > 0
-                      && selectedCustomerIds.length < customers.length
+                      selectedCustomerIds.length > 0 &&
+                      selectedCustomerIds.length < customers.length
                     }
                     onChange={handleSelectAll}
                   />
                 </TableCell>
-                <TableCell>
-                  Name
-                </TableCell>
-                <TableCell>
-                  Email
-                </TableCell>
-                <TableCell>
-                  Location
-                </TableCell>
-                <TableCell>
-                  Phone
-                </TableCell>
-                <TableCell>
-                  Registration date
-                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Location</TableCell>
+                <TableCell>Phone</TableCell>
+                <TableCell>Point</TableCell>
+                <TableCell>Verified</TableCell>
+                <TableCell>Registration date</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {customers.slice(0, limit).map((customer) => (
+              {customers.slice(0, query.perPage).map((customer) => (
                 <TableRow
                   hover
                   key={customer.id}
@@ -114,36 +108,35 @@ export const CustomerListResults = ({ customers, ...rest }) => {
                   <TableCell>
                     <Box
                       sx={{
-                        alignItems: 'center',
-                        display: 'flex'
+                        alignItems: "center",
+                        display: "flex",
                       }}
                     >
-                      <Avatar
-                        src={customer.avatarUrl}
-                        sx={{ mr: 2 }}
-                      >
-                        {getInitials(customer.name)}
+                      <Avatar src={customer.avatar} sx={{ mr: 2 }}>
+                        {getInitials(customer.firstName)}
                       </Avatar>
-                      <Typography
-                        color="textPrimary"
-                        variant="body1"
-                      >
-                        {customer.name}
+                      <Typography color="textPrimary" variant="body1">
+                        {customer.firstName + " " + customer.lastName}
                       </Typography>
                     </Box>
                   </TableCell>
+                  <TableCell>{customer.email}</TableCell>
+                  <TableCell>{customer.role}</TableCell>
                   <TableCell>
-                    {customer.email}
+                    {customer.address.length > 0
+                      ? `${customer.address[0].city}, ${customer.address[0].region}`
+                      : "-"}
                   </TableCell>
+                  <TableCell>{customer.phone}</TableCell>
+                  <TableCell>{customer.point}</TableCell>
                   <TableCell>
-                    {`${customer.address.city}, ${customer.address.state}, ${customer.address.country}`}
+                    {customer.isVerified ? (
+                      <CheckCircleIcon sx={{ color: "green" }} />
+                    ) : (
+                      <CancelIcon sx={{ color: "red" }} />
+                    )}
                   </TableCell>
-                  <TableCell>
-                    {customer.phone}
-                  </TableCell>
-                  <TableCell>
-                    {format(customer.createdAt, 'dd/MM/yyyy')}
-                  </TableCell>
+                  <TableCell>{dayjs(customer.createdAt).format("DD/MM/YYYY")}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -152,11 +145,11 @@ export const CustomerListResults = ({ customers, ...rest }) => {
       </PerfectScrollbar>
       <TablePagination
         component="div"
-        count={customers.length}
+        count={total}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleLimitChange}
-        page={page}
-        rowsPerPage={limit}
+        page={query.page}
+        rowsPerPage={query.perPage}
         rowsPerPageOptions={[5, 10, 25]}
       />
     </Card>
@@ -164,5 +157,5 @@ export const CustomerListResults = ({ customers, ...rest }) => {
 };
 
 CustomerListResults.propTypes = {
-  customers: PropTypes.array.isRequired
+  customers: PropTypes.array.isRequired,
 };

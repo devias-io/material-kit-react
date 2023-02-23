@@ -2,6 +2,9 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import PropTypes from "prop-types";
 import { AuthContext, useAuthContext } from "../contexts/auth-context";
+import { getCookies } from "../utils/cookies";
+import { ACCESS_TOKEN_KEY } from "../configs/constants";
+import useGetMe from "../services/auth/useGetMe";
 
 export const AuthGuard = (props) => {
   const { children } = props;
@@ -9,6 +12,8 @@ export const AuthGuard = (props) => {
   const { isAuthenticated } = useContext(AuthContext);
   const ignore = useRef(false);
   const [checked, setChecked] = useState(false);
+  const [isUserLogged, setIsUserLogged] = useState(false);
+  const {} = useGetMe(isUserLogged);
 
   // Only do authentication check on component mount.
   // This flow allows you to manually redirect the user after sign-out, otherwise this will be
@@ -26,7 +31,12 @@ export const AuthGuard = (props) => {
 
     ignore.current = true;
 
-    if (!isAuthenticated) {
+    const token = getCookies(ACCESS_TOKEN_KEY);
+    if (token) {
+      setIsUserLogged(true);
+    }
+
+    if (!isAuthenticated && !token) {
       console.error("Not authenticated, redirecting");
       router
         .replace({

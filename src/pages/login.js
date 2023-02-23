@@ -10,7 +10,7 @@ import { Google as GoogleIcon } from "../icons/google";
 import useLogin from "../services/auth/useLogin";
 
 const Login = () => {
-  const { mutate: login } = useLogin();
+  const { mutate: login, isLoading } = useLogin();
   const formik = useFormik({
     initialValues: {
       email: "",
@@ -55,42 +55,6 @@ const Login = () => {
                 Sign in on the internal platform
               </Typography>
             </Box>
-            {/* <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Button
-                  color="info"
-                  fullWidth
-                  startIcon={<FacebookIcon />}
-                  onClick={() => formik.handleSubmit()}
-                  size="large"
-                  variant="contained"
-                >
-                  Login with Facebook
-                </Button>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Button
-                  color="error"
-                  fullWidth
-                  onClick={() => formik.handleSubmit()}
-                  size="large"
-                  startIcon={<GoogleIcon />}
-                  variant="contained"
-                >
-                  Login with Google
-                </Button>
-              </Grid>
-            </Grid> */}
-            {/* <Box
-              sx={{
-                pb: 1,
-                pt: 3,
-              }}
-            >
-              <Typography align="center" color="textSecondary" variant="body1">
-                or login with email address
-              </Typography>
-            </Box> */}
             <TextField
               error={Boolean(formik.touched.email && formik.errors.email)}
               fullWidth
@@ -120,7 +84,7 @@ const Login = () => {
             <Box sx={{ py: 2 }}>
               <Button
                 color="primary"
-                disabled={formik.isSubmitting}
+                disabled={isLoading}
                 fullWidth
                 size="large"
                 type="submit"
