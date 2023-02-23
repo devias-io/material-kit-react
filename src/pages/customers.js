@@ -11,6 +11,8 @@ const Page = () => {
   const [query, setQuery] = useState({
     page: 0,
     perPage: 10,
+    sortBy: "createdAt",
+    sortOrder: "desc",
     keyword: undefined,
   });
   const keywordDebounce = useDebounce(query.keyword, 500);
@@ -18,6 +20,7 @@ const Page = () => {
     offset: query.page * query.perPage,
     limit: query.perPage,
     keyword: keywordDebounce,
+    ...query,
   });
 
   const onQueryChange = (newQuery) => {

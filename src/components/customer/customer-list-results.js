@@ -1,7 +1,5 @@
-import { useState } from "react";
-import PerfectScrollbar from "react-perfect-scrollbar";
-import PropTypes from "prop-types";
-import { format } from "date-fns";
+import CancelIcon from "@mui/icons-material/Cancel";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import {
   Avatar,
   Box,
@@ -13,12 +11,14 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  TableSortLabel,
   Typography,
 } from "@mui/material";
-import { getInitials } from "../../utils/get-initials";
 import dayjs from "dayjs";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CancelIcon from "@mui/icons-material/Cancel";
+import PropTypes from "prop-types";
+import { useState } from "react";
+import PerfectScrollbar from "react-perfect-scrollbar";
+import { getInitials } from "../../utils/get-initials";
 
 export const CustomerListResults = ({ customers, query, onQueryChange, total, ...rest }) => {
   const [selectedCustomerIds, setSelectedCustomerIds] = useState([]);
@@ -63,6 +63,14 @@ export const CustomerListResults = ({ customers, query, onQueryChange, total, ..
     onQueryChange({ ...query, page: newPage });
   };
 
+  const handleSelectOrder = (name) => {
+    onQueryChange({
+      ...query,
+      sortBy: name,
+      sortOrder: query.sortOrder === "asc" ? "desc" : "asc",
+    });
+  };
+
   return (
     <Card {...rest}>
       <PerfectScrollbar>
@@ -86,9 +94,25 @@ export const CustomerListResults = ({ customers, query, onQueryChange, total, ..
                 <TableCell>Role</TableCell>
                 <TableCell>Location</TableCell>
                 <TableCell>Phone</TableCell>
-                <TableCell>Point</TableCell>
+                <TableCell sortDirection={query.sortBy === "point" ? query.sortOrder : "asc"}>
+                  <TableSortLabel
+                    active={query.sortBy === "point"}
+                    direction={query.sortBy === "point" ? query.sortOrder : "asc"}
+                    onClick={() => handleSelectOrder("point")}
+                  >
+                    Point
+                  </TableSortLabel>
+                </TableCell>
                 <TableCell>Verified</TableCell>
-                <TableCell>Registration date</TableCell>
+                <TableCell sortDirection={query.sortBy === "createdAt" ? query.sortOrder : "asc"}>
+                  <TableSortLabel
+                    active={query.sortBy === "createdAt"}
+                    direction={query.sortBy === "createdAt" ? query.sortOrder : "asc"}
+                    onClick={() => handleSelectOrder("createdAt")}
+                  >
+                    Registration date
+                  </TableSortLabel>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
