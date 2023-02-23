@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { useContext } from "react";
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from "../../configs/constants";
 import { AuthContext } from "../../contexts/auth-context";
 import { setCookie } from "../../utils/cookies";
 import { notify } from "../../utils/notification";
@@ -24,8 +25,8 @@ const useLogin = () => {
         setUser(data);
         notify(message);
         const { access_token, refresh_token, exp } = tokens;
-        setCookie("access_token", access_token, { expires: new Date(Date.now() + exp * 1000) });
-        setCookie("refresh_token", refresh_token);
+        setCookie(ACCESS_TOKEN_KEY, access_token, { expires: new Date(Date.now() + exp * 1000) });
+        setCookie(REFRESH_TOKEN_KEY, refresh_token);
         const redirect = router.query.next || "/";
         router.push(redirect).catch(console.error);
       },
