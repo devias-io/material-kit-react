@@ -156,10 +156,12 @@ const data = [
   }
 ];
 
-const useCustomers = (page, rowsPerPage) => {
+
+const useCustomers = (customersData,page, rowsPerPage) => {
+  
   return useMemo(
     () => {
-      return applyPagination(data, page, rowsPerPage);
+      return applyPagination(customersData, page, rowsPerPage);
     },
     [page, rowsPerPage]
   );
@@ -176,8 +178,8 @@ const useCustomerIds = (customers) => {
 
 const Page = () => {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const customers = useCustomers(page, rowsPerPage);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [customers,setCustomers ]=useState( useCustomers(data,page, rowsPerPage));
   const customersIds = useCustomerIds(customers);
   const customersSelection = useSelection(customersIds);
 
@@ -194,7 +196,23 @@ const Page = () => {
     },
     []
   );
-
+  function search(query) {
+    // convert query to lowercase for case-insensitive search
+    const q = query.toLowerCase();
+  
+    // filter data based on query
+    const filteredData = data.filter((item) => {
+      // check if name, email, or phone contains query
+      return (
+        item.name.toLowerCase().includes(q) ||
+        item.email.toLowerCase().includes(q) ||
+        item.phone.toLowerCase().includes(q)
+      );
+    });
+    // update Customers State
+    setCustomers(applyPagination(filteredData,page, rowsPerPage))
+  }
+    
   return (
     <>
       <Head>
@@ -260,7 +278,7 @@ const Page = () => {
                 </Button>
               </div>
             </Stack>
-            <CustomersSearch />
+            <CustomersSearch search={search}/>
             <CustomersTable
               count={data.length}
               items={customers}
