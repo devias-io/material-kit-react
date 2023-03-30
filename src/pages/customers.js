@@ -156,14 +156,13 @@ const data = [
   }
 ];
 
-
-const useCustomers = (customersData,page, rowsPerPage) => {
+const useCustomers = (rows,page, rowsPerPage) => {
   
   return useMemo(
     () => {
-      return applyPagination(customersData, page, rowsPerPage);
+      return applyPagination(rows, page, rowsPerPage);
     },
-    [page, rowsPerPage]
+    [rows,page, rowsPerPage]
   );
 };
 
@@ -178,8 +177,10 @@ const useCustomerIds = (customers) => {
 
 const Page = () => {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
-  const [customers,setCustomers ]=useState( useCustomers(data,page, rowsPerPage));
+  const [searchlength, setSearchlength] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(2);
+  const [rows, setRows] = useState(data);
+  const customers = useCustomers(rows,page, rowsPerPage);
   const customersIds = useCustomerIds(customers);
   const customersSelection = useSelection(customersIds);
 
@@ -191,7 +192,7 @@ const Page = () => {
   );
 
   const handleRowsPerPageChange = useCallback(
-    (event) => {
+    (event) => { 
       setRowsPerPage(event.target.value);
     },
     []
@@ -209,8 +210,12 @@ const Page = () => {
         item.phone.toLowerCase().includes(q)
       );
     });
-    // update Customers State
-    setCustomers(applyPagination(filteredData,page, rowsPerPage))
+    // update the search length State
+    setSearchlength(filteredData.length)
+    // update the rows
+    setRows(filteredData)
+    // got to the first page
+    setPage(0);
   }
     
   return (
@@ -280,7 +285,7 @@ const Page = () => {
             </Stack>
             <CustomersSearch search={search}/>
             <CustomersTable
-              count={data.length}
+              count={searchlength||data.length}
               items={customers}
               onDeselectAll={customersSelection.handleDeselectAll}
               onDeselectOne={customersSelection.handleDeselectOne}
