@@ -1,9 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { subDays, subHours } from 'date-fns';
-import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
-import ArrowUpOnSquareIcon from '@heroicons/react/24/solid/ArrowUpOnSquareIcon';
-import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
+
+import { TrashIcon,ArrowDownOnSquareIcon,ArrowUpOnSquareIcon,PlusIcon } from '@heroicons/react/24/solid';
 import { Box, Button, Container, Stack, SvgIcon, Typography } from '@mui/material';
 import { useSelection } from 'src/hooks/use-selection';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
@@ -177,8 +176,7 @@ const useCustomerIds = (customers) => {
 
 const Page = () => {
   const [page, setPage] = useState(0);
-  const [searchlength, setSearchlength] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(2);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [rows, setRows] = useState(data);
   const customers = useCustomers(rows,page, rowsPerPage);
   const customersIds = useCustomerIds(customers);
@@ -197,6 +195,15 @@ const Page = () => {
     },
     []
   );
+
+  const handleDeleteClick =(e)=>{
+    console.log(customersSelection.selected.values())
+    const newRows = rows.filter((item)=>{
+     const itemFount = customersSelection.selected.find(s => item.id == s) 
+     return itemFount==undefined
+    })
+    setRows(newRows)
+  }
   function search(query) {
     // convert query to lowercase for case-insensitive search
     const q = query.toLowerCase();
@@ -210,8 +217,7 @@ const Page = () => {
         item.phone.toLowerCase().includes(q)
       );
     });
-    // update the search length State
-    setSearchlength(filteredData.length)
+ 
     // update the rows
     setRows(filteredData)
     // got to the first page
@@ -268,6 +274,18 @@ const Page = () => {
                   >
                     Export
                   </Button>
+                  <Button
+                    color="inherit"
+                    startIcon={(
+                      <SvgIcon fontSize="small">
+                        <TrashIcon />
+                      </SvgIcon>
+                    )}
+                    onClick={handleDeleteClick}
+                    disabled={customersSelection.selected.length==0}
+                  >
+                    Delete
+                  </Button>
                 </Stack>
               </Stack>
               <div>
@@ -285,7 +303,7 @@ const Page = () => {
             </Stack>
             <CustomersSearch search={search}/>
             <CustomersTable
-              count={searchlength||data.length}
+              count={rows.length}
               items={customers}
               onDeselectAll={customersSelection.handleDeselectAll}
               onDeselectOne={customersSelection.handleDeselectOne}
