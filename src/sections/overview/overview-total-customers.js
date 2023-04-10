@@ -8,8 +8,9 @@ export const OverviewTotalCustomers = (props) => {
   const { difference, positive = false, sx, value } = props;
 
   return (
-    <Card sx={sx}>
-      <CardContent>
+    <Card  className='card' 
+    sx={sx}>
+      <CardContent className='card-content'>
         <Stack
           alignItems="flex-start"
           direction="row"
@@ -21,7 +22,8 @@ export const OverviewTotalCustomers = (props) => {
               color="text.secondary"
               variant="overline"
             >
-              Total Customers
+              <div className='card-tittle'>
+              Total Customers</div>
             </Typography>
             <Typography variant="h4">
               {value}

@@ -8,8 +8,9 @@ export const OverviewBudget = (props) => {
   const { difference, positive = false, sx, value } = props;
 
   return (
-    <Card sx={sx}>
-      <CardContent>
+    <Card className='card'
+    sx={sx}>
+      <CardContent className='card-content'>
         <Stack
           alignItems="flex-start"
           direction="row"
@@ -21,7 +22,7 @@ export const OverviewBudget = (props) => {
               color="text.secondary"
               variant="overline"
             >
-              Budget
+              <div className='card-tittle'>Budget</div>
             </Typography>
             <Typography variant="h4">
               {value}

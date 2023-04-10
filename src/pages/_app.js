@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import '../sections/overview/budget.css'
 import { CacheProvider } from '@emotion/react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';

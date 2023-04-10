@@ -1,0 +1,72 @@
+.card {
+  width: 300px;
+  height: 200px;
+  background-color: #e0e0e0;
+  perspective: 1000px;
+  transition: transform 0.3s ease-in-out;
+}
+
+.card:hover {
+  transform: rotateX(10deg);
+}
+
+.card-content {
+  padding: 20px;
+  transform: translateY(80%);
+  transition: transform 0.3s ease-in-out;
+  -webkit-transform: translateY(80%);
+  -moz-transform: translateY(80%);
+  -ms-transform: translateY(80%);
+  -o-transform: translateY(80%);
+}
+
+.card:hover .card-content {
+  transform: translateY(10%);
+  -webkit-transform: translateY(10%);
+  -moz-transform: translateY(10%);
+  -ms-transform: translateY(10%);
+  -o-transform: translateY(10%);
+}
+.card-content2 {
+  padding: 20px;
+  transform: translateY(45%);
+  transition: transform 0.3s ease-in-out;
+  -webkit-transform: translateY(45%);
+  -moz-transform: translateY(45%);
+  -ms-transform: translateY(45%);
+  -o-transform: translateY(45%);
+}
+.card:hover .card-content2 {
+  transform: translateY(10%);
+  -webkit-transform: translateY(10%);
+  -moz-transform: translateY(10%);
+  -ms-transform: translateY(10%);
+  -o-transform: translateY(10%);
+}
+.card-content3 {
+  padding: 20px;
+  transform: translateY(85%);
+  transition: transform 0.3s ease-in-out;
+  -webkit-transform: translateY(85%);
+  -moz-transform: translateY(85%);
+  -ms-transform: translateY(85%);
+  -o-transform: translateY(85%);
+}
+.card:hover .card-content3 {
+  transform: translateY(10%);
+  -webkit-transform: translateY(10%);
+  -moz-transform: translateY(10%);
+  -ms-transform: translateY(10%);
+  -o-transform: translateY(10%);
+}
+
+
+.card-title {
+  font-size: 24px;
+  margin: 0;
+}
+
+.card-text {
+  margin: 10px 0 0 0;
+}
+

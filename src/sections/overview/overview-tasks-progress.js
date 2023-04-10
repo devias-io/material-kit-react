@@ -15,23 +15,25 @@ export const OverviewTasksProgress = (props) => {
   const { value, sx } = props;
 
   return (
-    <Card sx={sx}>
-      <CardContent>
+    <Card className='card'
+     sx={sx}>
+      <CardContent className='card-content2'>
         <Stack
           alignItems="flex-start"
           direction="row"
           justifyContent="space-between"
           spacing={3}
         >
-          <Stack spacing={1}>
+          <Stack spacing={1} 
+          gap={'40%'}>
             <Typography
               color="text.secondary"
               gutterBottom
               variant="overline"
             >
-              Task Progress
+             <div className='card-title'> Task Progress</div>
             </Typography>
-            <Typography variant="h4">
+            <Typography variant="h4" > 
               {value}%
             </Typography>
           </Stack>
