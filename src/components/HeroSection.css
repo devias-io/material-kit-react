@@ -1,0 +1,41 @@
+/* HeroSection.css */
+section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start; /* Aligns items to the left */
+    padding: 50px;
+    background-color: #e4f8ad; /* Add your desired color */
+    height: calc(100vh - 60px); /* Assumes navbar is 60px high */
+}
+
+h1 {
+    font-size: 48px; /* Adjust size as needed */
+    margin-bottom: 20px; /* Space between the h1 and p elements */
+}
+
+p {
+    font-size: 20px; /* Adjust size as needed */
+    font-weight: normal;
+}
+
+button {
+    background-color: #e4f8ad;
+    color: #0a0a0a;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 25px; /* Adjust for desired roundness */
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #fafafa; /* Light grey on hover */
+}
+
+.herosection-gif {
+    max-width: 500px; /* Or whatever max size you want */
+    border-radius: 10px; /* Optional: if you want rounded corners */
+}
+
