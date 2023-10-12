@@ -1,37 +1,43 @@
 .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 50px;
-    background-color: #ffffff; /* Dark Blue */
-  }
-  
-  .logo {
-    color: #0a0a0a;
-    font-size: 24px;
-    font-weight: bold;
-  }
-  
-  .nav-links {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    gap: 20px;
-  }
-  
-  .nav-links li {
-    color: #0a0a0a;
-    cursor: pointer;
-  }
-  
-  .get-started {
-    background-color: #0a0a0a; /* Black */
-    color: #ffffff;
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 16px;
-  }
-  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 50px;
+  background-color: #ffffff;
+}
+
+.logo {
+  color: #0a0a0a;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.nav-links {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 20px;
+}
+
+.nav-links li {
+  color: #0a0a0a;
+  cursor: pointer;
+  font-weight: bold; /* Makes text bold */
+  padding: 0 25px; /* Adds padding to left and right of each li */
+}
+
+.get-started {
+  background-color: #0a0a0a;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.nav-links li:hover {
+  color: #668810; /* Or any other color for hover state */
+}
+
