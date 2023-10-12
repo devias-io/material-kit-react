@@ -22,6 +22,7 @@ h1 {
     margin-bottom: 20px;
     font-family: Noto Sans, sans-serif; /* text font */
     font-weight: bold; 
+    color: #32302F;
     word-wrap: break-word;
 }
 
@@ -29,7 +30,7 @@ p {
     font-size: 20px;
     font-weight: normal;
     font-family: Noto Sans, sans-serif; /* text font */
-    color: #333; 
+    color: #32302F; 
     word-wrap: break-word;
 }
 
