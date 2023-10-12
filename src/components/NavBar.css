@@ -10,6 +10,7 @@
   color: #0a0a0a;
   font-size: 24px;
   font-weight: bold;
+  margin-left: 150px;
 }
 
 .nav-links {
@@ -30,11 +31,14 @@
 .get-started {
   background-color: #0a0a0a;
   color: #ffffff;
+  font-family: Arial, sans-serif;
+  font-weight: bold; 
   border: none;
   padding: 10px 20px;
   cursor: pointer;
   border-radius: 5px;
   font-size: 16px;
+  margin-right: 150px;
 }
 
 .nav-links li:hover {
