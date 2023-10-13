@@ -1,12 +1,19 @@
 /* HeroSection.css */
-section {
+section{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    background-color: #DEE7ED;
     height: calc(100vh - 60px);
+}
+
+.section1{
+    background-color: #DEE7ED;
+}
+
+.section2{
+    background-color: #FCFCFC;
 }
 
 .text-section {
@@ -18,24 +25,25 @@ section {
 }
 
 h1 {
-    font-size: 48px;
+    font-size: 64px;
     margin-bottom: 20px;
-    font-family: Noto Sans, sans-serif; /* text font */
-    font-weight: bold; 
+    font-family: Noto Sans, sans-serif;
+    font-weight: 500; 
     color: #32302F;
     word-wrap: break-word;
 }
 
 p {
-    font-size: 20px;
+    font-size: 25px;
     font-weight: normal;
-    font-family: Noto Sans, sans-serif; /* text font */
+    font-family: Noto Sans, sans-serif;
+    font-weight: 400; 
     color: #32302F; 
     word-wrap: break-word;
 }
 
 button {
-    background-color: #ffffff;
+    background-color: #FCFCFC;
     color: #070707;
     padding: 15px 30px;
     border: 1px solid #0a0a0a;
