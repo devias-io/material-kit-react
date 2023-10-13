@@ -6,11 +6,15 @@ const NavBar = () => {
     <nav className="navbar">
       <div className="logo">App Name</div>
       <ul className="nav-links">
-        <li>Home</li>
+        <Link href = "/">
+          <li className = "Home">Home</li>
+        </Link>
         <li>Queries</li>
         <li>Blogs</li>
         <li>FAQs</li>
-        <li>About us</li>
+        <Link href = "/aboutUs">
+          <li className = "about-us">About Us</li>
+        </Link>
         <li>Contact</li>
         {/* Add other navigation items */}
       </ul>
