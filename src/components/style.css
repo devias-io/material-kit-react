@@ -1,0 +1,40 @@
+button {
+    background-color: #FCFCFC;
+    color: #070707;
+    padding: 15px 30px;
+    border: 1px solid #0a0a0a;
+    border-radius: 25px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease; /* Added color to the transition */
+}
+
+button:hover {
+    background-color: #ffffff;
+    color: #070707;
+}
+
+input {
+    background-color: #FCFCFC;
+    border: none;
+    border-bottom: 1px solid #000;
+    height: 60px;
+    width: 500px;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+textarea {
+    background-color: #FCFCFC;
+    border: none;
+    border-bottom: 1px solid #000;
+    height: 60px;
+    width: 500px;
+    font-size: 24px;
+}
+
+label {
+    display: block;
+    margin-top: 10px;
+    font-size: 16px;
+}

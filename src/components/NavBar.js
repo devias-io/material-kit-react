@@ -15,7 +15,9 @@ const NavBar = () => {
         <Link href = "/aboutUs">
           <li className = "about-us">About Us</li>
         </Link>
-        <li>Contact</li>
+        <Link href = "/contact">
+          <li className = "contact">Contact</li>
+        </Link>
         {/* Add other navigation items */}
       </ul>
       <Link href="/auth/login" passHref> {/* Add Link component with href prop */}
