@@ -1,15 +1,19 @@
 .navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 50px;
-  background-color: #ffffff;
+  background-color: #FCFCFC;
 }
 
 .logo {
-  color: #0a0a0a;
+  color: #32302F;
   font-size: 24px;
   font-weight: bold;
+  margin-left: 150px;
 }
 
 .nav-links {
@@ -21,20 +25,23 @@
 }
 
 .nav-links li {
-  color: #0a0a0a;
+  color: #32302F;
   cursor: pointer;
   font-weight: bold; /* Makes text bold */
   padding: 0 25px; /* Adds padding to left and right of each li */
 }
 
 .get-started {
-  background-color: #0a0a0a;
+  background-color: #32302F;
   color: #ffffff;
+  font-family: Arial, sans-serif;
+  font-weight: bold; 
   border: none;
   padding: 10px 20px;
   cursor: pointer;
-  border-radius: 5px;
+  border-radius: 20px;
   font-size: 16px;
+  margin-right: 150px;
 }
 
 .nav-links li:hover {

@@ -1,0 +1,73 @@
+/* aboutUs.css */
+
+.team-container {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .header {
+    background-color: #F0F0F0;
+    padding: 20px;
+  }
+  
+  .main-image {
+    width: 100%;
+    height: auto;
+  }
+  
+  h1 {
+    font-size: 64px;
+    margin: 10px 0;
+  }
+  
+  p {
+    font-size: 24px;
+  }
+  
+  .team-section {
+    margin-top: 20px;
+  }
+  
+  h2 {
+    font-size: 48px;
+    margin-bottom: 10px;
+  }
+  
+  .team-members {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .member-card {
+    width: 300px;
+    height: 400px;
+    margin: 30px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    text-align: center;
+  }
+  
+  .member-image {
+    width: 200px;
+    height: 200px;
+    border-radius: 15%;
+    object-fit: cover;
+    margin: 0 auto;
+    margin-bottom: 10px;
+  }
+  
+  .member-name {
+    font-weight: bold;
+  }
+  
+  .member-position {
+    color: #666;
+    margin-bottom: 5px;
+  }
+  
+  .member-introduction {
+    font-size: 14px;
+  }
+  

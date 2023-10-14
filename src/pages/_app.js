@@ -11,6 +11,8 @@ import { createEmotionCache } from 'src/utils/create-emotion-cache';
 import 'simplebar-react/dist/simplebar.min.css';
 import '../components/NavBar.css';
 import '../components/HeroSection.css';
+import '../components/aboutUs.css';
+import '../components/style.css';
 
 const clientSideEmotionCache = createEmotionCache();
 
