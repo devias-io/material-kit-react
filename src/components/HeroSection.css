@@ -42,22 +42,6 @@ p {
     word-wrap: break-word;
 }
 
-button {
-    background-color: #FCFCFC;
-    color: #070707;
-    padding: 15px 30px;
-    border: 1px solid #0a0a0a;
-    border-radius: 25px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease; /* Added color to the transition */
-}
-
-button:hover {
-    background-color: #ffffff;
-    color: #070707;
-}
-
 .herosection-gif {
     width: 50%; /* Takes half the width */
     max-width: 100%;

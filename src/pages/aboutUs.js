@@ -51,6 +51,13 @@ const teamMembers = [
     introduction: 'Jane Smith is the Chief Technology Officer...',
     imageSrc: '/images/cat.jpg',
   },
+  {
+    id: 8,
+    name: 'Waiting for you to join us',
+    position: '',
+    introduction: '',
+    imageSrc: '/images/white.png',
+  },
 ];
 
 const AboutUs = () => {
