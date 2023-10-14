@@ -1,23 +1,30 @@
+import React from 'react';
 import { useCallback, useState } from 'react';
-import Head from 'next/head';
-import NextLink from 'next/link';
+import { useAuth } from 'src/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
-  Alert,
-  Box,
   Button,
-  FormHelperText,
-  Link,
-  Stack,
-  Tab,
-  Tabs,
   TextField,
-  Typography
+  Typography,
+  Box,
+  CssBaseline,
+  Container,
 } from '@mui/material';
-import { useAuth } from 'src/hooks/use-auth';
-import { Layout as AuthLayout } from 'src/layouts/auth/layout';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#ffffff',
+    },
+    secondary: {
+      main: '#ffffff',
+    },
+  },
+});
 
 const Page = () => {
   const router = useRouter();
@@ -25,7 +32,7 @@ const Page = () => {
   const [method, setMethod] = useState('email');
   const formik = useFormik({
     initialValues: {
-      email: 'demo@devias.io',
+      email: 'demo@Fin.io',
       password: 'Password123!',
       submit: null
     },
@@ -43,7 +50,7 @@ const Page = () => {
     onSubmit: async (values, helpers) => {
       try {
         await auth.signIn(values.email, values.password);
-        router.push('/');
+        router.push('/dashboard');
       } catch (err) {
         helpers.setStatus({ success: false });
         helpers.setErrors({ submit: err.message });
@@ -68,160 +75,101 @@ const Page = () => {
   );
 
   return (
-    <>
-      <Head>
-        <title>
-          Login | Devias Kit
-        </title>
-      </Head>
-      <Box
-        sx={{
-          backgroundColor: 'background.paper',
-          flex: '1 1 auto',
-          alignItems: 'center',
-          display: 'flex',
-          justifyContent: 'center'
-        }}
-      >
+    <ThemeProvider theme={theme}>
+      <Container component="main" maxWidth="xs">
+        <CssBaseline />
         <Box
           sx={{
-            maxWidth: 550,
-            px: 3,
-            py: '100px',
-            width: '100%'
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            bgcolor: 'primary.main',
+            height: '100vh',
+            justifyContent: 'center',
+            color: '#000000', // Black text color
           }}
         >
-          <div>
-            <Stack
-              spacing={1}
-              sx={{ mb: 3 }}
+          <Typography component="h1" variant="h5" sx={{ fontWeight: 'bold' }}>
+            Welcome back
+          </Typography>
+          <Box component="form" onSubmit={formik.handleSubmit} noValidate sx={{ width: '100%', mt: 1 }}>
+            <TextField
+              variant="outlined"
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label="Email Address"
+              name="email"
+              autoComplete="email"
+              autoFocus
+              onChange={formik.handleChange}
+              value={formik.values.email}
+              sx={{
+                bgcolor: 'secondary.main',
+                borderRadius: 4,
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#000000', // Black border color
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#000000', // Black border color on hover
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#000000', // Black border color when focused
+                  },
+                },
+              }}
+            />
+            <TextField
+              variant="outlined"
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              onChange={formik.handleChange}
+              value={formik.values.password}
+              sx={{
+                bgcolor: 'secondary.main',
+                borderRadius: 4,
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#000000',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#000000',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#000000',
+                  },
+                },
+              }}
+            />
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ 
+                mt: 3, 
+                mb: 2, 
+                bgcolor: '#f8c24c', 
+                color: '#000000',
+                '&:hover': {
+                  bgcolor: '#e6c301', // Light grey on hover
+                }
+              }}
             >
-              <Typography variant="h4">
-                Login
-              </Typography>
-              <Typography
-                color="text.secondary"
-                variant="body2"
-              >
-                Don&apos;t have an account?
-                &nbsp;
-                <Link
-                  component={NextLink}
-                  href="/auth/register"
-                  underline="hover"
-                  variant="subtitle2"
-                >
-                  Register
-                </Link>
-              </Typography>
-            </Stack>
-            <Tabs
-              onChange={handleMethodChange}
-              sx={{ mb: 3 }}
-              value={method}
-            >
-              <Tab
-                label="Email"
-                value="email"
-              />
-              <Tab
-                label="Phone Number"
-                value="phoneNumber"
-              />
-            </Tabs>
-            {method === 'email' && (
-              <form
-                noValidate
-                onSubmit={formik.handleSubmit}
-              >
-                <Stack spacing={3}>
-                  <TextField
-                    error={!!(formik.touched.email && formik.errors.email)}
-                    fullWidth
-                    helperText={formik.touched.email && formik.errors.email}
-                    label="Email Address"
-                    name="email"
-                    onBlur={formik.handleBlur}
-                    onChange={formik.handleChange}
-                    type="email"
-                    value={formik.values.email}
-                  />
-                  <TextField
-                    error={!!(formik.touched.password && formik.errors.password)}
-                    fullWidth
-                    helperText={formik.touched.password && formik.errors.password}
-                    label="Password"
-                    name="password"
-                    onBlur={formik.handleBlur}
-                    onChange={formik.handleChange}
-                    type="password"
-                    value={formik.values.password}
-                  />
-                </Stack>
-                <FormHelperText sx={{ mt: 1 }}>
-                  Optionally you can skip.
-                </FormHelperText>
-                {formik.errors.submit && (
-                  <Typography
-                    color="error"
-                    sx={{ mt: 3 }}
-                    variant="body2"
-                  >
-                    {formik.errors.submit}
-                  </Typography>
-                )}
-                <Button
-                  fullWidth
-                  size="large"
-                  sx={{ mt: 3 }}
-                  type="submit"
-                  variant="contained"
-                >
-                  Continue
-                </Button>
-                <Button
-                  fullWidth
-                  size="large"
-                  sx={{ mt: 3 }}
-                  onClick={handleSkip}
-                >
-                  Skip authentication
-                </Button>
-                <Alert
-                  color="primary"
-                  severity="info"
-                  sx={{ mt: 3 }}
-                >
-                  <div>
-                    You can use <b>demo@devias.io</b> and password <b>Password123!</b>
-                  </div>
-                </Alert>
-              </form>
-            )}
-            {method === 'phoneNumber' && (
-              <div>
-                <Typography
-                  sx={{ mb: 1 }}
-                  variant="h6"
-                >
-                  Not available in the demo
-                </Typography>
-                <Typography color="text.secondary">
-                  To prevent unnecessary costs we disabled this feature in the demo.
-                </Typography>
-              </div>
-            )}
-          </div>
+              Sign In
+            </Button>
+          </Box>
         </Box>
-      </Box>
-    </>
+      </Container>
+    </ThemeProvider>
   );
 };
-
-Page.getLayout = (page) => (
-  <AuthLayout>
-    {page}
-  </AuthLayout>
-);
 
 export default Page;
