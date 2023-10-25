@@ -2,12 +2,16 @@ import PropTypes from 'prop-types';
 import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
 import ClockIcon from '@heroicons/react/24/solid/ClockIcon';
 import { Avatar, Box, Card, CardContent, Divider, Stack, SvgIcon, Typography } from '@mui/material';
+import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 export const CompanyCard = (props) => {
   const { company } = props;
+  const navigate = useRouter();
 
   return (
     <Card
+      onClick={() => navigate.push(`/projetos/${company.id}`)}
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -66,7 +70,7 @@ export const CompanyCard = (props) => {
             display="inline"
             variant="body2"
           >
-            Updated 2hr ago
+            {format(company.createdAt, 'dd/MM/yyyy')}
           </Typography>
         </Stack>
         <Stack
@@ -85,7 +89,7 @@ export const CompanyCard = (props) => {
             display="inline"
             variant="body2"
           >
-            {company.downloads} Downloads
+            {company.reference}
           </Typography>
         </Stack>
       </Stack>
