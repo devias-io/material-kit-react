@@ -7,7 +7,7 @@ const teamMembers = [
     name: 'John Doe',
     position: 'CEO',
     introduction: 'John Doe is the CEO of our company...',
-    imageSrc: '/images/cat.jpg', // 请提供成员的头像图片路径
+    imageSrc: '/images/cat.jpg',
   },
   {
     id: 2,

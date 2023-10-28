@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 // HeroSection.js
 const HeroSection = () => {
     return (
@@ -16,7 +18,9 @@ const HeroSection = () => {
                 
                 <h1>Investing on Fintech80 section 2</h1>
                 <p>Start investing with Fintech80 with AI...and something more</p>
-                <button>Learn More</button>
+                <Link href="/learnMore">
+                    <button>Learn More</button>
+                </Link>
             </div>
         </section>
         </div>
