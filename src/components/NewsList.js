@@ -57,7 +57,7 @@ function NewsList() {
     </section>
       {loading && <div>Loading...</div>}
       {!loading && (
-        <ul>
+        <ul style={{ listStyle: 'none' }}>
           {news.map((item, index) => (
             <li key={index}
             style={{ backgroundColor: '#FCF8FC' }}>
