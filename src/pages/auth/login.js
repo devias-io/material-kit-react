@@ -1,14 +1,17 @@
 import React from 'react';
+import NextLink from 'next/link';
 import { useCallback, useState } from 'react';
 import { useAuth } from 'src/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
+  Alert,
   Button,
   TextField,
   Typography,
   Box,
+  Link,
   CssBaseline,
   Container,
 } from '@mui/material';
@@ -32,8 +35,8 @@ const Page = () => {
   const [method, setMethod] = useState('email');
   const formik = useFormik({
     initialValues: {
-      email: 'demo@Fin.io',
-      password: 'Password123!',
+      email: 'Fintech80@queensu.ca',
+      password: 'Fintechadmin!',
       submit: null
     },
     validationSchema: Yup.object({
@@ -69,7 +72,7 @@ const Page = () => {
   const handleSkip = useCallback(
     () => {
       auth.skip();
-      router.push('/');
+      router.push('/dashboard');
     },
     [auth, router]
   );
@@ -89,11 +92,16 @@ const Page = () => {
             color: '#000000', // Black text color
           }}
         >
+          <div className="logo" style={{ position: 'absolute', top: 0, left: 0, padding: '20px', fontWeight: 'bold', fontSize: '24px' }}>
+            App Name
+          </div>
           <Typography component="h1" variant="h5" sx={{ fontWeight: 'bold' }}>
             Welcome back
           </Typography>
           <Box component="form" onSubmit={formik.handleSubmit} noValidate sx={{ width: '100%', mt: 1 }}>
             <TextField
+              error={!!(formik.touched.email && formik.errors.email)}
+              helperText={formik.touched.email && formik.errors.email}
               variant="outlined"
               margin="normal"
               required
@@ -122,6 +130,8 @@ const Page = () => {
               }}
             />
             <TextField
+              error={!!(formik.touched.password && formik.errors.password)}
+              helperText={formik.touched.password && formik.errors.password}
               variant="outlined"
               margin="normal"
               required
@@ -165,6 +175,48 @@ const Page = () => {
             >
               Sign In
             </Button>
+            <Button
+                  fullWidth
+                  variant="contained"
+                  size="small"
+                  sx={{ 
+                    mt: 1, 
+                    mb: 1, 
+                    bgcolor: '#f8c24c', 
+                    color: '#000000',
+                    '&:hover': {
+                      bgcolor: '#e6c301', // Light grey on hover
+                    }
+                  }}
+                  onClick={handleSkip}
+                >
+                  Skip authentication
+            </Button>
+            <Typography
+                color="#000000"
+                variant="body2"
+              >
+                Don&apos;t have an account?
+                &nbsp;
+                <Link
+                  component={NextLink}
+                  href="/auth/register"
+                  underline="hover"
+                  variant="subtitle2"
+                  sx={{ color: '#000000' }}  // Black color
+                >
+                  Register
+                </Link>
+              </Typography>
+            <Alert
+                  color="primary"
+                  severity="info"
+                  sx={{ mt: 3 }}
+                >
+                  <div>
+                    You can use <b>Fintech80@queensu.ca</b> and password <b>Fintechadmin!</b>
+                  </div>
+                </Alert>
           </Box>
         </Box>
       </Container>

@@ -7,9 +7,12 @@ const NavBar = () => {
       <div className="logo">App Name</div>
       <ul className="nav-links">
         <Link href = "/">
-          <li className = "Home">Home</li>
+          <li>Home</li>
         </Link>
         <li>Queries</li>
+        <Link href = "/news">
+          <li>News Queries</li>
+        </Link>
         <li>Blogs</li>
         <li>FAQs</li>
         <Link href = "/aboutUs">

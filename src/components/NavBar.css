@@ -9,6 +9,10 @@
   background-color: #FCFCFC;
 }
 
+.navbar a {
+  text-decoration: none;
+}
+
 .logo {
   color: #32302F;
   font-size: 24px;
