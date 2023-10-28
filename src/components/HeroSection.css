@@ -45,7 +45,7 @@ p {
 .herosection-gif {
     width: 50%; /* Takes half the width */
     max-width: 100%;
-    height: auto;
+    height: 100%;
     border-radius: 15px;
     object-fit: cover;
 }

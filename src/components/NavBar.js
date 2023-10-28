@@ -9,9 +9,8 @@ const NavBar = () => {
         <Link href = "/">
           <li>Home</li>
         </Link>
-        <li>Queries</li>
         <Link href = "/news">
-          <li>News Queries</li>
+          <li>Queries</li>
         </Link>
         <li>Blogs</li>
         <li>FAQs</li>

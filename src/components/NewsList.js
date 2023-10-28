@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getLatestNews } from '../services/newsAPI';
+import NavBar from './NavBar';
 
 function NewsList() {
   const [news, setNews] = useState([]);
@@ -17,6 +18,17 @@ function NewsList() {
 
   return (
     <div>
+      <div className="navbar-fixed">
+      <NavBar />
+    </div>
+    <section style={{
+        backgroundColor: '#DEE7ED',
+        padding: '200px',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        height: 'auto',
+      }}>
       <h1>Latest News</h1>
       <div>
         <input 
@@ -42,12 +54,14 @@ function NewsList() {
         />
         <button onClick={fetchData}>Search</button>
       </div>
+    </section>
       {loading && <div>Loading...</div>}
       {!loading && (
         <ul>
           {news.map((item, index) => (
-            <li key={index}>
-              <h2><a href={item.link} target="_blank" rel="noopener noreferrer">{item.title}</a></h2>
+            <li key={index}
+            style={{ backgroundColor: '#FCF8FC' }}>
+              <h2 style={{ fontSize: '30px'}}><a href={item.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'black' }}>{item.title}</a></h2>
               <p><strong>Creators:</strong> {item.creator && item.creator.join(', ')}</p>
               {item.description && <p><strong>Description:</strong> {item.description}</p>}
               {item.content && <p><strong>Content:</strong> {item.content}</p>}
@@ -57,7 +71,6 @@ function NewsList() {
               <p><strong>Category:</strong> {item.category && item.category.join(', ')}</p>
               <p><strong>Country:</strong> {item.country && item.country.join(', ')}</p>
               <p><strong>Language:</strong> {item.language}</p>
-              <hr />
             </li>
           ))}
         </ul>
