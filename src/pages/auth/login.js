@@ -93,7 +93,7 @@ const Page = () => {
           }}
         >
           <div className="logo" style={{ position: 'absolute', top: 0, left: 0, padding: '20px', fontWeight: 'bold', fontSize: '24px' }}>
-            App Name
+            PathFinder
           </div>
           <Typography component="h1" variant="h5" sx={{ fontWeight: 'bold' }}>
             Welcome back

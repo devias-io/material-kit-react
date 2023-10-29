@@ -6,6 +6,7 @@ section{
     align-items: center;
     padding: 20px;
     height: calc(100vh - 60px);
+    margin-top: 50px;
 }
 
 .section1{
@@ -24,17 +25,18 @@ section{
     padding-left: 200px;
 }
 
-h1 {
-    font-size: 64px;
-    margin-bottom: 20px;
+.h1-hero-section {
+    font-size: 40px;
+    font-weight: bold;
+    margin-bottom: 10px;
     font-family: Noto Sans, sans-serif;
     font-weight: 500; 
     color: #32302F;
     word-wrap: break-word;
 }
 
-p {
-    font-size: 25px;
+.p-hero-section {
+    font-size: 20px;
     font-weight: normal;
     font-family: Noto Sans, sans-serif;
     font-weight: 400; 

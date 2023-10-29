@@ -73,8 +73,8 @@ const AboutUs = () => {
             alt="Main Image"
             className="main-image"
           />
-          <h1>Who are we?</h1>
-          <p>Description of team</p>
+          <h1 class="h1-about-us">Who are we?</h1>
+          <p class="p-about-us">Description of team</p>
         </div>
         <div className="team-members">
         {teamMembers.map((member) => (

@@ -4,13 +4,16 @@ import Link from 'next/link'; // Import Link from next/link
 const NavBar = () => {
   return (
     <nav className="navbar">
-      <div className="logo">App Name</div>
+      <div className="logo">PathFinder</div>
       <ul className="nav-links">
         <Link href = "/">
           <li>Home</li>
         </Link>
         <Link href = "/news">
           <li>Queries</li>
+        </Link>
+        <Link href = "/bingNews">
+          <li>Bing Queries</li>
         </Link>
         <li>Blogs</li>
         <li>FAQs</li>
