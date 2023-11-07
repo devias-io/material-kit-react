@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from "react";
 import {
   Box,
   Button,
@@ -8,76 +8,57 @@ import {
   CardHeader,
   Divider,
   TextField,
-  Unstable_Grid2 as Grid
-} from '@mui/material';
+  Unstable_Grid2 as Grid,
+} from "@mui/material";
 
 const states = [
   {
-    value: 'alabama',
-    label: 'Alabama'
+    value: "alabama",
+    label: "Alabama",
   },
   {
-    value: 'new-york',
-    label: 'New York'
+    value: "new-york",
+    label: "New York",
   },
   {
-    value: 'san-francisco',
-    label: 'San Francisco'
+    value: "san-francisco",
+    label: "San Francisco",
   },
   {
-    value: 'los-angeles',
-    label: 'Los Angeles'
-  }
+    value: "los-angeles",
+    label: "Los Angeles",
+  },
 ];
 
 export const AccountProfileDetails = () => {
   const [values, setValues] = useState({
-    firstName: 'Anika',
-    lastName: 'Visser',
-    email: 'demo@devias.io',
-    phone: '',
-    state: 'los-angeles',
-    country: 'USA'
+    firstName: "Anika",
+    lastName: "Visser",
+    email: "demo@devias.io",
+    phone: "",
+    state: "los-angeles",
+    country: "USA",
   });
 
-  const handleChange = useCallback(
-    (event) => {
-      setValues((prevState) => ({
-        ...prevState,
-        [event.target.name]: event.target.value
-      }));
-    },
-    []
-  );
+  const handleChange = useCallback((event) => {
+    setValues((prevState) => ({
+      ...prevState,
+      [event.target.name]: event.target.value,
+    }));
+  }, []);
 
-  const handleSubmit = useCallback(
-    (event) => {
-      event.preventDefault();
-    },
-    []
-  );
+  const handleSubmit = useCallback((event) => {
+    event.preventDefault();
+  }, []);
 
   return (
-    <form
-      autoComplete="off"
-      noValidate
-      onSubmit={handleSubmit}
-    >
+    <form autoComplete="off" noValidate onSubmit={handleSubmit}>
       <Card>
-        <CardHeader
-          subheader="The information can be edited"
-          title="Profile"
-        />
+        <CardHeader subheader="The information can be edited" title="Profile" />
         <CardContent sx={{ pt: 0 }}>
           <Box sx={{ m: -1.5 }}>
-            <Grid
-              container
-              spacing={3}
-            >
-              <Grid
-                xs={12}
-                md={6}
-              >
+            <Grid container spacing={3}>
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   helperText="Please specify the first name"
@@ -88,10 +69,7 @@ export const AccountProfileDetails = () => {
                   value={values.firstName}
                 />
               </Grid>
-              <Grid
-                xs={12}
-                md={6}
-              >
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Last name"
@@ -101,10 +79,7 @@ export const AccountProfileDetails = () => {
                   value={values.lastName}
                 />
               </Grid>
-              <Grid
-                xs={12}
-                md={6}
-              >
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Email Address"
@@ -114,10 +89,7 @@ export const AccountProfileDetails = () => {
                   value={values.email}
                 />
               </Grid>
-              <Grid
-                xs={12}
-                md={6}
-              >
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Phone Number"
@@ -127,10 +99,7 @@ export const AccountProfileDetails = () => {
                   value={values.phone}
                 />
               </Grid>
-              <Grid
-                xs={12}
-                md={6}
-              >
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Country"
@@ -140,10 +109,7 @@ export const AccountProfileDetails = () => {
                   value={values.country}
                 />
               </Grid>
-              <Grid
-                xs={12}
-                md={6}
-              >
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Select State"
@@ -155,10 +121,7 @@ export const AccountProfileDetails = () => {
                   value={values.state}
                 >
                   {states.map((option) => (
-                    <option
-                      key={option.value}
-                      value={option.value}
-                    >
+                    <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
@@ -168,10 +131,8 @@ export const AccountProfileDetails = () => {
           </Box>
         </CardContent>
         <Divider />
-        <CardActions sx={{ justifyContent: 'flex-end' }}>
-          <Button variant="contained">
-            Save details
-          </Button>
+        <CardActions sx={{ justifyContent: "flex-end" }}>
+          <Button variant="contained">Save details</Button>
         </CardActions>
       </Card>
     </form>
