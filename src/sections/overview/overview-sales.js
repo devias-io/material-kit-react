@@ -72,18 +72,14 @@ const useChartOptions = () => {
         show: true
       },
       categories: [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec'
+        'Category 1',
+        'Category 2',
+        'Category 3',
+        'Category 4',
+        'Category 5',
+        'Category 6',
+        'Category 7',
+        'Category 8',
       ],
       labels: {
         offsetY: 5,
@@ -94,7 +90,6 @@ const useChartOptions = () => {
     },
     yaxis: {
       labels: {
-        formatter: (value) => (value > 0 ? `${value}K` : `${value}`),
         offsetX: -10,
         style: {
           colors: theme.palette.text.secondary

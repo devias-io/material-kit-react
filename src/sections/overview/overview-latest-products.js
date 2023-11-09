@@ -26,7 +26,6 @@ export const OverviewLatestProducts = (props) => {
       <List>
         {products.map((product, index) => {
           const hasDivider = index < products.length - 1;
-          const ago = formatDistanceToNow(product.updatedAt);
 
           return (
             <ListItem
@@ -62,7 +61,8 @@ export const OverviewLatestProducts = (props) => {
               <ListItemText
                 primary={product.name}
                 primaryTypographyProps={{ variant: 'subtitle1' }}
-                secondary={`Updated ${ago} ago`}
+                secondary={`Number of posts ${product.num_posts}
+                            \nNumber of posts ${product.num_posts}`}
                 secondaryTypographyProps={{ variant: 'body2' }}
               />
               <IconButton edge="end">

@@ -16,7 +16,6 @@ import {
   TableRow
 } from '@mui/material';
 import { Scrollbar } from 'src/components/scrollbar';
-import { SeverityPill } from 'src/components/severity-pill';
 
 const statusMap = {
   pending: 'warning',
@@ -36,41 +35,32 @@ export const OverviewLatestOrders = (props) => {
             <TableHead>
               <TableRow>
                 <TableCell>
-                  Order
+                  Category
                 </TableCell>
                 <TableCell>
-                  Customer
-                </TableCell>
-                <TableCell sortDirection="desc">
-                  Date
+                  Title
                 </TableCell>
                 <TableCell>
-                  Status
+                  Body
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {orders.map((order) => {
-                const createdAt = format(order.createdAt, 'dd/MM/yyyy');
-
                 return (
                   <TableRow
                     hover
                     key={order.id}
+                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                   >
                     <TableCell>
-                      {order.ref}
+                      {order.category}
                     </TableCell>
                     <TableCell>
-                      {order.customer.name}
+                      {order.title}
                     </TableCell>
-                    <TableCell>
-                      {createdAt}
-                    </TableCell>
-                    <TableCell>
-                      <SeverityPill color={statusMap[order.status]}>
-                        {order.status}
-                      </SeverityPill>
+                    <TableCell variant="footer">
+                        {order.body}
                     </TableCell>
                   </TableRow>
                 );
@@ -80,20 +70,6 @@ export const OverviewLatestOrders = (props) => {
         </Box>
       </Scrollbar>
       <Divider />
-      <CardActions sx={{ justifyContent: 'flex-end' }}>
-        <Button
-          color="inherit"
-          endIcon={(
-            <SvgIcon fontSize="small">
-              <ArrowRightIcon />
-            </SvgIcon>
-          )}
-          size="small"
-          variant="text"
-        >
-          View all
-        </Button>
-      </CardActions>
     </Card>
   );
 };
