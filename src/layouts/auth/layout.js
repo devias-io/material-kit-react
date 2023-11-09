@@ -44,9 +44,8 @@ export const Layout = (props) => {
             color: "white",
             display: "flex",
             justifyContent: "center",
-            "& img": {
-              maxWidth: "100%",
-            },
+            backgroundColor: "#FF5733",
+            minHeight: "100vh",
           }}
         >
           <Box sx={{ p: 3 }}>

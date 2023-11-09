@@ -6,6 +6,7 @@ import {
   CardActions,
   CardContent,
   Divider,
+  Link,
   Typography,
 } from "@mui/material";
 
@@ -48,6 +49,7 @@ export const AccountProfile = () => (
       </Box>
     </CardContent>
     <Divider />
+
     <CardActions>
       <Button fullWidth variant="text">
         Upload picture

@@ -37,7 +37,7 @@ export const AccountProfileDetails = () => {
     email: "demo@devias.io",
     phone: "",
     state: "los-angeles",
-    country: "USA",
+    country: "DRC",
   });
 
   const handleChange = useCallback((event) => {
