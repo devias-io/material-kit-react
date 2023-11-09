@@ -1,0 +1,1300 @@
+[
+    {
+        "id": "7168f03e-ab89-4a2e-b259-7bbf536fb51b",
+        "categoryId": "c1741f16-5771-4c94-8055-9738b74aca9f",
+        "author": {
+            "id": "5fdd18da-c04c-4119-b3ae-392d4627ab0a",
+            "firstName": "Sean",
+            "lastName": "Thompson",
+            "registered": true,
+            "slug": "U2BA2695D",
+            "role": "0"
+        },
+        "title": "Lecture Videos",
+        "body": "What is the code to view the echo 360 lectures? I cannot find them",
+        "anonymous": true,
+        "published": true,
+        "publishedAt": "2022-09-08T15:26:03.021624Z",
+        "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+        "number": 1,
+        "type": "question",
+        "visibility": "member",
+        "slug": "67CPF69F1",
+        "createdAt": "2022-09-08T15:25:39.005352Z",
+        "updatedAt": "2022-09-10T01:50:58.726303Z",
+        "answersCount": 1,
+        "uniqueViewsCount": 131,
+        "viewsCount": 388,
+        "answeredAt": "2022-09-10T01:50:58.726303Z",
+        "modAnsweredAt": "2022-09-10T01:50:58.726303Z",
+        "read": true,
+        "conversation": {
+            "id": "7d88596d-609c-4e66-8099-10c708968fdf",
+            "name": "Lecture Videos",
+            "slug": "CEF9601C7",
+            "photo": "https://s3-us-west-2.amazonaws.com/campuswire-default-images/conversation-amber.png",
+            "type": "post",
+            "public": true,
+            "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+            "network": "b9db3a64-7038-474e-af07-04f6df6c46d9",
+            "firstMessage": {
+                "id": "4151399666176857605",
+                "uuid": "d84605dc-1fff-4063-9653-34495e20f8c2",
+                "anonymousLevel": 0,
+                "conversation": "7d88596d-609c-4e66-8099-10c708968fdf",
+                "system": true,
+                "createdAt": "2022-09-08T15:26:03.038373Z",
+                "updatedAt": "2022-09-08T15:26:03.038373Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessage": {
+                "id": "4151399666176857605",
+                "uuid": "d84605dc-1fff-4063-9653-34495e20f8c2",
+                "anonymousLevel": 0,
+                "author": {
+                    "id": "5fdd18da-c04c-4119-b3ae-392d4627ab0a",
+                    "firstName": "Sean",
+                    "lastName": "Thompson",
+                    "registered": true,
+                    "slug": "U2BA2695D",
+                    "role": "0"
+                },
+                "conversation": "7d88596d-609c-4e66-8099-10c708968fdf",
+                "system": true,
+                "createdAt": "2022-09-08T15:26:03.038373Z",
+                "updatedAt": "2022-09-08T15:26:03.038373Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessageAt": "2022-09-08T15:26:03.038373Z",
+            "createdAt": "2022-09-08T15:26:03.03248Z",
+            "updatedAt": "2022-09-08T15:26:03.038373Z",
+            "post": "f7f691c6-7801-4587-9b64-59311698b72f",
+            "subscribers": [
+                {
+                    "id": "5262db9a-16a7-4c57-872b-cd0c217a8a82",
+                    "enabled": true
+                }
+            ]
+        },
+        "comments": [
+            {
+                "id": "d194fa76-4b81-46a3-8243-98c172278e3a",
+                "author": {
+                    "id": "69a966f5-10f9-4d2d-8167-dbed283f1f20",
+                    "firstName": "Alexander",
+                    "lastName": "Harris",
+                    "registered": true,
+                    "slug": "0U180906E",
+                    "role": "0"
+                },
+                "body": "There is a link set up at the top of the Moodle page that should take you to the videos.  That said, I've yet to receive a notification that Wednesday's lecture has been posted in the system.  I've contacted instructor services and will update you when I hear back...",
+                "answer": true,
+                "metadata": {},
+                "createdAt": "2022-09-10T01:50:32.658822Z",
+                "publishedAt": "2022-09-10T01:50:58.661435Z",
+                "endorsed": false,
+                "depth": 1
+            }
+        ]
+    },
+    {
+        "id": "3f5825b6-9c1d-41f1-9d38-419b60e026c6",
+        "categoryId": "c1741f16-5771-4c94-8055-9738b74aca9f",
+        "author": {
+            "id": "9e6c472f-e33f-4fbf-a16d-92c72b638b67",
+            "firstName": "Travis",
+            "lastName": "Watson",
+            "registered": true,
+            "slug": "6EB06U712",
+            "role": "0"
+        },
+        "title": "zzz Because off traditional t",
+        "body": "zzz Single green four kitchen treatment item. Nature avoid yet.\nPlayer heart wonder character never foreign use garden. Serious process approach she movie.",
+        "published": true,
+        "publishedAt": "2022-09-08T19:48:21.572689Z",
+        "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+        "number": 2,
+        "type": "question",
+        "visibility": "moderator",
+        "slug": "078D95P9B",
+        "createdAt": "2022-09-08T19:45:26.475663Z",
+        "updatedAt": "2022-09-10T01:39:51.469998Z",
+        "answersCount": 1,
+        "uniqueViewsCount": 8,
+        "viewsCount": 33,
+        "answeredAt": "2022-09-10T01:39:51.469998Z",
+        "modAnsweredAt": "2022-09-10T01:39:51.469998Z",
+        "read": true,
+        "conversation": {
+            "id": "82240118-af4d-41bb-b636-c6081a7d2665",
+            "name": "zzz Because off traditional t",
+            "slug": "C2CA329AB",
+            "photo": "https://s3-us-west-2.amazonaws.com/campuswire-default-images/conversation-cyan.png",
+            "type": "post",
+            "public": true,
+            "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+            "network": "b9db3a64-7038-474e-af07-04f6df6c46d9",
+            "firstMessage": {
+                "id": "8503126670976681618",
+                "uuid": "b208d819-a852-44d7-ae62-3d44f048fa67",
+                "anonymousLevel": 0,
+                "conversation": "82240118-af4d-41bb-b636-c6081a7d2665",
+                "system": true,
+                "createdAt": "2022-09-08T19:48:21.588411Z",
+                "updatedAt": "2022-09-08T19:48:21.588411Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessage": {
+                "id": "8503126670976681618",
+                "uuid": "b208d819-a852-44d7-ae62-3d44f048fa67",
+                "anonymousLevel": 0,
+                "author": {
+                    "id": "9e6c472f-e33f-4fbf-a16d-92c72b638b67",
+                    "firstName": "Travis",
+                    "lastName": "Watson",
+                    "registered": true,
+                    "slug": "6EB06U712",
+                    "role": "0"
+                },
+                "conversation": "82240118-af4d-41bb-b636-c6081a7d2665",
+                "system": true,
+                "createdAt": "2022-09-08T19:48:21.588411Z",
+                "updatedAt": "2022-09-08T19:48:21.588411Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessageAt": "2022-09-08T19:48:21.588411Z",
+            "createdAt": "2022-09-08T19:48:21.582288Z",
+            "updatedAt": "2022-09-08T19:48:21.588411Z",
+            "post": "d98570b9-5f98-48c6-81e4-363a10158cb8",
+            "subscribers": [
+                {
+                    "id": "0266e7b1-689d-4f3c-8ba7-2bd8d1d954aa",
+                    "enabled": true
+                }
+            ]
+        },
+        "comments": [
+            {
+                "id": "7871093f-332a-4be2-9776-8be8aa311cf6",
+                "author": {
+                    "id": "69a966f5-10f9-4d2d-8167-dbed283f1f20",
+                    "firstName": "Alexander",
+                    "lastName": "Harris",
+                    "registered": true,
+                    "slug": "0U180906E",
+                    "role": "0"
+                },
+                "body": "zzz Stand fast hit growth war machine. Scene ready former key. Allow marriage charge.\nYard season board he. Consumer left Democrat wait still everybody buy.",
+                "answer": true,
+                "metadata": {},
+                "createdAt": "2022-09-10T01:33:58.501688Z",
+                "publishedAt": "2022-09-10T01:39:51.408011Z",
+                "endorsed": false,
+                "depth": 1
+            },
+            {
+                "id": "29003f8e-e413-4d85-a70e-e68470f561f7",
+                "author": {
+                    "id": "9e6c472f-e33f-4fbf-a16d-92c72b638b67",
+                    "firstName": "Travis",
+                    "lastName": "Watson",
+                    "registered": true,
+                    "slug": "6EB06U712",
+                    "role": "0"
+                },
+                "body": "zzz Believe hot member the fill. Yes act significant subject book.\nTravel civil positive size other dog fine condition. Pretty pai",
+                "metadata": {},
+                "parent": "98a293ae-d440-444e-97d9-28f20d168090",
+                "createdAt": "2022-09-10T03:01:30.397301Z",
+                "publishedAt": "2022-09-10T03:01:30.396392Z",
+                "endorsed": false,
+                "depth": 2
+            }
+        ]
+    },
+    {
+        "id": "50df03bf-e6e4-41a0-9aa0-2bec41cd56b5",
+        "categoryId": "c1741f16-5771-4c94-8055-9738b74aca9f",
+        "author": {
+            "id": "5f6359aa-ff96-4dc3-84da-3132886876ce",
+            "firstName": "Daniel",
+            "lastName": "Bowman",
+            "registered": true,
+            "slug": "ABE9F260U",
+            "role": "0"
+        },
+        "title": "Quiz",
+        "body": "When can we start off our first quiz?",
+        "anonymous": true,
+        "published": true,
+        "publishedAt": "2022-09-10T01:13:59.16199Z",
+        "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+        "number": 3,
+        "type": "question",
+        "visibility": "member",
+        "slug": "88P19B47E",
+        "createdAt": "2022-09-10T01:13:09.699785Z",
+        "updatedAt": "2022-09-10T01:33:30.053696Z",
+        "answersCount": 1,
+        "uniqueViewsCount": 137,
+        "viewsCount": 304,
+        "answeredAt": "2022-09-10T01:33:30.053696Z",
+        "modAnsweredAt": "2022-09-10T01:33:30.053696Z",
+        "read": true,
+        "conversation": {
+            "id": "9c31271a-0db3-4435-8b46-c4f0154dcd18",
+            "name": "Quiz",
+            "slug": "B57083C2C",
+            "photo": "https://s3-us-west-2.amazonaws.com/campuswire-default-images/conversation-cyan.png",
+            "type": "post",
+            "public": true,
+            "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+            "network": "b9db3a64-7038-474e-af07-04f6df6c46d9",
+            "firstMessage": {
+                "id": "1567440180036718698",
+                "uuid": "b53b0959-121c-407f-b54d-2b84dbc03aed",
+                "anonymousLevel": 0,
+                "conversation": "9c31271a-0db3-4435-8b46-c4f0154dcd18",
+                "system": true,
+                "createdAt": "2022-09-10T01:13:59.17839Z",
+                "updatedAt": "2022-09-10T01:13:59.17839Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessage": {
+                "id": "1567440180036718698",
+                "uuid": "b53b0959-121c-407f-b54d-2b84dbc03aed",
+                "anonymousLevel": 0,
+                "author": {
+                    "id": "5f6359aa-ff96-4dc3-84da-3132886876ce",
+                    "firstName": "Daniel",
+                    "lastName": "Bowman",
+                    "registered": true,
+                    "slug": "ABE9F260U",
+                    "role": "0"
+                },
+                "conversation": "9c31271a-0db3-4435-8b46-c4f0154dcd18",
+                "system": true,
+                "createdAt": "2022-09-10T01:13:59.17839Z",
+                "updatedAt": "2022-09-10T01:13:59.17839Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessageAt": "2022-09-10T01:13:59.17839Z",
+            "createdAt": "2022-09-10T01:13:59.17174Z",
+            "updatedAt": "2022-09-10T01:13:59.17839Z",
+            "post": "18eb7849-170b-45fc-9868-dd08cd55a6ef",
+            "subscribers": [
+                {
+                    "id": "296ae0fb-3da7-4d35-96ec-e1f155ad694b",
+                    "enabled": true
+                }
+            ]
+        },
+        "comments": [
+            {
+                "id": "55c91599-c36d-46b1-9e88-be43829ffc99",
+                "author": {
+                    "id": "69a966f5-10f9-4d2d-8167-dbed283f1f20",
+                    "firstName": "Alexander",
+                    "lastName": "Harris",
+                    "registered": true,
+                    "slug": "0U180906E",
+                    "role": "0"
+                },
+                "body": "There is no quiz this week.  ",
+                "answer": true,
+                "metadata": {},
+                "createdAt": "2022-09-10T01:33:21.881099Z",
+                "publishedAt": "2022-09-10T01:33:30.003343Z",
+                "endorsed": false,
+                "depth": 1
+            }
+        ]
+    },
+    {
+        "id": "dfbbbe87-61e4-4fb0-b23e-6519e41f680a",
+        "categoryId": "c1741f16-5771-4c94-8055-9738b74aca9f",
+        "author": {
+            "id": "5fdd18da-c04c-4119-b3ae-392d4627ab0a",
+            "firstName": "Sean",
+            "lastName": "Thompson",
+            "registered": true,
+            "slug": "U2BA2695D",
+            "role": "0"
+        },
+        "title": "Lecture videos",
+        "body": "Where are the lecture videos for this class?",
+        "anonymous": true,
+        "published": true,
+        "publishedAt": "2022-09-10T01:35:45.545901Z",
+        "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+        "number": 4,
+        "type": "question",
+        "visibility": "member",
+        "slug": "PA09A2D7F",
+        "createdAt": "2022-09-10T01:35:43.204459Z",
+        "updatedAt": "2022-09-10T01:54:01.560198Z",
+        "answersCount": 1,
+        "uniqueViewsCount": 130,
+        "viewsCount": 568,
+        "answeredAt": "2022-09-10T01:54:01.560198Z",
+        "modAnsweredAt": "2022-09-10T01:54:01.560198Z",
+        "read": true,
+        "conversation": {
+            "id": "e8a75847-a622-4007-99fe-1f439929005c",
+            "name": "Lecture videos",
+            "slug": "CD8A64C4D",
+            "photo": "https://s3-us-west-2.amazonaws.com/campuswire-default-images/conversation-indigo.png",
+            "type": "post",
+            "public": true,
+            "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+            "network": "b9db3a64-7038-474e-af07-04f6df6c46d9",
+            "firstMessage": {
+                "id": "5815348971247862125",
+                "uuid": "922ca697-f383-4375-a64c-1be355c2216e",
+                "anonymousLevel": 0,
+                "conversation": "e8a75847-a622-4007-99fe-1f439929005c",
+                "system": true,
+                "createdAt": "2022-09-10T01:35:45.562544Z",
+                "updatedAt": "2022-09-10T01:35:45.562544Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessage": {
+                "id": "5815348971247862125",
+                "uuid": "922ca697-f383-4375-a64c-1be355c2216e",
+                "anonymousLevel": 0,
+                "author": {
+                    "id": "5fdd18da-c04c-4119-b3ae-392d4627ab0a",
+                    "firstName": "Sean",
+                    "lastName": "Thompson",
+                    "registered": true,
+                    "slug": "U2BA2695D",
+                    "role": "0"
+                },
+                "conversation": "e8a75847-a622-4007-99fe-1f439929005c",
+                "system": true,
+                "createdAt": "2022-09-10T01:35:45.562544Z",
+                "updatedAt": "2022-09-10T01:35:45.562544Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessageAt": "2022-09-10T01:35:45.562544Z",
+            "createdAt": "2022-09-10T01:35:45.555126Z",
+            "updatedAt": "2022-09-10T01:35:45.562544Z",
+            "post": "ada2907f-c6f0-47ec-9bd6-c66927d313ae",
+            "subscribers": [
+                {
+                    "id": "5262db9a-16a7-4c57-872b-cd0c217a8a82",
+                    "enabled": true
+                }
+            ]
+        },
+        "comments": [
+            {
+                "id": "d3fe2799-06e8-47f7-b2cc-4b0a0b535730",
+                "author": {
+                    "id": "69a966f5-10f9-4d2d-8167-dbed283f1f20",
+                    "firstName": "Alexander",
+                    "lastName": "Harris",
+                    "registered": true,
+                    "slug": "0U180906E",
+                    "role": "0"
+                },
+                "body": "See the answer to #1.\n\nGoing forward, please do not post the same question more than once.  It's a big class and the forum is less useful if there are lots of dups.\n\n",
+                "answer": true,
+                "metadata": {},
+                "createdAt": "2022-09-10T01:51:38.031794Z",
+                "publishedAt": "2022-09-10T01:54:01.507703Z",
+                "endorsed": false,
+                "depth": 1
+            }
+        ]
+    },
+    {
+        "id": "88b82025-a6b7-4310-bf01-c42bfb3ab167",
+        "categoryId": "c1741f16-5771-4c94-8055-9738b74aca9f",
+        "author": {
+            "id": "c51424bb-84fb-4678-a0d8-b6ebdf47aab7",
+            "firstName": "Brian",
+            "lastName": "Brown",
+            "registered": true,
+            "slug": "UECDE774E",
+            "role": "0"
+        },
+        "title": "zzz Property course herself f",
+        "body": "zzz Past brother probably job anyone economy money. Offer yard hot need star. Agreement chance reduce bill just.",
+        "anonymous": true,
+        "published": true,
+        "publishedAt": "2022-09-11T03:55:45.029768Z",
+        "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+        "number": 5,
+        "type": "question",
+        "visibility": "moderator",
+        "slug": "5P70DE64B",
+        "createdAt": "2022-09-11T03:54:13.969717Z",
+        "updatedAt": "2022-09-22T23:00:56.892224Z",
+        "answersCount": 1,
+        "uniqueViewsCount": 7,
+        "viewsCount": 32,
+        "answeredAt": "2022-09-14T20:43:44.874514Z",
+        "read": true,
+        "conversation": {
+            "id": "48044b19-dfd9-49fc-ba7f-4b1a5ff75348",
+            "name": "zzz Property course herself f",
+            "slug": "F8E2AC65C",
+            "photo": "https://s3-us-west-2.amazonaws.com/campuswire-default-images/conversation-teal.png",
+            "type": "post",
+            "public": true,
+            "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+            "network": "b9db3a64-7038-474e-af07-04f6df6c46d9",
+            "firstMessage": {
+                "id": "4650808025484100154",
+                "uuid": "19c45afc-1f3b-424a-842c-28017f9b148e",
+                "anonymousLevel": 0,
+                "conversation": "48044b19-dfd9-49fc-ba7f-4b1a5ff75348",
+                "system": true,
+                "createdAt": "2022-09-11T03:55:45.04463Z",
+                "updatedAt": "2022-09-11T03:55:45.04463Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessage": {
+                "id": "4650808025484100154",
+                "uuid": "19c45afc-1f3b-424a-842c-28017f9b148e",
+                "anonymousLevel": 0,
+                "author": {
+                    "id": "c51424bb-84fb-4678-a0d8-b6ebdf47aab7",
+                    "firstName": "Brian",
+                    "lastName": "Brown",
+                    "registered": true,
+                    "slug": "UECDE774E",
+                    "role": "0"
+                },
+                "conversation": "48044b19-dfd9-49fc-ba7f-4b1a5ff75348",
+                "system": true,
+                "createdAt": "2022-09-11T03:55:45.04463Z",
+                "updatedAt": "2022-09-11T03:55:45.04463Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessageAt": "2022-09-11T03:55:45.04463Z",
+            "createdAt": "2022-09-11T03:55:45.038784Z",
+            "updatedAt": "2022-09-11T03:55:45.04463Z",
+            "post": "d6e40b57-5186-43bf-a5f6-3271f17f386f",
+            "subscribers": [
+                {
+                    "id": "e7ee47cd-e8b6-44a6-adc8-cb0b4bfce865",
+                    "enabled": true
+                }
+            ]
+        },
+        "comments": [
+            {
+                "id": "a519047a-d1a0-4d10-b894-b010975bb02c",
+                "author": {
+                    "id": "0c194388-1313-4412-a3a3-0cbd09c21a26",
+                    "firstName": "Jacob",
+                    "lastName": "Shannon",
+                    "registered": true,
+                    "slug": "E4D6586BU",
+                    "role": "0"
+                },
+                "body": "zzz Pressure study manage white its guess challenge. Difficult note husband price face able well. Wide cut benefit that detail suffer work.",
+                "answer": true,
+                "metadata": {},
+                "createdAt": "2022-09-14T20:39:45.686006Z",
+                "publishedAt": "2022-09-14T20:43:44.834946Z",
+                "endorsed": false,
+                "depth": 1
+            }
+        ]
+    },
+    {
+        "id": "876ec3fb-b546-4622-90e9-969f746b4b70",
+        "categoryId": "c1741f16-5771-4c94-8055-9738b74aca9f",
+        "author": {
+            "id": "2825b172-3ee2-4260-a5c7-b697976fe142",
+            "firstName": "Matthew",
+            "lastName": "Kent",
+            "registered": true,
+            "slug": "8554039UB",
+            "role": "0"
+        },
+        "title": "zzz National everything",
+        "body": "zzz Kind act morning free whom able. Research since education over back analysis next position. Buy week student director.",
+        "published": true,
+        "publishedAt": "2022-09-13T01:01:26.712996Z",
+        "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+        "number": 6,
+        "type": "question",
+        "visibility": "moderator",
+        "slug": "63CP3CE56",
+        "createdAt": "2022-09-13T01:00:19.946692Z",
+        "updatedAt": "2022-09-14T20:39:20.300371Z",
+        "lastEditedAt": "2022-09-13T01:01:49.326121Z",
+        "answersCount": 1,
+        "uniqueViewsCount": 7,
+        "viewsCount": 23,
+        "answeredAt": "2022-09-14T20:39:20.300371Z",
+        "modAnsweredAt": "2022-09-14T20:39:20.300371Z",
+        "read": true,
+        "conversation": {
+            "id": "3c474969-b178-469b-82d5-bb084cc9204a",
+            "name": "zzz National everything",
+            "slug": "0E815CBC2",
+            "photo": "https://s3-us-west-2.amazonaws.com/campuswire-default-images/conversation-green.png",
+            "type": "post",
+            "public": true,
+            "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+            "network": "b9db3a64-7038-474e-af07-04f6df6c46d9",
+            "firstMessage": {
+                "id": "3899590471642411618",
+                "uuid": "5d486d16-7d28-491f-a3d1-34cd703a7c88",
+                "anonymousLevel": 0,
+                "conversation": "3c474969-b178-469b-82d5-bb084cc9204a",
+                "system": true,
+                "createdAt": "2022-09-13T01:01:26.731807Z",
+                "updatedAt": "2022-09-13T01:01:26.731807Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessage": {
+                "id": "3899590471642411618",
+                "uuid": "5d486d16-7d28-491f-a3d1-34cd703a7c88",
+                "anonymousLevel": 0,
+                "author": {
+                    "id": "2825b172-3ee2-4260-a5c7-b697976fe142",
+                    "firstName": "Matthew",
+                    "lastName": "Kent",
+                    "registered": true,
+                    "slug": "8554039UB",
+                    "role": "0"
+                },
+                "conversation": "3c474969-b178-469b-82d5-bb084cc9204a",
+                "system": true,
+                "createdAt": "2022-09-13T01:01:26.731807Z",
+                "updatedAt": "2022-09-13T01:01:26.731807Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessageAt": "2022-09-13T01:01:26.731807Z",
+            "createdAt": "2022-09-13T01:01:26.72439Z",
+            "updatedAt": "2022-09-13T01:01:26.731807Z",
+            "post": "e35c6c63-838d-4f6d-9664-c49ffd1a6156"
+        },
+        "comments": [
+            {
+                "id": "1826a697-4cae-4f1f-bd27-d44bdadd2298",
+                "author": {
+                    "id": "0c194388-1313-4412-a3a3-0cbd09c21a26",
+                    "firstName": "Jacob",
+                    "lastName": "Shannon",
+                    "registered": true,
+                    "slug": "E4D6586BU",
+                    "role": "0"
+                },
+                "body": "zzz Hot will also machine million until yes. Action bar similar help forward whom. Tough southern simple involve f",
+                "answer": true,
+                "metadata": {},
+                "createdAt": "2022-09-14T20:38:29.194252Z",
+                "publishedAt": "2022-09-14T20:39:20.260063Z",
+                "endorsed": false,
+                "depth": 1
+            }
+        ]
+    },
+    {
+        "id": "b7b6867d-6546-4a7c-9e45-20ff6967e537",
+        "categoryId": "e03d79c7-74a5-4db3-8e43-45b4c5335051",
+        "author": {
+            "id": "c95325af-c836-4636-9213-ad50154d27c4",
+            "firstName": "Regina",
+            "lastName": "Gonzales",
+            "registered": true,
+            "slug": "AU0FA880D",
+            "role": "0"
+        },
+        "title": "Definition of sorted for question 5",
+        "body": "\"Return a list of (student club) tuples, sorted and grouped by club.\"\nWould a sorted list be sorted first alphabetically based off club name, then within the club segments of the list it would be sorted based on the name of the student?\n",
+        "anonymous": true,
+        "published": true,
+        "publishedAt": "2022-09-14T23:29:30.027525Z",
+        "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+        "number": 7,
+        "type": "question",
+        "visibility": "member",
+        "slug": "6ACFE1A7P",
+        "createdAt": "2022-09-14T23:27:43.268603Z",
+        "updatedAt": "2022-09-15T05:43:18.536903Z",
+        "answersCount": 1,
+        "uniqueViewsCount": 119,
+        "viewsCount": 293,
+        "answeredAt": "2022-09-15T05:43:18.536903Z",
+        "modAnsweredAt": "2022-09-15T05:43:18.536903Z",
+        "read": true,
+        "conversation": {
+            "id": "52354a74-08d8-4f7b-8cc0-d1e5b2db7135",
+            "name": "Definition of sorted for question 5",
+            "slug": "7DC50EC96",
+            "photo": "https://s3-us-west-2.amazonaws.com/campuswire-default-images/conversation-purple.png",
+            "type": "post",
+            "public": true,
+            "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+            "network": "b9db3a64-7038-474e-af07-04f6df6c46d9",
+            "firstMessage": {
+                "id": "6778149832309581501",
+                "uuid": "6e9d2eb0-7315-4e01-a375-cc3927893635",
+                "anonymousLevel": 0,
+                "conversation": "52354a74-08d8-4f7b-8cc0-d1e5b2db7135",
+                "system": true,
+                "createdAt": "2022-09-14T23:29:30.042909Z",
+                "updatedAt": "2022-09-14T23:29:30.042909Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessage": {
+                "id": "6778149832309581501",
+                "uuid": "6e9d2eb0-7315-4e01-a375-cc3927893635",
+                "anonymousLevel": 0,
+                "author": {
+                    "id": "c95325af-c836-4636-9213-ad50154d27c4",
+                    "firstName": "Regina",
+                    "lastName": "Gonzales",
+                    "registered": true,
+                    "slug": "AU0FA880D",
+                    "role": "0"
+                },
+                "conversation": "52354a74-08d8-4f7b-8cc0-d1e5b2db7135",
+                "system": true,
+                "createdAt": "2022-09-14T23:29:30.042909Z",
+                "updatedAt": "2022-09-14T23:29:30.042909Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessageAt": "2022-09-14T23:29:30.042909Z",
+            "createdAt": "2022-09-14T23:29:30.037101Z",
+            "updatedAt": "2022-09-14T23:29:30.042909Z",
+            "post": "aac6e7f1-7299-4361-bbfc-7a3d5730a980",
+            "subscribers": [
+                {
+                    "id": "daf8800a-d09f-4b58-82d9-523fd6bcf432",
+                    "enabled": true
+                }
+            ]
+        },
+        "comments": [
+            {
+                "id": "a0d3ad5b-0452-4fb1-8b2e-6440ea8b2047",
+                "author": {
+                    "id": "69a966f5-10f9-4d2d-8167-dbed283f1f20",
+                    "firstName": "Alexander",
+                    "lastName": "Harris",
+                    "registered": true,
+                    "slug": "0U180906E",
+                    "role": "0"
+                },
+                "body": "Yes, this is correct (see the example in main() for sample output).",
+                "answer": true,
+                "metadata": {},
+                "createdAt": "2022-09-15T05:42:55.795265Z",
+                "publishedAt": "2022-09-15T05:43:18.468738Z",
+                "endorsed": false,
+                "depth": 1
+            }
+        ]
+    },
+    {
+        "id": "fbdfac27-efa7-4384-9c9d-e852282eff62",
+        "categoryId": "e03d79c7-74a5-4db3-8e43-45b4c5335051",
+        "author": {
+            "id": "c95325af-c836-4636-9213-ad50154d27c4",
+            "firstName": "Regina",
+            "lastName": "Gonzales",
+            "registered": true,
+            "slug": "AU0FA880D",
+            "role": "0"
+        },
+        "title": "Gradescope tests",
+        "body": "Will the gradescope assignment automatically run private tests and tell us if we passed them all or not?  ",
+        "anonymous": true,
+        "published": true,
+        "publishedAt": "2022-09-15T00:26:14.003364Z",
+        "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+        "number": 8,
+        "type": "question",
+        "visibility": "member",
+        "slug": "AEPA688A9",
+        "createdAt": "2022-09-15T00:25:20.467779Z",
+        "updatedAt": "2022-09-15T05:44:13.60312Z",
+        "answersCount": 1,
+        "uniqueViewsCount": 115,
+        "viewsCount": 262,
+        "answeredAt": "2022-09-15T05:44:13.60312Z",
+        "modAnsweredAt": "2022-09-15T05:44:13.60312Z",
+        "read": true,
+        "conversation": {
+            "id": "674ee8dc-cac6-415d-87e2-6a2dd3551190",
+            "name": "Gradescope tests",
+            "slug": "DC547C8BB",
+            "photo": "https://s3-us-west-2.amazonaws.com/campuswire-default-images/conversation-cyan.png",
+            "type": "post",
+            "public": true,
+            "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+            "network": "b9db3a64-7038-474e-af07-04f6df6c46d9",
+            "firstMessage": {
+                "id": "7033501267024625184",
+                "uuid": "5c5ef72f-0300-47c8-b7b7-1275302d8841",
+                "anonymousLevel": 0,
+                "conversation": "674ee8dc-cac6-415d-87e2-6a2dd3551190",
+                "system": true,
+                "createdAt": "2022-09-15T00:26:14.019563Z",
+                "updatedAt": "2022-09-15T00:26:14.019563Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessage": {
+                "id": "7033501267024625184",
+                "uuid": "5c5ef72f-0300-47c8-b7b7-1275302d8841",
+                "anonymousLevel": 0,
+                "author": {
+                    "id": "c95325af-c836-4636-9213-ad50154d27c4",
+                    "firstName": "Regina",
+                    "lastName": "Gonzales",
+                    "registered": true,
+                    "slug": "AU0FA880D",
+                    "role": "0"
+                },
+                "conversation": "674ee8dc-cac6-415d-87e2-6a2dd3551190",
+                "system": true,
+                "createdAt": "2022-09-15T00:26:14.019563Z",
+                "updatedAt": "2022-09-15T00:26:14.019563Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessageAt": "2022-09-15T00:26:14.019563Z",
+            "createdAt": "2022-09-15T00:26:14.013995Z",
+            "updatedAt": "2022-09-15T00:26:14.019563Z",
+            "post": "aa96a88e-bcc7-434e-8ef7-93e6dd5ab59b",
+            "subscribers": [
+                {
+                    "id": "daf8800a-d09f-4b58-82d9-523fd6bcf432",
+                    "enabled": true
+                }
+            ]
+        },
+        "comments": [
+            {
+                "id": "3de8bfef-cb7e-47c4-a5ec-b390c42b1837",
+                "author": {
+                    "id": "69a966f5-10f9-4d2d-8167-dbed283f1f20",
+                    "firstName": "Alexander",
+                    "lastName": "Harris",
+                    "registered": true,
+                    "slug": "0U180906E",
+                    "role": "0"
+                },
+                "body": "The tests will be private for this assignment.  That said, you should be able to test your solutions yourself by looking at the examples in main() and modifying them.",
+                "answer": true,
+                "metadata": {},
+                "createdAt": "2022-09-15T05:43:38.295129Z",
+                "publishedAt": "2022-09-15T05:44:13.553534Z",
+                "endorsed": false,
+                "depth": 1
+            }
+        ]
+    },
+    {
+        "id": "84e152b6-1434-48e3-ad78-675995953b8c",
+        "categoryId": "e03d79c7-74a5-4db3-8e43-45b4c5335051",
+        "author": {
+            "id": "c95325af-c836-4636-9213-ad50154d27c4",
+            "firstName": "Regina",
+            "lastName": "Gonzales",
+            "registered": true,
+            "slug": "AU0FA880D",
+            "role": "0"
+        },
+        "title": "minor negligible possible typo in hw pdf",
+        "body": "![image.png](https://campuspro-uploads.s3.us-west-2.amazonaws.com/.../image.png), ![image.png](https://campuspro-uploads.s3.us-west-2.amazonaws.com/17cda193-edc7-46d3-9ee4-969df8027cb7/a7091dc7-08e2-4dbe-b297-a5f126deb1fa/image.png). In the pdf it seems question 7 was run on an n=13 while in the starter code its n=19. This shouldn't get in the way of doing the hw.",
+        "anonymous": true,
+        "published": true,
+        "publishedAt": "2022-09-15T00:33:20.834691Z",
+        "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+        "number": 9,
+        "type": "question",
+        "visibility": "member",
+        "slug": "PAA7B1673",
+        "createdAt": "2022-09-15T00:27:38.361982Z",
+        "updatedAt": "2022-09-15T05:44:59.892163Z",
+        "lastEditedAt": "2022-09-15T01:23:54.528555Z",
+        "answersCount": 1,
+        "uniqueViewsCount": 116,
+        "viewsCount": 329,
+        "answeredAt": "2022-09-15T05:44:59.892163Z",
+        "modAnsweredAt": "2022-09-15T05:44:59.892163Z",
+        "read": true,
+        "conversation": {
+            "id": "dda3e9eb-52e5-448b-a1ba-d1b65e7abcf9",
+            "name": "minor negligible possible type in hw pdf",
+            "slug": "8A1D7A4CA",
+            "photo": "https://s3-us-west-2.amazonaws.com/campuswire-default-images/conversation-dorange.png",
+            "type": "post",
+            "public": true,
+            "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+            "network": "b9db3a64-7038-474e-af07-04f6df6c46d9",
+            "firstMessage": {
+                "id": "9054020617278115849",
+                "uuid": "529954c1-bb33-4fff-8d1b-a979cbb58ea4",
+                "anonymousLevel": 0,
+                "conversation": "dda3e9eb-52e5-448b-a1ba-d1b65e7abcf9",
+                "system": true,
+                "createdAt": "2022-09-15T00:33:20.851236Z",
+                "updatedAt": "2022-09-15T00:33:20.851236Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessage": {
+                "id": "9054020617278115849",
+                "uuid": "529954c1-bb33-4fff-8d1b-a979cbb58ea4",
+                "anonymousLevel": 0,
+                "author": {
+                    "id": "c95325af-c836-4636-9213-ad50154d27c4",
+                    "firstName": "Regina",
+                    "lastName": "Gonzales",
+                    "registered": true,
+                    "slug": "AU0FA880D",
+                    "role": "0"
+                },
+                "conversation": "dda3e9eb-52e5-448b-a1ba-d1b65e7abcf9",
+                "system": true,
+                "createdAt": "2022-09-15T00:33:20.851236Z",
+                "updatedAt": "2022-09-15T00:33:20.851236Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessageAt": "2022-09-15T00:33:20.851236Z",
+            "createdAt": "2022-09-15T00:33:20.844913Z",
+            "updatedAt": "2022-09-15T00:33:20.851236Z",
+            "post": "ba173a67-731c-4f99-bf16-03c2afec7140",
+            "subscribers": [
+                {
+                    "id": "daf8800a-d09f-4b58-82d9-523fd6bcf432",
+                    "enabled": true
+                }
+            ]
+        },
+        "comments": [
+            {
+                "id": "3a592df0-d7ad-4bd7-910c-6d51854f8044",
+                "author": {
+                    "id": "69a966f5-10f9-4d2d-8167-dbed283f1f20",
+                    "firstName": "Alexander",
+                    "lastName": "Harris",
+                    "registered": true,
+                    "slug": "0U180906E",
+                    "role": "0"
+                },
+                "body": "Good catch!  I originally had it as 13, and then decided I liked 19 better.",
+                "answer": true,
+                "metadata": {},
+                "createdAt": "2022-09-15T05:44:58.338793Z",
+                "publishedAt": "2022-09-15T05:44:59.852646Z",
+                "endorsed": false,
+                "depth": 1
+            }
+        ]
+    },
+    {
+        "id": "78b7bfbb-b8e8-4c8b-8227-917941a5ad5b",
+        "categoryId": "c1741f16-5771-4c94-8055-9738b74aca9f",
+        "author": {
+            "id": "29e74d01-9983-4192-8833-66a1e8b70376",
+            "firstName": "Susan",
+            "lastName": "Rose",
+            "registered": true,
+            "slug": "89489D8U3",
+            "role": "0"
+        },
+        "title": "Gradescope Submission HW0",
+        "body": "Hi, is the submission page for HW0 up on Gradescope yet? When I logged in to Gradescope, it said: \"Your instructor hasn't released any assignments yet.\".",
+        "anonymous": true,
+        "published": true,
+        "publishedAt": "2022-09-15T00:33:30.014959Z",
+        "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+        "number": 10,
+        "type": "question",
+        "visibility": "member",
+        "slug": "1D1BP7C38",
+        "createdAt": "2022-09-15T00:31:48.518838Z",
+        "updatedAt": "2022-09-15T15:00:48.86264Z",
+        "answersCount": 1,
+        "uniqueViewsCount": 110,
+        "viewsCount": 242,
+        "votesCount": 1,
+        "answeredAt": "2022-09-15T05:45:43.223929Z",
+        "modAnsweredAt": "2022-09-15T05:45:43.223929Z",
+        "read": true,
+        "conversation": {
+            "id": "6e04b02d-31a3-40a8-8feb-24884a8c69c6",
+            "name": "Gradescope Submission HW0",
+            "slug": "5D72FC5AA",
+            "photo": "https://s3-us-west-2.amazonaws.com/campuswire-default-images/conversation-pink.png",
+            "type": "post",
+            "public": true,
+            "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+            "network": "b9db3a64-7038-474e-af07-04f6df6c46d9",
+            "firstMessage": {
+                "id": "9852119793104331805",
+                "uuid": "36558de7-02cd-4aea-b590-3d9adcd20ba7",
+                "anonymousLevel": 0,
+                "conversation": "6e04b02d-31a3-40a8-8feb-24884a8c69c6",
+                "system": true,
+                "createdAt": "2022-09-15T00:33:30.031045Z",
+                "updatedAt": "2022-09-15T00:33:30.031045Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessage": {
+                "id": "9852119793104331805",
+                "uuid": "36558de7-02cd-4aea-b590-3d9adcd20ba7",
+                "anonymousLevel": 0,
+                "author": {
+                    "id": "29e74d01-9983-4192-8833-66a1e8b70376",
+                    "firstName": "Susan",
+                    "lastName": "Rose",
+                    "registered": true,
+                    "slug": "89489D8U3",
+                    "role": "0"
+                },
+                "conversation": "6e04b02d-31a3-40a8-8feb-24884a8c69c6",
+                "system": true,
+                "createdAt": "2022-09-15T00:33:30.031045Z",
+                "updatedAt": "2022-09-15T00:33:30.031045Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessageAt": "2022-09-15T00:33:30.031045Z",
+            "createdAt": "2022-09-15T00:33:30.025852Z",
+            "updatedAt": "2022-09-15T00:33:30.031045Z",
+            "post": "71c83bd1-5275-46b1-8735-ac24ebd982a8",
+            "subscribers": [
+                {
+                    "id": "9d898843-2a00-4f33-98cf-9bdb15d4e0d9",
+                    "enabled": true
+                }
+            ]
+        },
+        "comments": [
+            {
+                "id": "26bf1d6c-4d9d-4cc2-9887-43dad1d47c40",
+                "author": {
+                    "id": "69a966f5-10f9-4d2d-8167-dbed283f1f20",
+                    "firstName": "Alexander",
+                    "lastName": "Harris",
+                    "registered": true,
+                    "slug": "0U180906E",
+                    "role": "0"
+                },
+                "body": "Still doing some tweaking with the autograder -- I'll try and get it posted tomorrow.  Sorry for the delay.",
+                "answer": true,
+                "metadata": {},
+                "createdAt": "2022-09-15T05:45:28.115181Z",
+                "publishedAt": "2022-09-15T05:45:43.17845Z",
+                "endorsed": false,
+                "votesCount": 1,
+                "depth": 1
+            }
+        ]
+    },
+    {
+        "id": "01fc5733-52c3-4cb6-9161-1bee9799cae5",
+        "categoryId": "c1741f16-5771-4c94-8055-9738b74aca9f",
+        "author": {
+            "id": "d0829753-12a2-46df-b667-c66eafd53a92",
+            "firstName": "Heidi",
+            "lastName": "Johnson",
+            "registered": true,
+            "slug": "EAEUC44D3",
+            "role": "0"
+        },
+        "title": "Python Version",
+        "body": "Hi there,\n\nI was wondering what version of python we should be programming in? Thanks in advance!",
+        "anonymous": true,
+        "published": true,
+        "publishedAt": "2022-09-15T01:18:56.663315Z",
+        "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+        "number": 11,
+        "type": "question",
+        "visibility": "member",
+        "slug": "D6PD4D316",
+        "createdAt": "2022-09-15T01:18:50.821437Z",
+        "updatedAt": "2022-09-15T01:54:28.938447Z",
+        "answersCount": 1,
+        "uniqueViewsCount": 106,
+        "viewsCount": 270,
+        "votesCount": 1,
+        "voted": true,
+        "answeredAt": "2022-09-15T01:54:28.938447Z",
+        "read": true,
+        "conversation": {
+            "id": "23a99805-2497-48f7-b60a-aede09e0c682",
+            "name": "Python Version",
+            "slug": "72C9D45BB",
+            "photo": "https://s3-us-west-2.amazonaws.com/campuswire-default-images/conversation-orange.png",
+            "type": "post",
+            "public": true,
+            "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+            "network": "b9db3a64-7038-474e-af07-04f6df6c46d9",
+            "firstMessage": {
+                "id": "2572002948072965173",
+                "uuid": "5cfe7458-a59b-476b-9c2b-f38f36088b54",
+                "anonymousLevel": 0,
+                "conversation": "23a99805-2497-48f7-b60a-aede09e0c682",
+                "system": true,
+                "createdAt": "2022-09-15T01:18:56.680713Z",
+                "updatedAt": "2022-09-15T01:18:56.680713Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessage": {
+                "id": "2572002948072965173",
+                "uuid": "5cfe7458-a59b-476b-9c2b-f38f36088b54",
+                "anonymousLevel": 0,
+                "author": {
+                    "id": "d0829753-12a2-46df-b667-c66eafd53a92",
+                    "firstName": "Heidi",
+                    "lastName": "Johnson",
+                    "registered": true,
+                    "slug": "EAEUC44D3",
+                    "role": "0"
+                },
+                "conversation": "23a99805-2497-48f7-b60a-aede09e0c682",
+                "system": true,
+                "createdAt": "2022-09-15T01:18:56.680713Z",
+                "updatedAt": "2022-09-15T01:18:56.680713Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessageAt": "2022-09-15T01:18:56.680713Z",
+            "createdAt": "2022-09-15T01:18:56.673704Z",
+            "updatedAt": "2022-09-15T01:18:56.680713Z",
+            "post": "1d64d63d-1a5c-40bc-8870-c87382ba635e",
+            "subscribers": [
+                {
+                    "id": "ead4e43c-58a6-4291-ac52-dd1ea3d00613",
+                    "enabled": true
+                }
+            ]
+        },
+        "comments": [
+            {
+                "id": "a4757c87-7ac1-411b-bbe0-d17c3cf86aa3",
+                "author": {
+                    "id": "b2155763-8a99-4a77-9c71-0255392fb040",
+                    "firstName": "Mary",
+                    "lastName": "Mendez",
+                    "registered": true,
+                    "slug": "ABA06B77U",
+                    "role": "0"
+                },
+                "body": "version 3.7+",
+                "anonymous": true,
+                "answer": true,
+                "metadata": {},
+                "createdAt": "2022-09-15T01:54:19.955449Z",
+                "publishedAt": "2022-09-15T01:54:28.890201Z",
+                "endorsed": true,
+                "endorsers": [
+                    {
+                        "id": "c366cd1a-7e25-42d1-88a2-48f3475f633a",
+                        "slug": "0U180906E",
+                        "firstName": "Alexander",
+                        "lastName": "Harris",
+                        "network": "b9db3a64-7038-474e-af07-04f6df6c46d9",
+                        "verified": true,
+                        "registered": true,
+                        "genus": "dbb81f67-7e13-497e-b504-16e201006b68",
+                        "createdAt": "2020-08-03T17:15:16.887834Z",
+                        "walkthrough": 1
+                    }
+                ],
+                "votesCount": 1,
+                "voted": true,
+                "depth": 1
+            }
+        ]
+    },
+    {
+        "id": "c39d4541-203c-44ad-8ad1-25bf96c853c4",
+        "categoryId": "e03d79c7-74a5-4db3-8e43-45b4c5335051",
+        "author": {
+            "id": "a40f33c9-a0fa-4419-a4e1-fccc1e9e66c8",
+            "firstName": "Christina",
+            "lastName": "Li",
+            "registered": true,
+            "slug": "33AEBU1AC",
+            "role": "0"
+        },
+        "title": "Gradescope submission tab",
+        "body": "This is just a heads up but I'm wondering when the submission tab will be opened on Gradescope for Homework 1? I checked Gradescope and I think it's still empty now for me. Thanks!",
+        "anonymous": true,
+        "published": true,
+        "publishedAt": "2022-09-15T04:09:04.552152Z",
+        "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+        "number": 12,
+        "type": "question",
+        "visibility": "member",
+        "slug": "EAP51A914",
+        "createdAt": "2022-09-15T04:06:40.98243Z",
+        "updatedAt": "2022-09-15T05:46:14.400779Z",
+        "answersCount": 2,
+        "uniqueViewsCount": 122,
+        "viewsCount": 369,
+        "answeredAt": "2022-09-15T05:46:14.400779Z",
+        "modAnsweredAt": "2022-09-15T05:46:14.400779Z",
+        "read": true,
+        "conversation": {
+            "id": "69269f3c-716b-4ec5-b334-f8944d7562da",
+            "name": "Gradescope submission tab",
+            "slug": "CFCEBCB03",
+            "photo": "https://s3-us-west-2.amazonaws.com/campuswire-default-images/conversation-amber.png",
+            "type": "post",
+            "public": true,
+            "group": "17cda193-edc7-46d3-9ee4-969df8027cb7",
+            "network": "b9db3a64-7038-474e-af07-04f6df6c46d9",
+            "firstMessage": {
+                "id": "5594337220212030064",
+                "uuid": "a8d57ed5-2b24-4567-8967-b534e7fc607a",
+                "anonymousLevel": 0,
+                "conversation": "69269f3c-716b-4ec5-b334-f8944d7562da",
+                "system": true,
+                "createdAt": "2022-09-15T04:09:04.567484Z",
+                "updatedAt": "2022-09-15T04:09:04.567484Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessage": {
+                "id": "5594337220212030064",
+                "uuid": "a8d57ed5-2b24-4567-8967-b534e7fc607a",
+                "anonymousLevel": 0,
+                "author": {
+                    "id": "a40f33c9-a0fa-4419-a4e1-fccc1e9e66c8",
+                    "firstName": "Christina",
+                    "lastName": "Li",
+                    "registered": true,
+                    "slug": "33AEBU1AC",
+                    "role": "0"
+                },
+                "conversation": "69269f3c-716b-4ec5-b334-f8944d7562da",
+                "system": true,
+                "createdAt": "2022-09-15T04:09:04.567484Z",
+                "updatedAt": "2022-09-15T04:09:04.567484Z",
+                "systemMessageType": "conversation-started",
+                "type": "normal",
+                "metadata": {},
+                "readState": {}
+            },
+            "lastMessageAt": "2022-09-15T04:09:04.567484Z",
+            "createdAt": "2022-09-15T04:09:04.5621Z",
+            "updatedAt": "2022-09-15T04:09:04.567484Z",
+            "post": "9a1e51a4-313f-49fb-b3b1-e9434fb4e0c4",
+            "subscribers": [
+                {
+                    "id": "ebac3a31-65b9-4181-aa32-0a482f8102d4",
+                    "enabled": true
+                }
+            ]
+        },
+        "comments": [
+            {
+                "id": "bea748bd-6a7c-4417-be20-c0c0aeb22817",
+                "author": {
+                    "id": "69a966f5-10f9-4d2d-8167-dbed283f1f20",
+                    "firstName": "Alexander",
+                    "lastName": "Harris",
+                    "registered": true,
+                    "slug": "0U180906E",
+                    "role": "0"
+                },
+                "body": "See #10",
+                "answer": true,
+                "metadata": {},
+                "createdAt": "2022-09-15T05:46:14.35407Z",
+                "publishedAt": "2022-09-15T05:46:14.353502Z",
+                "endorsed": false,
+                "depth": 1
+            },
+            {
+                "id": "37c32995-fb29-4b94-83ff-7d46c7f3b304",
+                "author": {
+                    "id": "a40f33c9-a0fa-4419-a4e1-fccc1e9e66c8",
+                    "firstName": "Christina",
+                    "lastName": "Li",
+                    "registered": true,
+                    "slug": "33AEBU1AC",
+                    "role": "0"
+                },
+                "body": "I think post #10 is not visible to everyone, it says that I don't have permission to view the post",
+                "anonymous": true,
+                "metadata": {},
+                "parent": "3ad4186e-30f9-4a60-aab6-33cf6e526d4e",
+                "createdAt": "2022-09-15T05:48:50.044613Z",
+                "publishedAt": "2022-09-15T05:48:50.043944Z",
+                "endorsed": false,
+                "depth": 2
+            }
+        ]
+    }
+]

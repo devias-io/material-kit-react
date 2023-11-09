@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // .env.local make a variable in Supabase
+}
+
+model Post {
+  id               String       @id
+  categoryId       String
+  title            String
+  body             String
+  anonymous        Boolean?
+  published        Boolean
+  publishedAt      DateTime
+  group            String
+  number           Int
+  type             String
+  visibility       String
+  slug             String       @unique
+  createdAt        DateTime
+  updatedAt        DateTime
+  answersCount     Int?
+  uniqueViewsCount Int
+  viewsCount       Int
+  answeredAt       DateTime?
+  modAnsweredAt    DateTime?
+  read             Boolean?
+  comments         Comment[]
+  author           Author       @relation(fields: [authorSlug], references: [slug])
+  authorSlug       String
+  conversation     Conversation @relation(fields: [conversationSlug], references: [slug])
+  conversationSlug String
+}
+
+model Author {
+  firstName   String
+  lastName    String
+  slug        String        @unique
+  LastMessage LastMessage[]
+  Comment     Comment[]
+  Post        Post[]
+}
+
+model Conversation {
+  name           String
+  slug           String       @id
+  type           String
+  public         Boolean
+  firstMessage   FirstMessage @relation(fields: [firstMessageId], references: [id])
+  lastMessage    LastMessage  @relation(fields: [lastMessageId], references: [id])
+  firstMessageId String
+  lastMessageId  String
+  Post           Post[]
+}
+
+model FirstMessage {
+  id             String         @id
+  anonymousLevel Int
+  createdAt      DateTime
+  updatedAt      DateTime
+  type           String
+  Conversation   Conversation[]
+}
+
+model LastMessage {
+  id             String         @id
+  anonymousLevel Int
+  author         Author         @relation(fields: [authorSlug], references: [slug])
+  authorSlug     String
+  createdAt      DateTime
+  updatedAt      DateTime
+  type           String
+  Conversation   Conversation[]
+}
+
+model Comment {
+  id          String   @id
+  author      Author   @relation(fields: [authorSlug], references: [slug])
+  body        String
+  answer      Boolean
+  createdAt   DateTime
+  publishedAt DateTime
+  endorsed    Boolean
+  depth       Int
+  authorSlug  String
+  Post        Post    @relation(fields: [postSlug], references: [slug])
+  postSlug    String
+}
