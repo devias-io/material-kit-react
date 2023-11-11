@@ -9,9 +9,24 @@ export const Layout = (props) => {
   const { children } = props;
 
   return (
-    <Box component="main">
+    <Box
+      component="main"
+      sx={{
+        display: "flex",
+        flex: "1 1 auto",
+      }}
+    >
       <Grid container sx={{ flex: "1 1 auto" }}>
-        <Grid xs={12} lg={6}>
+        <Grid
+          xs={12}
+          lg={6}
+          sx={{
+            backgroundColor: "background.paper",
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
+          }}
+        >
           <Box
             component="header"
             sx={{
@@ -41,15 +56,17 @@ export const Layout = (props) => {
           lg={6}
           sx={{
             alignItems: "center",
+            background: "radial-gradient(50% 50% at 50% 50%, #122647 0%, #090E23 100%)",
             color: "white",
             display: "flex",
             justifyContent: "center",
-            backgroundColor: "#FF5733",
-            minHeight: "100vh",
+            "& img": {
+              maxWidth: "100%",
+            },
           }}
         >
-          <Box sx={{ p: 3 }}>
-            <img alt="" src="/assets/login/login.avif" />
+          <Box sx={{ p: 1 }}>
+            <img alt="" src="/assets/login/login2.avif" />
           </Box>
         </Grid>
       </Grid>
