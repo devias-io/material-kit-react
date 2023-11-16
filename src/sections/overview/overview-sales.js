@@ -72,14 +72,18 @@ const useChartOptions = () => {
         show: true
       },
       categories: [
-        'Category 1',
-        'Category 2',
-        'Category 3',
-        'Category 4',
-        'Category 5',
-        'Category 6',
-        'Category 7',
-        'Category 8',
+        'Homework 1',
+        'Homework 2',
+        'Homework 3',
+        'Homework 4',
+        'Homework 5',
+        'Homework 6',
+        'Homework 7',
+        'Homework 8',
+        'Homework 9',
+        'Homework 10',
+        'Homework 11',
+        'Homework 12',
       ],
       labels: {
         offsetY: 5,
@@ -106,20 +110,7 @@ export const OverviewSales = (props) => {
   return (
     <Card sx={sx}>
       <CardHeader
-        action={(
-          <Button
-            color="inherit"
-            size="small"
-            startIcon={(
-              <SvgIcon fontSize="small">
-                <ArrowPathIcon />
-              </SvgIcon>
-            )}
-          >
-            Sync
-          </Button>
-        )}
-        title="Sales"
+        title="Posts by Category"
       />
       <CardContent>
         <Chart
@@ -132,17 +123,6 @@ export const OverviewSales = (props) => {
       </CardContent>
       <Divider />
       <CardActions sx={{ justifyContent: 'flex-end' }}>
-        <Button
-          color="inherit"
-          endIcon={(
-            <SvgIcon fontSize="small">
-              <ArrowRightIcon />
-            </SvgIcon>
-          )}
-          size="small"
-        >
-          Overview
-        </Button>
       </CardActions>
     </Card>
   );
