@@ -76,18 +76,6 @@ export const OverviewLatestProducts = (props) => {
       </List>
       <Divider />
       <CardActions sx={{ justifyContent: 'flex-end' }}>
-        <Button
-          color="inherit"
-          endIcon={(
-            <SvgIcon fontSize="small">
-              <ArrowRightIcon />
-            </SvgIcon>
-          )}
-          size="small"
-          variant="text"
-        >
-          View all
-        </Button>
       </CardActions>
     </Card>
   );
