@@ -1,28 +1,34 @@
 // set up general data fetching commands with prisma client
-import prisma from '../prisma';
+import prisma from "../prisma";
 
-async function getTopContributors(count: number = 5) {
-    const top = await prisma.author.findMany({
-        take: count,
-        orderBy: {
-            Comment: {
-                _count: 'desc',
-            },
-        },
-    });
-    console.log(top);
-}
+import getTopContributors from "./topContributors";
 
-getTopContributors();
+const result = getTopContributors().then((res) => {
+  console.log(res);
+});
 
-async function getTopPosts(count: number = 5) {
-    const top = await prisma.post.findMany({
-        take: count,
-        orderBy: {
-            viewsCount: 'desc',
-        },
-    });
-    console.log(top);
-}
+// async function getTopContributors(count: number = 5) {
+//     const top = await prisma.author.findMany({
+//         take: count,
+//         orderBy: {
+//             Comment: {
+//                 _count: 'desc',
+//             },
+//         },
+//     });
+//     console.log(top);
+// }
 
-getTopPosts();
+// getTopContributors();
+
+// async function getTopPosts(count: number = 5) {
+//     const top = await prisma.post.findMany({
+//         take: count,
+//         orderBy: {
+//             viewsCount: 'desc',
+//         },
+//     });
+//     console.log(top);
+// }
+
+// getTopPosts();

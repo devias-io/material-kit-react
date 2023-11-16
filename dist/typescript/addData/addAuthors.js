@@ -39,54 +39,49 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var prisma_1 = __importDefault(require("../../prisma"));
-var _12_15_json_1 = __importDefault(require("../../../data/12_15.json"));
+var prisma_1 = __importDefault(require("../prisma"));
+var _12_15_json_1 = __importDefault(require("../data/12_15.json"));
+// file to add in the corresponding data from the json files
 /**
- * add the last messages to the database
- * @param posts List of post items from JSON
+ * Add all the authors to the database of authors
+ * @param authors List of author items from JSON
+ * @returns
  */
-function addPosts(posts) {
+function addAuthors(authors) {
     return __awaiter(this, void 0, void 0, function () {
         var createMany;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, prisma_1.default.post.createMany({
-                        data: posts,
+                case 0: return [4 /*yield*/, prisma_1.default.author.createMany({
+                        data: authors,
                         skipDuplicates: true,
                     })];
                 case 1:
                     createMany = _a.sent();
-                    console.log('created ' + createMany.count + ' posts');
+                    console.log('created ' + createMany.count + ' authors');
                     return [2 /*return*/];
             }
         });
     });
 }
-var posts = _12_15_json_1.default.map(function (post) {
-    var _a, _b, _c;
-    return {
-        id: post.id,
-        categoryId: post.categoryId,
-        title: post.title,
-        body: post.body,
-        anonymous: (_a = post.anonymous) !== null && _a !== void 0 ? _a : false,
-        published: post.published,
-        publishedAt: post.publishedAt,
-        group: post.group,
-        number: post.number,
-        type: post.type,
-        visibility: post.visibility,
-        slug: post.slug,
-        createdAt: post.createdAt,
-        updatedAt: post.updatedAt,
-        answersCount: (_b = post.answersCount) !== null && _b !== void 0 ? _b : 0,
-        uniqueViewsCount: post.uniqueViewsCount,
-        viewsCount: post.viewsCount,
-        answeredAt: post.answeredAt,
-        modAnsweredAt: post.modAnsweredAt,
-        read: (_c = post.read) !== null && _c !== void 0 ? _c : false,
-        authorSlug: post.author.slug,
-        conversationSlug: post.conversation.slug,
-    };
+var authors = [];
+_12_15_json_1.default.forEach(function (post) {
+    // add the author of each post
+    authors.push({
+        firstName: post.author.firstName,
+        lastName: post.author.lastName,
+        slug: post.author.slug,
+    });
+    // add the commentors of each post
+    post.comments.forEach(function (comment) {
+        // some comment sections are empty
+        if (post.comments.length !== 0) {
+            authors.push({
+                firstName: comment.author.firstName,
+                lastName: comment.author.lastName,
+                slug: comment.author.slug,
+            });
+        }
+    });
 });
-addPosts(posts);
+addAuthors(authors);

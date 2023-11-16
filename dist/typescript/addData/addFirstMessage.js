@@ -39,37 +39,36 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var prisma_1 = __importDefault(require("../../prisma"));
-var _12_15_json_1 = __importDefault(require("../../../data/12_15.json"));
+var prisma_1 = __importDefault(require("../prisma"));
+var _12_15_json_1 = __importDefault(require("../data/12_15.json"));
 /**
- * add the last messages to the database
- * @param conversations List of post items from JSON
+ * add the first messages to the database
+ * @param firstMessages List of firstMessage items from JSON
  */
-function addConversations(conversations) {
+function addFirstMessages(firstMessages) {
     return __awaiter(this, void 0, void 0, function () {
         var createMany;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, prisma_1.default.conversation.createMany({
-                        data: conversations,
+                case 0: return [4 /*yield*/, prisma_1.default.firstMessage.createMany({
+                        data: firstMessages,
                         skipDuplicates: true,
                     })];
                 case 1:
                     createMany = _a.sent();
-                    console.log('created ' + createMany.count + ' conversations');
+                    console.log('created ' + createMany.count + ' firstMessages');
                     return [2 /*return*/];
             }
         });
     });
 }
-var conversations = _12_15_json_1.default.map(function (post) {
+var firstMessages = _12_15_json_1.default.map(function (post) {
     return {
-        name: post.conversation.name,
-        slug: post.conversation.slug,
-        type: post.conversation.type,
-        public: post.conversation.public,
-        firstMessageId: post.conversation.firstMessage.id,
-        lastMessageId: post.conversation.lastMessage.id,
+        id: post.conversation.firstMessage.id,
+        anonymousLevel: post.conversation.firstMessage.anonymousLevel,
+        createdAt: post.conversation.firstMessage.createdAt,
+        updatedAt: post.conversation.firstMessage.updatedAt,
+        type: post.conversation.firstMessage.type,
     };
 });
-addConversations(conversations);
+addFirstMessages(firstMessages);
