@@ -78,12 +78,6 @@ const useChartOptions = () => {
         'Homework 4',
         'Homework 5',
         'Homework 6',
-        'Homework 7',
-        'Homework 8',
-        'Homework 9',
-        'Homework 10',
-        'Homework 11',
-        'Homework 12',
       ],
       labels: {
         offsetY: 5,
