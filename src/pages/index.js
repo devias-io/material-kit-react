@@ -161,7 +161,7 @@ const Page = () => (
               chartSeries={[
                 {
                   name: 'Data',
-                  data: [18, 16, 5, 8, 3, 14, 14, 16, 17, 19, 18, 20]
+                  data: [18, 16, 5, 8, 3, 14]
                 }
               ]}
               sx={{ height: '100%' }}
