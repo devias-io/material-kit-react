@@ -1,5 +1,5 @@
-import prisma from '../../prisma';
-import data from '../../../data/12_15.json';
+import prisma from '../prisma';
+import data from '../data/12_15.json';
 
 // file to add in the corresponding data from the json files
 

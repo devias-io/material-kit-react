@@ -39,8 +39,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var prisma_1 = __importDefault(require("../../prisma"));
-var _12_15_json_1 = __importDefault(require("../../../data/12_15.json"));
+var prisma_1 = __importDefault(require("../prisma"));
+var _12_15_json_1 = __importDefault(require("../data/12_15.json"));
 /**
  * add the comments to the database
  * @param comments List of comment items from JSON
