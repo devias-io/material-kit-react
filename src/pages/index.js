@@ -6,6 +6,14 @@ import { OverviewLatestOrders } from "src/sections/overview/overview-latest-orde
 import { OverviewLatestProducts } from "src/sections/overview/overview-latest-products";
 import { OverviewSales } from "src/sections/overview/overview-sales";
 import getTopContributors from "./api/topContributors";
+import { subDays, subHours } from 'date-fns';
+import { Box, Badge, Container, IconButton, SvgIcon, Tooltip, Unstable_Grid2 as Grid} from '@mui/material';
+import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
+import { OverviewLatestOrders } from 'src/sections/overview/overview-latest-orders';
+import { OverviewLatestProducts } from 'src/sections/overview/overview-latest-products';
+import { OverviewSales } from 'src/sections/overview/overview-sales';
+import BellIcon from '@heroicons/react/24/solid/BellIcon';
+
 
 const now = new Date();
 
@@ -21,7 +29,9 @@ export const getServerSideProps = async () => {
 const Page = (props) => (
   <>
     <Head>
-      <title>Overview | Devias Kit</title>
+      <title>
+        DataWire Analytics
+      </title>
     </Head>
     <Box
       component="main"
@@ -30,9 +40,33 @@ const Page = (props) => (
         py: 8,
       }}
     >
+    <Box
+      sx={{ position: "fixed", top: 20, right: 20}}
+    >
+      <Tooltip title="Notifications">
+        <IconButton>
+          <Badge
+            badgeContent={2}
+            color="primary"
+            sx={{ "& .MuiBadge-badge": {height: 30, minWidth: 30, borderRadius: 10, fontSize: 20}}}
+          >
+            <SvgIcon sx={{ fontSize: 50 }}>
+              <BellIcon/>
+            </SvgIcon>
+          </Badge>
+        </IconButton>
+      </Tooltip>
+    </Box>
       <Container maxWidth="xl">
-        <Grid container spacing={3}>
-          <Grid xs={12} md={12} lg={8}>
+        <Grid
+          container
+          spacing={3}
+        >
+          <Grid
+            xs={6}
+            md={6}
+            lg={6}
+          >
             <OverviewLatestOrders
               orders={[
                 {
@@ -75,7 +109,11 @@ const Page = (props) => (
               sx={{ height: "100%" }}
             />
           </Grid>
-          <Grid xs={12} md={12} lg={8}>
+          <Grid
+            xs={6}
+            md={6}
+            lg={6}
+          >
             <OverviewLatestOrders
               orders={[
                 {
@@ -118,19 +156,27 @@ const Page = (props) => (
               sx={{ height: "100%" }}
             />
           </Grid>
-          <Grid xs={12} md={6} lg={4}>
+          <Grid
+            xs={3}
+            md={3}
+            lg={3}
+          >
             <OverviewLatestProducts
               products={[props.authors[0], props.authors[1], props.authors[2], props.authors[3], props.authors[4]]}
               sx={{ height: "100%" }}
             />
           </Grid>
-          <Grid xs={12} lg={8}>
+          <Grid
+            xs={9}
+            md={9}
+            lg={9}
+          >
             <OverviewSales
               chartSeries={[
                 {
-                  name: "Data",
-                  data: [18, 16, 5, 8, 3, 14, 14, 16, 17, 19, 18, 20],
-                },
+                  name: 'Data',
+                  data: [18, 16, 5, 8, 3, 14]
+                }
               ]}
               sx={{ height: "100%" }}
             />
