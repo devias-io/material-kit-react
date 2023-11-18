@@ -24,10 +24,11 @@ const Page = () => (
       }}
     >
     <Box
-      sx={{ position: "fixed", top: 20, right: 20}}
+      sx={{ position: "fixed", top: 20, right: 20, zIndex: 1000}}
     >
-      <Tooltip title="Notifications">
-        <IconButton>
+      <Tooltip title="Urgent Questions">
+        <IconButton 
+        onClick={() => { alert('clicked') }}>
           <Badge
             badgeContent={2}
             color="primary"
