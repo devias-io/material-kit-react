@@ -1,10 +1,11 @@
 import Head from 'next/head';
 import { subDays, subHours } from 'date-fns';
-import { Box, Container, Unstable_Grid2 as Grid } from '@mui/material';
+import { Box, Badge, Container, IconButton, SvgIcon, Tooltip, Unstable_Grid2 as Grid} from '@mui/material';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { OverviewLatestOrders } from 'src/sections/overview/overview-latest-orders';
 import { OverviewLatestProducts } from 'src/sections/overview/overview-latest-products';
 import { OverviewSales } from 'src/sections/overview/overview-sales';
+import BellIcon from '@heroicons/react/24/solid/BellIcon';
 
 const now = new Date();
 
@@ -22,6 +23,23 @@ const Page = () => (
         py: 8
       }}
     >
+    <Box
+      sx={{ position: "fixed", top: 20, right: 20}}
+    >
+      <Tooltip title="Notifications">
+        <IconButton>
+          <Badge
+            badgeContent={2}
+            color="primary"
+            sx={{ "& .MuiBadge-badge": {height: 30, minWidth: 30, borderRadius: 10, fontSize: 20}}}
+          >
+            <SvgIcon sx={{ fontSize: 50 }}>
+              <BellIcon/>
+            </SvgIcon>
+          </Badge>
+        </IconButton>
+      </Tooltip>
+    </Box>
       <Container maxWidth="xl">
         <Grid
           container
