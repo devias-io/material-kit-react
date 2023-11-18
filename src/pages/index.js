@@ -5,6 +5,9 @@ import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { OverviewLatestOrders } from 'src/sections/overview/overview-latest-orders';
 import { OverviewLatestProducts } from 'src/sections/overview/overview-latest-products';
 import { OverviewSales } from 'src/sections/overview/overview-sales';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 const now = new Date();
 
@@ -12,7 +15,7 @@ const Page = () => (
   <>
     <Head>
       <title>
-        DataWire Analytics
+        Overview | Devias Kit
       </title>
     </Head>
     <Box
@@ -28,9 +31,9 @@ const Page = () => (
           spacing={3}
         >
           <Grid
-            xs={6}
-            md={6}
-            lg={6}
+            xs={12}
+            md={12}
+            lg={8}
           >
             <OverviewLatestOrders
               orders={[
@@ -75,9 +78,9 @@ const Page = () => (
             />
           </Grid>
           <Grid
-            xs={6}
-            md={6}
-            lg={6}
+            xs={12}
+            md={12}
+            lg={8}
           >
             <OverviewLatestOrders
               orders={[
@@ -122,9 +125,9 @@ const Page = () => (
             />
           </Grid>
           <Grid
-            xs={3}
-            md={3}
-            lg={3}
+            xs={12}
+            md={6}
+            lg={4}
           >
             <OverviewLatestProducts
               products={[
@@ -154,9 +157,8 @@ const Page = () => (
             />
           </Grid>
           <Grid
-            xs={9}
-            md={9}
-            lg={9}
+            xs={12}
+            lg={8}
           >
             <OverviewSales
               chartSeries={[
