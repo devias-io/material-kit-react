@@ -1,18 +1,11 @@
 import Head from "next/head";
-<<<<<<< HEAD
-=======
-import { Layout as DashboardLayout } from "src/layouts/dashboard/layout";
->>>>>>> 54e40cd57a2ecc94238358a6656f7988e73300c2
 import { OverviewLatestOrders } from "src/sections/overview/overview-latest-orders";
 import { OverviewLatestProducts } from "src/sections/overview/overview-latest-products";
 import { OverviewSales } from "src/sections/overview/overview-sales";
 import getTopContributors from "./api/topContributors";
 import { subDays, subHours } from 'date-fns';
 import { Box, Badge, Container, IconButton, SvgIcon, Tooltip, Unstable_Grid2 as Grid} from '@mui/material';
-<<<<<<< HEAD
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
-=======
->>>>>>> 54e40cd57a2ecc94238358a6656f7988e73300c2
 import BellIcon from '@heroicons/react/24/solid/BellIcon';
 
 const now = new Date();
@@ -64,103 +57,103 @@ const Page = (props) => (
           spacing={3}
         >
           <Grid
-            xs={12}
-            md={12}
-            lg={8}
-          >
-            <OverviewLatestOrders
-              orders={[
-                {
-                  id: "f69f88012978187a6c12897f",
-                  category: "Homework 1",
-                  title: "Title",
-                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
-                },
-                {
-                  id: "9eaa1c7dd4433f413c308ce2",
-                  category: "Homework 2",
-                  title: "Title",
-                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
-                },
-                {
-                  id: "01a5230c811bd04996ce7c13",
-                  category: "Homework 3",
-                  title: "Title",
-                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
-                },
-                {
-                  id: "1f4e1bd0a87cea23cdb83d18",
-                  category: "Homework 4",
-                  title: "Title",
-                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
-                },
-                {
-                  id: "9f974f239d29ede969367103",
-                  category: "Homework 5",
-                  title: "Title",
-                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
-                },
-                {
-                  id: "ffc83c1560ec2f66a1c05596",
-                  category: "Homework 6",
-                  title: "Title",
-                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
-                },
-              ]}
-              sx={{ height: "100%" }}
-            />
-          </Grid>
-          <Grid
-            xs={12}
-            md={12}
-            lg={8}
-          >
-            <OverviewLatestOrders
-              orders={[
-                {
-                  id: "f69f88012978187a6c12897f",
-                  category: "Homework 1",
-                  title: "Title",
-                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
-                },
-                {
-                  id: "9eaa1c7dd4433f413c308ce2",
-                  category: "Homework 2",
-                  title: "Title",
-                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
-                },
-                {
-                  id: "01a5230c811bd04996ce7c13",
-                  category: "Homework 3",
-                  title: "Title",
-                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
-                },
-                {
-                  id: "1f4e1bd0a87cea23cdb83d18",
-                  category: "Homework 4",
-                  title: "Title",
-                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
-                },
-                {
-                  id: "9f974f239d29ede969367103",
-                  category: "Homework 5",
-                  title: "Title",
-                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
-                },
-                {
-                  id: "ffc83c1560ec2f66a1c05596",
-                  category: "Homework 6",
-                  title: "Title",
-                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
-                },
-              ]}
-              sx={{ height: "100%" }}
-            />
-          </Grid>
-          <Grid
-            xs={12}
+            xs={6}
             md={6}
-            lg={4}
+            lg={6}
+          >
+            <OverviewLatestOrders
+              orders={[
+                {
+                  id: "f69f88012978187a6c12897f",
+                  category: "Homework 1",
+                  title: "Title",
+                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
+                },
+                {
+                  id: "9eaa1c7dd4433f413c308ce2",
+                  category: "Homework 2",
+                  title: "Title",
+                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
+                },
+                {
+                  id: "01a5230c811bd04996ce7c13",
+                  category: "Homework 3",
+                  title: "Title",
+                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
+                },
+                {
+                  id: "1f4e1bd0a87cea23cdb83d18",
+                  category: "Homework 4",
+                  title: "Title",
+                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
+                },
+                {
+                  id: "9f974f239d29ede969367103",
+                  category: "Homework 5",
+                  title: "Title",
+                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
+                },
+                {
+                  id: "ffc83c1560ec2f66a1c05596",
+                  category: "Homework 6",
+                  title: "Title",
+                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
+                },
+              ]}
+              sx={{ height: "100%" }}
+            />
+          </Grid>
+          <Grid
+            xs={6}
+            md={6}
+            lg={6}
+          >
+            <OverviewLatestOrders
+              orders={[
+                {
+                  id: "f69f88012978187a6c12897f",
+                  category: "Homework 1",
+                  title: "Title",
+                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
+                },
+                {
+                  id: "9eaa1c7dd4433f413c308ce2",
+                  category: "Homework 2",
+                  title: "Title",
+                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
+                },
+                {
+                  id: "01a5230c811bd04996ce7c13",
+                  category: "Homework 3",
+                  title: "Title",
+                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
+                },
+                {
+                  id: "1f4e1bd0a87cea23cdb83d18",
+                  category: "Homework 4",
+                  title: "Title",
+                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
+                },
+                {
+                  id: "9f974f239d29ede969367103",
+                  category: "Homework 5",
+                  title: "Title",
+                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
+                },
+                {
+                  id: "ffc83c1560ec2f66a1c05596",
+                  category: "Homework 6",
+                  title: "Title",
+                  body: "abcabacacacacac abcabacacacacac abcabacacacacac abcabacacacacac",
+                },
+              ]}
+              sx={{ height: "100%" }}
+            />
+          </Grid>
+          <Grid
+            xs={3}
+            md={3}
+            lg={3}
           >
             <OverviewLatestProducts
               products={[props.authors[0], props.authors[1], props.authors[2], props.authors[3], props.authors[4]]}
@@ -168,8 +161,8 @@ const Page = (props) => (
             />
           </Grid>
           <Grid
-            xs={12}
-            lg={8}
+            xs={9}
+            lg={9}
           >
             <OverviewSales
               chartSeries={[
