@@ -5,14 +5,30 @@
  */
 import prisma from "../../typescript/prisma";
 
+/**
+ * returns a JSON list of contributors with the following shape:
+ * [
+ *  {
+ *    slug: string,
+ *    totalCount: number
+ *  }
+ * ...
+ * ]
+ */
+interface Author {
+  slug: string;
+  totalCount: number;
+}
+
 const getTopContributors = async (
   startDate: Date = new Date(2022, 8, 5), // Default start date of September 5th, 2022 (0-based indices for month)
   endDate: Date = new Date(2022, 11, 20), // Default end date of December 20th, 2022 (0-based indices for month)
   count: number = 5
-): Promise<any[]> => {
+): Promise<Author[]> => {
   try {
     console.log(startDate, endDate);
-    const top = (await prisma.$queryRaw`
+    const top = (
+      (await prisma.$queryRaw`
             SELECT a.slug, 
             COUNT(DISTINCT c.id) + 
             COUNT(DISTINCT p.id) + 
@@ -27,9 +43,16 @@ const getTopContributors = async (
             GROUP BY a.slug
             ORDER BY "totalCount" DESC
             LIMIT ${count}
-        `) as any[];
+        `) as Author[]
+    ).map((author) => {
+      return {
+        slug: author.slug,
+        totalCount: Number(author.totalCount)
+      };
+    });
+
     return Promise.resolve(top);
-  } catch (error) {
+  } catch (error: any) {
     return Promise.reject(error);
   }
 };

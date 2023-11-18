@@ -1,5 +1,5 @@
 // set up general data fetching commands with prisma client
-import prisma from "../prisma";
+import prisma from "../../typescript/prisma";
 
 import getTopContributors from "./topContributors";
 
