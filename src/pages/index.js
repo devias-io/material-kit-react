@@ -8,7 +8,6 @@ import { subDays, subHours } from 'date-fns';
 import { Box, Badge, Container, IconButton, SvgIcon, Tooltip, Unstable_Grid2 as Grid} from '@mui/material';
 import BellIcon from '@heroicons/react/24/solid/BellIcon';
 
-
 const now = new Date();
 
 export const getServerSideProps = async () => {
@@ -24,7 +23,7 @@ const Page = (props) => (
   <>
     <Head>
       <title>
-        DataWire Analytics
+        Overview | Devias Kit
       </title>
     </Head>
     <Box
@@ -35,10 +34,11 @@ const Page = (props) => (
       }}
     >
     <Box
-      sx={{ position: "fixed", top: 20, right: 20}}
+      sx={{ position: "fixed", top: 20, right: 20, zIndex: 1000}}
     >
-      <Tooltip title="Notifications">
-        <IconButton>
+      <Tooltip title="Urgent Questions">
+        <IconButton 
+        onClick={() => { alert('clicked') }}>
           <Badge
             badgeContent={2}
             color="primary"
@@ -57,9 +57,9 @@ const Page = (props) => (
           spacing={3}
         >
           <Grid
-            xs={6}
-            md={6}
-            lg={6}
+            xs={12}
+            md={12}
+            lg={8}
           >
             <OverviewLatestOrders
               orders={[
@@ -104,9 +104,9 @@ const Page = (props) => (
             />
           </Grid>
           <Grid
-            xs={6}
-            md={6}
-            lg={6}
+            xs={12}
+            md={12}
+            lg={8}
           >
             <OverviewLatestOrders
               orders={[
@@ -151,9 +151,9 @@ const Page = (props) => (
             />
           </Grid>
           <Grid
-            xs={3}
-            md={3}
-            lg={3}
+            xs={12}
+            md={6}
+            lg={4}
           >
             <OverviewLatestProducts
               products={[props.authors[0], props.authors[1], props.authors[2], props.authors[3], props.authors[4]]}
@@ -161,9 +161,8 @@ const Page = (props) => (
             />
           </Grid>
           <Grid
-            xs={9}
-            md={9}
-            lg={9}
+            xs={12}
+            lg={8}
           >
             <OverviewSales
               chartSeries={[
