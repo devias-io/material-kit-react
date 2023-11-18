@@ -1,13 +1,19 @@
 import Head from "next/head";
+<<<<<<< HEAD
+=======
+import { Layout as DashboardLayout } from "src/layouts/dashboard/layout";
+>>>>>>> 54e40cd57a2ecc94238358a6656f7988e73300c2
 import { OverviewLatestOrders } from "src/sections/overview/overview-latest-orders";
 import { OverviewLatestProducts } from "src/sections/overview/overview-latest-products";
 import { OverviewSales } from "src/sections/overview/overview-sales";
 import getTopContributors from "./api/topContributors";
 import { subDays, subHours } from 'date-fns';
 import { Box, Badge, Container, IconButton, SvgIcon, Tooltip, Unstable_Grid2 as Grid} from '@mui/material';
+<<<<<<< HEAD
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
+=======
+>>>>>>> 54e40cd57a2ecc94238358a6656f7988e73300c2
 import BellIcon from '@heroicons/react/24/solid/BellIcon';
-
 
 const now = new Date();
 
@@ -24,7 +30,7 @@ const Page = (props) => (
   <>
     <Head>
       <title>
-        DataWire Analytics
+        Overview | Devias Kit
       </title>
     </Head>
     <Box
@@ -58,9 +64,9 @@ const Page = (props) => (
           spacing={3}
         >
           <Grid
-            xs={6}
-            md={6}
-            lg={6}
+            xs={12}
+            md={12}
+            lg={8}
           >
             <OverviewLatestOrders
               orders={[
@@ -105,9 +111,9 @@ const Page = (props) => (
             />
           </Grid>
           <Grid
-            xs={6}
-            md={6}
-            lg={6}
+            xs={12}
+            md={12}
+            lg={8}
           >
             <OverviewLatestOrders
               orders={[
@@ -152,9 +158,9 @@ const Page = (props) => (
             />
           </Grid>
           <Grid
-            xs={3}
-            md={3}
-            lg={3}
+            xs={12}
+            md={6}
+            lg={4}
           >
             <OverviewLatestProducts
               products={[props.authors[0], props.authors[1], props.authors[2], props.authors[3], props.authors[4]]}
@@ -162,9 +168,8 @@ const Page = (props) => (
             />
           </Grid>
           <Grid
-            xs={9}
-            md={9}
-            lg={9}
+            xs={12}
+            lg={8}
           >
             <OverviewSales
               chartSeries={[
