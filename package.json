@@ -25,6 +25,7 @@
     "@mui/x-date-pickers": "5.0.19",
     "@prisma/client": "^5.5.2",
     "apexcharts": "3.37.0",
+    "axios": "^1.6.2",
     "date-fns": "2.29.3",
     "formik": "2.2.9",
     "next": "13.1.6",
