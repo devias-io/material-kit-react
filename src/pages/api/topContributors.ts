@@ -23,7 +23,7 @@ interface Author {
 const getTopContributors = async (
   startDate: Date = new Date(2022, 8, 5), // Default start date of September 5th, 2022 (0-based indices for month)
   endDate: Date = new Date(2022, 11, 20), // Default end date of December 20th, 2022 (0-based indices for month)
-  count: number = 5
+  count: number = 3
 ): Promise<Author[]> => {
   try {
     console.log(startDate, endDate);

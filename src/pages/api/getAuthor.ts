@@ -10,6 +10,11 @@ const getAuthor = async (slug: string): Promise<Author | null> => {
     const author = await prisma.author.findUnique({
         where: {
             slug: slug
+        },
+        select: {
+            firstName: true,
+            lastName: true,
+            slug: true,
         }
     });
     return Promise.resolve(author);

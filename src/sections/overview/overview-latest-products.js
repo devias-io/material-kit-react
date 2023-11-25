@@ -22,6 +22,11 @@ import { useEffect, useState } from "react";
 export const OverviewLatestProducts = (props) => {
   const { products = [], sx } = props;
   const [data, setData] = useState([]);
+  const trophies = [
+    "/assets/products/trophy.png",
+    "/assets/products/silver.png",
+    "/assets/products/bronze.png",
+  ];
 
   // const fetchData = async () => {
   //   try {
@@ -45,12 +50,13 @@ export const OverviewLatestProducts = (props) => {
           const hasDivider = index < products.length - 1;
 
           return (
-            <ListItem divider={hasDivider} key={product.id}>
+            <ListItem divider={hasDivider} key={index}>
               <ListItemAvatar>
-                {product.image ? (
+                {index < 3 ? (
                   <Box
                     component="img"
-                    src={product.image}
+                    src={trophies[index]}
+                    alt="top contributor trophy"
                     sx={{
                       borderRadius: 1,
                       height: 48,
@@ -61,7 +67,6 @@ export const OverviewLatestProducts = (props) => {
                   <Box
                     sx={{
                       borderRadius: 1,
-                      backgroundColor: "neutral.200",
                       height: 48,
                       width: 48,
                     }}
@@ -69,7 +74,7 @@ export const OverviewLatestProducts = (props) => {
                 )}
               </ListItemAvatar>
               <ListItemText
-                primary={product.slug}
+                primary={`${product.firstName} ${product.lastName}`}
                 primaryTypographyProps={{ variant: "subtitle1" }}
                 secondary={`Number of posts ${product.totalCount}`}
                 secondaryTypographyProps={{ variant: "body2" }}
