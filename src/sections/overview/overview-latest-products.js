@@ -1,10 +1,7 @@
-import { formatDistanceToNow } from "date-fns";
 import PropTypes from "prop-types";
-import ArrowRightIcon from "@heroicons/react/24/solid/ArrowRightIcon";
 import EllipsisVerticalIcon from "@heroicons/react/24/solid/EllipsisVerticalIcon";
 import {
   Box,
-  Button,
   Card,
   CardActions,
   CardHeader,
@@ -16,31 +13,14 @@ import {
   ListItemText,
   SvgIcon,
 } from "@mui/material";
-import { getTopContributors } from "../../pages/api/api";
-import { useEffect, useState } from "react";
 
 export const OverviewLatestProducts = (props) => {
   const { products = [], sx } = props;
-  const [data, setData] = useState([]);
   const trophies = [
     "/assets/products/trophy.png",
     "/assets/products/silver.png",
     "/assets/products/bronze.png",
   ];
-
-  // const fetchData = async () => {
-  //   try {
-  //     const data = await getTopContributors();
-  //     setData(data);
-  //   }
-  //   catch (err) {
-  //     console.log(err);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   fetchData();
-  // }, []);
 
   return (
     <Card sx={sx}>
@@ -76,7 +56,7 @@ export const OverviewLatestProducts = (props) => {
               <ListItemText
                 primary={`${product.firstName} ${product.lastName}`}
                 primaryTypographyProps={{ variant: "subtitle1" }}
-                secondary={`Number of posts ${product.totalCount}`}
+                secondary={`Number of posts: ${product.totalCount}`}
                 secondaryTypographyProps={{ variant: "body2" }}
               />
               <IconButton edge="end">

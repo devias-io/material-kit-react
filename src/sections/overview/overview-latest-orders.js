@@ -1,6 +1,6 @@
-import { format } from 'date-fns';
-import PropTypes from 'prop-types';
-import ArrowRightIcon from '@heroicons/react/24/solid/ArrowRightIcon';
+import { format } from "date-fns";
+import PropTypes from "prop-types";
+import ArrowRightIcon from "@heroicons/react/24/solid/ArrowRightIcon";
 import {
   Box,
   Button,
@@ -13,14 +13,14 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TableRow
-} from '@mui/material';
-import { Scrollbar } from 'src/components/scrollbar';
+  TableRow,
+} from "@mui/material";
+import { Scrollbar } from "src/components/scrollbar";
 
 const statusMap = {
-  pending: 'warning',
-  delivered: 'success',
-  refunded: 'error'
+  pending: "warning",
+  delivered: "success",
+  refunded: "error",
 };
 
 export const OverviewLatestOrders = (props) => {
@@ -28,40 +28,28 @@ export const OverviewLatestOrders = (props) => {
 
   return (
     <Card sx={sx}>
-      <CardHeader title="Latest Orders" />
+      <CardHeader title="Latest Public Posts" />
       <Scrollbar sx={{ flexGrow: 1 }}>
         <Box sx={{ minWidth: 800 }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>
-                  Category
-                </TableCell>
-                <TableCell>
-                  Title
-                </TableCell>
-                <TableCell>
-                  Body
-                </TableCell>
+                <TableCell>Category</TableCell>
+                <TableCell>Title</TableCell>
+                <TableCell>Body</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {orders.map((order) => {
+              {orders.map((order, index) => {
                 return (
                   <TableRow
                     hover
-                    key={order.id}
-                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                    key={index}
+                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                   >
-                    <TableCell>
-                      {order.category}
-                    </TableCell>
-                    <TableCell>
-                      {order.title}
-                    </TableCell>
-                    <TableCell variant="footer">
-                        {order.body}
-                    </TableCell>
+                    <TableCell>{order.category}</TableCell>
+                    <TableCell>{order.title}</TableCell>
+                    <TableCell variant="footer">{order.body}</TableCell>
                   </TableRow>
                 );
               })}
@@ -76,5 +64,5 @@ export const OverviewLatestOrders = (props) => {
 
 OverviewLatestOrders.prototype = {
   orders: PropTypes.array,
-  sx: PropTypes.object
+  sx: PropTypes.object,
 };
