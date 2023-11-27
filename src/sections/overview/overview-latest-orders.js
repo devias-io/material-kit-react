@@ -1,3 +1,5 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
 import { format } from "date-fns";
 import PropTypes from "prop-types";
 import ArrowRightIcon from "@heroicons/react/24/solid/ArrowRightIcon";
@@ -13,9 +15,13 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TableRow,
-} from "@mui/material";
-import { Scrollbar } from "src/components/scrollbar";
+  TableRow
+} from '@mui/material';
+import { Scrollbar } from 'src/components/scrollbar';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import IconButton from '@mui/material/IconButton';
+import { Collapse } from '@mui/material';
 
 const statusMap = {
   pending: "warning",
@@ -23,8 +29,11 @@ const statusMap = {
   refunded: "error",
 };
 
+
+//Trending posts table
 export const OverviewLatestOrders = (props) => {
   const { orders = [], sx } = props;
+  const [open, setOpen] = React.useState(false);
 
   return (
     <Card sx={sx}>
@@ -37,19 +46,36 @@ export const OverviewLatestOrders = (props) => {
                 <TableCell>Category</TableCell>
                 <TableCell>Title</TableCell>
                 <TableCell>Body</TableCell>
+                <TableCell>
+                  Category
+                </TableCell>
+                <TableCell>
+                  Title
+                </TableCell>
+                <TableCell>
+                  Post info
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {orders.map((order, index) => {
                 return (
                   <TableRow
-                    hover
-                    key={index}
-                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    hover 
+                    key = {order.id}
+                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                   >
+                    <TableCell>
+                      <IconButton
+                        aria-label="expand row"
+                        size="small"
+                        onClick={() => setOpen(open===index ? -1 : index)}
+                      >
+                        {open===index ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                      </IconButton>
+                    </TableCell>   
                     <TableCell>{order.category}</TableCell>
                     <TableCell>{order.title}</TableCell>
-                    <TableCell variant="footer">{order.body}</TableCell>
                   </TableRow>
                 );
               })}

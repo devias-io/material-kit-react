@@ -1,5 +1,4 @@
 import Head from "next/head";
-import { Layout as DashboardLayout } from "src/layouts/dashboard/layout";
 import { OverviewLatestOrders } from "src/sections/overview/overview-latest-orders";
 import { OverviewLatestProducts } from "src/sections/overview/overview-latest-products";
 import { OverviewSales } from "src/sections/overview/overview-sales";
@@ -64,14 +63,11 @@ const Page = (props) => (
         </Tooltip>
       </Box>
       <Container maxWidth="xl">
-        <Grid container spacing={3}>
-          <Grid xs={12} md={12} lg={8}>
-            <OverviewLatestOrders
-              orders={props.latestPosts}
-              sx={{ height: "100%" }}
-            />
-          </Grid>
-          <Grid xs={12} md={12} lg={8}>
+        <Grid xs={6} md={6} lg={6}>
+          <OverviewLatestOrders orders={props.latestPosts} sx={{ height: "100%" }} />
+        </Grid>
+        <Grid xs={12} md={12} lg={8}>
+          <Grid xs={6} md={6} lg={6}>
             <OverviewLatestOrders
               orders={[
                 {
@@ -117,7 +113,7 @@ const Page = (props) => (
           <Grid xs={12} md={6} lg={4}>
             <OverviewLatestProducts products={props.contributors} sx={{ height: "100%" }} />
           </Grid>
-          <Grid xs={12} lg={8}>
+          <Grid xs={9} lg={9}>
             <OverviewSales
               chartSeries={[
                 {
