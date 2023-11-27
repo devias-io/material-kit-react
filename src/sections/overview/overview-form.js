@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { Button, Card, CardActions, CardContent, Grid, MenuItem, TextField } from "@mui/material";
+import {
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  Grid,
+  MenuItem,
+  TextField,
+} from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 
 const OverviewForm = () => {
@@ -35,8 +44,8 @@ const OverviewForm = () => {
 
   return (
     <Grid>
-      <Card>
-        <CardContent>
+      <Box>
+        <CardContent xs={12} sm={6} lg={3}>
           <form onSubmit={handleSubmit}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={4}>
@@ -166,7 +175,7 @@ const OverviewForm = () => {
             </CardActions>
           </form>
         </CardContent>
-      </Card>
+      </Box>
     </Grid>
   );
 };

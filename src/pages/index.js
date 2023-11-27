@@ -29,6 +29,8 @@ const style = {
   left: "50%",
   transform: "translate(-50%, -50%)",
   width: "80%",
+  maxHeight: "100%",
+  maxWidth: "100%",
   bgcolor: "background.paper",
   border: "2px solid #000",
   borderRadius: "5px",
@@ -54,23 +56,24 @@ const Page = () => {
           py: 8,
         }}
       >
+        <Button onClick={handleOpen}>Open modal </Button>
         <Container maxWidth="xl">
-          <Grid>
-            <Button onClick={handleOpen}>Open modal</Button>
-
+          <Grid xs={12} sm={6} lg={3}>
             <Modal
               open={open}
               onClose={handleClose}
               aria-labelledby="modal-modal-title"
               aria-describedby="modal-modal-description"
             >
+              {/* <Grid>
+                <OverviewProfile />
+              </Grid> */}
               <Grid sx={style}>
                 <CardActions sx={{ justifyContent: "flex-end" }}>
                   <Button onClick={handleClose}>X</Button>
                 </CardActions>
 
-                <Grid>{/* <OverviewProfile /> */}</Grid>
-                <Grid id="modal-modal-description" sx={{ mt: 2 }}>
+                <Grid id="modal-modal-description" sx={{ mt: 5 }}>
                   <OverviewForm />
                 </Grid>
               </Grid>
