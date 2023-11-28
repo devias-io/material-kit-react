@@ -40,7 +40,7 @@ const Page = () => {
   const customersSelection = useSelection(customersIds);
 
   useEffect(() => {
-    fetch('http://localhost:3000/clients/comp1234/list')
+    fetch(`${process.env.REALIZZA_BACKEND_PORT}/users`)
       .then((response) => response.json())
       .then((data) => setData(data.map((item) => {
         return {
