@@ -9,7 +9,7 @@ import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 import { SvgIcon } from '@mui/material';
 
 export const items = [
-  {
+  /* {
     title: 'Resumo',
     path: '/',
     icon: (
@@ -17,7 +17,7 @@ export const items = [
         <ChartBarIcon />
       </SvgIcon>
     )
-  },
+  }, */
   {
     title: 'Clientes',
     path: '/clientes',
@@ -27,7 +27,7 @@ export const items = [
       </SvgIcon>
     )
   },
-  {
+  /*{
     title: 'Projetos',
     path: '/projetos',
     icon: (
@@ -80,5 +80,5 @@ export const items = [
         <XCircleIcon />
       </SvgIcon>
     )
-  }
+  }*/
 ];
