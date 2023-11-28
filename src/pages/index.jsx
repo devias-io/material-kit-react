@@ -17,12 +17,41 @@ const now = new Date();
 
 
 const Page = ({ params }) => {
-  const [project, setProject] = useState();
+  const [transactions, setTransactions] = useState();
+  const [countTickets, setCountTickets] = useState();
+  const [percentage, setPercentage] = useState(0);
+  const totalTickets = 100000;
+  const [approved, setApproved] = useState();
+  const [pending, setPending] = useState();
   const router = useRouter();
 
   useEffect(() => {
-    fetch(`http://localhost:3000/projects/${router.asPath.split('/').pop()}`)
-      .then(async (response) => setProject(await response.json()));
+    fetch(`http://localhost:3000/purchase-transactions`)
+      .then(async (response) => {
+
+        const data = await response.json();
+        
+        setTransactions(data)
+        const approvedFiltering = data.filter((transaction) => transaction.approvedAt);
+        setApproved(approvedFiltering);
+        const pendingFiltering = data.filter((transaction) => !transaction.approvedAt);
+        setPending(pendingFiltering);
+        const countTicketsReducer = data.reduce((acc, curr) => {
+          const { amount} = curr;
+
+          if (amount >= 199) {
+            return acc + Math.floor(amount / 1.99);
+          }
+          if (amount >= 24.90) {
+            return acc + Math.floor(amount / 2.49);
+          } else {
+            return acc + Math.floor(amount / 2.99);
+          }
+        }, 0);
+        setCountTickets(countTicketsReducer);
+        const percentageReducer = (countTicketsReducer / totalTickets) * 100;
+        setPercentage(percentageReducer);
+      });
   }, []);
 
   return (
@@ -53,7 +82,19 @@ const Page = ({ params }) => {
                 difference={12}
                 positive
                 sx={{ height: '100%' }}
-                value={Number(project?.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                value={Number(approved?.reduce((acc, curr) => acc + curr.amount, 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              />
+            </Grid>
+            <Grid
+              xs={12}
+              sm={12}
+              lg={4}
+            >
+              <OverviewBudget
+                difference={12}
+                positive
+                sx={{ height: '100%' }}
+                value={Number(approved?.reduce((acc, curr) => acc + curr.amount, 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               />
             </Grid>
             <Grid
@@ -63,7 +104,7 @@ const Page = ({ params }) => {
             >
               <OverviewTasksProgress
                 sx={{ height: '100%' }}
-                value={75.5}
+                value={percentage}
               />
             </Grid>
             <Grid
