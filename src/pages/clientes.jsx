@@ -7,6 +7,7 @@ import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { CustomersTable } from 'src/sections/customer/customers-table';
 import { CustomersSearch } from 'src/sections/customer/customers-search';
 import { applyPagination } from 'src/utils/apply-pagination';
+import { GetAllClientsUseCase } from 'src/provider/useCases/clients/get-all-client.usecase';
 
 const now = new Date();
 
@@ -40,24 +41,9 @@ const Page = () => {
   const customersSelection = useSelection(customersIds);
 
   useEffect(() => {
-    fetch(`${process.env.REALIZZA_BACKEND_PORT}/users`)
-      .then((response) => response.json())
-      .then((data) => setData(data.map((item) => {
-        return {
-          id: item.id,
-          address: {
-            city: item.address.city,
-            country: 'BR',
-            state: item.address.state,
-            street: item.address.street + ' ' + item.address.streetNumber
-          },
-          avatar: item.avatarUrl,
-          createdAt: new Date(item.createdAt).getTime(),
-          email: 'iulia.albu@devias.io',
-          name: item.name,
-          phone: '00000000000'
-        }
-      })));
+    GetAllClientsUseCase().then((response) => {
+      setData(response.value);
+    })
   }, []);
 
 

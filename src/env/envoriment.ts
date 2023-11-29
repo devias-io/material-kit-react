@@ -5,7 +5,7 @@ export {};
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      REALIZZA_BACKEND_PORT: string;
+      NEXT_PUBLIC_REALIZZA_BACKEND_PORT: string;
     }
   }
 }

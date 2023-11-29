@@ -27,6 +27,7 @@
     "axios": "^1.6.2",
     "date-fns": "2.29.3",
     "formik": "2.2.9",
+    "js-cookie": "^3.0.5",
     "next": "13.1.6",
     "nprogress": "0.2.0",
     "prop-types": "15.8.1",

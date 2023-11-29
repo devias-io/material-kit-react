@@ -8,7 +8,7 @@ export class MainApiProvider {
     private readonly url: string;
   
     constructor() {
-      this.url = process.env.REALIZZA_BACKEND_PORT;
+      this.url = process.env.NEXT_PUBLIC_REALIZZA_BACKEND_PORT;
     }
   
     async request(method: string, url: string, data?: any, token?: string): Promise<Result<any>> {
@@ -22,7 +22,7 @@ export class MainApiProvider {
                 return axios.get(`${url}`, {
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
+                        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbHBqdHcyN3YwMDAwdzFma2x5czA2OXkzIiwiaWF0IjoxNzAxMjcyNzU3fQ.VVQELIeXeSIv3_sMTiwdrmIycNUjGUOJ6iDf-bbqs0U`,
                     },
                     baseURL: this.url,
                 }).then((res) => {
