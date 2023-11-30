@@ -40,11 +40,17 @@ const Page = () => {
   const customersIds = useCustomerIds(customers);
   const customersSelection = useSelection(customersIds);
 
+  const [search, setSearch] = useState('');
+
   useEffect(() => {
-    GetAllClientsUseCase().then((response) => {
+    GetAllClientsUseCase(search.length > 0 ? search : undefined).then((response) => {
       setData(response.value);
     })
   }, []);
+
+  const handleChangeSearch = (e) => {
+      setSearch(e.target.value);
+  }
 
 
 
@@ -103,7 +109,9 @@ const Page = () => {
                 </Button>
               </div>
             </Stack>
-            <CustomersSearch />
+            <CustomersSearch 
+            search={search} 
+            onChange={handleChangeSearch} />
             <CustomersTable
               count={data.length}
               items={data}

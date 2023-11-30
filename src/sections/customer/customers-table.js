@@ -64,7 +64,7 @@ export const CustomersTable = (props) => {
                   Documento
                 </TableCell>
                 <TableCell>
-                  Carteira
+                  Administrador
                 </TableCell>
                 {/* <TableCell>
                   Signed Up
@@ -115,7 +115,7 @@ export const CustomersTable = (props) => {
                       {customer.document}
                     </TableCell>
                     <TableCell>
-                      {customer.wallet === null ? 'Nenhuma Carteira' : customer.wallet}
+                      {customer.is_admin === false ? 'Cliente' : 'Administrador'}
                     </TableCell>
                   </TableRow>
                 );

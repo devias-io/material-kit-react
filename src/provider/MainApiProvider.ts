@@ -22,7 +22,7 @@ export class MainApiProvider {
                 return axios.get(`${url}`, {
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbHBqdHcyN3YwMDAwdzFma2x5czA2OXkzIiwiaWF0IjoxNzAxMjcyNzU3fQ.VVQELIeXeSIv3_sMTiwdrmIycNUjGUOJ6iDf-bbqs0U`,
+                        Authorization: `Bearer ${token}`,
                     },
                     baseURL: this.url,
                 }).then((res) => {

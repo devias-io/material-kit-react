@@ -13,6 +13,7 @@ export const AccountPopover = (props) => {
       onClose?.();
       Cookies.remove('token');
       router.push('/auth/login');
+      window.sessionStorage.removeItem('authenticated');
     },
     [onClose, router]
   );
