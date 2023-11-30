@@ -74,8 +74,7 @@ export const CustomersTable = (props) => {
             <TableBody>
               {items.map((customer) => {
                 const isSelected = selected.includes(customer.id);
-              
-
+          
                 return (
                   <TableRow
                     hover
@@ -124,7 +123,7 @@ export const CustomersTable = (props) => {
           </Table>
         </Box>
       </Scrollbar>
-      <TablePagination
+      <TablePagination       
         component="div"
         count={count}
         onPageChange={onPageChange}

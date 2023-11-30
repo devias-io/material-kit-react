@@ -21,7 +21,7 @@ const Page = () => {
   const useCustomers = (page, rowsPerPage) => {
     return useMemo(
       () => {
-        return applyPagination(data, page, rowsPerPage);
+        return applyPagination(data?.users, page, rowsPerPage);
       },
       [page, rowsPerPage]
     );
@@ -30,7 +30,7 @@ const Page = () => {
   const useCustomerIds = (customers) => {
     return useMemo(
       () => {
-        return customers.map((customer) => customer.id);
+        return customers?.map((customer) => customer.id);
       },
       [customers]
     );
@@ -43,16 +43,16 @@ const Page = () => {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    GetAllClientsUseCase(search.length > 0 ? search : undefined).then((response) => {
+
+    GetAllClientsUseCase(search.length > 0 ? search : '' , page , rowsPerPage).then((response) => {
       setData(response.value);
     })
-  }, []);
+
+  }, [search, page, rowsPerPage]);
 
   const handleChangeSearch = (e) => {
       setSearch(e.target.value);
   }
-
-
 
   const handlePageChange = useCallback(
     (event, value) => {
@@ -68,7 +68,7 @@ const Page = () => {
     []
   );
 
-
+    
 
   return (
     <>
@@ -109,12 +109,12 @@ const Page = () => {
                 </Button>
               </div>
             </Stack>
-            <CustomersSearch 
+            <CustomersSearch
             search={search} 
             onChange={handleChangeSearch} />
             <CustomersTable
-              count={data.length}
-              items={data}
+              count={data.usersCount}
+              items={data.users}
               onDeselectAll={customersSelection.handleDeselectAll}
               onDeselectOne={customersSelection.handleDeselectOne}
               onPageChange={handlePageChange}
