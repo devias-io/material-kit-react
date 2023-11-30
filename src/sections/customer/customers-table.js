@@ -64,7 +64,7 @@ export const CustomersTable = (props) => {
                   Documento
                 </TableCell>
                 <TableCell>
-                  Carteira
+                  Administrador
                 </TableCell>
                 {/* <TableCell>
                   Signed Up
@@ -74,8 +74,7 @@ export const CustomersTable = (props) => {
             <TableBody>
               {items.map((customer) => {
                 const isSelected = selected.includes(customer.id);
-              
-
+          
                 return (
                   <TableRow
                     hover
@@ -115,7 +114,7 @@ export const CustomersTable = (props) => {
                       {customer.document}
                     </TableCell>
                     <TableCell>
-                      {customer.wallet === null ? 'Nenhuma Carteira' : customer.wallet}
+                      {customer.is_admin === false ? 'Cliente' : 'Administrador'}
                     </TableCell>
                   </TableRow>
                 );
@@ -124,7 +123,7 @@ export const CustomersTable = (props) => {
           </Table>
         </Box>
       </Scrollbar>
-      <TablePagination
+      <TablePagination       
         component="div"
         count={count}
         onPageChange={onPageChange}

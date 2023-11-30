@@ -9,9 +9,6 @@ import { CustomersSearch } from 'src/sections/customer/customers-search';
 import { applyPagination } from 'src/utils/apply-pagination';
 import { GetAllClientsUseCase } from 'src/provider/useCases/clients/get-all-client.usecase';
 
-const now = new Date();
-
-
 const Page = () => {
   const [data, setData] = useState([]);
   const [page, setPage] = useState(0);
@@ -21,7 +18,7 @@ const Page = () => {
   const useCustomers = (page, rowsPerPage) => {
     return useMemo(
       () => {
-        return applyPagination(data, page, rowsPerPage);
+        return applyPagination(data?.users, page, rowsPerPage);
       },
       [page, rowsPerPage]
     );
@@ -30,7 +27,7 @@ const Page = () => {
   const useCustomerIds = (customers) => {
     return useMemo(
       () => {
-        return customers.map((customer) => customer.id);
+        return customers?.map((customer) => customer.id);
       },
       [customers]
     );
@@ -40,13 +37,19 @@ const Page = () => {
   const customersIds = useCustomerIds(customers);
   const customersSelection = useSelection(customersIds);
 
+  const [search, setSearch] = useState('');
+
   useEffect(() => {
-    GetAllClientsUseCase().then((response) => {
+
+    GetAllClientsUseCase(search.length > 0 ? search : '' , page , rowsPerPage).then((response) => {
       setData(response.value);
     })
-  }, []);
 
+  }, [search, page, rowsPerPage]);
 
+  const handleChangeSearch = (e) => {
+      setSearch(e.target.value);
+  }
 
   const handlePageChange = useCallback(
     (event, value) => {
@@ -62,13 +65,13 @@ const Page = () => {
     []
   );
 
-
+    
 
   return (
     <>
       <Head>
         <title>
-          Clientes
+          Clientes | Realizza Backoffice
         </title>
       </Head>
       <Box
@@ -103,10 +106,12 @@ const Page = () => {
                 </Button>
               </div>
             </Stack>
-            <CustomersSearch />
+            <CustomersSearch
+            search={search} 
+            onChange={handleChangeSearch} />
             <CustomersTable
-              count={data.length}
-              items={data}
+              count={data.usersCount}
+              items={data.users}
               onDeselectAll={customersSelection.handleDeselectAll}
               onDeselectOne={customersSelection.handleDeselectOne}
               onPageChange={handlePageChange}

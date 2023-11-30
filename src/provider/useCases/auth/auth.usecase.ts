@@ -7,8 +7,9 @@ export async function SignInUseCase(data: LoginDTO){
 
     const response = await result.request('POST', '/auth/login', data)
     
+    if (response.isFailure) return { error: 'Usuário ou senha inválidos' }
+
     return {
         token: response.value.access_token,
-        response
     }
 }
