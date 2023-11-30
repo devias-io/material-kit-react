@@ -9,9 +9,6 @@ import { CustomersSearch } from 'src/sections/customer/customers-search';
 import { applyPagination } from 'src/utils/apply-pagination';
 import { GetAllClientsUseCase } from 'src/provider/useCases/clients/get-all-client.usecase';
 
-const now = new Date();
-
-
 const Page = () => {
   const [data, setData] = useState([]);
   const [page, setPage] = useState(0);
@@ -74,7 +71,7 @@ const Page = () => {
     <>
       <Head>
         <title>
-          Clientes
+          Clientes | Realizza Backoffice
         </title>
       </Head>
       <Box

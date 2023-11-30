@@ -24,7 +24,7 @@ export const neutral = {
   900: '#111927'
 };
 
-export const indigo = withAlphas({
+export const realizzaPalete = withAlphas({
   lightest: '#F5F7FF',
   light: '#EBEEFE',
   main: '#dcbc91',

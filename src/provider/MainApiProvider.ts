@@ -43,7 +43,6 @@ export class MainApiProvider {
 
                 } ).catch((err) => {
                     return Result.fail(err);
-
                 });
             case 'PUT':
                 return axios.put(`${url}`, data, {

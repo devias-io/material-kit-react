@@ -8,16 +8,14 @@ import Cookies from 'js-cookie';
 import {
   Box,
   Button,
-  Link,
   Stack,
-  Tab,
-  Tabs,
   TextField,
   Typography
 } from '@mui/material';
 import { SignInUseCase } from 'src/provider/useCases/auth/auth.usecase';
 import Image from 'next/image';
 import Logo from '../../assets/images/RealizzaLogo.png'
+import { useEffect } from 'react';
 
 const loginSchema = Yup.object().shape({
   email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
@@ -40,16 +38,20 @@ const Page = () => {
         email: values.email,
         password: values.password,
       }).then((response) => {
-        if (response.response.isFailure) {
-          return
-        } else {
-          Cookies.set('token', response.token);
-          window.sessionStorage.setItem('authenticated', 'true');
-          router.push('/');
-        }
+        if (response.error) {
+          return formik.setErrors({ submit: response.error });
+        } 
+        
+        Cookies.set('token', response.token);
+        window.sessionStorage.setItem('authenticated', 'true');
       });
     }
-    
+  });
+
+  useEffect(() => {
+    if (window.sessionStorage.getItem('authenticated') === 'true') {
+      router.push('/');
+    }
   });
 
   return (
