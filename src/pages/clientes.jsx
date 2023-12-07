@@ -1,18 +1,22 @@
-import { useCallback, useMemo, useState, useEffect } from 'react';
-import Head from 'next/head';
 import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
-import { Box, Button, Container, Stack, SvgIcon, Typography } from '@mui/material';
+import { Box, Button, Container, Snackbar, Stack, SvgIcon, Typography } from '@mui/material';
+import Head from 'next/head';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelection } from 'src/hooks/use-selection';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
-import { CustomersTable } from 'src/sections/customer/customers-table';
-import { CustomersSearch } from 'src/sections/customer/customers-search';
-import { applyPagination } from 'src/utils/apply-pagination';
 import { GetAllClientsUseCase } from 'src/provider/useCases/clients/get-all-client.usecase';
+import { CustomersSearch } from 'src/sections/customer/customers-search';
+import { CustomersTable } from 'src/sections/customer/customers-table';
+import { EditCustomerDialog } from 'src/sections/customer/edit-customer-dialog';
+import { GiftDialog } from 'src/sections/customer/gift-customer-dialog';
+import { applyPagination } from 'src/utils/apply-pagination';
 
 const Page = () => {
   const [data, setData] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [snakBarMsg, setSnakBarMsg] = useState('');
+  const [snakBarOpen, setSnakBarOpen] = useState(false);
 
 
   const useCustomers = (page, rowsPerPage) => {
@@ -38,6 +42,8 @@ const Page = () => {
   const customersSelection = useSelection(customersIds);
 
   const [search, setSearch] = useState('');
+  const [dialog, setDialog] = useState('close');
+  const [dialogData, setDialogData] = useState({});
 
   useEffect(() => {
 
@@ -45,7 +51,7 @@ const Page = () => {
       setData(response.value);
     })
 
-  }, [search, page, rowsPerPage]);
+  }, [search, page, rowsPerPage, dialog]);
 
   const handleChangeSearch = (e) => {
       setSearch(e.target.value);
@@ -64,8 +70,26 @@ const Page = () => {
     },
     []
   );
-
-    
+  
+  const handleEditButton = (id, name, document, email) => {
+    setDialogData({
+      id,
+      name,
+      document,
+      email
+    });
+    setDialog('edit');
+  }
+  
+  const handleGiftButton = (id, name, document, email) => {
+    setDialogData({
+      id,
+      name,
+      document,
+      email
+    });
+    setDialog('gift');
+  }
 
   return (
     <>
@@ -121,10 +145,36 @@ const Page = () => {
               page={page}
               rowsPerPage={rowsPerPage}
               selected={customersSelection.selected}
+              handleEdit={handleEditButton}
+              handleGift={handleGiftButton}
             />
           </Stack>
         </Container>
       </Box>
+      <EditCustomerDialog 
+        dialog={dialog}
+        setDialog={setDialog}
+        data={dialogData}
+        setSnakBarMsg={setSnakBarMsg}
+        setSnakBarOpen={setSnakBarOpen}
+        />
+      <GiftDialog 
+        dialog={dialog}
+        setDialog={setDialog}
+        data={dialogData}
+        setSnakBarMsg={setSnakBarMsg}
+        setSnakBarOpen={setSnakBarOpen}
+      />
+      <Snackbar
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right'
+        }}
+        autoHideDuration={3000}
+        message={snakBarMsg}
+        open={snakBarOpen}
+        onClose={() => setSnakBarOpen(false)}
+      />
     </>
   );
 };

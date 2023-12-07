@@ -52,7 +52,7 @@ const Page = () => {
     if (window.sessionStorage.getItem('authenticated') === 'true') {
       router.push('/');
     }
-  });
+  }, [window.sessionStorage.getItem('authenticated')]);
 
   return (
     <>

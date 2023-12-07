@@ -13,6 +13,7 @@ import {
   TableRow,
   Typography
 } from '@mui/material';
+import { GiftIcon, PencilSquareIcon, TicketIcon } from '@heroicons/react/24/outline'
 import { Scrollbar } from 'src/components/scrollbar';
 import { getInitials } from 'src/utils/get-initials';
 
@@ -28,7 +29,9 @@ export const CustomersTable = (props) => {
     onSelectOne,
     page = 0,
     rowsPerPage = 0,
-    selected = []
+    selected = [],
+    handleEdit = () => {},
+    handleGift = () => {},
   } = props;
 
   const selectedSome = (selected.length > 0) && (selected.length < items.length);
@@ -66,9 +69,9 @@ export const CustomersTable = (props) => {
                 <TableCell>
                   Administrador
                 </TableCell>
-                {/* <TableCell>
-                  Signed Up
-                </TableCell> */}
+                <TableCell>
+                  {/* Signed Up */}
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -113,8 +116,28 @@ export const CustomersTable = (props) => {
                     <TableCell>
                       {customer.document}
                     </TableCell>
-                    <TableCell>
+                    <TableCell >
                       {customer.is_admin === false ? 'Cliente' : 'Administrador'}
+                    </TableCell>
+                    <TableCell>
+                      <Stack
+                        alignItems="center"
+                        direction="row"
+                        spacing={4}
+                      >
+                        <PencilSquareIcon
+                          height={20}
+                          cursor={'pointer'}
+                          id={customer.id}
+                          onClick={() => handleEdit(customer.id, customer.name, customer.document, customer.email)}
+                          />
+                        <TicketIcon
+                          height={20}
+                          cursor={'pointer'}
+                          id={customer.id}
+                          onClick={() => handleGift(customer.id, customer.name, customer.document, customer.email)}
+                        />
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 );

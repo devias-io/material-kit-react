@@ -58,6 +58,20 @@ export class MainApiProvider {
                 }).catch((err) => {
                     return Result.fail(err);
                 });
+            case 'PATCH':
+                return axios.patch(`${url}`, data, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+
+                    },
+                    baseURL: this.url,
+                }).then((res) => {
+                    return Result.ok(res.data);
+
+                }).catch((err) => {
+                    return Result.fail(err);
+                });
             case 'DELETE':
                 return axios.delete(`${url}`, {
                     headers: {
