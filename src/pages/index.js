@@ -65,10 +65,21 @@ const Page = () => {
               aria-labelledby="modal-modal-title"
               aria-describedby="modal-modal-description"
             >
-              {/* <Grid>
-                <OverviewProfile />
-              </Grid> */}
-              <Grid sx={style}>
+              <Grid
+                container
+                sx={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: "80%",
+                  maxHeight: "90vh",
+                  bgcolor: "background.paper",
+                  boxShadow: 24,
+                  // p: 4,
+                  overflowY: "auto",
+                }}
+              >
                 <CardActions sx={{ justifyContent: "flex-end" }}>
                   <Button onClick={handleClose}>X</Button>
                 </CardActions>

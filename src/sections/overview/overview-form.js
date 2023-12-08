@@ -10,38 +10,85 @@ import {
   TextField,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
+import { useFormik } from "formik";
 
 const OverviewForm = () => {
-  const [formData, setFormData] = useState({
-    username: "",
-    firstName: "",
-    lastName: "",
-    dateOfBirth: null,
-    gender: "",
-    profilePicture: "",
-    address: "",
-    contactInfo: "",
-    preferences: "",
-    registrationDate: "",
-    accountStatus: "",
-    education: "",
-    employment: "",
-    socialMediaLinks: "",
+  const formik = useFormik({
+    initialValues: {
+      username: "",
+      firstName: "",
+      lastName: "",
+      dateOfBirth: null,
+      gender: "",
+      profilePicture: "",
+      address: "",
+      contactInfo: "",
+      preferences: "",
+      registrationDate: "",
+      accountStatus: "",
+      education: "",
+      employment: "",
+      socialMediaLinks: "",
+    },
+
+    validationSchema: Yup.object({
+      username: Yup.string().required("Username is required"),
+      firstName: Yup.string().required("First Name is required"),
+      lastName: Yup.string().required("Last Name is required"),
+      gender: Yup.string().required("Gender is required"),
+      dateOfBirth: Yup.string().required("Date of Birth is required"),
+      address: Yup.string().required("Address is required"),
+      employment: Yup.string().required("Employment is required"),
+      education: Yup.string().required("Education is required"),
+      preferences: Yup.string().required("Preference is required"),
+      socialMediaLinks: Yup.string().required("Social media is required"),
+      registrationDate: Yup.string().required("Registration Date is required"),
+    }),
+
+    onSubmit: async (values, { resetForm }) => {
+      // setLoadBtn(true);
+
+      var requestOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+        redirect: "follow",
+      };
+
+      // Fetch call to submit data
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/login`, requestOptions)
+        .then((response) => response.json())
+        .then((result) => {
+          console.log("result ", result);
+          // if (result.status === "success") {
+          //   setLoadBtn(false);
+          //   resetForm();
+          //   successMessage(result.message);
+          //   setSuccessMsg(true);
+          // }
+          // if (result.status === "fail") {
+          //   warningMessage(result.message);
+          //   setLoadBtn(false);
+          // }
+          // if (result.status === "error") {
+          //   dangerMessage(result.data);
+          //   setLoadBtn(false);
+          // }
+        })
+        .catch((error) => {
+          //   setLoadBtn(false);
+          //   dangerMessage(error);
+          console.log(" error : ", error);
+        });
+    },
   });
 
   const handleInputChange = (fieldName, value) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      [fieldName]: value,
-    }));
+    // Update the form data
+    formik.setFieldValue(fieldName, value);
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    console.log("Form Data:", formData);
-  };
   const renderInput = (props) => <TextField {...props} fullWidth margin="normal" helperText="" />;
-
   return (
     <Grid>
       <Box>

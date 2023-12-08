@@ -27,7 +27,6 @@ const Page = () => {
     initialValues: {
       email: "demo@devias.io",
       password: "Password123!",
-      submit: null,
     },
     validationSchema: Yup.object({
       email: Yup.string().email("Must be a valid email").max(255).required("Email is required"),
