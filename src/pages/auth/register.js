@@ -3,34 +3,62 @@ import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { Box, Button, Link, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, Grid, Link, Stack, TextField, Typography } from "@mui/material";
 import { useAuth } from "src/hooks/use-auth";
 import { Layout as AuthLayout } from "src/layouts/auth/layout";
 
 const Page = () => {
-  const router = useRouter();
-  const auth = useAuth();
   const formik = useFormik({
     initialValues: {
       email: "",
       name: "",
       password: "",
-      submit: null,
+      passwordConfirm: "",
+      roles: ["user"],
     },
+
     validationSchema: Yup.object({
       email: Yup.string().email("Must be a valid email").max(255).required("Email is required"),
       name: Yup.string().max(255).required("Name is required"),
       password: Yup.string().max(255).required("Password is required"),
+      passwordConfirm: Yup.string().max(255).required("Confirm password is required"),
     }),
-    onSubmit: async (values, helpers) => {
-      try {
-        await auth.signUp(values.email, values.name, values.password);
-        router.push("/");
-      } catch (err) {
-        helpers.setStatus({ success: false });
-        helpers.setErrors({ submit: err.message });
-        helpers.setSubmitting(false);
-      }
+
+    onSubmit: async (values, { resetForm }) => {
+      // setLoadBtn(true);
+
+      var requestOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+        redirect: "follow",
+      };
+
+      // Fetch call to submit data
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/login`, requestOptions)
+        .then((response) => response.json())
+        .then((result) => {
+          console.log("result ", result);
+          // if (result.status === "success") {
+          //   setLoadBtn(false);
+          //   resetForm();
+          //   successMessage(result.message);
+          //   setSuccessMsg(true);
+          // }
+          // if (result.status === "fail") {
+          //   warningMessage(result.message);
+          //   setLoadBtn(false);
+          // }
+          // if (result.status === "error") {
+          //   dangerMessage(result.data);
+          //   setLoadBtn(false);
+          // }
+        })
+        .catch((error) => {
+          //   setLoadBtn(false);
+          //   dangerMessage(error);
+          console.log(" error : ", error);
+        });
     },
   });
 
@@ -88,17 +116,42 @@ const Page = () => {
                   type="email"
                   value={formik.values.email}
                 />
-                <TextField
-                  error={!!(formik.touched.password && formik.errors.password)}
-                  fullWidth
-                  helperText={formik.touched.password && formik.errors.password}
-                  label="Password"
-                  name="password"
-                  onBlur={formik.handleBlur}
-                  onChange={formik.handleChange}
-                  type="password"
-                  value={formik.values.password}
-                />
+
+                <Grid container>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={12} md={6}>
+                      <TextField
+                        error={!!(formik.touched.password && formik.errors.password)}
+                        fullWidth
+                        helperText={formik.touched.password && formik.errors.password}
+                        label="Password"
+                        name="password"
+                        onBlur={formik.handleBlur}
+                        onChange={formik.handleChange}
+                        type="password"
+                        value={formik.values.password}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={12} md={6}>
+                      <TextField
+                        error={
+                          !!(
+                            formik.touched.papasswordConfirmssword && formik.errors.passwordConfirm
+                          )
+                        }
+                        fullWidth
+                        helperText={formik.touched.passwordConfirm && formik.errors.passwordConfirm}
+                        label="Confirm Password"
+                        name="passwordConfirm"
+                        onBlur={formik.handleBlur}
+                        onChange={formik.handleChange}
+                        type="passwordConfirm"
+                        value={formik.values.passwordConfirm}
+                      />
+                    </Grid>
+                  </Grid>
+                </Grid>
               </Stack>
               {formik.errors.submit && (
                 <Typography color="error" sx={{ mt: 3 }} variant="body2">

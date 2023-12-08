@@ -13,6 +13,7 @@
     "lint": "next lint",
     "lint-fix": "next lint --fix"
   },
+  "proxy": "https://authentication-mechack.up.railway.app",
   "dependencies": {
     "@emotion/cache": "11.10.5",
     "@emotion/react": "11.10.6",
