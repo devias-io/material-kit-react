@@ -21,7 +21,7 @@
 
 ## Free Figma Community File
 
-- [Duplicate File](https://www.figma.com/community/file/1039837897183395483/Devias-Dashboard-Design-Library-Kit)
+- [Duplicate File](https://www.figma.com/file/b3L1Np4RYiicZAOMopHNkm/Devias-Dashboard-Design-Library-Kit)
 
 ## Upgrade to PRO Version
 
