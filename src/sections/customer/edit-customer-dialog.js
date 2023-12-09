@@ -14,7 +14,8 @@ export const EditCustomerDialog = (props) => {
     setDialog,
     data,
     setSnakBarMsg,
-    setSnakBarOpen
+    setSnakBarOpen,
+    setSnackBarStatus
   } = props;
   const [loadingEdit, setLoadingEdit] = useState(false)
 
@@ -29,7 +30,10 @@ export const EditCustomerDialog = (props) => {
       email: ''
     },
     validationSchema: Yup.object().shape({
-      document: Yup.string().length(11).required('CPF é obrigatório'),
+      document: Yup.string().matches(/^[0-9]+$/, "Deve conter apenas números")
+      .min(11, 'Deve conter 11 dígitos')
+      .max(11, 'Deve conter 11 dígitos')
+      .required('CPF é obrigatório'),
       email: Yup.string().email('Deve ser um email válido').max(255).required('Email é obrigatório'),
     }),
     onSubmit: async (values) => {
@@ -42,11 +46,13 @@ export const EditCustomerDialog = (props) => {
       const response = await EditClientUsecase(data.id, fetchData)
       if(response.isFailure){
         setSnakBarMsg(response.error)
+        setSnackBarStatus('error')
         setSnakBarOpen(true)
         console.error(response.error)
       }
       else{
         setSnakBarMsg('Cliente atualizado com sucesso')
+        setSnackBarStatus('success')
         setSnakBarOpen(true)
       }
       setLoadingEdit(false)
@@ -83,7 +89,7 @@ export const EditCustomerDialog = (props) => {
               margin="dense"
               id="name"
               label="CPF"
-              type="number"
+              type="text"
               name='document'
               fullWidth
               variant="standard"
