@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { useFormik } from "formik";
+import * as Yup from "yup";
 
 const OverviewForm = () => {
   const formik = useFormik({
@@ -18,7 +19,7 @@ const OverviewForm = () => {
       username: "",
       firstName: "",
       lastName: "",
-      dateOfBirth: null,
+      dateOfBirth: "",
       gender: "",
       profilePicture: "",
       address: "",
@@ -93,7 +94,7 @@ const OverviewForm = () => {
     <Grid>
       <Box>
         <CardContent xs={12} sm={6} lg={3}>
-          <form onSubmit={handleSubmit}>
+          <form noValidate onSubmit={formik.handleSubmit}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={4}>
                 <TextField

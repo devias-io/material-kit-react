@@ -25,22 +25,50 @@ const Page = () => {
   const [method, setMethod] = useState("email");
   const formik = useFormik({
     initialValues: {
-      email: "demo@devias.io",
-      password: "Password123!",
+      email: "",
+      password: "",
     },
     validationSchema: Yup.object({
       email: Yup.string().email("Must be a valid email").max(255).required("Email is required"),
       password: Yup.string().max(255).required("Password is required"),
     }),
-    onSubmit: async (values, helpers) => {
-      try {
-        await auth.signIn(values.email, values.password);
-        router.push("/");
-      } catch (err) {
-        helpers.setStatus({ success: false });
-        helpers.setErrors({ submit: err.message });
-        helpers.setSubmitting(false);
-      }
+    onSubmit: async (values, { resetForm }) => {
+      console.log("values", values);
+      // setLoadBtn(true);
+
+      var requestOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+        redirect: "follow",
+      };
+      console.log("requestOptions", requestOptions);
+
+      // Fetch call to submit data
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/login`, requestOptions)
+        .then((response) => response.json())
+        .then((result) => {
+          console.log("result ", result);
+          // if (result.status === "success") {
+          //   setLoadBtn(false);
+          //   resetForm();
+          //   successMessage(result.message);
+          //   setSuccessMsg(true);
+          // }
+          // if (result.status === "fail") {
+          //   warningMessage(result.message);
+          //   setLoadBtn(false);
+          // }
+          // if (result.status === "error") {
+          //   dangerMessage(result.data);
+          //   setLoadBtn(false);
+          // }
+        })
+        .catch((error) => {
+          //   setLoadBtn(false);
+          //   dangerMessage(error);
+          console.log(" error : ", error);
+        });
     },
   });
 

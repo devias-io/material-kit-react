@@ -1,13 +1,34 @@
 import Head from "next/head";
+import { useState } from "react";
 import NextLink from "next/link";
-import { useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { Box, Button, Grid, Link, Stack, TextField, Typography } from "@mui/material";
-import { useAuth } from "src/hooks/use-auth";
+import {
+  Box,
+  Button,
+  Grid,
+  IconButton,
+  InputAdornment,
+  Link,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { Layout as AuthLayout } from "src/layouts/auth/layout";
+import { Visibility, VisibilityOff } from "@material-ui/icons";
 
 const Page = () => {
+  const [showPassword1, setShowPassword1] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
+
+  const handleTogglePasswordVisibility1 = () => {
+    setShowPassword1((prevShowPassword) => !prevShowPassword);
+  };
+
+  const handleTogglePasswordVisibility2 = () => {
+    setShowPassword2((prevShowPassword) => !prevShowPassword);
+  };
+
   const formik = useFormik({
     initialValues: {
       email: "",
@@ -35,7 +56,7 @@ const Page = () => {
       };
 
       // Fetch call to submit data
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/login`, requestOptions)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/signupUser`, requestOptions)
         .then((response) => response.json())
         .then((result) => {
           console.log("result ", result);
@@ -128,26 +149,48 @@ const Page = () => {
                         name="password"
                         onBlur={formik.handleBlur}
                         onChange={formik.handleChange}
-                        type="password"
+                        type={showPassword1 ? "text" : "password"}
                         value={formik.values.password}
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                aria-label="toggle password visibility"
+                                onClick={handleTogglePasswordVisibility1}
+                                edge="end"
+                              >
+                                {showPassword1 ? <Visibility /> : <VisibilityOff />}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
                       />
                     </Grid>
 
                     <Grid item xs={12} sm={12} md={6}>
                       <TextField
-                        error={
-                          !!(
-                            formik.touched.papasswordConfirmssword && formik.errors.passwordConfirm
-                          )
-                        }
+                        error={!!(formik.touched.passwordConfirm && formik.errors.passwordConfirm)}
                         fullWidth
                         helperText={formik.touched.passwordConfirm && formik.errors.passwordConfirm}
                         label="Confirm Password"
                         name="passwordConfirm"
                         onBlur={formik.handleBlur}
                         onChange={formik.handleChange}
-                        type="passwordConfirm"
+                        type={showPassword2 ? "text" : "password"}
                         value={formik.values.passwordConfirm}
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                aria-label="toggle password visibility"
+                                onClick={handleTogglePasswordVisibility2}
+                                edge="end"
+                              >
+                                {showPassword2 ? <Visibility /> : <VisibilityOff />}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
                       />
                     </Grid>
                   </Grid>
@@ -159,7 +202,7 @@ const Page = () => {
                 </Typography>
               )}
               <Button fullWidth size="large" sx={{ mt: 3 }} type="submit" variant="contained">
-                Continue
+                Login
               </Button>
             </form>
           </div>
