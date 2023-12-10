@@ -1,9 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { subDays, subHours } from 'date-fns';
-import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
-import ArrowUpOnSquareIcon from '@heroicons/react/24/solid/ArrowUpOnSquareIcon';
-import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
+
+import { TrashIcon,ArrowDownOnSquareIcon,ArrowUpOnSquareIcon,PlusIcon } from '@heroicons/react/24/solid';
 import { Box, Button, Container, Stack, SvgIcon, Typography } from '@mui/material';
 import { useSelection } from 'src/hooks/use-selection';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
@@ -156,12 +155,13 @@ const data = [
   }
 ];
 
-const useCustomers = (page, rowsPerPage) => {
+const useCustomers = (rows,page, rowsPerPage) => {
+  
   return useMemo(
     () => {
-      return applyPagination(data, page, rowsPerPage);
+      return applyPagination(rows, page, rowsPerPage);
     },
-    [page, rowsPerPage]
+    [rows,page, rowsPerPage]
   );
 };
 
@@ -177,7 +177,8 @@ const useCustomerIds = (customers) => {
 const Page = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const customers = useCustomers(page, rowsPerPage);
+  const [rows, setRows] = useState(data);
+  const customers = useCustomers(rows,page, rowsPerPage);
   const customersIds = useCustomerIds(customers);
   const customersSelection = useSelection(customersIds);
 
@@ -189,12 +190,40 @@ const Page = () => {
   );
 
   const handleRowsPerPageChange = useCallback(
-    (event) => {
+    (event) => { 
       setRowsPerPage(event.target.value);
     },
     []
   );
 
+  const handleDeleteClick =(e)=>{
+    console.log(customersSelection.selected.values())
+    const newRows = rows.filter((item)=>{
+     const itemFount = customersSelection.selected.find(s => item.id == s) 
+     return itemFount==undefined
+    })
+    setRows(newRows)
+  }
+  function search(query) {
+    // convert query to lowercase for case-insensitive search
+    const q = query.toLowerCase();
+  
+    // filter data based on query
+    const filteredData = data.filter((item) => {
+      // check if name, email, or phone contains query
+      return (
+        item.name.toLowerCase().includes(q) ||
+        item.email.toLowerCase().includes(q) ||
+        item.phone.toLowerCase().includes(q)
+      );
+    });
+ 
+    // update the rows
+    setRows(filteredData)
+    // got to the first page
+    setPage(0);
+  }
+    
   return (
     <>
       <Head>
@@ -245,6 +274,18 @@ const Page = () => {
                   >
                     Export
                   </Button>
+                  <Button
+                    color="inherit"
+                    startIcon={(
+                      <SvgIcon fontSize="small">
+                        <TrashIcon />
+                      </SvgIcon>
+                    )}
+                    onClick={handleDeleteClick}
+                    disabled={customersSelection.selected.length==0}
+                  >
+                    Delete
+                  </Button>
                 </Stack>
               </Stack>
               <div>
@@ -260,9 +301,9 @@ const Page = () => {
                 </Button>
               </div>
             </Stack>
-            <CustomersSearch />
+            <CustomersSearch search={search}/>
             <CustomersTable
-              count={data.length}
+              count={rows.length}
               items={customers}
               onDeselectAll={customersSelection.handleDeselectAll}
               onDeselectOne={customersSelection.handleDeselectOne}
