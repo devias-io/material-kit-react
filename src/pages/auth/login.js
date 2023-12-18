@@ -1,10 +1,3 @@
-import { useCallback, useState } from 'react';
-import Head from 'next/head';
-import NextLink from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import Cookies from 'js-cookie';
 import {
   Box,
   Button,
@@ -12,10 +5,15 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { SignInUseCase } from 'src/provider/useCases/auth/auth.usecase';
+import { useFormik } from 'formik';
+import Cookies from 'js-cookie';
+import Head from 'next/head';
 import Image from 'next/image';
-import Logo from '../../assets/images/RealizzaLogo.png'
-import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import { SignInUseCase } from 'src/provider/useCases/auth/auth.usecase';
+import * as Yup from 'yup';
+import Logo from '../../assets/images/RealizzaLogo.png';
 
 const loginSchema = Yup.object().shape({
   email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
@@ -26,6 +24,7 @@ const loginSchema = Yup.object().shape({
 const Page = () => {
   const router = useRouter();
   const [method, setMethod] = useState('email');
+
   const formik = useFormik({
     initialValues: {
       email: '',
@@ -44,15 +43,18 @@ const Page = () => {
         
         Cookies.set('token', response.token);
         window.sessionStorage.setItem('authenticated', 'true');
+        router.replace('/');
       });
     }
   });
 
   useEffect(() => {
     if (window.sessionStorage.getItem('authenticated') === 'true') {
-      router.push('/');
+      router.replace('/');
     }
-  }, [window.sessionStorage.getItem('authenticated')]);
+
+    return () => {}
+  }, [router.isReady]);
 
   return (
     <>
