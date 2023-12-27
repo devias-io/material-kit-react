@@ -18,18 +18,18 @@ export const items = [
       </SvgIcon>
     )
   },
+  // {
+  //   title: 'Customers',
+  //   path: '/customers',
+  //   icon: (
+  //     <SvgIcon fontSize="small">
+  //       <UsersIcon />
+  //     </SvgIcon>
+  //   )
+  // },
   {
-    title: 'Customers',
-    path: '/customers',
-    icon: (
-      <SvgIcon fontSize="small">
-        <UsersIcon />
-      </SvgIcon>
-    )
-  },
-  {
-    title: 'Companies',
-    path: '/companies',
+    title: 'Products',
+    path: '/products',
     icon: (
       <SvgIcon fontSize="small">
         <ShoppingBagIcon />
