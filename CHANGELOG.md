@@ -1,11 +1,29 @@
+# Changelog
+
+## v4.0.0
+
+###### Mar 8, 2024
+
+- Add `TypeScript`
+- Refactor code
+- Replace `date-fns` with `dayjs`
+- Replace `Formik` with `React Hook Form`
+- Replace `Hero Icons` with `Phosphor Icons`
+- Replace `pages` router with `app router`
+- Replace `Yup` with `Zod`
+- Update `eslint` rules
+- Update auth implementation
+- Update dependencies
+- Update design system
+
 ## v3.0.0
 
 ###### Feb 24, 2023
 
-- Update dependencies
-- Update design system
 - Refactor components
 - Replace authentication
+- Update dependencies
+- Update design system
 
 ## v2.1.0
 
@@ -31,8 +49,8 @@
 - Add `Feather Icons`
 - Add `Formik` for login/register pages
 - Implement `react-router` v6 routing method
-- Remove extra views
 - Remove `node-sass` dependency
+- Remove extra views
 - Update all components to match the PRO version style
 - Update dependencies
 - Update folder structure to remove folder depth
