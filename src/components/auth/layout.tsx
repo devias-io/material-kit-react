@@ -46,11 +46,11 @@ export function Layout({ children }: LayoutProps): React.JSX.Element {
             <Typography color="inherit" sx={{ fontSize: '24px', lineHeight: '32px', textAlign: 'center' }} variant="h1">
               Welcome to{' '}
               <Box component="span" sx={{ color: '#15b79e' }}>
-                Devias Kit
+                StakeReloadXS
               </Box>
             </Typography>
             <Typography align="center" variant="subtitle1">
-              A professional template that comes with ready-to-use MUI components.
+              Xstremely Simple Reloads.
             </Typography>
           </Stack>
           <Box sx={{ display: 'flex', justifyContent: 'center' }}>
