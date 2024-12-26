@@ -9,4 +9,5 @@ export const paths = {
     settings: '/dashboard/settings',
   },
   errors: { notFound: '/errors/not-found' },
+  landing: '/landing', // Added new path for unauthenticated landing page
 } as const;
