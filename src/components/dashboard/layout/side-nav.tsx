@@ -4,10 +4,8 @@ import * as React from 'react';
 
 import Box from '@mui/material/Box';
 import { CaretUpDown as CaretUpDownIcon } from '@phosphor-icons/react/dist/ssr/CaretUpDown';
-import { Chip } from '@mui/material';
 import Divider from '@mui/material/Divider';
 import Image from 'next/image';
-import { Logo } from '@/components/core/logo';
 import type { NavItemConfig } from '@/types/nav';
 import RouterLink from 'next/link';
 import Stack from '@mui/material/Stack';

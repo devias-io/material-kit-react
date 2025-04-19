@@ -2,9 +2,7 @@
 
 import * as React from 'react';
 
-import { ArrowSquareUpRight as ArrowSquareUpRightIcon } from '@phosphor-icons/react/dist/ssr/ArrowSquareUpRight';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import { CaretUpDown as CaretUpDownIcon } from '@phosphor-icons/react/dist/ssr/CaretUpDown';
 import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
