@@ -1,21 +1,22 @@
-import * as React from 'react';
+'use client';
 
+import * as React from 'react';
+import RouterLink from 'next/link';
+import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
-import { GearSix as GearSixIcon } from '@phosphor-icons/react/dist/ssr/GearSix';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import MenuItem from '@mui/material/MenuItem';
 import MenuList from '@mui/material/MenuList';
 import Popover from '@mui/material/Popover';
-import RouterLink from 'next/link';
-import { SignOut as SignOutIcon } from '@phosphor-icons/react/dist/ssr/SignOut';
 import Typography from '@mui/material/Typography';
+import { GearSix as GearSixIcon } from '@phosphor-icons/react/dist/ssr/GearSix';
+import { SignOut as SignOutIcon } from '@phosphor-icons/react/dist/ssr/SignOut';
 import { User as UserIcon } from '@phosphor-icons/react/dist/ssr/User';
-import { authClient } from '@/lib/auth/client';
-import { logger } from '@/lib/default-logger';
+
 import { paths } from '@/paths';
-import { useRouter } from 'next/navigation';
-import { useUser } from '@/hooks/use-user';
+import { useAuth } from '@/lib/auth/client';
+import { logger } from '@/lib/default-logger';
 
 export interface UserPopoverProps {
   anchorEl: Element | null;
@@ -24,38 +25,33 @@ export interface UserPopoverProps {
 }
 
 export function UserPopover({ anchorEl, onClose, open }: UserPopoverProps): React.JSX.Element {
-  const { user, checkSession } = useUser();
-
+  const { currentUser, signOut } = useAuth();
   const router = useRouter();
 
   const handleSignOut = React.useCallback(async (): Promise<void> => {
     try {
-      const { error } = await authClient.signOut();
+      const result: any = await signOut();
 
-      if (error) {
-        logger.error('Sign out error', error);
+      if (result.error) {
+        logger.error('Sign out error', result.error);
         return;
       }
 
-      // Refresh the auth state
-      await checkSession?.();
-
-      // UserProvider, for this case, will not refresh the router and we need to do it manually
+      // Refresh to let AuthGuard handle redirect
       router.refresh();
-      // After refresh, AuthGuard will handle the redirect
     } catch (err) {
       logger.error('Sign out error', err);
     }
-  }, [checkSession, router]);
+  }, [signOut, router]);
 
   // Construct user display name
   const displayName = React.useMemo(() => {
-    if (!user) return 'User';
+    if (!currentUser) return 'User';
 
-    return user.firstName && user.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : user.firstName || user.email || 'User';
-  }, [user]);
+    return currentUser.firstName && currentUser.lastName
+      ? `${currentUser.firstName} ${currentUser.lastName}`
+      : currentUser.firstName || currentUser.email || 'User';
+  }, [currentUser]);
 
   return (
     <Popover
@@ -68,7 +64,7 @@ export function UserPopover({ anchorEl, onClose, open }: UserPopoverProps): Reac
       <Box sx={{ p: '16px 20px ' }}>
         <Typography variant="subtitle1">{displayName}</Typography>
         <Typography color="text.secondary" variant="body2">
-          {typeof user?.email === 'string' ? user.email : ''}
+          {currentUser?.email || ''}
         </Typography>
       </Box>
       <Divider />

@@ -19,15 +19,14 @@ import { Controller, useForm } from 'react-hook-form';
 import { z as zod } from 'zod';
 
 import { paths } from '@/paths';
-import { authClient } from '@/lib/auth/client';
-import { useUser } from '@/hooks/use-user';
+import { useAuth } from '@/lib/auth/client';
 
 const schema = zod.object({
   firstName: zod.string().min(1, { message: 'First name is required' }),
   lastName: zod.string().min(1, { message: 'Last name is required' }),
-  email: zod.string().min(1, { message: 'Email is required' }).email(),
+  email: zod.string().min(1, { message: 'Email is required' }).email({ message: 'Invalid email address' }),
   password: zod.string().min(6, { message: 'Password should be at least 6 characters' }),
-  terms: zod.boolean().refine((value) => value, 'You must accept the terms and conditions'),
+  terms: zod.boolean().refine((value) => value, { message: 'You must accept the terms and conditions' }),
 });
 
 type Values = zod.infer<typeof schema>;
@@ -36,9 +35,7 @@ const defaultValues = { firstName: '', lastName: '', email: '', password: '', te
 
 export function SignUpForm(): React.JSX.Element {
   const router = useRouter();
-
-  const { checkSession } = useUser();
-
+  const { signUp } = useAuth();
   const [isPending, setIsPending] = React.useState<boolean>(false);
 
   const {
@@ -53,7 +50,7 @@ export function SignUpForm(): React.JSX.Element {
       setIsPending(true);
 
       try {
-        const result = await authClient.signUp(values);
+        const result: any = await signUp(values);
 
         if (result.error) {
           setError('root', { type: 'server', message: result.error });
@@ -61,21 +58,17 @@ export function SignUpForm(): React.JSX.Element {
           return;
         }
 
-        // Refresh the auth state
-        await checkSession?.();
-
-        // UserProvider, for this case, will not refresh the router
-        // After refresh, GuestGuard will handle the redirect
+        // Redirect to sign-in page after successful signup
         router.push(paths.auth.signIn);
       } catch (error) {
         setError('root', {
           type: 'server',
-          message: 'An unexpected error occurred. Please try again.'
+          message: 'An unexpected error occurred. Please try again.',
         });
         setIsPending(false);
       }
     },
-    [checkSession, router, setError]
+    [router, signUp, setError]
   );
 
   return (
@@ -97,7 +90,7 @@ export function SignUpForm(): React.JSX.Element {
             render={({ field }) => (
               <FormControl error={Boolean(errors.firstName)}>
                 <InputLabel>First name</InputLabel>
-                <OutlinedInput {...field} label="First name" />
+                <OutlinedInput {...field} label="First name" disabled={isPending} />
                 {errors.firstName ? <FormHelperText>{errors.firstName.message}</FormHelperText> : null}
               </FormControl>
             )}
@@ -108,7 +101,7 @@ export function SignUpForm(): React.JSX.Element {
             render={({ field }) => (
               <FormControl error={Boolean(errors.lastName)}>
                 <InputLabel>Last name</InputLabel>
-                <OutlinedInput {...field} label="Last name" />
+                <OutlinedInput {...field} label="Last name" disabled={isPending} />
                 {errors.lastName ? <FormHelperText>{errors.lastName.message}</FormHelperText> : null}
               </FormControl>
             )}
@@ -119,7 +112,7 @@ export function SignUpForm(): React.JSX.Element {
             render={({ field }) => (
               <FormControl error={Boolean(errors.email)}>
                 <InputLabel>Email address</InputLabel>
-                <OutlinedInput {...field} label="Email address" type="email" />
+                <OutlinedInput {...field} label="Email address" type="email" disabled={isPending} />
                 {errors.email ? <FormHelperText>{errors.email.message}</FormHelperText> : null}
               </FormControl>
             )}
@@ -130,7 +123,7 @@ export function SignUpForm(): React.JSX.Element {
             render={({ field }) => (
               <FormControl error={Boolean(errors.password)}>
                 <InputLabel>Password</InputLabel>
-                <OutlinedInput {...field} label="Password" type="password" />
+                <OutlinedInput {...field} label="Password" type="password" disabled={isPending} />
                 {errors.password ? <FormHelperText>{errors.password.message}</FormHelperText> : null}
               </FormControl>
             )}
@@ -141,7 +134,7 @@ export function SignUpForm(): React.JSX.Element {
             render={({ field }) => (
               <div>
                 <FormControlLabel
-                  control={<Checkbox {...field} />}
+                  control={<Checkbox {...field} disabled={isPending} />}
                   label={
                     <React.Fragment>
                       I have read the <Link>terms and conditions</Link>
@@ -154,7 +147,7 @@ export function SignUpForm(): React.JSX.Element {
           />
           {errors.root ? <Alert color="error">{errors.root.message}</Alert> : null}
           <Button disabled={isPending} type="submit" variant="contained">
-            Sign up
+            {isPending ? 'Signing up...' : 'Sign up'}
           </Button>
         </Stack>
       </form>

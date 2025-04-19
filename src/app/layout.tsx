@@ -1,9 +1,12 @@
+'use client';
+
 import * as React from 'react';
 import type { Viewport } from 'next';
 
 import '@/styles/global.css';
 
-import { UserProvider } from '@/contexts/user-context';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 import { LocalizationProvider } from '@/components/core/localization-provider';
 import { ThemeProvider } from '@/components/core/theme-provider/theme-provider';
 
@@ -12,16 +15,17 @@ export const viewport = { width: 'device-width', initialScale: 1 } satisfies Vie
 interface LayoutProps {
   children: React.ReactNode;
 }
+const queryClient = new QueryClient();
 
 export default function Layout({ children }: LayoutProps): React.JSX.Element {
   return (
     <html lang="en">
       <body>
-        <LocalizationProvider>
-          <UserProvider>
+        <QueryClientProvider client={queryClient}>
+          <LocalizationProvider>
             <ThemeProvider>{children}</ThemeProvider>
-          </UserProvider>
-        </LocalizationProvider>
+          </LocalizationProvider>
+        </QueryClientProvider>
       </body>
     </html>
   );

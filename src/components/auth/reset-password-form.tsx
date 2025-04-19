@@ -13,16 +13,20 @@ import Typography from '@mui/material/Typography';
 import { Controller, useForm } from 'react-hook-form';
 import { z as zod } from 'zod';
 
-import { authClient } from '@/lib/auth/client';
+import { useAuth } from '@/lib/auth/client';
 
-const schema = zod.object({ email: zod.string().min(1, { message: 'Email is required' }).email() });
+const schema = zod.object({
+  email: zod.string().min(1, { message: 'Email is required' }).email({ message: 'Invalid email address' }),
+});
 
 type Values = zod.infer<typeof schema>;
 
 const defaultValues = { email: '' } satisfies Values;
 
 export function ResetPasswordForm(): React.JSX.Element {
+  const { resetPassword } = useAuth();
   const [isPending, setIsPending] = React.useState<boolean>(false);
+  const [successMessage, setSuccessMessage] = React.useState<string | null>(null);
 
   const {
     control,
@@ -34,20 +38,22 @@ export function ResetPasswordForm(): React.JSX.Element {
   const onSubmit = React.useCallback(
     async (values: Values): Promise<void> => {
       setIsPending(true);
+      setSuccessMessage(null);
 
-      const { error } = await authClient.resetPassword(values);
-
-      if (error) {
-        setError('root', { type: 'server', message: error });
+      try {
+        const result: any = await resetPassword(values);
+        if (result.error) {
+          setError('root', { type: 'server', message: result.error });
+        } else {
+          setSuccessMessage('Recovery link sent! Please check your email.');
+        }
+      } catch (error) {
+        setError('root', { type: 'server', message: 'An unexpected error occurred' });
+      } finally {
         setIsPending(false);
-        return;
       }
-
-      setIsPending(false);
-
-      // Redirect to confirm password reset
     },
-    [setError]
+    [resetPassword, setError]
   );
 
   return (
@@ -61,14 +67,15 @@ export function ResetPasswordForm(): React.JSX.Element {
             render={({ field }) => (
               <FormControl error={Boolean(errors.email)}>
                 <InputLabel>Email address</InputLabel>
-                <OutlinedInput {...field} label="Email address" type="email" />
+                <OutlinedInput {...field} label="Email address" type="email" disabled={isPending} />
                 {errors.email ? <FormHelperText>{errors.email.message}</FormHelperText> : null}
               </FormControl>
             )}
           />
           {errors.root ? <Alert color="error">{errors.root.message}</Alert> : null}
+          {successMessage ? <Alert color="success">{successMessage}</Alert> : null}
           <Button disabled={isPending} type="submit" variant="contained">
-            Send recovery link
+            {isPending ? 'Sending...' : 'Send recovery link'}
           </Button>
         </Stack>
       </form>

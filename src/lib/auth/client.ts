@@ -1,6 +1,12 @@
 'use client';
 
-import type { User } from '@/types/user';
+import { useRouter } from 'next/navigation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import axios, { AxiosError } from 'axios';
+import Cookies from 'js-cookie';
+
+import { paths } from '@/paths';
+import { logger } from '@/lib/default-logger';
 
 export interface SignUpParams {
   firstName: string;
@@ -22,162 +28,205 @@ export interface ResetPasswordParams {
   email: string;
 }
 
-interface ApiResponse {
-  token?: string;
-  message?: string;
-  data?: {
-    accessToken: string;
-  };
-  [key: string]: unknown;
+export interface UpdateUserParams {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  state?: string;
+  city?: string;
 }
 
-interface BackendUserResponse {
+interface ApiResponse<T = unknown> {
   success: boolean;
-  message: string;
-  data: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    role: string;
-    avatar?: string;
-    [key: string]: unknown;
+  message?: string;
+  data?: T;
+}
+
+interface AuthResponse {
+  accessToken: string;
+}
+
+interface User {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  avatar?: string;
+}
+
+const apiConfig = {
+  baseURL: process.env.NEXT_PUBLIC_XPIPS_API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+};
+
+const axiosInstance = axios.create(apiConfig);
+
+const TOKEN_KEY = 'accessToken';
+const COOKIE_OPTIONS = {
+  expires: 7, // 7 days
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict' as const,
+};
+
+// Add request interceptor to include token in headers
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = Cookies.get(TOKEN_KEY);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      logger.debug('[axiosInterceptor]: Token added to request', token.slice(0, 10) + '...');
+    } else {
+      logger.debug('[axiosInterceptor]: No token found in cookies');
+    }
+    return config;
+  },
+  (error) => {
+    logger.error('[axiosInterceptor]: Request error', error);
+    return Promise.reject(error);
+  }
+);
+
+const setAuthToken = (token: string) => {
+  Cookies.set(TOKEN_KEY, token, COOKIE_OPTIONS);
+};
+
+const removeAuthToken = () => {
+  Cookies.remove(TOKEN_KEY);
+};
+
+const getAuthToken = () => Cookies.get(TOKEN_KEY);
+
+// API service layer
+const authService = {
+  async signUp(params: SignUpParams) {
+    const response = await axiosInstance.post<ApiResponse<AuthResponse>>('/auth/register', params);
+    return response.data;
+  },
+
+  async signInWithPassword(params: SignInWithPasswordParams) {
+    const response = await axiosInstance.post<ApiResponse<AuthResponse>>('/auth/login', params);
+    return response.data;
+  },
+
+  async signInWithOAuth(params: SignInWithOAuthParams) {
+    throw new Error('Social authentication not implemented');
+  },
+
+  async resetPassword(params: ResetPasswordParams) {
+    const response = await axiosInstance.post<ApiResponse>('/auth/reset-password', params);
+    return response.data;
+  },
+
+  async updatePassword(params: ResetPasswordParams) {
+    const response = await axiosInstance.post<ApiResponse>('/auth/change-password', params);
+    return response.data;
+  },
+
+  async getCurrentUser() {
+    const token = getAuthToken();
+    if (!token) {
+      logger.debug('[authService.getCurrentUser]: No token found');
+      throw new Error('No authentication token available');
+    }
+    const response = await axiosInstance.get<ApiResponse<User>>('/user/profile');
+    return response.data;
+  },
+
+  async updateUser(params: UpdateUserParams) {
+    const response = await axiosInstance.patch<ApiResponse<User>>('/user/profile', params);
+    return response.data;
+  },
+};
+
+// React Query hooks
+export const useAuth = () => {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const signUpMutation = useMutation({
+    mutationFn: authService.signUp,
+    onSuccess: (data) => {
+      if (data.success && data.data?.accessToken) {
+        setAuthToken(data.data.accessToken);
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      }
+    },
+    onError: (error: AxiosError<ApiResponse>) => {
+      return { error: error.response?.data.message || 'Registration failed' };
+    },
+  });
+
+  const signInMutation = useMutation({
+    mutationFn: authService.signInWithPassword,
+    onSuccess: (data) => {
+      if (data.success && data.data?.accessToken) {
+        setAuthToken(data.data.accessToken);
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      }
+    },
+    onError: (error: AxiosError<ApiResponse>) => {
+      return { error: error.response?.data.message || 'Invalid credentials' };
+    },
+  });
+
+  const signOutMutation = useMutation({
+    mutationFn: async () => {
+      removeAuthToken();
+      queryClient.clear();
+      return { success: true };
+    },
+    onSuccess: () => {
+      router.push(paths.auth.signIn);
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: authService.resetPassword,
+    onError: (error: AxiosError<ApiResponse>) => {
+      return { error: error.response?.data.message || 'Password reset failed' };
+    },
+  });
+
+  const updatePasswordMutation = useMutation({
+    mutationFn: authService.updatePassword,
+    onError: (error: AxiosError<ApiResponse>) => {
+      return { error: error.response?.data.message || 'Password update failed' };
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: authService.updateUser,
+    onSuccess: (data) => {
+      if (data.success && data.data) {
+        queryClient.setQueryData(['currentUser'], data);
+      }
+    },
+    onError: (error: AxiosError<ApiResponse>) => {
+      return { error: error.response?.data.message || 'Failed to update profile' };
+    },
+  });
+
+  const currentUserQuery = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: authService.getCurrentUser,
+    enabled: !!getAuthToken(),
+    select: (data) => data.data,
+  });
+
+  return {
+    signUp: signUpMutation.mutateAsync,
+    signInWithPassword: signInMutation.mutateAsync,
+    signInWithOAuth: authService.signInWithOAuth,
+    resetPassword: resetPasswordMutation.mutateAsync,
+    updatePassword: updatePasswordMutation.mutateAsync,
+    updateUser: updateUserMutation.mutateAsync,
+    signOut: signOutMutation.mutateAsync,
+    currentUser: currentUserQuery.data,
+    isAuthenticated: !!getAuthToken(),
+    isLoading: currentUserQuery.isLoading,
   };
-}
-
-class AuthClient {
-  async signUp(params: SignUpParams): Promise<{ error?: string }> {
-    try {
-      const registerUrl = process.env.NEXT_PUBLIC_XPIPS_REGISTER_URL;
-      if (!registerUrl) {
-        return { error: 'Register URL not configured' };
-      }
-
-      const response = await fetch(registerUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(params),
-      });
-
-      const data = await response.json() as ApiResponse;
-
-      if (!response.ok) {
-        return { error: data.message! || 'Registration failed' };
-      }
-
-      if (data.data?.accessToken) {
-        localStorage.setItem('custom-auth-token', data.data.accessToken);
-      }
-
-      return {};
-    } catch (error) {
-      // Log error silently in production
-      return { error: 'Failed to register' };
-    }
-  }
-
-  async signInWithOAuth(_: SignInWithOAuthParams): Promise<{ error?: string }> {
-    return { error: 'Social authentication not implemented' };
-  }
-
-  async signInWithPassword(params: SignInWithPasswordParams): Promise<{ error?: string }> {
-    try {
-      const loginUrl = process.env.NEXT_PUBLIC_XPIPS_LOGIN_URL;
-      if (!loginUrl) {
-        return { error: 'Login URL not configured' };
-      }
-
-      const response = await fetch(loginUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(params),
-      });
-
-      const data = await response.json() as ApiResponse;
-
-      if (!response.ok) {
-        return { error: data.message! || 'Invalid credentials' };
-      }
-
-      if (data.data?.accessToken) {
-        localStorage.setItem('custom-auth-token', data.data.accessToken);
-      } else if (data.token) {
-        localStorage.setItem('custom-auth-token', data.token);
-      }
-
-      return {};
-    } catch (error) {
-      // Log error silently in production
-      return { error: 'Failed to login' };
-    }
-  }
-
-  async resetPassword(_: ResetPasswordParams): Promise<{ error?: string }> {
-    return { error: 'Password reset not implemented' };
-  }
-
-  async updatePassword(_: ResetPasswordParams): Promise<{ error?: string }> {
-    return { error: 'Update reset not implemented' };
-  }
-
-  async getUser(): Promise<{ data?: User | null; error?: string }> {
-    try {
-      const token = localStorage.getItem('custom-auth-token');
-
-      if (!token) {
-        return { data: null };
-      }
-
-      const apiUrl = process.env.NEXT_PUBLIC_XPIPS_API_URL;
-      if (!apiUrl) {
-        return { error: 'API URL not configured' };
-      }
-
-      const response = await fetch(`${apiUrl}/user/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        // If token is invalid or expired, clear it
-        if (response.status === 401) {
-          localStorage.removeItem('custom-auth-token');
-          return { data: null };
-        }
-
-        const errorData = await response.json() as { message?: string };
-        return { error: errorData.message || 'Failed to get user data' };
-      }
-
-      const userData = await response.json() as BackendUserResponse;
-
-      // Convert backend user format to frontend User type
-      return {
-        data: {
-          id: userData.data._id,
-          avatar: userData.data.avatar || '/assets/avatar.png',
-          firstName: userData.data.firstName,
-          lastName: userData.data.lastName,
-          email: userData.data.email,
-          role: userData.data.role
-        }
-      };
-    } catch (error) {
-      // Log error silently in production
-      return { error: 'Failed to get user data' };
-    }
-  }
-
-  async signOut(): Promise<{ error?: string }> {
-    localStorage.removeItem('custom-auth-token');
-
-    return {};
-  }
-}
-
-export const authClient = new AuthClient();
+};
