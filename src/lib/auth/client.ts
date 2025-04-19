@@ -2,20 +2,6 @@
 
 import type { User } from '@/types/user';
 
-function generateToken(): string {
-  const arr = new Uint8Array(12);
-  window.crypto.getRandomValues(arr);
-  return Array.from(arr, (v) => v.toString(16).padStart(2, '0')).join('');
-}
-
-const user = {
-  id: 'USR-000',
-  avatar: '/assets/avatar.png',
-  firstName: 'Sofia',
-  lastName: 'Rivers',
-  email: 'sofia@devias.io',
-} satisfies User;
-
 export interface SignUpParams {
   firstName: string;
   lastName: string;
@@ -36,15 +22,60 @@ export interface ResetPasswordParams {
   email: string;
 }
 
+interface ApiResponse {
+  token?: string;
+  message?: string;
+  data?: {
+    accessToken: string;
+  };
+  [key: string]: unknown;
+}
+
+interface BackendUserResponse {
+  success: boolean;
+  message: string;
+  data: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    avatar?: string;
+    [key: string]: unknown;
+  };
+}
+
 class AuthClient {
-  async signUp(_: SignUpParams): Promise<{ error?: string }> {
-    // Make API request
+  async signUp(params: SignUpParams): Promise<{ error?: string }> {
+    try {
+      const registerUrl = process.env.NEXT_PUBLIC_XPIPS_REGISTER_URL;
+      if (!registerUrl) {
+        return { error: 'Register URL not configured' };
+      }
 
-    // We do not handle the API, so we'll just generate a token and store it in localStorage.
-    const token = generateToken();
-    localStorage.setItem('custom-auth-token', token);
+      const response = await fetch(registerUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      });
 
-    return {};
+      const data = await response.json() as ApiResponse;
+
+      if (!response.ok) {
+        return { error: data.message! || 'Registration failed' };
+      }
+
+      if (data.data?.accessToken) {
+        localStorage.setItem('custom-auth-token', data.data.accessToken);
+      }
+
+      return {};
+    } catch (error) {
+      // Log error silently in production
+      return { error: 'Failed to register' };
+    }
   }
 
   async signInWithOAuth(_: SignInWithOAuthParams): Promise<{ error?: string }> {
@@ -52,19 +83,37 @@ class AuthClient {
   }
 
   async signInWithPassword(params: SignInWithPasswordParams): Promise<{ error?: string }> {
-    const { email, password } = params;
+    try {
+      const loginUrl = process.env.NEXT_PUBLIC_XPIPS_LOGIN_URL;
+      if (!loginUrl) {
+        return { error: 'Login URL not configured' };
+      }
 
-    // Make API request
+      const response = await fetch(loginUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      });
 
-    // We do not handle the API, so we'll check if the credentials match with the hardcoded ones.
-    if (email !== 'sofia@devias.io' || password !== 'Secret1') {
-      return { error: 'Invalid credentials' };
+      const data = await response.json() as ApiResponse;
+
+      if (!response.ok) {
+        return { error: data.message! || 'Invalid credentials' };
+      }
+
+      if (data.data?.accessToken) {
+        localStorage.setItem('custom-auth-token', data.data.accessToken);
+      } else if (data.token) {
+        localStorage.setItem('custom-auth-token', data.token);
+      }
+
+      return {};
+    } catch (error) {
+      // Log error silently in production
+      return { error: 'Failed to login' };
     }
-
-    const token = generateToken();
-    localStorage.setItem('custom-auth-token', token);
-
-    return {};
   }
 
   async resetPassword(_: ResetPasswordParams): Promise<{ error?: string }> {
@@ -76,16 +125,52 @@ class AuthClient {
   }
 
   async getUser(): Promise<{ data?: User | null; error?: string }> {
-    // Make API request
+    try {
+      const token = localStorage.getItem('custom-auth-token');
 
-    // We do not handle the API, so just check if we have a token in localStorage.
-    const token = localStorage.getItem('custom-auth-token');
+      if (!token) {
+        return { data: null };
+      }
 
-    if (!token) {
-      return { data: null };
+      const apiUrl = process.env.NEXT_PUBLIC_XPIPS_API_URL;
+      if (!apiUrl) {
+        return { error: 'API URL not configured' };
+      }
+
+      const response = await fetch(`${apiUrl}/user/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        // If token is invalid or expired, clear it
+        if (response.status === 401) {
+          localStorage.removeItem('custom-auth-token');
+          return { data: null };
+        }
+
+        const errorData = await response.json() as { message?: string };
+        return { error: errorData.message || 'Failed to get user data' };
+      }
+
+      const userData = await response.json() as BackendUserResponse;
+
+      // Convert backend user format to frontend User type
+      return {
+        data: {
+          id: userData.data._id,
+          avatar: userData.data.avatar || '/assets/avatar.png',
+          firstName: userData.data.firstName,
+          lastName: userData.data.lastName,
+          email: userData.data.email,
+          role: userData.data.role
+        }
+      };
+    } catch (error) {
+      // Log error silently in production
+      return { error: 'Failed to get user data' };
     }
-
-    return { data: user };
   }
 
   async signOut(): Promise<{ error?: string }> {

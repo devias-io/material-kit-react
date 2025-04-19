@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -7,31 +8,48 @@ import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-
-const user = {
-  name: 'Sofia Rivers',
-  avatar: '/assets/avatar.png',
-  jobTitle: 'Senior Developer',
-  country: 'USA',
-  city: 'Los Angeles',
-  timezone: 'GTM-7',
-} as const;
+import { useUser } from '@/hooks/use-user';
 
 export function AccountInfo(): React.JSX.Element {
+  const { user } = useUser();
+
+  // Handle case where user might not be loaded yet
+  if (!user) {
+    return (
+      <Card>
+        <CardContent>
+          <Typography>Loading user information...</Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Construct full name from firstName and lastName
+  const fullName = user.firstName && user.lastName
+    ? `${user.firstName} ${user.lastName}`
+    : user.firstName || 'Unknown User';
+
+  // Handle location information with type safety
+  const city = typeof user.city === 'string' ? user.city : '';
+  const country = typeof user.country === 'string' ? user.country : '';
+  const location = [city, country].filter(Boolean).join(' ');
+
   return (
     <Card>
       <CardContent>
         <Stack spacing={2} sx={{ alignItems: 'center' }}>
           <div>
-            <Avatar src={user.avatar} sx={{ height: '80px', width: '80px' }} />
+            <Avatar src={user.avatar || '/assets/avatar.png'} sx={{ height: '80px', width: '80px' }} />
           </div>
           <Stack spacing={1} sx={{ textAlign: 'center' }}>
-            <Typography variant="h5">{user.name}</Typography>
+            <Typography variant="h5">{fullName}</Typography>
+            {location && (
+              <Typography color="text.secondary" variant="body2">
+                {location}
+              </Typography>
+            )}
             <Typography color="text.secondary" variant="body2">
-              {user.city} {user.country}
-            </Typography>
-            <Typography color="text.secondary" variant="body2">
-              {user.timezone}
+              {typeof user.email === 'string' ? user.email : ''}
             </Typography>
           </Stack>
         </Stack>

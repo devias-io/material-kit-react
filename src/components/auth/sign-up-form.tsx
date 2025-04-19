@@ -52,20 +52,28 @@ export function SignUpForm(): React.JSX.Element {
     async (values: Values): Promise<void> => {
       setIsPending(true);
 
-      const { error } = await authClient.signUp(values);
+      try {
+        const result = await authClient.signUp(values);
 
-      if (error) {
-        setError('root', { type: 'server', message: error });
+        if (result.error) {
+          setError('root', { type: 'server', message: result.error });
+          setIsPending(false);
+          return;
+        }
+
+        // Refresh the auth state
+        await checkSession?.();
+
+        // UserProvider, for this case, will not refresh the router
+        // After refresh, GuestGuard will handle the redirect
+        router.push(paths.auth.signIn);
+      } catch (error) {
+        setError('root', {
+          type: 'server',
+          message: 'An unexpected error occurred. Please try again.'
+        });
         setIsPending(false);
-        return;
       }
-
-      // Refresh the auth state
-      await checkSession?.();
-
-      // UserProvider, for this case, will not refresh the router
-      // After refresh, GuestGuard will handle the redirect
-      router.refresh();
     },
     [checkSession, router, setError]
   );
@@ -98,10 +106,10 @@ export function SignUpForm(): React.JSX.Element {
             control={control}
             name="lastName"
             render={({ field }) => (
-              <FormControl error={Boolean(errors.firstName)}>
+              <FormControl error={Boolean(errors.lastName)}>
                 <InputLabel>Last name</InputLabel>
                 <OutlinedInput {...field} label="Last name" />
-                {errors.firstName ? <FormHelperText>{errors.firstName.message}</FormHelperText> : null}
+                {errors.lastName ? <FormHelperText>{errors.lastName.message}</FormHelperText> : null}
               </FormControl>
             )}
           />
@@ -150,7 +158,6 @@ export function SignUpForm(): React.JSX.Element {
           </Button>
         </Stack>
       </form>
-      <Alert color="warning">Created users are not persisted</Alert>
     </Stack>
   );
 }

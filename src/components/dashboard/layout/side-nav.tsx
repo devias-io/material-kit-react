@@ -1,23 +1,22 @@
 'use client';
 
 import * as React from 'react';
-import RouterLink from 'next/link';
-import { usePathname } from 'next/navigation';
+
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
+import { CaretUpDown as CaretUpDownIcon } from '@phosphor-icons/react/dist/ssr/CaretUpDown';
+import { Chip } from '@mui/material';
 import Divider from '@mui/material/Divider';
+import Image from 'next/image';
+import { Logo } from '@/components/core/logo';
+import type { NavItemConfig } from '@/types/nav';
+import RouterLink from 'next/link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { ArrowSquareUpRight as ArrowSquareUpRightIcon } from '@phosphor-icons/react/dist/ssr/ArrowSquareUpRight';
-import { CaretUpDown as CaretUpDownIcon } from '@phosphor-icons/react/dist/ssr/CaretUpDown';
-
-import type { NavItemConfig } from '@/types/nav';
-import { paths } from '@/paths';
 import { isNavItemActive } from '@/lib/is-nav-item-active';
-import { Logo } from '@/components/core/logo';
-
-import { navItems } from './config';
 import { navIcons } from './nav-icons';
+import { navItems } from './config';
+import { paths } from '@/paths';
+import { usePathname } from 'next/navigation';
 
 export function SideNav(): React.JSX.Element {
   const pathname = usePathname();
@@ -52,8 +51,24 @@ export function SideNav(): React.JSX.Element {
     >
       <Stack spacing={2} sx={{ p: 3 }}>
         <Box component={RouterLink} href={paths.home} sx={{ display: 'inline-flex' }}>
-          <Logo color="light" height={32} width={122} />
+          <Image src="/assets/xpips-logo.png" alt="XPIPS" width={92} height={82} />
+
         </Box>
+        <Typography color="inherit" variant="subtitle1"
+          sx={{
+            position: 'absolute',
+            top: 50,
+            right: 60,
+            fontSize: '0.8rem',
+            fontWeight: 'bold',
+            textDecoration: 'none',
+            backgroundColor: 'white',
+            color: 'var(--mui-palette-neutral-950)',
+            borderRadius: '6px',
+            padding: '4px 12px',
+          }}>
+          Dashboard
+        </Typography>
         <Box
           sx={{
             alignItems: 'center',
@@ -70,47 +85,19 @@ export function SideNav(): React.JSX.Element {
               Workspace
             </Typography>
             <Typography color="inherit" variant="subtitle1">
-              Devias
+              XPIPS
             </Typography>
           </Box>
           <CaretUpDownIcon />
         </Box>
-      </Stack>
+      </Stack >
       <Divider sx={{ borderColor: 'var(--mui-palette-neutral-700)' }} />
       <Box component="nav" sx={{ flex: '1 1 auto', p: '12px' }}>
         {renderNavItems({ pathname, items: navItems })}
       </Box>
       <Divider sx={{ borderColor: 'var(--mui-palette-neutral-700)' }} />
-      <Stack spacing={2} sx={{ p: '12px' }}>
-        <div>
-          <Typography color="var(--mui-palette-neutral-100)" variant="subtitle2">
-            Need more features?
-          </Typography>
-          <Typography color="var(--mui-palette-neutral-400)" variant="body2">
-            Check out our Pro solution template.
-          </Typography>
-        </div>
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <Box
-            component="img"
-            alt="Pro version"
-            src="/assets/devias-kit-pro.png"
-            sx={{ height: 'auto', width: '160px' }}
-          />
-        </Box>
-        <Button
-          component="a"
-          endIcon={<ArrowSquareUpRightIcon fontSize="var(--icon-fontSize-md)" />}
-          fullWidth
-          href="https://material-kit-pro-react.devias.io/"
-          sx={{ mt: 2 }}
-          target="_blank"
-          variant="contained"
-        >
-          Pro version
-        </Button>
-      </Stack>
-    </Box>
+
+    </Box >
   );
 }
 
@@ -143,11 +130,11 @@ function NavItem({ disabled, external, href, icon, matcher, pathname, title }: N
       <Box
         {...(href
           ? {
-              component: external ? 'a' : RouterLink,
-              href,
-              target: external ? '_blank' : undefined,
-              rel: external ? 'noreferrer' : undefined,
-            }
+            component: external ? 'a' : RouterLink,
+            href,
+            target: external ? '_blank' : undefined,
+            rel: external ? 'noreferrer' : undefined,
+          }
           : { role: 'button' })}
         sx={{
           alignItems: 'center',
