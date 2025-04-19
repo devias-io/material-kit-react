@@ -1,10 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { useServerInsertedHTML } from 'next/navigation';
-import createCache from '@emotion/cache';
+
 import type { EmotionCache, Options as OptionsOfCreateCache } from '@emotion/cache';
+
 import { CacheProvider as DefaultCacheProvider } from '@emotion/react';
+import createCache from '@emotion/cache';
+import { useServerInsertedHTML } from 'next/navigation';
 
 interface Registry {
   cache: EmotionCache;
@@ -24,7 +26,6 @@ export default function NextAppDirEmotionCacheProvider(props: NextAppDirEmotionC
   const [registry] = React.useState<Registry>(() => {
     const cache = createCache(options);
     cache.compat = true;
-    // eslint-disable-next-line @typescript-eslint/unbound-method -- Expected
     const prevInsert = cache.insert;
     let inserted: { name: string; isGlobal: boolean }[] = [];
     cache.insert = (...args) => {
@@ -60,9 +61,9 @@ export default function NextAppDirEmotionCacheProvider(props: NextAppDirEmotionC
       const style = registry.cache.inserted[name];
 
       if (typeof style !== 'boolean') {
-        if (isGlobal) {
+        if (isGlobal && typeof style === 'string') {
           globals.push({ name, style });
-        } else {
+        } else if (typeof style === 'string') {
           styles += style;
           dataEmotionAttribute += ` ${name}`;
         }

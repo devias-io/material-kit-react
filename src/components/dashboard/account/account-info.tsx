@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from 'react';
 
 import Avatar from '@mui/material/Avatar';
@@ -34,6 +36,9 @@ export function AccountInfo(): React.JSX.Element {
   const country = typeof user.country === 'string' ? user.country : '';
   const location = [city, country].filter(Boolean).join(' ');
 
+  // Safely handle email
+  const email = typeof user.email === 'string' ? user.email : '';
+
   return (
     <Card>
       <CardContent>
@@ -48,9 +53,11 @@ export function AccountInfo(): React.JSX.Element {
                 {location}
               </Typography>
             )}
-            <Typography color="text.secondary" variant="body2">
-              {typeof user.email === 'string' ? user.email : ''}
-            </Typography>
+            {email && (
+              <Typography color="text.secondary" variant="body2">
+                {email}
+              </Typography>
+            )}
           </Stack>
         </Stack>
       </CardContent>
