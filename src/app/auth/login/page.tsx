@@ -26,6 +26,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import Logo from "@/components/layout/logo";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -67,102 +68,155 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="shadow-lg border-t-4 border-t-primary">
-      <CardHeader className="space-y-1">
-        <div className="flex justify-center mb-4">
-          <div className="rounded-full bg-primary p-2">
-            <img src="/logo-white.svg" alt="XPIPS" className="h-8 w-8" />
-          </div>
-        </div>
-        <CardTitle className="text-2xl text-center">XPIPS Dashboard</CardTitle>
-        <CardDescription className="text-center">
-          Enter your credentials to sign in to your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="mail@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
+    <div className="min-h-screen bg-white dark:bg-[#040a14] flex items-center justify-center p-4">
+      <Card
+        className="w-full max-w-md bg-white dark:dark-card shadow-lg dark:shadow-[#12e9ee]/5
+                    dark:bg-gradient-to-br dark:from-[#062f3a] dark:to-[#083c5a]
+                    rounded-xl border border-gray-100 dark:border-[#12e9ee]/10 
+                    backdrop-blur-sm transition-all duration-300"
+      >
+        <CardHeader className="space-y-1 pb-6">
+          <Logo />
+          <CardTitle
+            className="text-3xl font-clash-display font-bold text-center 
+                             text-gray-900 dark:text-[#f6f9fa]"
+          >
+            Dashboard
+          </CardTitle>
+          <CardDescription
+            className="text-center font-clash-grotesk 
+                                  text-gray-600 dark:text-[#f6f9fa]/80"
+          >
+            Enter your credentials to sign in to your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          {error && (
+            <Alert
+              variant="destructive"
+              className="bg-red-50 dark:bg-red-500/10 
+                                                border border-red-100 dark:border-red-500/20"
+            >
+              <AlertDescription className="text-red-600 dark:text-red-400 font-clash-grotesk">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-clash-grotesk text-gray-700 dark:text-[#f6f9fa]/80">
+                      Email
+                    </FormLabel>
+                    <FormControl>
                       <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
+                        placeholder="mail@example.com"
+                        className="border border-gray-200 dark:border-[#12e9ee]/20 
+                                 bg-white dark:bg-[#062f3a] text-gray-800 
+                                 dark:text-[#f6f9fa] focus:ring-2 
+                                 focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
+                                 font-clash-grotesk transition-all duration-300"
                         {...field}
                       />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full px-3 py-1 text-muted-foreground hover:text-foreground"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOffIcon className="h-4 w-4" />
-                        ) : (
-                          <EyeIcon className="h-4 w-4" />
-                        )}
-                        <span className="sr-only">
-                          {showPassword ? "Hide password" : "Show password"}
-                        </span>
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    </FormControl>
+                    <FormMessage className="text-red-500 dark:text-red-400 font-clash-grotesk" />
+                  </FormItem>
+                )}
+              />
 
-            <div className="flex items-center justify-end">
-              <Link
-                href="/auth/forgot-password"
-                className="text-sm text-primary underline-offset-4 hover:underline"
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-clash-grotesk text-gray-700 dark:text-[#f6f9fa]/80">
+                      Password
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          className="border border-gray-200 dark:border-[#12e9ee]/20 
+                                   bg-white dark:bg-[#062f3a] text-gray-800 
+                                   dark:text-[#f6f9fa] focus:ring-2 
+                                   focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
+                                   font-clash-grotesk transition-all duration-300"
+                          {...field}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 py-1 
+                                   text-gray-400 dark:text-[#f6f9fa]/60 
+                                   hover:text-teal-500 dark:hover:text-[#12e9ee] 
+                                   transition-colors"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOffIcon className="h-4 w-4" />
+                          ) : (
+                            <EyeIcon className="h-4 w-4" />
+                          )}
+                          <span className="sr-only">
+                            {showPassword ? "Hide password" : "Show password"}
+                          </span>
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-red-500 dark:text-red-400 font-clash-grotesk" />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex items-center justify-end">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-sm font-clash-grotesk text-teal-500 dark:text-[#12e9ee] 
+                           hover:text-teal-600 dark:hover:text-[#12e9ee]/90 
+                           underline-offset-4 hover:underline transition-colors"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-teal-500 dark:bg-[#12e9ee] text-white 
+                         dark:text-[#040a14] hover:bg-teal-600 
+                         dark:hover:bg-[#12e9ee]/90 transition-all duration-300 
+                         font-clash-grotesk dark:glow-teal group"
+                disabled={isLoading}
               >
-                Forgot your password?
-              </Link>
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign In"}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-      <CardFooter className="flex flex-col space-y-4">
-        <div className="text-sm text-center">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/auth/registration"
-            className="text-primary underline-offset-4 hover:underline"
+                <span className="group-hover:scale-105 transition-transform inline-block">
+                  {isLoading ? "Signing in..." : "Sign In"}
+                </span>
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
+          <div
+            className="text-sm text-center font-clash-grotesk 
+                       text-gray-600 dark:text-[#f6f9fa]/80"
           >
-            Sign up
-          </Link>
-        </div>
-      </CardFooter>
-    </Card>
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/auth/register"
+              className="text-teal-500 dark:text-[#12e9ee] hover:text-teal-600 
+                     dark:hover:text-[#12e9ee]/90 underline-offset-4 
+                     hover:underline transition-colors"
+            >
+              Sign up
+            </Link>
+          </div>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }

@@ -55,7 +55,7 @@ export default function DashboardLayout({
       </div>
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col md:pl-64">
+      <div className="flex flex-1 flex-col md:pl-64 ">
         <Header user={user} />
         <main className="flex-1 px-4 py-4 md:px-6 md:py-6">{children}</main>
       </div>

@@ -113,20 +113,34 @@ const tradingHistory = [
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white dark:bg-[#040a14] min-h-screen p-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-3xl font-clash-display font-bold tracking-tight text-gray-900 dark:text-[#f6f9fa]">
+            Dashboard
+          </h2>
+          <p className="text-gray-600 dark:text-[#f6f9fa]/70 font-clash-grotesk">
             Welcome back! Here's an overview of your trading account.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1 border-gray-200 dark:border-[#12e9ee]/20 
+                     hover:bg-gray-100 dark:hover:bg-[#12e9ee]/10 
+                     text-gray-700 dark:text-[#f6f9fa] font-clash-grotesk
+                     transition-all duration-300"
+          >
             <Calendar className="h-4 w-4" />
             Last 30 Days
           </Button>
-          <Button className="gap-1">
+          <Button
+            className="gap-1 bg-teal-500 dark:bg-[#12e9ee] text-white 
+                     dark:text-[#040a14] hover:bg-teal-600 
+                     dark:hover:bg-[#12e9ee]/90 font-clash-grotesk
+                     transition-all duration-300 dark:glow-teal"
+          >
             <Target className="h-4 w-4" />
             New Challenge
           </Button>
@@ -134,12 +148,27 @@ export default function DashboardPage() {
       </div>
 
       {/* Account Status Card */}
-      <Card className="border-l-4 border-l-primary">
+      <Card
+        className="dark:dark-card border-l-4 border-l-[#12e9ee] 
+                    bg-white dark:bg-gradient-to-br dark:from-[#062f3a] 
+                    dark:to-[#083c5a] shadow-lg dark:shadow-[#12e9ee]/5"
+      >
         <CardContent className="p-6">
-          <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
+          <div
+            className="flex flex-col space-y-2 md:flex-row md:items-center 
+                       md:justify-between md:space-y-0"
+          >
             <div>
-              <h3 className="text-xl font-semibold">Express Account #73549</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3
+                className="text-xl font-clash-display font-semibold 
+                          text-gray-900 dark:text-[#f6f9fa]"
+              >
+                Express Account #73549
+              </h3>
+              <p
+                className="text-sm text-gray-600 dark:text-[#f6f9fa]/70 
+                         font-clash-grotesk"
+              >
                 Phase 1 Evaluation - 6 days remaining
               </p>
             </div>
@@ -153,15 +182,30 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card
+          className="dark:dark-card bg-white dark:bg-gradient-to-br 
+                      dark:from-[#062f3a] dark:to-[#083c5a] 
+                      hover:shadow-lg transition-all duration-300
+                      dark:shadow-[#12e9ee]/5"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Balance</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle
+              className="text-sm font-clash-grotesk font-medium 
+                               text-gray-900 dark:text-[#f6f9fa]"
+            >
+              Balance
+            </CardTitle>
+            <DollarSign className="h-4 w-4 text-gray-500 dark:text-[#12e9ee]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$11,320.00</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-500 flex items-center">
+            <div
+              className="text-2xl font-clash-display font-bold 
+                         text-gray-900 dark:text-[#f6f9fa]"
+            >
+              $11,320.00
+            </div>
+            <p className="text-xs font-clash-grotesk text-gray-600 dark:text-[#f6f9fa]/70">
+              <span className="text-green-500 dark:text-[#12e9ee] flex items-center">
                 <ChevronUpIcon className="h-3 w-3 mr-1" />
                 13.2%
               </span>{" "}
@@ -169,15 +213,30 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card
+          className="dark:dark-card bg-white dark:bg-gradient-to-br 
+                      dark:from-[#062f3a] dark:to-[#083c5a] 
+                      hover:shadow-lg transition-all duration-300
+                      dark:shadow-[#12e9ee]/5"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Profit</CardTitle>
-            <BadgePercent className="h-4 w-4 text-muted-foreground" />
+            <CardTitle
+              className="text-sm font-clash-grotesk font-medium 
+                               text-gray-900 dark:text-[#f6f9fa]"
+            >
+              Profit
+            </CardTitle>
+            <BadgePercent className="h-4 w-4 text-gray-500 dark:text-[#12e9ee]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$1,320.00</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-500 flex items-center">
+            <div
+              className="text-2xl font-clash-display font-bold 
+                         text-gray-900 dark:text-[#f6f9fa]"
+            >
+              $1,320.00
+            </div>
+            <p className="text-xs font-clash-grotesk text-gray-600 dark:text-[#f6f9fa]/70">
+              <span className="text-green-500 dark:text-[#12e9ee] flex items-center">
                 <ChevronUpIcon className="h-3 w-3 mr-1" />
                 +4.5%
               </span>{" "}
@@ -185,15 +244,30 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card
+          className="dark:dark-card bg-white dark:bg-gradient-to-br 
+                      dark:from-[#062f3a] dark:to-[#083c5a] 
+                      hover:shadow-lg transition-all duration-300
+                      dark:shadow-[#12e9ee]/5"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Trades</CardTitle>
-            <LineChart className="h-4 w-4 text-muted-foreground" />
+            <CardTitle
+              className="text-sm font-clash-grotesk font-medium 
+                               text-gray-900 dark:text-[#f6f9fa]"
+            >
+              Trades
+            </CardTitle>
+            <LineChart className="h-4 w-4 text-gray-500 dark:text-[#12e9ee]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">28</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-primary flex items-center">
+            <div
+              className="text-2xl font-clash-display font-bold 
+                         text-gray-900 dark:text-[#f6f9fa]"
+            >
+              28
+            </div>
+            <p className="text-xs font-clash-grotesk text-gray-600 dark:text-[#f6f9fa]/70">
+              <span className="text-primary dark:text-[#12e9ee] flex items-center">
                 <ChevronUpIcon className="h-3 w-3 mr-1" />
                 12 new
               </span>{" "}
@@ -201,15 +275,30 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card
+          className="dark:dark-card bg-white dark:bg-gradient-to-br 
+                      dark:from-[#062f3a] dark:to-[#083c5a] 
+                      hover:shadow-lg transition-all duration-300
+                      dark:shadow-[#12e9ee]/5"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <CardTitle
+              className="text-sm font-clash-grotesk font-medium 
+                               text-gray-900 dark:text-[#f6f9fa]"
+            >
+              Win Rate
+            </CardTitle>
+            <Target className="h-4 w-4 text-gray-500 dark:text-[#12e9ee]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">68%</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-500 flex items-center">
+            <div
+              className="text-2xl font-clash-display font-bold 
+                         text-gray-900 dark:text-[#f6f9fa]"
+            >
+              68%
+            </div>
+            <p className="text-xs font-clash-grotesk text-gray-600 dark:text-[#f6f9fa]/70">
+              <span className="text-green-500 dark:text-[#12e9ee] flex items-center">
                 <ChevronUpIcon className="h-3 w-3 mr-1" />
                 +2.3%
               </span>{" "}
@@ -221,41 +310,60 @@ export default function DashboardPage() {
 
       {/* Account Overview Tab and Charts */}
       <div className="grid gap-4 md:grid-cols-7">
-        <Card className="md:col-span-4">
+        <Card
+          className="md:col-span-4 dark:dark-card bg-white 
+                      dark:bg-gradient-to-br dark:from-[#062f3a] 
+                      dark:to-[#083c5a]"
+        >
           <CardHeader>
-            <CardTitle>Balance Chart</CardTitle>
+            <CardTitle
+              className="font-clash-display text-gray-900 
+                               dark:text-[#f6f9fa]"
+            >
+              Balance Chart
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={balanceData}
-                  margin={{
-                    top: 10,
-                    right: 30,
-                    left: 0,
-                    bottom: 0,
-                  }}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    opacity={0.1}
+                    stroke="#f6f9fa"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    stroke="#f6f9fa"
+                    fontSize={12}
+                    tickLine={false}
+                  />
+                  <YAxis stroke="#f6f9fa" fontSize={12} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#040a14",
+                      border: "1px solid #12e9ee20",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                      fontFamily: "Clash Grotesk",
+                    }}
+                  />
                   <Area
                     type="monotone"
                     dataKey="equity"
-                    stackId="1"
-                    stroke="hsl(var(--chart-1))"
-                    fill="hsl(var(--chart-1))"
-                    fillOpacity={0.3}
+                    stroke="#12e9ee"
+                    fill="#12e9ee"
+                    fillOpacity={0.1}
                   />
                   <Area
                     type="monotone"
                     dataKey="balance"
-                    stackId="2"
-                    stroke="hsl(var(--chart-3))"
-                    fill="hsl(var(--chart-3))"
-                    fillOpacity={0.3}
+                    stroke="#486ebb"
+                    fill="#486ebb"
+                    fillOpacity={0.1}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -263,60 +371,79 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-3">
+        {/* Trading Objectives Card */}
+        <Card className="md:col-span-3 dark:dark-card bg-white dark:bg-gradient-to-br dark:from-[#062f3a] dark:to-[#083c5a] hover:shadow-lg transition-all duration-300 dark:shadow-[#12e9ee]/5">
           <CardHeader>
-            <CardTitle>Trading Objectives</CardTitle>
+            <CardTitle className="font-['Clash_Display'] text-gray-900 dark:text-[#f6f9fa]">
+              Trading Objectives
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-sm   ">
                 <div className="flex items-center">
-                  <div className="mr-2 h-2 w-2 rounded-full bg-primary" />
-                  <span>Profit Target (8%)</span>
+                  <div className="mr-2 h-2 w-2 rounded-full bg-[#12e9ee] dark:bg-[#12e9ee]" />
+                  <span className="text-gray-900 dark:text-[#f6f9fa]">
+                    Profit Target (8%)
+                  </span>
                 </div>
-                <span className="font-medium">4.5% / 8%</span>
+                <span className="font-medium text-gray-900 dark:text-[#f6f9fa]">
+                  4.5% / 8%
+                </span>
               </div>
-              <div className="h-2 rounded-full bg-muted">
-                <div className="h-full w-[56%] rounded-full bg-primary" />
+              <div className="h-2 rounded-full bg-gray-100 dark:bg-[#040a14]/50">
+                <div className="h-full w-[56%] rounded-full bg-[#12e9ee] dark:bg-[#12e9ee] animate-glow" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-sm   ">
                 <div className="flex items-center">
-                  <div className="mr-2 h-2 w-2 rounded-full bg-amber-500" />
-                  <span>Max Daily Loss (4%)</span>
+                  <div className="mr-2 h-2 w-2 rounded-full bg-[#486ebb] dark:bg-[#486ebb]" />
+                  <span className="text-gray-900 dark:text-[#f6f9fa]">
+                    Max Daily Loss (4%)
+                  </span>
                 </div>
-                <span className="font-medium">1.2% / 4%</span>
+                <span className="font-medium text-gray-900 dark:text-[#f6f9fa]">
+                  1.2% / 4%
+                </span>
               </div>
-              <div className="h-2 rounded-full bg-muted">
-                <div className="h-full w-[30%] rounded-full bg-amber-500" />
+              <div className="h-2 rounded-full bg-gray-100 dark:bg-[#040a14]/50">
+                <div className="h-full w-[30%] rounded-full bg-[#486ebb] dark:bg-[#486ebb]" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-sm   ">
                 <div className="flex items-center">
-                  <div className="mr-2 h-2 w-2 rounded-full bg-destructive" />
-                  <span>Max Total Loss (10%)</span>
+                  <div className="mr-2 h-2 w-2 rounded-full bg-[#875f85] dark:bg-[#875f85]" />
+                  <span className="text-gray-900 dark:text-[#f6f9fa]">
+                    Max Total Loss (10%)
+                  </span>
                 </div>
-                <span className="font-medium">0% / 10%</span>
+                <span className="font-medium text-gray-900 dark:text-[#f6f9fa]">
+                  0% / 10%
+                </span>
               </div>
-              <div className="h-2 rounded-full bg-muted">
-                <div className="h-full w-[0%] rounded-full bg-destructive" />
+              <div className="h-2 rounded-full bg-gray-100 dark:bg-[#040a14]/50">
+                <div className="h-full w-[0%] rounded-full bg-[#875f85] dark:bg-[#875f85]" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-sm   ">
                 <div className="flex items-center">
-                  <div className="mr-2 h-2 w-2 rounded-full bg-green-500" />
-                  <span>Min Trading Days (10)</span>
+                  <div className="mr-2 h-2 w-2 rounded-full bg-[#12e9ee] dark:bg-[#12e9ee]" />
+                  <span className="text-gray-900 dark:text-[#f6f9fa]">
+                    Min Trading Days (10)
+                  </span>
                 </div>
-                <span className="font-medium">6 / 10</span>
+                <span className="font-medium text-gray-900 dark:text-[#f6f9fa]">
+                  6 / 10
+                </span>
               </div>
-              <div className="h-2 rounded-full bg-muted">
-                <div className="h-full w-[60%] rounded-full bg-green-500" />
+              <div className="h-2 rounded-full bg-gray-100 dark:bg-[#040a14]/50">
+                <div className="h-full w-[60%] rounded-full bg-[#12e9ee] dark:bg-[#12e9ee]" />
               </div>
             </div>
           </CardContent>
@@ -325,9 +452,12 @@ export default function DashboardPage() {
 
       {/* Trading Stats and History */}
       <div className="grid gap-4 md:grid-cols-7">
-        <Card className="md:col-span-3">
+        {/* Trading Direction Card */}
+        <Card className="md:col-span-3 dark:dark-card bg-white dark:bg-gradient-to-br dark:from-[#062f3a] dark:to-[#083c5a] hover:shadow-lg transition-all duration-300 dark:shadow-[#12e9ee]/5">
           <CardHeader>
-            <CardTitle>Trading Direction</CardTitle>
+            <CardTitle className="font-['Clash_Display'] text-gray-900 dark:text-[#f6f9fa]">
+              Trading Direction
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -341,20 +471,32 @@ export default function DashboardPage() {
                     bottom: 5,
                   }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar
-                    dataKey="long"
-                    stackId="a"
-                    fill="hsl(var(--chart-1))"
-                    name="Long"
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    opacity={0.1}
+                    stroke="#f6f9fa"
                   />
+                  <XAxis
+                    dataKey="date"
+                    stroke="#f6f9fa"
+                    fontSize={12}
+                    tickLine={false}
+                  />
+                  <YAxis stroke="#f6f9fa" fontSize={12} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#040a14",
+                      border: "1px solid #12e9ee20",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                      fontFamily: "Clash Grotesk",
+                    }}
+                  />
+                  <Bar dataKey="long" stackId="a" fill="#12e9ee" name="Long" />
                   <Bar
                     dataKey="short"
                     stackId="a"
-                    fill="hsl(var(--chart-3))"
+                    fill="#486ebb"
                     name="Short"
                   />
                 </BarChart>
@@ -363,25 +505,39 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-4">
+        {/* Latest Trades Card */}
+        <Card className="md:col-span-4 dark:dark-card bg-white dark:bg-gradient-to-br dark:from-[#062f3a] dark:to-[#083c5a] hover:shadow-lg transition-all duration-300 dark:shadow-[#12e9ee]/5">
           <CardHeader>
-            <CardTitle>Latest Trades</CardTitle>
+            <CardTitle className="font-['Clash_Display'] text-gray-900 dark:text-[#f6f9fa]">
+              Latest Trades
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="max-h-[300px] overflow-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Symbol</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead className="text-right">Size</TableHead>
-                    <TableHead className="text-right">Profit/Loss</TableHead>
+                  <TableRow className="border-b border-gray-200 dark:border-[#12e9ee]/10">
+                    <TableHead className="text-gray-900 dark:text-[#f6f9fa]">
+                      Symbol
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-[#f6f9fa]">
+                      Type
+                    </TableHead>
+                    <TableHead className=" text-gray-900 dark:text-[#f6f9fa] text-right">
+                      Size
+                    </TableHead>
+                    <TableHead className=" text-gray-900 dark:text-[#f6f9fa] text-right">
+                      Profit/Loss
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {tradingHistory.map((trade) => (
-                    <TableRow key={trade.id}>
-                      <TableCell className="font-medium">
+                    <TableRow
+                      key={trade.id}
+                      className="border-b border-gray-200 dark:border-[#12e9ee]/10"
+                    >
+                      <TableCell className="font-medium text-gray-900 dark:text-[#f6f9fa]">
                         {trade.symbol}
                       </TableCell>
                       <TableCell>
@@ -389,10 +545,14 @@ export default function DashboardPage() {
                           {trade.type}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">{trade.size}</TableCell>
+                      <TableCell className="   text-right text-gray-900 dark:text-[#f6f9fa]">
+                        {trade.size}
+                      </TableCell>
                       <TableCell
-                        className={`text-right ${
-                          trade.profit >= 0 ? "text-green-500" : "text-red-500"
+                        className={`   text-right ${
+                          trade.profit >= 0
+                            ? "text-green-500 dark:text-[#12e9ee]"
+                            : "text-red-500 dark:text-[#875f85]"
                         }`}
                       >
                         ${trade.profit.toFixed(2)}
@@ -409,7 +569,7 @@ export default function DashboardPage() {
   );
 }
 
-// Badge component
+// Updated Badge component
 function Badge({
   children,
   status,
@@ -419,26 +579,24 @@ function Badge({
   status?: string;
   type?: string;
 }) {
-  let className =
-    "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium";
+  let className = `
+    inline-flex items-center rounded-full px-2.5 py-1 
+    text-xs font-clash-grotesk font-medium 
+    transition-all duration-300
+  `;
 
   if (status === "active") {
     className +=
-      " bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400";
+      " bg-green-100 text-green-800 dark:bg-[#12e9ee]/10 dark:text-[#12e9ee]";
   } else if (status === "warning") {
     className +=
-      " bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-400";
-  } else if (status === "danger") {
-    className +=
-      " bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400";
+      " bg-yellow-100 text-yellow-800 dark:bg-[#486ebb]/10 dark:text-[#486ebb]";
   } else if (type === "BUY" || type === "buy") {
     className +=
-      " bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400";
+      " bg-green-100 text-green-800 dark:bg-[#12e9ee]/10 dark:text-[#12e9ee]";
   } else if (type === "SELL" || type === "sell") {
     className +=
-      " bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400";
-  } else {
-    className += " bg-primary/10 text-primary";
+      " bg-red-100 text-red-800 dark:bg-[#875f85]/10 dark:text-[#875f85]";
   }
 
   return <span className={className}>{children}</span>;

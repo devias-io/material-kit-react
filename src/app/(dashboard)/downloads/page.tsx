@@ -41,35 +41,150 @@ const DownloadsPage = () => {
   ];
 
   return (
-    <div className=" mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Trading Platforms</h1>
-      <div className="grid md:grid-cols-2 gap-6">
-        {platforms.map((platform) => (
-          <div
-            key={platform.name}
-            className="bg-card dark:bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow border"
+    <div className="min-h-screen bg-white dark:bg-[#040a14] p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <div>
+          <h1
+            className="text-3xl font-clash-display font-bold 
+                      text-gray-900 dark:text-[#f6f9fa] mb-2"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <platform.icon className="w-8 h-8 text-primary-purple" />
-              <h2 className="text-2xl font-semibold text-foreground">
-                {platform.name}
-              </h2>
-            </div>
-            <p className="text-muted-foreground mb-6">{platform.description}</p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              {platform.downloads.map((download) => (
-                <a
-                  key={download.os}
-                  href={download.link}
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-secondary transition-colors flex-1"
+            Trading Platforms
+          </h1>
+          <p
+            className="text-gray-600 dark:text-[#f6f9fa]/70 
+                     font-clash-grotesk"
+          >
+            Download our supported trading platforms
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {platforms.map((platform) => (
+            <div
+              key={platform.name}
+              className="dark:dark-card bg-white dark:bg-gradient-to-br 
+                      dark:from-[#062f3a] dark:to-[#083c5a] 
+                      rounded-xl p-6 border border-gray-200 
+                      dark:border-[#12e9ee]/10 
+                      shadow-lg dark:shadow-[#12e9ee]/5 
+                      hover:shadow-xl dark:hover:shadow-[#12e9ee]/10 
+                      transition-all duration-300"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div
+                  className="p-3 rounded-lg bg-[#486ebb]/10 
+                            dark:bg-[#486ebb]/20"
                 >
-                  <download.icon className="w-5 h-5" />
-                  <span>Download for {download.os}</span>
-                </a>
-              ))}
+                  <platform.icon
+                    className="w-8 h-8 text-[#486ebb] 
+                                       dark:text-[#486ebb]"
+                  />
+                </div>
+                <div>
+                  <h2
+                    className="text-2xl font-clash-display font-semibold 
+                             text-gray-900 dark:text-[#f6f9fa]"
+                  >
+                    {platform.name}
+                  </h2>
+                  <p
+                    className="text-gray-600 dark:text-[#f6f9fa]/70 
+                            font-clash-grotesk mt-1"
+                  >
+                    {platform.description}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                {platform.downloads.map((download) => (
+                  <a
+                    key={download.os}
+                    href={download.link}
+                    className="flex items-center justify-center gap-2 
+                           px-4 py-3 bg-teal-500 dark:bg-[#12e9ee] 
+                           text-white dark:text-[#040a14] rounded-lg 
+                           hover:bg-teal-600 dark:hover:bg-[#12e9ee]/90 
+                           transition-all duration-300 flex-1 
+                           font-clash-grotesk dark:glow-teal 
+                           group relative overflow-hidden"
+                  >
+                    <div
+                      className="absolute inset-0 dark:bg-gradient-to-r 
+                                dark:from-[#12e9ee]/0 
+                                dark:via-[#12e9ee]/10 
+                                dark:to-[#12e9ee]/0 
+                                transform -skew-x-12 
+                                opacity-0 group-hover:opacity-100 
+                                transition-opacity duration-700"
+                    />
+                    <download.icon
+                      className="w-5 h-5 
+                                         group-hover:scale-110 
+                                         transition-transform 
+                                         duration-300"
+                    />
+                    <span className="relative z-10">
+                      Download for {download.os}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Additional Information Section */}
+        <div
+          className="mt-12 dark:dark-card bg-white 
+                     dark:bg-gradient-to-br dark:from-[#062f3a] 
+                     dark:to-[#083c5a] rounded-xl p-6 
+                     border border-gray-200 dark:border-[#12e9ee]/10"
+        >
+          <h3
+            className="text-xl font-clash-display font-semibold 
+                      text-gray-900 dark:text-[#f6f9fa] mb-4"
+          >
+            System Requirements
+          </h3>
+          <div
+            className="grid md:grid-cols-2 gap-6 
+                       font-clash-grotesk"
+          >
+            <div className="space-y-2">
+              <h4
+                className="text-gray-900 dark:text-[#f6f9fa] 
+                         font-medium"
+              >
+                Windows
+              </h4>
+              <ul
+                className="list-disc list-inside space-y-1 
+                          text-gray-600 dark:text-[#f6f9fa]/70"
+              >
+                <li>Windows 7 or higher</li>
+                <li>2 GB RAM minimum</li>
+                <li>1 GHz processor</li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <h4
+                className="text-gray-900 dark:text-[#f6f9fa] 
+                         font-medium"
+              >
+                MacOS
+              </h4>
+              <ul
+                className="list-disc list-inside space-y-1 
+                          text-gray-600 dark:text-[#f6f9fa]/70"
+              >
+                <li>macOS 10.13 or higher</li>
+                <li>4 GB RAM minimum</li>
+                <li>Intel or Apple Silicon processor</li>
+              </ul>
             </div>
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );

@@ -5,9 +5,8 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Table,
@@ -24,7 +23,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -33,29 +32,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+
 import { Label } from "@/components/ui/label";
 import {
   DollarSign,
-  Download,
   FileText,
-  CreditCard,
   WalletIcon,
   LandmarkIcon,
-  ArrowDownIcon,
   ArrowUpIcon,
   CheckCircleIcon,
   ClockIcon,
   AlertCircleIcon,
-  XCircleIcon
+  XCircleIcon,
+  Calendar,
 } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
 
 // Sample withdrawal history data
 const withdrawals = [
@@ -65,7 +60,7 @@ const withdrawals = [
     status: "Completed",
     date: "2024-03-15",
     method: "Bank Transfer",
-    account: "Express Account #59721"
+    account: "Express Account #59721",
   },
   {
     id: "W2302",
@@ -73,7 +68,7 @@ const withdrawals = [
     status: "Processing",
     date: "2024-03-02",
     method: "PayPal",
-    account: "Express Account #59721"
+    account: "Express Account #59721",
   },
   {
     id: "W2289",
@@ -81,7 +76,7 @@ const withdrawals = [
     status: "Completed",
     date: "2024-02-18",
     method: "Bank Transfer",
-    account: "Express Account #59721"
+    account: "Express Account #59721",
   },
   {
     id: "W2265",
@@ -90,7 +85,7 @@ const withdrawals = [
     date: "2024-02-05",
     method: "Crypto",
     account: "Express Account #73549",
-    reason: "Invalid wallet address provided"
+    reason: "Invalid wallet address provided",
   },
   {
     id: "W2201",
@@ -98,7 +93,7 @@ const withdrawals = [
     status: "Completed",
     date: "2024-01-22",
     method: "Bank Transfer",
-    account: "Express Account #59721"
+    account: "Express Account #59721",
   },
 ];
 
@@ -110,7 +105,7 @@ const accounts = [
     balance: 11320,
     phase: "Phase 1 Evaluation",
     status: "Active",
-    fundingDetails: null
+    fundingDetails: null,
   },
   {
     id: "59721",
@@ -122,16 +117,24 @@ const accounts = [
       availableForWithdrawal: 1750,
       nextPayoutDate: "2024-04-04",
       profitSplit: "80/20",
-      lastPayout: "2024-03-15"
-    }
+      lastPayout: "2024-03-15",
+    },
   },
 ];
 
 // Payment method options
 const paymentMethods = [
-  { id: "bank", name: "Bank Transfer", icon: <LandmarkIcon className="h-4 w-4" /> },
+  {
+    id: "bank",
+    name: "Bank Transfer",
+    icon: <LandmarkIcon className="h-4 w-4" />,
+  },
   { id: "paypal", name: "PayPal", icon: <WalletIcon className="h-4 w-4" /> },
-  { id: "crypto", name: "Cryptocurrency", icon: <FileText className="h-4 w-4" /> },
+  {
+    id: "crypto",
+    name: "Cryptocurrency",
+    icon: <FileText className="h-4 w-4" />,
+  },
 ];
 
 export default function WithdrawalsPage() {
@@ -142,7 +145,7 @@ export default function WithdrawalsPage() {
   const [withdrawalError, setWithdrawalError] = useState<string | null>(null);
 
   // Find the account that is funded
-  const fundedAccount = accounts.find(account => account.status === "Funded");
+  const fundedAccount = accounts.find((account) => account.status === "Funded");
 
   const handleWithdrawalRequest = () => {
     // Validate inputs
@@ -162,7 +165,7 @@ export default function WithdrawalsPage() {
       return;
     }
 
-    const account = accounts.find(acc => acc.id === selectedAccount);
+    const account = accounts.find((acc) => acc.id === selectedAccount);
 
     if (!account?.fundingDetails) {
       setWithdrawalError("Selected account is not eligible for withdrawals");
@@ -170,7 +173,9 @@ export default function WithdrawalsPage() {
     }
 
     if (amount > account.fundingDetails.availableForWithdrawal) {
-      setWithdrawalError(`Amount exceeds available balance (${account.fundingDetails.availableForWithdrawal})`);
+      setWithdrawalError(
+        `Amount exceeds available balance (${account.fundingDetails.availableForWithdrawal})`
+      );
       return;
     }
 
@@ -187,239 +192,390 @@ export default function WithdrawalsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Withdrawals</h2>
-          <p className="text-muted-foreground">
-            Manage your earnings and track withdrawal history
-          </p>
-        </div>
-        <Dialog open={isWithdrawalDialogOpen} onOpenChange={setIsWithdrawalDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2" disabled={!fundedAccount}>
-              <ArrowUpIcon className="h-4 w-4" />
-              Request Withdrawal
+    <div className="min-h-screen bg-white dark:bg-[#040a14] p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl font-clash-display font-bold tracking-tight text-gray-900 dark:text-[#f6f9fa]">
+              Withdrawals
+            </h1>
+            <p className="text-gray-600 dark:text-[#f6f9fa]/70 font-clash-grotesk">
+              Manage your withdrawal requests and view withdrawal history
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1 border-gray-200 dark:border-[#12e9ee]/20 
+                       hover:bg-gray-100 dark:hover:bg-[#12e9ee]/10 
+                       text-gray-700 dark:text-[#f6f9fa] font-clash-grotesk
+                       transition-all duration-300"
+            >
+              <Calendar className="h-4 w-4" />
+              Last 30 Days
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Request Withdrawal</DialogTitle>
-              <DialogDescription>
-                Complete the form below to request a funds withdrawal from your funded account.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              {withdrawalError && (
-                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md flex items-center gap-2">
-                  <AlertCircleIcon className="h-4 w-4" />
-                  {withdrawalError}
-                </div>
-              )}
-
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="account" className="text-right">
-                  Account
-                </Label>
-                <div className="col-span-3">
-                  <Select
-                    value={selectedAccount}
-                    onValueChange={setSelectedAccount}
-                  >
-                    <SelectTrigger id="account">
-                      <SelectValue placeholder="Select account" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {accounts
-                        .filter(account => account.status === "Funded")
-                        .map(account => (
-                          <SelectItem key={account.id} value={account.id}>
-                            {account.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="amount" className="text-right">
-                  Amount
-                </Label>
-                <div className="col-span-3 relative">
-                  <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="amount"
-                    placeholder="0.00"
-                    className="pl-8"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={withdrawalAmount}
-                    onChange={(e) => setWithdrawalAmount(e.target.value)}
+            <Dialog
+              open={isWithdrawalDialogOpen}
+              onOpenChange={setIsWithdrawalDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  className="gap-2 bg-teal-500 dark:bg-[#12e9ee] 
+                          text-white dark:text-[#040a14] 
+                          hover:bg-teal-600 dark:hover:bg-[#12e9ee]/90 
+                          font-clash-grotesk transition-all duration-300 
+                          dark:glow-teal group"
+                  disabled={!fundedAccount}
+                >
+                  <ArrowUpIcon
+                    className="h-4 w-4 group-hover:scale-110 
+                             transition-transform duration-300"
                   />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="method" className="text-right">
-                  Method
-                </Label>
-                <div className="col-span-3">
-                  <Select
-                    value={selectedPaymentMethod}
-                    onValueChange={setSelectedPaymentMethod}
+                  Request Withdrawal
+                </Button>
+              </DialogTrigger>
+              <DialogContent
+                className="dark:dark-card bg-white 
+                         dark:bg-gradient-to-br 
+                         dark:from-[#062f3a] dark:to-[#083c5a] 
+                         border border-gray-200 
+                         dark:border-[#12e9ee]/10"
+              >
+                <DialogHeader>
+                  <DialogTitle
+                    className="font-clash-display text-xl 
+                             text-gray-900 dark:text-[#f6f9fa]"
                   >
-                    <SelectTrigger id="method">
-                      <SelectValue placeholder="Select payment method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {paymentMethods.map(method => (
-                        <SelectItem key={method.id} value={method.id}>
-                          <div className="flex items-center gap-2">
-                            {method.icon}
-                            <span>{method.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    Request Withdrawal
+                  </DialogTitle>
+                  <DialogDescription
+                    className="font-clash-grotesk 
+                             text-gray-600 dark:text-[#f6f9fa]/70"
+                  >
+                    Complete the form below to request a funds withdrawal from
+                    your funded account.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  {withdrawalError && (
+                    <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md flex items-center gap-2">
+                      <AlertCircleIcon className="h-4 w-4" />
+                      {withdrawalError}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label
+                      htmlFor="account"
+                      className="text-right text-gray-900 dark:text-[#f6f9fa]"
+                    >
+                      Account
+                    </Label>
+                    <div className="col-span-3">
+                      <Select
+                        value={selectedAccount}
+                        onValueChange={setSelectedAccount}
+                      >
+                        <SelectTrigger
+                          id="account"
+                          className="border-gray-200 dark:border-[#12e9ee]/20"
+                        >
+                          <SelectValue placeholder="Select account" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {accounts
+                            .filter((account) => account.status === "Funded")
+                            .map((account) => (
+                              <SelectItem key={account.id} value={account.id}>
+                                {account.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label
+                      htmlFor="amount"
+                      className="text-right text-gray-900 dark:text-[#f6f9fa]"
+                    >
+                      Amount
+                    </Label>
+                    <div className="col-span-3 relative">
+                      <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-[#12e9ee]" />
+                      <Input
+                        id="amount"
+                        placeholder="0.00"
+                        className="pl-8 border-gray-200 dark:border-[#12e9ee]/20"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={withdrawalAmount}
+                        onChange={(e) => setWithdrawalAmount(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label
+                      htmlFor="method"
+                      className="text-right text-gray-900 dark:text-[#f6f9fa]"
+                    >
+                      Method
+                    </Label>
+                    <div className="col-span-3">
+                      <Select
+                        value={selectedPaymentMethod}
+                        onValueChange={setSelectedPaymentMethod}
+                      >
+                        <SelectTrigger
+                          id="method"
+                          className="border-gray-200 dark:border-[#12e9ee]/20"
+                        >
+                          <SelectValue placeholder="Select payment method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {paymentMethods.map((method) => (
+                            <SelectItem key={method.id} value={method.id}>
+                              <div className="flex items-center gap-2">
+                                {method.icon}
+                                <span>{method.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsWithdrawalDialogOpen(false)}
+                    className="border-gray-200 dark:border-[#12e9ee]/20 
+                             hover:bg-gray-100 dark:hover:bg-[#12e9ee]/10 
+                             text-gray-700 dark:text-[#f6f9fa]"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleWithdrawalRequest}
+                    className="bg-teal-500 dark:bg-[#12e9ee] 
+                             text-white dark:text-[#040a14] 
+                             hover:bg-teal-600 dark:hover:bg-[#12e9ee]/90 
+                             dark:glow-teal"
+                  >
+                    Submit Request
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Card
+            className="dark:dark-card bg-white dark:bg-gradient-to-br 
+                      dark:from-[#062f3a] dark:to-[#083c5a] 
+                      border border-gray-200 dark:border-[#12e9ee]/10 
+                      shadow-lg dark:shadow-[#12e9ee]/5"
+          >
+            <CardHeader className="pb-2">
+              <CardTitle
+                className="text-sm font-clash-grotesk font-medium 
+                          text-gray-900 dark:text-[#f6f9fa]"
+              >
+                Available Balance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div
+                className="text-2xl font-clash-display font-bold 
+                          text-gray-900 dark:text-[#12e9ee]"
+              >
+                {fundedAccount?.balance
+                  ? `$${fundedAccount.balance.toFixed(2)}`
+                  : "N/A"}
               </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsWithdrawalDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleWithdrawalRequest}>
-                Submit Request
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+              <p
+                className="text-xs font-clash-grotesk 
+                         text-gray-600 dark:text-[#f6f9fa]/70 mt-1"
+              >
+                {fundedAccount
+                  ? `For ${fundedAccount.name}`
+                  : "No funded accounts available"}
+              </p>
+            </CardContent>
+          </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Available for Withdrawal</CardTitle>
+          <Card
+            className="dark:dark-card bg-white dark:bg-gradient-to-br 
+                      dark:from-[#062f3a] dark:to-[#083c5a] 
+                      border border-gray-200 dark:border-[#12e9ee]/10 
+                      shadow-lg dark:shadow-[#12e9ee]/5"
+          >
+            <CardHeader className="pb-2">
+              <CardTitle
+                className="text-sm font-clash-grotesk font-medium 
+                          text-gray-900 dark:text-[#f6f9fa]"
+              >
+                Profit Split
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div
+                className="text-2xl font-clash-display font-bold 
+                          text-gray-900 dark:text-[#12e9ee]"
+              >
+                {fundedAccount?.fundingDetails
+                  ? fundedAccount.fundingDetails.profitSplit
+                  : "N/A"}
+              </div>
+              <p
+                className="text-xs font-clash-grotesk 
+                         text-gray-600 dark:text-[#f6f9fa]/70 mt-1"
+              >
+                {fundedAccount
+                  ? `For ${fundedAccount.name}`
+                  : "No funded accounts available"}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card
+          className="dark:dark-card bg-white dark:bg-gradient-to-br 
+                    dark:from-[#062f3a] dark:to-[#083c5a] 
+                    border border-gray-200 dark:border-[#12e9ee]/10 
+                    shadow-lg dark:shadow-[#12e9ee]/5"
+        >
+          <CardHeader>
+            <CardTitle
+              className="font-clash-display text-xl 
+                        text-gray-900 dark:text-[#f6f9fa]"
+            >
+              Withdrawals History
+            </CardTitle>
+            <CardDescription
+              className="font-clash-grotesk 
+                       text-gray-600 dark:text-[#f6f9fa]/70"
+            >
+              View and manage your withdrawal requests
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {fundedAccount?.fundingDetails ? `$${fundedAccount.fundingDetails.availableForWithdrawal.toLocaleString()}` : "$0.00"}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {fundedAccount?.fundingDetails ? `Next payout date: ${fundedAccount.fundingDetails.nextPayoutDate}` : "No funded accounts available"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Withdrawals</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${withdrawals
-                .filter(w => w.status === "Completed")
-                .reduce((sum, w) => sum + w.amount, 0)
-                .toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Across all accounts
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Profit Split</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {fundedAccount?.fundingDetails ? fundedAccount.fundingDetails.profitSplit : "N/A"}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {fundedAccount ? `For ${fundedAccount.name}` : "No funded accounts available"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Withdrawals History</CardTitle>
-          <CardDescription>
-            View and manage your withdrawal requests
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Reference</TableHead>
-                <TableHead>Account</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {withdrawals.length > 0 ? (
-                withdrawals.map((withdrawal) => (
-                  <TableRow key={withdrawal.id}>
-                    <TableCell className="font-medium">{withdrawal.id}</TableCell>
-                    <TableCell>{withdrawal.account}</TableCell>
-                    <TableCell>{new Date(withdrawal.date).toLocaleDateString()}</TableCell>
-                    <TableCell>{withdrawal.method}</TableCell>
-                    <TableCell className="text-right">${withdrawal.amount.toLocaleString()}</TableCell>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-gray-200 dark:border-[#12e9ee]/20">
+                  <TableHead className="text-gray-900 dark:text-[#f6f9fa]">
+                    Date
+                  </TableHead>
+                  <TableHead className="text-gray-900 dark:text-[#f6f9fa]">
+                    Account
+                  </TableHead>
+                  <TableHead className="text-gray-900 dark:text-[#f6f9fa]">
+                    Amount
+                  </TableHead>
+                  <TableHead className="text-gray-900 dark:text-[#f6f9fa]">
+                    Method
+                  </TableHead>
+                  <TableHead className="text-gray-900 dark:text-[#f6f9fa]">
+                    Status
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {withdrawals.map((withdrawal) => (
+                  <TableRow
+                    key={withdrawal.id}
+                    className="border-gray-200 dark:border-[#12e9ee]/20 
+                             hover:bg-gray-50 dark:hover:bg-[#12e9ee]/5 
+                             transition-colors"
+                  >
+                    <TableCell className="font-clash-grotesk text-gray-900 dark:text-[#f6f9fa]">
+                      {new Date(withdrawal.date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="font-clash-grotesk text-gray-900 dark:text-[#f6f9fa]">
+                      {withdrawal.account}
+                    </TableCell>
+                    <TableCell className="font-clash-grotesk text-gray-900 dark:text-[#f6f9fa]">
+                      ${withdrawal.amount.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="font-clash-grotesk text-gray-900 dark:text-[#f6f9fa]">
+                      {withdrawal.method}
+                    </TableCell>
                     <TableCell>
-                      <WithdrawalStatusBadge status={withdrawal.status} />
+                      <Badge
+                        variant={
+                          withdrawal.status === "Completed"
+                            ? "default"
+                            : withdrawal.status === "Pending"
+                            ? "secondary"
+                            : "destructive"
+                        }
+                        className="font-clash-grotesk"
+                      >
+                        {withdrawal.status}
+                      </Badge>
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6">
-                    <p className="text-muted-foreground">No withdrawal history found</p>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
 
-// Withdrawal Status Badge component
+// Updated WithdrawalStatusBadge component
 function WithdrawalStatusBadge({ status }: { status: string }) {
-  let className = "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium";
-  let icon = null;
+  let className = `
+    inline-flex items-center rounded-full px-2.5 py-1 
+    text-xs font-clash-grotesk font-medium 
+    transition-all duration-300
+  `;
 
   switch (status) {
     case "Completed":
-      className += " bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400";
-      icon = <CheckCircleIcon className="mr-1 h-3 w-3" />;
+      className +=
+        " bg-green-100 text-green-800 dark:bg-[#12e9ee]/10 dark:text-[#12e9ee]";
       break;
     case "Processing":
-      className += " bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-400";
-      icon = <ClockIcon className="mr-1 h-3 w-3" />;
+      className +=
+        " bg-blue-100 text-blue-800 dark:bg-[#486ebb]/10 dark:text-[#486ebb]";
       break;
     case "Rejected":
-      className += " bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400";
-      icon = <XCircleIcon className="mr-1 h-3 w-3" />;
+      className +=
+        " bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-400";
       break;
     default:
-      className += " bg-muted text-muted-foreground";
+      className +=
+        " bg-gray-100 dark:bg-gray-500/10 text-gray-800 dark:text-gray-400";
   }
 
   return (
     <span className={className}>
-      {icon}
+      {getStatusIcon(status)}
       <span>{status}</span>
     </span>
   );
+}
+
+// Helper function for status icons
+function getStatusIcon(status: string) {
+  const iconClass = "mr-1 h-3 w-3";
+  switch (status) {
+    case "Completed":
+      return <CheckCircleIcon className={iconClass} />;
+    case "Processing":
+      return <ClockIcon className={iconClass} />;
+    case "Rejected":
+      return <XCircleIcon className={iconClass} />;
+    default:
+      return null;
+  }
 }

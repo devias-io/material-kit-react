@@ -12,14 +12,18 @@
     --popover-foreground: 224 71.4% 4.1%;
 
     /* XPIPS Custom Colors */
-    --primary-cyan: 180 100% 50%;
-    --secondary-cyan: 180 100% 20%;
-    --primary-purple: 263 100% 66%;
-    --secondary-purple: 258 75% 53%;
+    --primary-cyan: 180 93% 50%;  /* #12e9ee - vibrant teal/cyan */
+    --secondary-cyan: 189 87% 13%;  /* #062f3a - dark teal */
+    --primary-blue: 208 85% 19%;  /* #083c5a - dark blue */
+    --deep-blue-black: 216 48% 5%;  /* #040a14 - deep blue-black */
+    --light-blue: 217 57% 51%;  /* #486ebb - light blue */
+    --mauve: 317 18% 45%;  /* #875f85 - purple/mauve */
+    --light-gray: 200 33% 97%;  /* #f6f9fa - light gray/off-white */
+    --dark-gray: 260 8% 27%;  /* #44414a - dark gray */
 
-    --primary: var(--primary-purple);
+    --primary: var(--primary-cyan);
     --primary-foreground: 210 20% 98%;
-    --secondary: var(--secondary-purple);
+    --secondary: var(--secondary-cyan);
     --secondary-foreground: 210 20% 98%;
 
     --muted: 220 14.3% 95.9%;
@@ -30,51 +34,55 @@
     --destructive-foreground: 210 20% 98%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: var(--primary-purple);
+    --ring: var(--primary-cyan);
     --radius: 0.5rem;
 
     /* Chart Colors for dashboards */
     --chart-1: var(--primary-cyan);
     --chart-2: var(--secondary-cyan);
-    --chart-3: var(--primary-purple);
-    --chart-4: var(--secondary-purple);
+    --chart-3: var(--light-blue);
+    --chart-4: var(--mauve);
     --chart-5: 43 74% 66%;
   }
 
   .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
+    --background: 216 48% 5%;  /* #040a14 - XPIPS deep blue-black background */
+    --foreground: 200 33% 97%;  /* #f6f9fa - XPIPS light text */
+    --card: 189 87% 13%;  /* #062f3a - XPIPS card background start */
+    --card-foreground: 200 33% 97%;  /* #f6f9fa - XPIPS card text */
+    --popover: 208 85% 19%;  /* #083c5a - XPIPS darker blue */
+    --popover-foreground: 200 33% 97%;  /* #f6f9fa - XPIPS light text */
 
     /* XPIPS Custom Colors - Dark Mode */
-    --primary-cyan: 180 100% 50%;
-    --secondary-cyan: 180 100% 20%;
-    --primary-purple: 263 100% 66%;
-    --secondary-purple: 258 75% 53%;
+    --primary-cyan: 180 93% 50%;  /* #12e9ee - vibrant teal/cyan */
+    --secondary-cyan: 189 87% 13%;  /* #062f3a - dark teal */
+    --primary-blue: 208 85% 19%;  /* #083c5a - dark blue */
+    --deep-blue-black: 216 48% 5%;  /* #040a14 - deep blue-black */
+    --light-blue: 217 57% 51%;  /* #486ebb - light blue */
+    --mauve: 317 18% 45%;  /* #875f85 - purple/mauve */
+    --light-gray: 200 33% 97%;  /* #f6f9fa - light gray/off-white */
+    --dark-gray: 260 8% 27%;  /* #44414a - dark gray */
 
-    --primary: var(--primary-purple);
-    --primary-foreground: 210 20% 98%;
-    --secondary: var(--secondary-purple);
-    --secondary-foreground: 210 20% 98%;
+    --primary: var(--primary-cyan);
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--secondary-cyan);
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: var(--primary-purple);
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: var(--primary-cyan);
 
     /* Chart Colors for dashboards - Dark Mode */
     --chart-1: var(--primary-cyan);
-    --chart-2: var(--secondary-cyan);
-    --chart-3: var(--primary-purple);
-    --chart-4: var(--secondary-purple);
+    --chart-2: var(--light-blue);
+    --chart-3: var(--mauve);
+    --chart-4: var(--secondary-cyan);
     --chart-5: 340 75% 55%;
   }
 }
@@ -96,11 +104,23 @@
   .bg-secondary-cyan {
     background-color: hsl(var(--secondary-cyan));
   }
-  .bg-primary-purple {
-    background-color: hsl(var(--primary-purple));
+  .bg-primary-blue {
+    background-color: hsl(var(--primary-blue));
   }
-  .bg-secondary-purple {
-    background-color: hsl(var(--secondary-purple));
+  .bg-deep-blue-black {
+    background-color: hsl(var(--deep-blue-black));
+  }
+  .bg-light-blue {
+    background-color: hsl(var(--light-blue));
+  }
+  .bg-mauve {
+    background-color: hsl(var(--mauve));
+  }
+  .bg-light-gray {
+    background-color: hsl(var(--light-gray));
+  }
+  .bg-dark-gray {
+    background-color: hsl(var(--dark-gray));
   }
 
   .text-primary-cyan {
@@ -109,10 +129,43 @@
   .text-secondary-cyan {
     color: hsl(var(--secondary-cyan));
   }
-  .text-primary-purple {
-    color: hsl(var(--primary-purple));
+  .text-primary-blue {
+    color: hsl(var(--primary-blue));
   }
-  .text-secondary-purple {
-    color: hsl(var(--secondary-purple));
+  .text-deep-blue-black {
+    color: hsl(var(--deep-blue-black));
+  }
+  .text-light-blue {
+    color: hsl(var(--light-blue));
+  }
+  .text-mauve {
+    color: hsl(var(--mauve));
+  }
+  .text-light-gray {
+    color: hsl(var(--light-gray));
+  }
+  .text-dark-gray {
+    color: hsl(var(--dark-gray));
+  }
+
+  /* XPIPS glow effects */
+  .glow-cyan {
+    box-shadow: 0 0 15px 2px hsl(var(--primary-cyan) / 0.5);
+  }
+  .glow-blue {
+    box-shadow: 0 0 15px 2px hsl(var(--light-blue) / 0.5);
+  }
+  .glow-text-cyan {
+    text-shadow: 0 0 10px hsl(var(--primary-cyan) / 0.8);
+  }
+
+  /* XPIPS gradient backgrounds */
+  .bg-gradient-dark {
+    background: linear-gradient(135deg, hsl(var(--secondary-cyan)), hsl(var(--primary-blue)));
+  }
+  .bg-gradient-card {
+    background: linear-gradient(135deg,
+      hsl(var(--secondary-cyan) / 0.7),
+      hsl(var(--primary-blue) / 0.7));
   }
 }

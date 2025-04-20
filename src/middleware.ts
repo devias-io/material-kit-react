@@ -24,8 +24,9 @@ export function middleware(request: NextRequest) {
   if (isAdminPath && role !== "admin") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
+
   if (isUserDashboardPath && role === "admin") {
-    return NextResponse.redirect(new URL("/admin/leaderboard", request.url));
+    return NextResponse.redirect(new URL("/admin/subscriptions", request.url));
   }
   return NextResponse.next();
 }

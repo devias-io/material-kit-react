@@ -1,6 +1,7 @@
 "use client";
 
 import DashboardLayout from "@/components/layout/dashboard-layout";
+import Loading from "@/components/layout/loading";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -8,7 +9,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading } = useCurrentUser();
 
   if (isLoading || !user) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
 
   return (

@@ -24,6 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import Logo from "./logo";
 
 interface SidebarProps {
   isAdmin?: boolean;
@@ -94,6 +95,13 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
       adminOnly: true,
     },
     {
+      title: "Accounts Overview",
+      href: "/admin/accounts/overview",
+      icon: <Users className="h-5 w-5" />,
+
+      adminOnly: true,
+    },
+    {
       title: "Program Management",
       href: "/admin/programs",
       icon: <Settings className="h-5 w-5" />,
@@ -118,17 +126,17 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
   );
 
   return (
-    <div className="flex h-screen w-64 flex-col border-r bg-background">
-      <div className="flex h-14 items-center border-b px-4">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="rounded-full bg-primary p-1">
-            <img src="/logo-white.svg" alt="XPIPS" className="h-6 w-6" />
-          </div>
-          <span className="text-xl font-bold text-primary">XPIPS</span>
+    <div className="flex h-screen w-64 flex-col bg-white dark:bg-[#040a14] border-r border-gray-200 dark:border-[#12e9ee]/10">
+      <div className="flex h-14 items-center px-4 border-b border-gray-200 dark:border-[#12e9ee]/10 bg-white dark:bg-gradient-to-l dark:from-[#062f3a] dark:to-[#083c5a]">
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-2 transition-transform duration-300 hover:scale-105"
+        >
+          <Logo />
         </Link>
       </div>
 
-      <div className="flex-1 overflow-auto py-2">
+      <div className="flex-1 overflow-auto py-2 bg-white dark:bg-gradient-to-b dark:from-[#062f3a] dark:to-[#083c5a]">
         <nav className="grid gap-1 px-2">
           {filteredItems.map((item) => {
             const isSubActive = item.submenu?.some(
@@ -161,10 +169,10 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
                   <AccordionItem value={item.title} className="border-none">
                     <AccordionTrigger
                       className={cn(
-                        "flex items-center rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground",
+                        "flex items-center rounded-md px-3 py-2 text-sm transition-all duration-300",
                         isActive
-                          ? "bg-accent text-accent-foreground"
-                          : "transparent"
+                          ? "bg-teal-500/10 dark:bg-[#12e9ee]/10 text-teal-500 dark:text-[#12e9ee]"
+                          : "text-gray-700 dark:text-[#f6f9fa]/70 hover:bg-gray-100 dark:hover:bg-[#12e9ee]/5 hover:text-gray-900 dark:hover:text-[#f6f9fa]"
                       )}
                     >
                       <div className="flex items-center gap-x-2">
@@ -181,10 +189,10 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
                               key={`${item.title}-${submenu.title}`}
                               href={submenu.href}
                               className={cn(
-                                "flex items-center rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground",
+                                "flex items-center rounded-md px-3 py-2 text-sm transition-all duration-300",
                                 isSubmenuActive
-                                  ? "bg-accent text-accent-foreground font-medium"
-                                  : "transparent"
+                                  ? "bg-teal-500/10 dark:bg-[#12e9ee]/10 text-teal-500 dark:text-[#12e9ee] font-medium"
+                                  : "text-gray-700 dark:text-[#f6f9fa]/70 hover:bg-gray-100 dark:hover:bg-[#12e9ee]/5 hover:text-gray-900 dark:hover:text-[#f6f9fa]"
                               )}
                             >
                               {submenu.title}
@@ -203,10 +211,10 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
                 key={item.title}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-x-2 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground",
+                  "flex items-center gap-x-2 rounded-md px-3 py-2 text-sm transition-all duration-300",
                   isActive
-                    ? "bg-accent text-accent-foreground font-medium"
-                    : "transparent"
+                    ? "bg-teal-500/10 dark:bg-[#12e9ee]/10 text-teal-500 dark:text-[#12e9ee] font-medium"
+                    : "text-gray-700 dark:text-[#f6f9fa]/70 hover:bg-gray-100 dark:hover:bg-[#12e9ee]/5 hover:text-gray-900 dark:hover:text-[#f6f9fa]"
                 )}
               >
                 {item.icon}
@@ -217,14 +225,12 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
         </nav>
       </div>
 
-      {!isAdmin && (
-        <div className="border-t p-4">
-          <Button variant="default" className="w-full justify-start gap-2">
-            <PlusCircle className="h-4 w-4" />
-            New Challenge
-          </Button>
-        </div>
-      )}
+      <div className="border-t border-gray-200 dark:border-[#12e9ee]/10 p-4 bg-white dark:bg-gradient-to-r dark:from-[#062f3a] dark:to-[#083c5a]">
+        <Button className="w-full justify-start gap-2 bg-teal-500 dark:bg-[#12e9ee] text-white dark:text-[#040a14] hover:bg-teal-600 dark:hover:bg-[#12e9ee]/90 transition-all duration-300 dark:glow-teal group">
+          <PlusCircle className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
+          New Challenge
+        </Button>
+      </div>
     </div>
   );
 }
