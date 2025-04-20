@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
   const isPublicPath = path.startsWith("/auth");
   const isProtectedPath = path.startsWith("/dashboard");
   const isAdminPath = path.startsWith("/admin");
-
+  const isUserDashboardPath = path.startsWith("/dashboard");
   const token = request.cookies.get("accessToken")?.value || null;
   const role = request.cookies.get("role")?.value || null;
 
@@ -24,7 +24,9 @@ export function middleware(request: NextRequest) {
   if (isAdminPath && role !== "admin") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
-
+  if (isUserDashboardPath && role === "admin") {
+    return NextResponse.redirect(new URL("/admin/leaderboard", request.url));
+  }
   return NextResponse.next();
 }
 

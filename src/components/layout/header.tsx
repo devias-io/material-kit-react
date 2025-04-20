@@ -4,11 +4,10 @@ import Link from "next/link";
 import {
   BellIcon,
   SearchIcon,
-  UserIcon,
   LogOut,
   Settings,
-  User,
-  Mail
+  User as UserIcon,
+  Mail,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -22,24 +21,32 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/useAuth";
+import { User as UserType } from "@/types/user.types";
 
 interface HeaderProps {
-  userName?: string;
-  userEmail?: string;
-  avatarUrl?: string;
+  user: UserType;
 }
 
-export default function Header({
-  userName = "John Doe",
-  userEmail = "john@example.com",
-  avatarUrl,
-}: HeaderProps) {
+export default function Header({ user }: HeaderProps) {
+  const { logout } = useAuth();
+
+  const userName = `${user?.firstName} ${user?.lastName}`.trim();
   // Extract initials for avatar fallback
   const initials = userName
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .join("")
     .toUpperCase();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
 
   return (
     <header className="flex h-14 items-center border-b px-4 lg:px-6">
@@ -71,7 +78,7 @@ export default function Header({
               aria-label="User menu"
             >
               <Avatar className="h-8 w-8">
-                <AvatarImage src={avatarUrl} alt={userName} />
+                <AvatarImage src={user?.imageUri} alt={userName} />
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
             </Button>
@@ -81,31 +88,43 @@ export default function Header({
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{userName}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {userEmail}
+                  {user?.email}
                 </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/profile" className="cursor-pointer flex w-full items-center">
-                <User className="mr-2 h-4 w-4" />
+              <Link
+                href="/profile"
+                className="cursor-pointer flex w-full items-center"
+              >
+                <UserIcon className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/settings" className="cursor-pointer flex w-full items-center">
+              <Link
+                href="/settings"
+                className="cursor-pointer flex w-full items-center"
+              >
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/messages" className="cursor-pointer flex w-full items-center">
+              <Link
+                href="/messages"
+                className="cursor-pointer flex w-full items-center"
+              >
                 <Mail className="mr-2 h-4 w-4" />
                 <span>Messages</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
+            <DropdownMenuItem
+              className="cursor-pointer text-destructive focus:text-destructive"
+              onClick={handleLogout}
+            >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>

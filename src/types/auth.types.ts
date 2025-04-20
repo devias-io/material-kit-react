@@ -19,7 +19,9 @@ export interface RegisterCredentials extends LoginCredentials {
   lastName: string;
   phone?: string;
 }
-
+export interface CurrentUserResponse {
+  data: User;
+}
 export interface ResetCredentials {
   email: string;
 }

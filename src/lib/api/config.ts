@@ -14,5 +14,6 @@ export const ENDPOINTS = {
     reset: "/auth/reset-link",
     forgetPassword: "/auth/forgot-password",
     changePassword: "/auth/change-password",
+    me: "/user/profile",
   },
 };

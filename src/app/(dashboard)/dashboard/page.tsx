@@ -1,11 +1,25 @@
 "use client";
-
-import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BadgePercent, DollarSign, UserIcon, LineChart, Target, Calendar, ChevronUpIcon, ChevronDownIcon } from "lucide-react";
+import {
+  BadgePercent,
+  DollarSign,
+  LineChart,
+  Target,
+  Calendar,
+  ChevronUpIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, TooltipProps } from 'recharts';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from "recharts";
 import {
   Table,
   TableBody,
@@ -40,28 +54,64 @@ const tradingData = [
 
 // Sample trading history data
 const tradingHistory = [
-  { id: 1, symbol: "EURUSD", type: "BUY", openPrice: 1.0821, closePrice: 1.0875, size: 1.25, profit: 54.00, openTime: "2024-03-12 09:32", closeTime: "2024-03-12 14:45" },
-  { id: 2, symbol: "GBPUSD", type: "SELL", openPrice: 1.2654, closePrice: 1.2589, size: 0.75, profit: 48.75, openTime: "2024-03-11 15:20", closeTime: "2024-03-12 10:15" },
-  { id: 3, symbol: "USDJPY", type: "BUY", openPrice: 149.85, closePrice: 150.75, size: 1.00, profit: 90.00, openTime: "2024-03-10 22:15", closeTime: "2024-03-11 05:30" },
-  { id: 4, symbol: "XAUUSD", type: "SELL", openPrice: 2018.50, closePrice: 2025.75, size: 0.10, profit: -72.50, openTime: "2024-03-09 14:30", closeTime: "2024-03-10 12:45" },
-  { id: 5, symbol: "EURUSD", type: "SELL", openPrice: 1.0902, closePrice: 1.0845, size: 2.00, profit: 114.00, openTime: "2024-03-08 10:05", closeTime: "2024-03-08 17:20" },
+  {
+    id: 1,
+    symbol: "EURUSD",
+    type: "BUY",
+    openPrice: 1.0821,
+    closePrice: 1.0875,
+    size: 1.25,
+    profit: 54.0,
+    openTime: "2024-03-12 09:32",
+    closeTime: "2024-03-12 14:45",
+  },
+  {
+    id: 2,
+    symbol: "GBPUSD",
+    type: "SELL",
+    openPrice: 1.2654,
+    closePrice: 1.2589,
+    size: 0.75,
+    profit: 48.75,
+    openTime: "2024-03-11 15:20",
+    closeTime: "2024-03-12 10:15",
+  },
+  {
+    id: 3,
+    symbol: "USDJPY",
+    type: "BUY",
+    openPrice: 149.85,
+    closePrice: 150.75,
+    size: 1.0,
+    profit: 90.0,
+    openTime: "2024-03-10 22:15",
+    closeTime: "2024-03-11 05:30",
+  },
+  {
+    id: 4,
+    symbol: "XAUUSD",
+    type: "SELL",
+    openPrice: 2018.5,
+    closePrice: 2025.75,
+    size: 0.1,
+    profit: -72.5,
+    openTime: "2024-03-09 14:30",
+    closeTime: "2024-03-10 12:45",
+  },
+  {
+    id: 5,
+    symbol: "EURUSD",
+    type: "SELL",
+    openPrice: 1.0902,
+    closePrice: 1.0845,
+    size: 2.0,
+    profit: 114.0,
+    openTime: "2024-03-08 10:05",
+    closeTime: "2024-03-08 17:20",
+  },
 ];
 
 export default function DashboardPage() {
-  const [isClient, setIsClient] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-    const adminStatus = localStorage.getItem("isAdmin") === "true";
-    setIsAdmin(adminStatus);
-  }, []);
-
-  // If not client yet, show nothing to prevent hydration mismatch
-  if (!isClient) {
-    return null;
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -191,8 +241,22 @@ export default function DashboardPage() {
                   <XAxis dataKey="date" />
                   <YAxis />
                   <Tooltip />
-                  <Area type="monotone" dataKey="equity" stackId="1" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" fillOpacity={0.3} />
-                  <Area type="monotone" dataKey="balance" stackId="2" stroke="hsl(var(--chart-3))" fill="hsl(var(--chart-3))" fillOpacity={0.3} />
+                  <Area
+                    type="monotone"
+                    dataKey="equity"
+                    stackId="1"
+                    stroke="hsl(var(--chart-1))"
+                    fill="hsl(var(--chart-1))"
+                    fillOpacity={0.3}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="balance"
+                    stackId="2"
+                    stroke="hsl(var(--chart-3))"
+                    fill="hsl(var(--chart-3))"
+                    fillOpacity={0.3}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -281,8 +345,18 @@ export default function DashboardPage() {
                   <XAxis dataKey="date" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="long" stackId="a" fill="hsl(var(--chart-1))" name="Long" />
-                  <Bar dataKey="short" stackId="a" fill="hsl(var(--chart-3))" name="Short" />
+                  <Bar
+                    dataKey="long"
+                    stackId="a"
+                    fill="hsl(var(--chart-1))"
+                    name="Long"
+                  />
+                  <Bar
+                    dataKey="short"
+                    stackId="a"
+                    fill="hsl(var(--chart-3))"
+                    name="Short"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -307,14 +381,20 @@ export default function DashboardPage() {
                 <TableBody>
                   {tradingHistory.map((trade) => (
                     <TableRow key={trade.id}>
-                      <TableCell className="font-medium">{trade.symbol}</TableCell>
+                      <TableCell className="font-medium">
+                        {trade.symbol}
+                      </TableCell>
                       <TableCell>
                         <Badge type={trade.type === "BUY" ? "buy" : "sell"}>
                           {trade.type}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">{trade.size}</TableCell>
-                      <TableCell className={`text-right ${trade.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      <TableCell
+                        className={`text-right ${
+                          trade.profit >= 0 ? "text-green-500" : "text-red-500"
+                        }`}
+                      >
                         ${trade.profit.toFixed(2)}
                       </TableCell>
                     </TableRow>
@@ -330,19 +410,33 @@ export default function DashboardPage() {
 }
 
 // Badge component
-function Badge({ children, status, type }: { children: React.ReactNode; status?: string; type?: string }) {
-  let className = "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium";
+function Badge({
+  children,
+  status,
+  type,
+}: {
+  children: React.ReactNode;
+  status?: string;
+  type?: string;
+}) {
+  let className =
+    "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium";
 
   if (status === "active") {
-    className += " bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400";
+    className +=
+      " bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400";
   } else if (status === "warning") {
-    className += " bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-400";
+    className +=
+      " bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-400";
   } else if (status === "danger") {
-    className += " bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400";
+    className +=
+      " bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400";
   } else if (type === "BUY" || type === "buy") {
-    className += " bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400";
+    className +=
+      " bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400";
   } else if (type === "SELL" || type === "sell") {
-    className += " bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400";
+    className +=
+      " bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400";
   } else {
     className += " bg-primary/10 text-primary";
   }

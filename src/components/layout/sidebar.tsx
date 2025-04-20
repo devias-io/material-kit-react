@@ -16,6 +16,7 @@ import {
   MessageSquare,
   PlusCircle,
   FileCheck,
+  Info,
 } from "lucide-react";
 import {
   Accordion,
@@ -49,10 +50,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
       title: "Accounts",
       href: "/accounts",
       icon: <CreditCard className="h-5 w-5" />,
-      submenu: [
-        { title: "Overview", href: "/accounts" },
-        { title: "New Challenge", href: "/accounts/new" },
-      ],
+      submenu: [{ title: "Overview", href: "/accounts" }],
     },
     {
       title: "Withdrawals",
@@ -79,11 +77,20 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
       href: "/kyc",
       icon: <FileCheck className="h-5 w-5" />,
     },
-    // Admin only items
     {
-      title: "User Management",
+      title: "Subscriptions",
+      href: "/admin/subscriptions",
+      icon: <Info className="h-5 w-5" />,
+      adminOnly: true,
+    },
+    {
+      title: "Users & Accounts",
       href: "/admin/users",
       icon: <Users className="h-5 w-5" />,
+      submenu: [
+        { title: "Management", href: "/admin/users" },
+        { title: "Add user", href: "/admin/users/add" },
+      ],
       adminOnly: true,
     },
     {
@@ -106,9 +113,8 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
     },
   ];
 
-  // Filter items based on user role
-  const filteredItems = sidebarItems.filter(
-    (item) => !item.adminOnly || (item.adminOnly && isAdmin)
+  const filteredItems = sidebarItems.filter((item) =>
+    isAdmin ? item.adminOnly : !item.adminOnly
   );
 
   return (
@@ -121,22 +127,21 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
           <span className="text-xl font-bold text-primary">XPIPS</span>
         </Link>
       </div>
+
       <div className="flex-1 overflow-auto py-2">
         <nav className="grid gap-1 px-2">
           {filteredItems.map((item) => {
-            // Check if this route or any of its children is active
+            const isSubActive = item.submenu?.some(
+              (submenu) => pathname === submenu.href
+            );
+
             const isActive =
-              pathname === item.href ||
-              pathname.startsWith(`${item.href}/`) ||
-              (item.submenu?.some(
-                (submenu) =>
-                  pathname === submenu.href ||
-                  pathname.startsWith(`${submenu.href}/`)
-              ) ??
-                false);
+              (!item.submenu &&
+                (pathname === item.href ||
+                  pathname.startsWith(`${item.href}/`))) ||
+              isSubActive;
 
             if (item.submenu) {
-              // Get the default open value for the accordion
               const defaultOpen = item.submenu.some(
                 (submenu) =>
                   pathname === submenu.href ||
@@ -170,16 +175,14 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
                     <AccordionContent className="pt-1 pb-0">
                       <div className="flex flex-col gap-1 pl-9">
                         {item.submenu.map((submenu) => {
-                          const isSubActive =
-                            pathname === submenu.href ||
-                            pathname.startsWith(`${submenu.href}/`);
+                          const isSubmenuActive = pathname === submenu.href;
                           return (
                             <Link
                               key={`${item.title}-${submenu.title}`}
                               href={submenu.href}
                               className={cn(
                                 "flex items-center rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground",
-                                isSubActive
+                                isSubmenuActive
                                   ? "bg-accent text-accent-foreground font-medium"
                                   : "transparent"
                               )}
@@ -213,6 +216,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
           })}
         </nav>
       </div>
+
       {!isAdmin && (
         <div className="border-t p-4">
           <Button variant="default" className="w-full justify-start gap-2">
