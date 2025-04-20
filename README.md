@@ -1,90 +1,36 @@
-## [XPIPS Kit - React](https://material-kit-react.XPIPS.io/)
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-![license](https://img.shields.io/badge/license-MIT-blue.svg)
+## Getting Started
 
-[![XPIPS Kit - React](https://github.com/XPIPS-io/material-kit-react/blob/main/public/assets/thumbnail.png)](https://material-kit-react.XPIPS.io/)
+First, run the development server:
 
-> Free React Admin Dashboard made with [MUI's](https://mui.com) components, [React](https://reactjs.org) and of course [Next.js](https://github.com/vercel/next.js) to boost your app development process!
-
-## Pages
-
-- [Dashboard](https://material-kit-react.XPIPS.io)
-- [Customers](https://material-kit-react.XPIPS.io/dashboard/customers)
-- [Integrations](https://material-kit-react.XPIPS.io/dashboard/integrations)
-- [Settings](https://material-kit-react.XPIPS.io/dashboard/settings)
-- [Account](https://material-kit-react.XPIPS.io/dashboard/account)
-- [Sign In](https://material-kit-react.XPIPS.io/auth/sign-in)
-- [Sign Up](https://material-kit-react.XPIPS.io/auth/sign-up)
-- [Reset Password](https://material-kit-react.XPIPS.io/auth/reset-password)
-
-## Free Figma Community File
-
-- [Duplicate File](https://www.figma.com/file/b3L1Np4RYiicZAOMopHNkm/XPIPS-Dashboard-Design-Library-Kit)
-
-## Upgrade to PRO Version
-
-We also have a pro version of this product which bundles even more pages and components if you want
-to save more time and design efforts :)
-
-| Free Version (this one)  | [XPIPS Kit Pro](https://mui.com/store/items/XPIPS-kit-pro/)                |
-| ------------------------ | :--------------------------------------------------------------------------- |
-| **8** Pages              | **80+** Pages                                                                |
-| ✔ Custom Authentication  | ✔ Authentication with **Amplify**, **Auth0**, **Firebase** and **Supabase**  |
-| -                        | ✔ Vite Version                                                               |
-| -                        | ✔ Dark Mode Support                                                          |
-| -                        | ✔ Complete Users Flows                                                       |
-| -                        | ✔ Premium Technical Support                                                  |
-
-## Quick start
-
-- Clone the repo: `git clone https://github.com/XPIPS-io/material-kit-react.git`
-- Make sure your Node.js and npm versions are up to date
-- Install dependencies: `npm install` or `yarn`
-- Start the server: `npm run dev` or `yarn dev`
-- Open browser: `http://localhost:3000`
-
-## File Structure
-
-Within the download you'll find the following directories and files:
-
-```
-┌── .editorconfig
-├── .eslintrc.js
-├── .gitignore
-├── CHANGELOG.md
-├── LICENSE.md
-├── next-env.d.ts
-├── next.config.js
-├── package.json
-├── README.md
-├── tsconfig.json
-├── public
-└── src
-	├── components
-	├── contexts
-	├── hooks
-	├── lib
-	├── styles
-	├── types
-	└── app
-		├── layout.tsx
-		├── page.tsx
-		├── auth
-		└── dashboard
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-## Resources
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-- More freebies like this one: https://XPIPS.io
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## Reporting Issues:
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-- [Github Issues Page](https://github.com/XPIPS-io/material-kit-react/issues)
+## Learn More
 
-## License
+To learn more about Next.js, take a look at the following resources:
 
-- Licensed under [MIT](https://github.com/XPIPS-io/material-kit-react/blob/main/LICENSE.md)
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-## Contact Us
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-- Email Us: support@XPIPSio.zendesk.com
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

@@ -1,32 +1,37 @@
-'use client';
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import ClientBody from "./ClientBody";
 
-import * as React from 'react';
-import type { Viewport } from 'next';
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
 
-import '@/styles/global.css';
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+export const metadata: Metadata = {
+  title: "XPIPS Trading Prop Firm - Dashboard",
+  description:
+    "Trading Prop Firm XPIPS administration dashboard and user portal",
+  keywords: ["trading", "prop firm", "XPIPS", "dashboard", "forex"],
+};
 
-import { LocalizationProvider } from '@/components/core/localization-provider';
-import { ThemeProvider } from '@/components/core/theme-provider/theme-provider';
-
-export const viewport = { width: 'device-width', initialScale: 1 } satisfies Viewport;
-
-interface LayoutProps {
+export default function RootLayout({
+  children,
+}: Readonly<{
   children: React.ReactNode;
-}
-const queryClient = new QueryClient();
-
-export default function Layout({ children }: LayoutProps): React.JSX.Element {
+}>) {
   return (
-    <html lang="en">
-      <body>
-        <QueryClientProvider client={queryClient}>
-          <LocalizationProvider>
-            <ThemeProvider>{children}</ThemeProvider>
-          </LocalizationProvider>
-        </QueryClientProvider>
-      </body>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
+      <ClientBody>{children}</ClientBody>
     </html>
   );
 }
