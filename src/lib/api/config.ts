@@ -11,7 +11,7 @@ export const ENDPOINTS = {
   auth: {
     login: "/auth/login",
     register: "/auth/register",
-    reset: "/auth/reset-link",
+    reset: "/auth/reset-password",
     forgetPassword: "/auth/forgot-password",
     changePassword: "/auth/change-password",
     me: "/user/profile",

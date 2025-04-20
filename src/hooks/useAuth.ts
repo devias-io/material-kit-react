@@ -21,10 +21,12 @@ export const useAuth = () => {
 
   const setAuthData = (data: AuthResponse) => {
     const { accessToken, result } = data.data.data;
-    Cookies.set("accessToken", accessToken, { expires: 7 });
-    Cookies.set("role", result.role, { expires: 7 });
-    queryClient.setQueryData(["user"], result);
-    router.push("/dashboard");
+    if (accessToken !== undefined) {
+      Cookies.set("accessToken", accessToken, { expires: 7 });
+      Cookies.set("role", result.role, { expires: 7 });
+      queryClient.setQueryData(["user"], result);
+      router.push("/dashboard");
+    }
   };
 
   const login = useMutation<AuthResponse, Error, LoginCredentials>({
