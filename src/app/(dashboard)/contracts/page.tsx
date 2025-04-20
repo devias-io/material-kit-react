@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { Upload, Download, FileText, AlertCircle } from "lucide-react";
+import Title from "@/components/layout/title";
+import Description from "@/components/layout/description";
 
 interface Contract {
   id: string;
@@ -41,22 +43,12 @@ const ContractsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#040a14] p-6">
+    <div className="min-h-screen bg-white dark:bg-[#040a14]">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex justify-between items-center">
-          <div>
-            <h1
-              className="text-3xl font-clash-display font-bold 
-                        text-gray-900 dark:text-[#f6f9fa] mb-2"
-            >
-              Contracts
-            </h1>
-            <p
-              className="text-gray-600 dark:text-[#f6f9fa]/70 
-                       font-clash-grotesk"
-            >
-              Manage and view your trading agreements
-            </p>
+          <div className="mb-8">
+            <Title title="Contracts" />
+            <Description description="Manage and view your trading agreements" />
           </div>
           <div className="relative">
             <input
@@ -74,7 +66,7 @@ const ContractsPage = () => {
                      rounded-lg hover:bg-teal-600 
                      dark:hover:bg-[#12e9ee]/90 
                      transition-all duration-300 
-                     cursor-pointer font-clash-grotesk 
+                     cursor-pointer   
                      dark:glow-teal group"
             >
               <Upload
@@ -100,14 +92,14 @@ const ContractsPage = () => {
                                   dark:text-[#12e9ee]/50"
               />
               <h3
-                className="text-xl font-clash-display font-semibold 
+                className="text-xl   font-semibold 
                          text-gray-900 dark:text-[#f6f9fa]"
               >
                 No Contracts Available
               </h3>
               <p
                 className="text-gray-600 dark:text-[#f6f9fa]/70 
-                        font-clash-grotesk"
+                         "
               >
                 Upload your first contract to get started
               </p>
@@ -144,13 +136,13 @@ const ContractsPage = () => {
                   </div>
                   <div>
                     <h3
-                      className="font-clash-grotesk font-medium 
+                      className="  font-medium 
                                text-gray-900 dark:text-[#f6f9fa]"
                     >
                       {contract.name}
                     </h3>
                     <p
-                      className="text-sm font-clash-grotesk 
+                      className="text-sm   
                               text-gray-600 dark:text-[#f6f9fa]/70"
                     >
                       Uploaded on {contract.uploadedAt} • {contract.size}
@@ -165,7 +157,7 @@ const ContractsPage = () => {
                          rounded-lg hover:bg-teal-600 
                          dark:hover:bg-[#12e9ee]/90 
                          transition-all duration-300 
-                         font-clash-grotesk dark:glow-teal 
+                           dark:glow-teal 
                          group"
                 >
                   <Download

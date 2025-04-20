@@ -11,6 +11,8 @@ import {
   UserX,
   FileSpreadsheet,
 } from "lucide-react";
+import Title from "@/components/layout/title";
+import Description from "@/components/layout/description";
 
 interface SubscriptionStats {
   quotaLimit: number;
@@ -46,20 +48,13 @@ const SubscriptionsPage = () => {
     <div className="mx-auto min-h-screen bg-white dark:bg-[#040a14] text-black dark:text-[#f6f9fa]">
       {/* Header Section */}
       <div className="mb-8">
-        <h1
-          className="text-4xl font-clash-display font-bold mb-2 bg-gradient-to-r from-black to-gray-700 bg-clip-text text-transparent
-                     dark:from-[#12e9ee] dark:to-[#486ebb]"
-        >
-          Subscription Overview
-        </h1>
-        <p className="text-gray-600 dark:text-[#f6f9fa]/80 font-clash-grotesk">
-          Monitor subscription metrics and generate statistics
-        </p>
+        <Title title="Subscription Overview" />
+        <Description description="Monitor subscription metrics and generate statistics" />
       </div>
 
       {/* Details Section */}
       <div className="mb-8">
-        <h2 className="text-2xl font-clash-display font-semibold mb-4 text-black dark:text-[#f6f9fa]">
+        <h2 className="text-2xl   font-semibold mb-4 text-black dark:text-[#f6f9fa]">
           Subscription Details
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -79,7 +74,7 @@ const SubscriptionsPage = () => {
                 <Users className="w-6 h-6 text-teal-500 dark:text-[#12e9ee]" />
               </div>
               <div>
-                <p className="text-sm text-gray-600 dark:text-[#f6f9fa]/60 font-clash-grotesk">
+                <p className="text-sm text-gray-600 dark:text-[#f6f9fa]/60  ">
                   Available Quota
                 </p>
                 <h3 className="text-2xl font-bold text-teal-600 dark:text-[#12e9ee]">
@@ -96,7 +91,7 @@ const SubscriptionsPage = () => {
                 }}
               />
             </div>
-            <p className="text-sm text-gray-500 dark:text-[#f6f9fa]/60 mt-2 font-clash-grotesk">
+            <p className="text-sm text-gray-500 dark:text-[#f6f9fa]/60 mt-2  ">
               {stats.quotaLimit - stats.activeAccounts} accounts remaining
             </p>
           </div>
@@ -117,7 +112,7 @@ const SubscriptionsPage = () => {
                 <UserCheck className="w-6 h-6 text-teal-500 dark:text-[#12e9ee]" />
               </div>
               <div>
-                <p className="text-sm text-gray-600 dark:text-[#f6f9fa]/60 font-clash-grotesk">
+                <p className="text-sm text-gray-600 dark:text-[#f6f9fa]/60  ">
                   Active Accounts
                 </p>
                 <h3 className="text-2xl font-bold text-teal-600 dark:text-[#12e9ee]">
@@ -125,7 +120,7 @@ const SubscriptionsPage = () => {
                 </h3>
               </div>
             </div>
-            <p className="text-sm text-gray-500 dark:text-[#f6f9fa]/60 font-clash-grotesk">
+            <p className="text-sm text-gray-500 dark:text-[#f6f9fa]/60  ">
               {(
                 (stats.activeAccounts / stats.totalIssuedAccounts) *
                 100
@@ -150,7 +145,7 @@ const SubscriptionsPage = () => {
                 <Target className="w-6 h-6 text-teal-500 dark:text-[#12e9ee]" />
               </div>
               <div>
-                <p className="text-sm text-gray-600 dark:text-[#f6f9fa]/60 font-clash-grotesk">
+                <p className="text-sm text-gray-600 dark:text-[#f6f9fa]/60  ">
                   Target Reached
                 </p>
                 <h3 className="text-2xl font-bold text-teal-600 dark:text-[#12e9ee]">
@@ -158,7 +153,7 @@ const SubscriptionsPage = () => {
                 </h3>
               </div>
             </div>
-            <p className="text-sm text-gray-500 dark:text-[#f6f9fa]/60 font-clash-grotesk">
+            <p className="text-sm text-gray-500 dark:text-[#f6f9fa]/60  ">
               Success rate: {stats.successRate}%
             </p>
           </div>
@@ -179,7 +174,7 @@ const SubscriptionsPage = () => {
                 <UserX className="w-6 h-6 text-teal-500 dark:text-[#12e9ee]" />
               </div>
               <div>
-                <p className="text-sm text-gray-600 dark:text-[#f6f9fa]/60 font-clash-grotesk">
+                <p className="text-sm text-gray-600 dark:text-[#f6f9fa]/60  ">
                   Violated Accounts
                 </p>
                 <h3 className="text-2xl font-bold text-teal-600 dark:text-[#12e9ee]">
@@ -187,7 +182,7 @@ const SubscriptionsPage = () => {
                 </h3>
               </div>
             </div>
-            <p className="text-sm text-gray-500 dark:text-[#f6f9fa]/60 font-clash-grotesk">
+            <p className="text-sm text-gray-500 dark:text-[#f6f9fa]/60  ">
               {(
                 (stats.violatedAccounts / stats.totalIssuedAccounts) *
                 100
@@ -212,7 +207,7 @@ const SubscriptionsPage = () => {
                 <FileSpreadsheet className="w-6 h-6 text-teal-500 dark:text-[#12e9ee]" />
               </div>
               <div>
-                <p className="text-sm text-gray-600 dark:text-[#f6f9fa]/60 font-clash-grotesk">
+                <p className="text-sm text-gray-600 dark:text-[#f6f9fa]/60  ">
                   Total Issued
                 </p>
                 <h3 className="text-2xl font-bold text-teal-600 dark:text-[#12e9ee]">
@@ -220,7 +215,7 @@ const SubscriptionsPage = () => {
                 </h3>
               </div>
             </div>
-            <p className="text-sm text-gray-500 dark:text-[#f6f9fa]/60 font-clash-grotesk">
+            <p className="text-sm text-gray-500 dark:text-[#f6f9fa]/60  ">
               All time total issued accounts
             </p>
           </div>
@@ -234,13 +229,13 @@ const SubscriptionsPage = () => {
                    rounded-xl border border-gray-100 dark:border-[#12e9ee]/10 p-6 
                    backdrop-blur-sm transition-all duration-300"
       >
-        <h2 className="text-2xl font-clash-display font-semibold mb-6 text-black dark:text-[#f6f9fa]">
+        <h2 className="text-2xl   font-semibold mb-6 text-black dark:text-[#f6f9fa]">
           Statistics Range
         </h2>
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1">
             <label
-              className="block text-sm font-clash-grotesk font-medium mb-2 
+              className="block text-sm   font-medium mb-2 
                           text-gray-700 dark:text-[#f6f9fa]/80"
             >
               Start Date
@@ -256,7 +251,7 @@ const SubscriptionsPage = () => {
                         rounded-lg bg-white dark:bg-[#062f3a] text-gray-800 
                         dark:text-[#f6f9fa] focus:outline-none focus:ring-2 
                         focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                        font-clash-grotesk transition-all duration-300"
+                          transition-all duration-300"
                 value={dateRange.startDate}
                 onChange={(e) =>
                   setDateRange({ ...dateRange, startDate: e.target.value })
@@ -266,7 +261,7 @@ const SubscriptionsPage = () => {
           </div>
           <div className="flex-1">
             <label
-              className="block text-sm font-clash-grotesk font-medium mb-2 
+              className="block text-sm   font-medium mb-2 
                           text-gray-700 dark:text-[#f6f9fa]/80"
             >
               End Date
@@ -282,7 +277,7 @@ const SubscriptionsPage = () => {
                         rounded-lg bg-white dark:bg-[#062f3a] text-gray-800 
                         dark:text-[#f6f9fa] focus:outline-none focus:ring-2 
                         focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                        font-clash-grotesk transition-all duration-300"
+                          transition-all duration-300"
                 value={dateRange.endDate}
                 onChange={(e) =>
                   setDateRange({ ...dateRange, endDate: e.target.value })
@@ -297,7 +292,7 @@ const SubscriptionsPage = () => {
                       text-white dark:text-[#040a14] rounded-lg 
                       hover:bg-teal-600 dark:hover:bg-[#12e9ee]/90 
                       transition-all duration-300 flex items-center justify-center 
-                      gap-2 font-clash-grotesk font-medium shadow-lg 
+                      gap-2   font-medium shadow-lg 
                       hover:shadow-teal-500/25 dark:hover:shadow-[#12e9ee]/25 
                       dark:glow-teal group"
             >
@@ -307,7 +302,7 @@ const SubscriptionsPage = () => {
           </div>
         </div>
 
-        <div className="text-sm text-gray-600 dark:text-[#f6f9fa]/80 font-clash-grotesk">
+        <div className="text-sm text-gray-600 dark:text-[#f6f9fa]/80  ">
           Generate a detailed PDF report for the selected date range including:
           <ul className="list-disc list-inside mt-2 space-y-1 text-gray-500 dark:text-[#f6f9fa]/60">
             <li>Account creation statistics</li>

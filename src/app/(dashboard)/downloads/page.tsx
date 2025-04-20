@@ -1,3 +1,5 @@
+import Description from "@/components/layout/description";
+import Title from "@/components/layout/title";
 import { Apple, BarChart, Laptop, LineChart } from "lucide-react";
 import React from "react";
 
@@ -41,23 +43,12 @@ const DownloadsPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#040a14] p-6">
+    <div className="min-h-screen bg-white dark:bg-[#040a14]">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div>
-          <h1
-            className="text-3xl font-clash-display font-bold 
-                      text-gray-900 dark:text-[#f6f9fa] mb-2"
-          >
-            Trading Platforms
-          </h1>
-          <p
-            className="text-gray-600 dark:text-[#f6f9fa]/70 
-                     font-clash-grotesk"
-          >
-            Download our supported trading platforms
-          </p>
+        <div className="mb-8">
+          <Title title="Trading Platforms" />
+          <Description description="Download our supported trading platforms" />
         </div>
-
         <div className="grid md:grid-cols-2 gap-6">
           {platforms.map((platform) => (
             <div
@@ -82,14 +73,14 @@ const DownloadsPage = () => {
                 </div>
                 <div>
                   <h2
-                    className="text-2xl font-clash-display font-semibold 
+                    className="text-2xl   font-semibold 
                              text-gray-900 dark:text-[#f6f9fa]"
                   >
                     {platform.name}
                   </h2>
                   <p
                     className="text-gray-600 dark:text-[#f6f9fa]/70 
-                            font-clash-grotesk mt-1"
+                              mt-1"
                   >
                     {platform.description}
                   </p>
@@ -106,7 +97,7 @@ const DownloadsPage = () => {
                            text-white dark:text-[#040a14] rounded-lg 
                            hover:bg-teal-600 dark:hover:bg-[#12e9ee]/90 
                            transition-all duration-300 flex-1 
-                           font-clash-grotesk dark:glow-teal 
+                             dark:glow-teal 
                            group relative overflow-hidden"
                   >
                     <div
@@ -142,14 +133,14 @@ const DownloadsPage = () => {
                      border border-gray-200 dark:border-[#12e9ee]/10"
         >
           <h3
-            className="text-xl font-clash-display font-semibold 
+            className="text-xl   font-semibold 
                       text-gray-900 dark:text-[#f6f9fa] mb-4"
           >
             System Requirements
           </h3>
           <div
             className="grid md:grid-cols-2 gap-6 
-                       font-clash-grotesk"
+                        "
           >
             <div className="space-y-2">
               <h4

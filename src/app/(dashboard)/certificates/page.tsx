@@ -10,6 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Description from "@/components/layout/description";
+import Title from "@/components/layout/title";
 
 interface Certificate {
   accountNumber: string;
@@ -59,7 +61,7 @@ const CertificatesPage = () => {
     >
       <CardHeader className="border-b border-gray-100 dark:border-[#12e9ee]/10">
         <CardTitle
-          className="font-clash-display text-xl text-gray-900 
+          className="  text-xl text-gray-900 
                            dark:text-[#f6f9fa]"
         >
           {title}
@@ -73,31 +75,31 @@ const CertificatesPage = () => {
                               hover:bg-gray-50 dark:hover:bg-[#12e9ee]/5"
             >
               <TableHead
-                className="font-clash-grotesk text-gray-700 
+                className="  text-gray-700 
                                 dark:text-[#f6f9fa]/70"
               >
                 Account Number
               </TableHead>
               <TableHead
-                className="font-clash-grotesk text-gray-700 
+                className="  text-gray-700 
                                 dark:text-[#f6f9fa]/70"
               >
                 Account Size
               </TableHead>
               <TableHead
-                className="font-clash-grotesk text-gray-700 
+                className="  text-gray-700 
                                 dark:text-[#f6f9fa]/70"
               >
                 Account Balance
               </TableHead>
               <TableHead
-                className="font-clash-grotesk text-gray-700 
+                className="  text-gray-700 
                                 dark:text-[#f6f9fa]/70"
               >
                 Certificate Date
               </TableHead>
               <TableHead
-                className="font-clash-grotesk text-gray-700 
+                className="  text-gray-700 
                                 dark:text-[#f6f9fa]/70"
               >
                 Action
@@ -113,25 +115,25 @@ const CertificatesPage = () => {
                          transition-colors duration-200"
               >
                 <TableCell
-                  className="font-clash-grotesk text-gray-900 
+                  className="  text-gray-900 
                                   dark:text-[#f6f9fa] font-medium"
                 >
                   {cert.accountNumber}
                 </TableCell>
                 <TableCell
-                  className="font-clash-grotesk text-gray-700 
+                  className="  text-gray-700 
                                   dark:text-[#f6f9fa]/90"
                 >
                   {cert.accountSize}
                 </TableCell>
                 <TableCell
-                  className="font-clash-grotesk text-gray-700 
+                  className="  text-gray-700 
                                   dark:text-[#f6f9fa]/90"
                 >
                   {cert.accountBalance}
                 </TableCell>
                 <TableCell
-                  className="font-clash-grotesk text-gray-700 
+                  className="  text-gray-700 
                                   dark:text-[#f6f9fa]/90"
                 >
                   {cert.date}
@@ -142,7 +144,7 @@ const CertificatesPage = () => {
                     size="sm"
                     className="hover:bg-[#12e9ee]/10 text-gray-700 
                              dark:text-[#12e9ee] hover:text-[#12e9ee] 
-                             font-clash-grotesk transition-all duration-300 
+                               transition-all duration-300 
                              group"
                   >
                     <Download
@@ -161,21 +163,11 @@ const CertificatesPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#040a14] p-6 space-y-8">
+    <div className="min-h-screen bg-white dark:bg-[#040a14] space-y-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1
-            className="text-3xl font-clash-display font-bold 
-                      text-gray-900 dark:text-[#f6f9fa] mb-2"
-          >
-            My Certificates
-          </h1>
-          <p
-            className="text-gray-600 dark:text-[#f6f9fa]/70 
-                     font-clash-grotesk"
-          >
-            View and download your achievement certificates
-          </p>
+          <Title title="My Certificates" />
+          <Description description="View and download your achievement certificates" />
         </div>
 
         <div className="space-y-8">

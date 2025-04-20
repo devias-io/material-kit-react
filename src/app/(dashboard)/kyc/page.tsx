@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { Upload, AlertCircle, FileText, Trash2 } from "lucide-react";
+import Title from "@/components/layout/title";
+import Description from "@/components/layout/description";
 
 interface KYCDocument {
   id: string;
@@ -74,23 +76,12 @@ const KYCPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#040a14] p-6">
+    <div className="min-h-screen bg-white dark:bg-[#040a14]">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div>
-          <h1
-            className="text-3xl font-clash-display font-bold 
-                      text-gray-900 dark:text-[#f6f9fa] mb-2"
-          >
-            KYC Verification
-          </h1>
-          <p
-            className="text-gray-600 dark:text-[#f6f9fa]/70 
-                     font-clash-grotesk"
-          >
-            Complete your verification by uploading the required documents
-          </p>
+        <div className="mb-8">
+          <Title title="KYC Verification" />
+          <Description description="Complete your verification by uploading the required documents" />
         </div>
-
         <div className="grid md:grid-cols-2 gap-6">
           {documentTypes.map(({ type, title, description, accepted }) => {
             const existingDoc = documents.find((doc) => doc.type === type);
@@ -105,14 +96,14 @@ const KYCPage = () => {
                         shadow-lg dark:shadow-[#12e9ee]/5"
               >
                 <h2
-                  className="text-xl font-clash-display font-semibold 
+                  className="text-xl   font-semibold 
                            text-gray-900 dark:text-[#f6f9fa] mb-2"
                 >
                   {title}
                 </h2>
                 <p
                   className="text-gray-600 dark:text-[#f6f9fa]/70 
-                          font-clash-grotesk text-sm mb-4"
+                            text-sm mb-4"
                 >
                   {description}
                 </p>
@@ -133,14 +124,14 @@ const KYCPage = () => {
                         </div>
                         <div>
                           <p
-                            className="font-clash-grotesk font-medium 
+                            className="  font-medium 
                                     text-gray-900 dark:text-[#f6f9fa]"
                           >
                             {existingDoc.fileName}
                           </p>
                           <div className="flex items-center gap-2">
                             <span
-                              className={`text-sm font-clash-grotesk 
+                              className={`text-sm   
                                          ${getStatusBadgeClasses(
                                            existingDoc.status
                                          )}`}
@@ -149,7 +140,7 @@ const KYCPage = () => {
                                 existingDoc.status.slice(1)}
                             </span>
                             <span
-                              className="text-sm font-clash-grotesk 
+                              className="text-sm   
                                          text-gray-600 dark:text-[#f6f9fa]/70"
                             >
                               • Uploaded on {existingDoc.uploadedAt}
@@ -201,13 +192,13 @@ const KYCPage = () => {
                         />
                       </div>
                       <span
-                        className="text-sm font-clash-grotesk font-medium 
+                        className="text-sm   font-medium 
                                    text-gray-900 dark:text-[#f6f9fa]"
                       >
                         Click to upload or drag and drop
                       </span>
                       <span
-                        className="text-xs font-clash-grotesk 
+                        className="text-xs   
                                    text-gray-600 dark:text-[#f6f9fa]/70"
                       >
                         Supported formats: {accepted}
@@ -235,7 +226,7 @@ const KYCPage = () => {
                 <AlertCircle className="w-5 h-5 text-[#486ebb]" />
               </div>
               <p
-                className="text-sm font-clash-grotesk 
+                className="text-sm   
                          text-gray-600 dark:text-[#f6f9fa]/70"
               >
                 Your documents are being reviewed. This process typically takes

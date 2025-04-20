@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { Plus, Pencil, Mail, Search } from "lucide-react";
+import Title from "@/components/layout/title";
+import Description from "@/components/layout/description";
 
 interface MessageTemplate {
   id: string;
@@ -51,22 +53,15 @@ const MessagesPage = () => {
   return (
     <div className="mx-auto min-h-screen bg-white dark:bg-[#040a14] text-black dark:text-[#f6f9fa]">
       <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1
-            className="text-4xl font-clash-display font-bold mb-2 bg-gradient-to-r from-black to-gray-700 bg-clip-text text-transparent
-                     dark:from-[#12e9ee] dark:to-[#486ebb]"
-          >
-            Message Templates
-          </h1>
-          <p className="text-gray-600 dark:text-[#f6f9fa]/80 font-clash-grotesk">
-            Manage and customize your email templates
-          </p>
+        <div className="mb-8">
+          <Title title="Message Templates" />
+          <Description description=" Manage and customize your email templates" />
         </div>
         <button
           className="flex items-center gap-2 px-4 py-2 bg-teal-500 dark:bg-[#12e9ee] 
                        text-white dark:text-[#040a14] rounded-lg 
                        hover:bg-teal-600 dark:hover:bg-[#12e9ee]/90 
-                       transition-all duration-300 font-clash-grotesk 
+                       transition-all duration-300   
                        dark:glow-teal group"
         >
           <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -84,7 +79,7 @@ const MessagesPage = () => {
                      rounded-lg bg-white dark:bg-[#062f3a] text-gray-800 
                      dark:text-[#f6f9fa] focus:outline-none focus:ring-2 
                      focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                     font-clash-grotesk transition-all duration-300"
+                       transition-all duration-300"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -102,19 +97,19 @@ const MessagesPage = () => {
             <thead>
               <tr className="border-b border-gray-200 dark:border-[#12e9ee]/20">
                 <th
-                  className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                  className="px-6 py-4 text-left text-sm   font-semibold 
                            text-gray-600 dark:text-[#f6f9fa]/80"
                 >
                   Name
                 </th>
                 <th
-                  className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                  className="px-6 py-4 text-left text-sm   font-semibold 
                            text-gray-600 dark:text-[#f6f9fa]/80"
                 >
                   Subject
                 </th>
                 <th
-                  className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                  className="px-6 py-4 text-left text-sm   font-semibold 
                            text-gray-600 dark:text-[#f6f9fa]/80 w-[100px]"
                 >
                   Action
@@ -136,17 +131,17 @@ const MessagesPage = () => {
                       >
                         <Mail className="w-5 h-5 text-teal-500 dark:text-[#12e9ee]" />
                       </div>
-                      <span className="font-clash-grotesk font-medium text-gray-900 dark:text-[#f6f9fa]">
+                      <span className="  font-medium text-gray-900 dark:text-[#f6f9fa]">
                         {template.name}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 font-clash-grotesk text-gray-500 dark:text-[#f6f9fa]/60">
+                  <td className="px-6 py-4   text-gray-500 dark:text-[#f6f9fa]/60">
                     {template.subject}
                   </td>
                   <td className="px-6 py-4">
                     <button
-                      className="flex items-center gap-1 font-clash-grotesk text-[#486ebb] 
+                      className="flex items-center gap-1   text-[#486ebb] 
                                    hover:text-[#12e9ee] transition-colors group"
                     >
                       <Pencil className="w-4 h-4 group-hover:scale-110 transition-transform" />
@@ -161,7 +156,7 @@ const MessagesPage = () => {
       </div>
 
       {filteredTemplates.length === 0 && (
-        <div className="text-center py-8 font-clash-grotesk text-gray-500 dark:text-[#f6f9fa]/60">
+        <div className="text-center py-8   text-gray-500 dark:text-[#f6f9fa]/60">
           No templates found matching your search.
         </div>
       )}

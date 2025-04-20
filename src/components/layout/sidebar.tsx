@@ -17,6 +17,7 @@ import {
   PlusCircle,
   FileCheck,
   Info,
+  X,
 } from "lucide-react";
 import {
   Accordion,
@@ -40,6 +41,11 @@ interface SidebarItem {
 
 export default function Sidebar({ isAdmin = false }: SidebarProps) {
   const pathname = usePathname();
+
+  const handleCloseSidebar = () => {
+    const event = new CustomEvent("toggleSidebar");
+    window.dispatchEvent(event);
+  };
 
   const sidebarItems: SidebarItem[] = [
     {
@@ -127,13 +133,22 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
 
   return (
     <div className="flex h-screen w-64 flex-col bg-white dark:bg-[#040a14] border-r border-gray-200 dark:border-[#12e9ee]/10">
-      <div className="flex h-14 items-center px-4 border-b border-gray-200 dark:border-[#12e9ee]/10 bg-white dark:bg-gradient-to-l dark:from-[#062f3a] dark:to-[#083c5a]">
+      <div className="flex h-14 items-center justify-between px-4 border-b border-gray-200 dark:border-[#12e9ee]/10 bg-white dark:bg-gradient-to-l dark:from-[#062f3a] dark:to-[#083c5a]">
         <Link
           href="/dashboard"
           className="flex items-center gap-2 transition-transform duration-300 hover:scale-105"
         >
           <Logo />
         </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={handleCloseSidebar}
+        >
+          <X className="h-5 w-5" />
+          <span className="sr-only">Close sidebar</span>
+        </Button>
       </div>
 
       <div className="flex-1 overflow-auto py-2 bg-white dark:bg-gradient-to-b dark:from-[#062f3a] dark:to-[#083c5a]">
@@ -194,6 +209,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
                                   ? "bg-teal-500/10 dark:bg-[#12e9ee]/10 text-teal-500 dark:text-[#12e9ee] font-medium"
                                   : "text-gray-700 dark:text-[#f6f9fa]/70 hover:bg-gray-100 dark:hover:bg-[#12e9ee]/5 hover:text-gray-900 dark:hover:text-[#f6f9fa]"
                               )}
+                              onClick={handleCloseSidebar}
                             >
                               {submenu.title}
                             </Link>
@@ -216,6 +232,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
                     ? "bg-teal-500/10 dark:bg-[#12e9ee]/10 text-teal-500 dark:text-[#12e9ee] font-medium"
                     : "text-gray-700 dark:text-[#f6f9fa]/70 hover:bg-gray-100 dark:hover:bg-[#12e9ee]/5 hover:text-gray-900 dark:hover:text-[#f6f9fa]"
                 )}
+                onClick={handleCloseSidebar}
               >
                 {item.icon}
                 <span>{item.title}</span>

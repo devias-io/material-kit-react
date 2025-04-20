@@ -9,6 +9,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
+import Title from "@/components/layout/title";
+import Description from "@/components/layout/description";
 
 interface Program {
   id: string;
@@ -132,23 +134,16 @@ const UsersPage = () => {
   return (
     <div className="mx-auto min-h-screen bg-white dark:bg-[#040a14] text-black dark:text-[#f6f9fa]">
       <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1
-            className="text-4xl font-clash-display font-bold mb-2 bg-gradient-to-r from-black to-gray-700 bg-clip-text text-transparent
-                     dark:from-[#12e9ee] dark:to-[#486ebb]"
-          >
-            Users & Accounts
-          </h1>
-          <p className="text-gray-600 dark:text-[#f6f9fa]/80 font-clash-grotesk">
-            Manage users and monitor account activities
-          </p>
+        <div className="mb-8">
+          <Title title="Users & Accounts" />
+          <Description description="Manage users and monitor account activities" />
         </div>
         <Link
           href="/admin/users/add"
           className="flex items-center gap-2 px-4 py-2 bg-teal-500 dark:bg-[#12e9ee] 
                    text-white dark:text-[#040a14] rounded-lg 
                    hover:bg-teal-600 dark:hover:bg-[#12e9ee]/90 
-                   transition-all duration-300 font-clash-grotesk 
+                   transition-all duration-300   
                    dark:glow-teal group"
         >
           <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -159,7 +154,7 @@ const UsersPage = () => {
       <div className="flex gap-4 mb-6">
         <button
           onClick={() => setActiveTab("users")}
-          className={`px-4 py-2 rounded-lg transition-all duration-300 font-clash-grotesk ${
+          className={`px-4 py-2 rounded-lg transition-all duration-300   ${
             activeTab === "users"
               ? "bg-teal-500 dark:bg-[#12e9ee] text-white dark:text-[#040a14] dark:glow-teal"
               : "bg-gray-100 dark:bg-[#062f3a] text-gray-600 dark:text-[#f6f9fa]/80 hover:bg-gray-200 dark:hover:bg-[#12e9ee]/10"
@@ -169,7 +164,7 @@ const UsersPage = () => {
         </button>
         <button
           onClick={() => setActiveTab("ip")}
-          className={`px-4 py-2 rounded-lg transition-all duration-300 font-clash-grotesk ${
+          className={`px-4 py-2 rounded-lg transition-all duration-300   ${
             activeTab === "ip"
               ? "bg-teal-500 dark:bg-[#12e9ee] text-white dark:text-[#040a14] dark:glow-teal"
               : "bg-gray-100 dark:bg-[#062f3a] text-gray-600 dark:text-[#f6f9fa]/80 hover:bg-gray-200 dark:hover:bg-[#12e9ee]/10"
@@ -191,7 +186,7 @@ const UsersPage = () => {
                      rounded-lg bg-white dark:bg-[#062f3a] text-gray-800 
                      dark:text-[#f6f9fa] focus:outline-none focus:ring-2 
                      focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                     font-clash-grotesk transition-all duration-300"
+                       transition-all duration-300"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -211,37 +206,37 @@ const UsersPage = () => {
                 <tr className="border-b border-gray-200 dark:border-[#12e9ee]/20">
                   <th className="w-10 px-6 py-4"></th>
                   <th
-                    className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                    className="px-6 py-4 text-left text-sm   font-semibold 
                              text-gray-600 dark:text-[#f6f9fa]/80"
                   >
                     User Name
                   </th>
                   <th
-                    className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                    className="px-6 py-4 text-left text-sm   font-semibold 
                              text-gray-600 dark:text-[#f6f9fa]/80"
                   >
                     Added on
                   </th>
                   <th
-                    className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                    className="px-6 py-4 text-left text-sm   font-semibold 
                              text-gray-600 dark:text-[#f6f9fa]/80"
                   >
                     Email
                   </th>
                   <th
-                    className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                    className="px-6 py-4 text-left text-sm   font-semibold 
                              text-gray-600 dark:text-[#f6f9fa]/80"
                   >
                     Name
                   </th>
                   <th
-                    className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                    className="px-6 py-4 text-left text-sm   font-semibold 
                              text-gray-600 dark:text-[#f6f9fa]/80"
                   >
                     Last Dashboard IP
                   </th>
                   <th
-                    className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                    className="px-6 py-4 text-left text-sm   font-semibold 
                              text-gray-600 dark:text-[#f6f9fa]/80"
                   >
                     Actions
@@ -274,7 +269,7 @@ const UsersPage = () => {
                           )}
                         </button>
                       </td>
-                      <td className="px-6 py-4 font-clash-grotesk font-medium text-gray-900 dark:text-[#f6f9fa]">
+                      <td className="px-6 py-4   font-medium text-gray-900 dark:text-[#f6f9fa]">
                         {user.username}
                       </td>
                       <td className="px-6 py-4">{user.addedOn}</td>
@@ -423,7 +418,7 @@ const UsersPage = () => {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between font-clash-grotesk">
+      <div className="mt-4 flex items-center justify-between  ">
         <div className="text-sm text-gray-500 dark:text-[#f6f9fa]/60">
           Showing {itemsPerPage} items per page
         </div>

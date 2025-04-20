@@ -8,6 +8,7 @@ import {
   Settings,
   User as UserIcon,
   Mail,
+  Menu,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -26,9 +27,10 @@ import { User as UserType } from "@/types/user.types";
 
 interface HeaderProps {
   user: UserType;
+  onMenuClick?: () => void;
 }
 
-export default function Header({ user }: HeaderProps) {
+export default function Header({ user, onMenuClick }: HeaderProps) {
   const { logout } = useAuth();
 
   const userName = `${user?.firstName} ${user?.lastName}`.trim();
@@ -54,6 +56,15 @@ export default function Header({ user }: HeaderProps) {
                      px-4 lg:px-6 backdrop-blur-sm shadow-sm dark:shadow-[#12e9ee]/5"
     >
       <div className="flex flex-1 items-center gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={onMenuClick}
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle menu</span>
+        </Button>
         <div className="relative w-full max-w-md">
           <SearchIcon
             className="absolute left-2.5 top-2.5 h-4 w-4 
@@ -68,7 +79,7 @@ export default function Header({ user }: HeaderProps) {
                      text-gray-900 dark:text-[#f6f9fa]
                      placeholder:text-gray-500 dark:placeholder:text-[#f6f9fa]/50
                      focus:ring-2 focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50
-                     font-clash-grotesk transition-all duration-300"
+                       transition-all duration-300"
           />
         </div>
       </div>
@@ -109,7 +120,7 @@ export default function Header({ user }: HeaderProps) {
                 <AvatarFallback
                   className="bg-teal-500 dark:bg-[#12e9ee] 
                                        text-white dark:text-[#040a14]
-                                       font-clash-grotesk"
+                                        "
                 >
                   {initials}
                 </AvatarFallback>
@@ -123,7 +134,7 @@ export default function Header({ user }: HeaderProps) {
                                       dark:bg-gradient-to-br dark:from-[#062f3a] 
                                       dark:to-[#083c5a]"
           >
-            <DropdownMenuLabel className="font-clash-grotesk">
+            <DropdownMenuLabel className=" ">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium text-gray-900 dark:text-[#f6f9fa]">
                   {userName}
@@ -140,7 +151,7 @@ export default function Header({ user }: HeaderProps) {
                 className="cursor-pointer flex w-full items-center
                              text-gray-700 dark:text-[#f6f9fa]
                              hover:text-teal-500 dark:hover:text-[#12e9ee]
-                             font-clash-grotesk transition-colors"
+                               transition-colors"
               >
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>Profile</span>
@@ -152,7 +163,7 @@ export default function Header({ user }: HeaderProps) {
                 className="cursor-pointer flex w-full items-center
                              text-gray-700 dark:text-[#f6f9fa]
                              hover:text-teal-500 dark:hover:text-[#12e9ee]
-                             font-clash-grotesk transition-colors"
+                               transition-colors"
               >
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
@@ -164,7 +175,7 @@ export default function Header({ user }: HeaderProps) {
                 className="cursor-pointer flex w-full items-center
                              text-gray-700 dark:text-[#f6f9fa]
                              hover:text-teal-500 dark:hover:text-[#12e9ee]
-                             font-clash-grotesk transition-colors"
+                               transition-colors"
               >
                 <Mail className="mr-2 h-4 w-4" />
                 <span>Messages</span>
@@ -174,7 +185,7 @@ export default function Header({ user }: HeaderProps) {
             <DropdownMenuItem
               className="cursor-pointer text-red-600 dark:text-red-400
                        hover:text-red-700 dark:hover:text-red-300
-                       font-clash-grotesk transition-colors"
+                         transition-colors"
               onClick={handleLogout}
             >
               <LogOut className="mr-2 h-4 w-4" />

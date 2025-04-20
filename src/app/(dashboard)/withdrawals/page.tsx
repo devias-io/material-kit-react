@@ -51,6 +51,8 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import Title from "@/components/layout/title";
+import Description from "@/components/layout/description";
 
 // Sample withdrawal history data
 const withdrawals = [
@@ -192,16 +194,12 @@ export default function WithdrawalsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#040a14] p-6">
+    <div className="min-h-screen bg-white dark:bg-[#040a14]">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-clash-display font-bold tracking-tight text-gray-900 dark:text-[#f6f9fa]">
-              Withdrawals
-            </h1>
-            <p className="text-gray-600 dark:text-[#f6f9fa]/70 font-clash-grotesk">
-              Manage your withdrawal requests and view withdrawal history
-            </p>
+          <div className="mb-8">
+            <Title title="Withdrawals" />
+            <Description description="Manage your withdrawal requests and view withdrawal history" />
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -209,7 +207,7 @@ export default function WithdrawalsPage() {
               size="sm"
               className="gap-1 border-gray-200 dark:border-[#12e9ee]/20 
                        hover:bg-gray-100 dark:hover:bg-[#12e9ee]/10 
-                       text-gray-700 dark:text-[#f6f9fa] font-clash-grotesk
+                       text-gray-700 dark:text-[#f6f9fa]  
                        transition-all duration-300"
             >
               <Calendar className="h-4 w-4" />
@@ -224,7 +222,7 @@ export default function WithdrawalsPage() {
                   className="gap-2 bg-teal-500 dark:bg-[#12e9ee] 
                           text-white dark:text-[#040a14] 
                           hover:bg-teal-600 dark:hover:bg-[#12e9ee]/90 
-                          font-clash-grotesk transition-all duration-300 
+                            transition-all duration-300 
                           dark:glow-teal group"
                   disabled={!fundedAccount}
                 >
@@ -244,13 +242,13 @@ export default function WithdrawalsPage() {
               >
                 <DialogHeader>
                   <DialogTitle
-                    className="font-clash-display text-xl 
+                    className="  text-xl 
                              text-gray-900 dark:text-[#f6f9fa]"
                   >
                     Request Withdrawal
                   </DialogTitle>
                   <DialogDescription
-                    className="font-clash-grotesk 
+                    className="  
                              text-gray-600 dark:text-[#f6f9fa]/70"
                   >
                     Complete the form below to request a funds withdrawal from
@@ -384,7 +382,7 @@ export default function WithdrawalsPage() {
           >
             <CardHeader className="pb-2">
               <CardTitle
-                className="text-sm font-clash-grotesk font-medium 
+                className="text-sm   font-medium 
                           text-gray-900 dark:text-[#f6f9fa]"
               >
                 Available Balance
@@ -392,7 +390,7 @@ export default function WithdrawalsPage() {
             </CardHeader>
             <CardContent>
               <div
-                className="text-2xl font-clash-display font-bold 
+                className="text-2xl   font-bold 
                           text-gray-900 dark:text-[#12e9ee]"
               >
                 {fundedAccount?.balance
@@ -400,7 +398,7 @@ export default function WithdrawalsPage() {
                   : "N/A"}
               </div>
               <p
-                className="text-xs font-clash-grotesk 
+                className="text-xs   
                          text-gray-600 dark:text-[#f6f9fa]/70 mt-1"
               >
                 {fundedAccount
@@ -418,7 +416,7 @@ export default function WithdrawalsPage() {
           >
             <CardHeader className="pb-2">
               <CardTitle
-                className="text-sm font-clash-grotesk font-medium 
+                className="text-sm   font-medium 
                           text-gray-900 dark:text-[#f6f9fa]"
               >
                 Profit Split
@@ -426,7 +424,7 @@ export default function WithdrawalsPage() {
             </CardHeader>
             <CardContent>
               <div
-                className="text-2xl font-clash-display font-bold 
+                className="text-2xl   font-bold 
                           text-gray-900 dark:text-[#12e9ee]"
               >
                 {fundedAccount?.fundingDetails
@@ -434,7 +432,7 @@ export default function WithdrawalsPage() {
                   : "N/A"}
               </div>
               <p
-                className="text-xs font-clash-grotesk 
+                className="text-xs   
                          text-gray-600 dark:text-[#f6f9fa]/70 mt-1"
               >
                 {fundedAccount
@@ -453,13 +451,13 @@ export default function WithdrawalsPage() {
         >
           <CardHeader>
             <CardTitle
-              className="font-clash-display text-xl 
+              className="  text-xl 
                         text-gray-900 dark:text-[#f6f9fa]"
             >
               Withdrawals History
             </CardTitle>
             <CardDescription
-              className="font-clash-grotesk 
+              className="  
                        text-gray-600 dark:text-[#f6f9fa]/70"
             >
               View and manage your withdrawal requests
@@ -494,16 +492,16 @@ export default function WithdrawalsPage() {
                              hover:bg-gray-50 dark:hover:bg-[#12e9ee]/5 
                              transition-colors"
                   >
-                    <TableCell className="font-clash-grotesk text-gray-900 dark:text-[#f6f9fa]">
+                    <TableCell className="  text-gray-900 dark:text-[#f6f9fa]">
                       {new Date(withdrawal.date).toLocaleDateString()}
                     </TableCell>
-                    <TableCell className="font-clash-grotesk text-gray-900 dark:text-[#f6f9fa]">
+                    <TableCell className="  text-gray-900 dark:text-[#f6f9fa]">
                       {withdrawal.account}
                     </TableCell>
-                    <TableCell className="font-clash-grotesk text-gray-900 dark:text-[#f6f9fa]">
+                    <TableCell className="  text-gray-900 dark:text-[#f6f9fa]">
                       ${withdrawal.amount.toFixed(2)}
                     </TableCell>
-                    <TableCell className="font-clash-grotesk text-gray-900 dark:text-[#f6f9fa]">
+                    <TableCell className="  text-gray-900 dark:text-[#f6f9fa]">
                       {withdrawal.method}
                     </TableCell>
                     <TableCell>
@@ -515,7 +513,7 @@ export default function WithdrawalsPage() {
                             ? "secondary"
                             : "destructive"
                         }
-                        className="font-clash-grotesk"
+                        className=" "
                       >
                         {withdrawal.status}
                       </Badge>
@@ -535,7 +533,7 @@ export default function WithdrawalsPage() {
 function WithdrawalStatusBadge({ status }: { status: string }) {
   let className = `
     inline-flex items-center rounded-full px-2.5 py-1 
-    text-xs font-clash-grotesk font-medium 
+    text-xs   font-medium 
     transition-all duration-300
   `;
 

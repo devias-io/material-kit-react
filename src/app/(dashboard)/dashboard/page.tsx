@@ -28,6 +28,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import Title from "@/components/layout/title";
+import Description from "@/components/layout/description";
 
 // Sample data for the charts
 const balanceData = [
@@ -113,15 +115,11 @@ const tradingHistory = [
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-6 bg-white dark:bg-[#040a14] min-h-screen p-6">
+    <div className="space-y-6 bg-white dark:bg-[#040a14] min-h-screen">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-3xl font-clash-display font-bold tracking-tight text-gray-900 dark:text-[#f6f9fa]">
-            Dashboard
-          </h2>
-          <p className="text-gray-600 dark:text-[#f6f9fa]/70 font-clash-grotesk">
-            Welcome back! Here's an overview of your trading account.
-          </p>
+        <div className="mb-8">
+          <Title title="Dashboard" />
+          <Description description="Welcome back! Here's an overview of your trading account." />
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -129,7 +127,7 @@ export default function DashboardPage() {
             size="sm"
             className="gap-1 border-gray-200 dark:border-[#12e9ee]/20 
                      hover:bg-gray-100 dark:hover:bg-[#12e9ee]/10 
-                     text-gray-700 dark:text-[#f6f9fa] font-clash-grotesk
+                     text-gray-700 dark:text-[#f6f9fa] 
                      transition-all duration-300"
           >
             <Calendar className="h-4 w-4" />
@@ -138,7 +136,7 @@ export default function DashboardPage() {
           <Button
             className="gap-1 bg-teal-500 dark:bg-[#12e9ee] text-white 
                      dark:text-[#040a14] hover:bg-teal-600 
-                     dark:hover:bg-[#12e9ee]/90 font-clash-grotesk
+                     dark:hover:bg-[#12e9ee]/90
                      transition-all duration-300 dark:glow-teal"
           >
             <Target className="h-4 w-4" />
@@ -160,15 +158,12 @@ export default function DashboardPage() {
           >
             <div>
               <h3
-                className="text-xl font-clash-display font-semibold 
+                className="text-xl  font-semibold 
                           text-gray-900 dark:text-[#f6f9fa]"
               >
                 Express Account #73549
               </h3>
-              <p
-                className="text-sm text-gray-600 dark:text-[#f6f9fa]/70 
-                         font-clash-grotesk"
-              >
+              <p className="text-sm text-gray-600 dark:text-[#f6f9fa]/70 ">
                 Phase 1 Evaluation - 6 days remaining
               </p>
             </div>
@@ -190,7 +185,7 @@ export default function DashboardPage() {
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle
-              className="text-sm font-clash-grotesk font-medium 
+              className="text-sm font-medium 
                                text-gray-900 dark:text-[#f6f9fa]"
             >
               Balance
@@ -199,12 +194,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div
-              className="text-2xl font-clash-display font-bold 
+              className="text-2xl  font-bold 
                          text-gray-900 dark:text-[#f6f9fa]"
             >
               $11,320.00
             </div>
-            <p className="text-xs font-clash-grotesk text-gray-600 dark:text-[#f6f9fa]/70">
+            <p className="text-xs text-gray-600 dark:text-[#f6f9fa]/70">
               <span className="text-green-500 dark:text-[#12e9ee] flex items-center">
                 <ChevronUpIcon className="h-3 w-3 mr-1" />
                 13.2%
@@ -221,7 +216,7 @@ export default function DashboardPage() {
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle
-              className="text-sm font-clash-grotesk font-medium 
+              className="text-sm  font-medium 
                                text-gray-900 dark:text-[#f6f9fa]"
             >
               Profit
@@ -230,12 +225,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div
-              className="text-2xl font-clash-display font-bold 
+              className="text-2xl  font-bold 
                          text-gray-900 dark:text-[#f6f9fa]"
             >
               $1,320.00
             </div>
-            <p className="text-xs font-clash-grotesk text-gray-600 dark:text-[#f6f9fa]/70">
+            <p className="text-xs  text-gray-600 dark:text-[#f6f9fa]/70">
               <span className="text-green-500 dark:text-[#12e9ee] flex items-center">
                 <ChevronUpIcon className="h-3 w-3 mr-1" />
                 +4.5%
@@ -252,7 +247,7 @@ export default function DashboardPage() {
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle
-              className="text-sm font-clash-grotesk font-medium 
+              className="text-sm  font-medium 
                                text-gray-900 dark:text-[#f6f9fa]"
             >
               Trades
@@ -261,12 +256,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div
-              className="text-2xl font-clash-display font-bold 
+              className="text-2xl  font-bold 
                          text-gray-900 dark:text-[#f6f9fa]"
             >
               28
             </div>
-            <p className="text-xs font-clash-grotesk text-gray-600 dark:text-[#f6f9fa]/70">
+            <p className="text-xs text-gray-600 dark:text-[#f6f9fa]/70">
               <span className="text-primary dark:text-[#12e9ee] flex items-center">
                 <ChevronUpIcon className="h-3 w-3 mr-1" />
                 12 new
@@ -283,7 +278,7 @@ export default function DashboardPage() {
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle
-              className="text-sm font-clash-grotesk font-medium 
+              className="text-sm font-medium 
                                text-gray-900 dark:text-[#f6f9fa]"
             >
               Win Rate
@@ -292,12 +287,12 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div
-              className="text-2xl font-clash-display font-bold 
+              className="text-2xl  font-bold 
                          text-gray-900 dark:text-[#f6f9fa]"
             >
               68%
             </div>
-            <p className="text-xs font-clash-grotesk text-gray-600 dark:text-[#f6f9fa]/70">
+            <p className="text-xs  text-gray-600 dark:text-[#f6f9fa]/70">
               <span className="text-green-500 dark:text-[#12e9ee] flex items-center">
                 <ChevronUpIcon className="h-3 w-3 mr-1" />
                 +2.3%
@@ -317,7 +312,7 @@ export default function DashboardPage() {
         >
           <CardHeader>
             <CardTitle
-              className="font-clash-display text-gray-900 
+              className="text-gray-900 
                                dark:text-[#f6f9fa]"
             >
               Balance Chart
@@ -348,7 +343,6 @@ export default function DashboardPage() {
                       border: "1px solid #12e9ee20",
                       borderRadius: "8px",
                       fontSize: "12px",
-                      fontFamily: "Clash Grotesk",
                     }}
                   />
                   <Area
@@ -374,7 +368,7 @@ export default function DashboardPage() {
         {/* Trading Objectives Card */}
         <Card className="md:col-span-3 dark:dark-card bg-white dark:bg-gradient-to-br dark:from-[#062f3a] dark:to-[#083c5a] hover:shadow-lg transition-all duration-300 dark:shadow-[#12e9ee]/5">
           <CardHeader>
-            <CardTitle className="font-['Clash_Display'] text-gray-900 dark:text-[#f6f9fa]">
+            <CardTitle className="text-gray-900 dark:text-[#f6f9fa]">
               Trading Objectives
             </CardTitle>
           </CardHeader>
@@ -409,7 +403,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <div className="h-2 rounded-full bg-gray-100 dark:bg-[#040a14]/50">
-                <div className="h-full w-[30%] rounded-full bg-[#486ebb] dark:bg-[#486ebb]" />
+                <div className="h-full w-[30%] rounded-full bg-[#486ebb] animate-glow dark:bg-[#486ebb]" />
               </div>
             </div>
 
@@ -422,11 +416,11 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <span className="font-medium text-gray-900 dark:text-[#f6f9fa]">
-                  0% / 10%
+                  6% / 10%
                 </span>
               </div>
               <div className="h-2 rounded-full bg-gray-100 dark:bg-[#040a14]/50">
-                <div className="h-full w-[0%] rounded-full bg-[#875f85] dark:bg-[#875f85]" />
+                <div className="h-full w-[6%] rounded-full animate-glow bg-[#875f85] dark:bg-[#875f85]" />
               </div>
             </div>
 
@@ -443,7 +437,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <div className="h-2 rounded-full bg-gray-100 dark:bg-[#040a14]/50">
-                <div className="h-full w-[60%] rounded-full bg-[#12e9ee] dark:bg-[#12e9ee]" />
+                <div className="h-full w-[60%] animate-glow rounded-full bg-[#12e9ee] dark:bg-[#12e9ee]" />
               </div>
             </div>
           </CardContent>
@@ -455,7 +449,7 @@ export default function DashboardPage() {
         {/* Trading Direction Card */}
         <Card className="md:col-span-3 dark:dark-card bg-white dark:bg-gradient-to-br dark:from-[#062f3a] dark:to-[#083c5a] hover:shadow-lg transition-all duration-300 dark:shadow-[#12e9ee]/5">
           <CardHeader>
-            <CardTitle className="font-['Clash_Display'] text-gray-900 dark:text-[#f6f9fa]">
+            <CardTitle className="text-gray-900 dark:text-[#f6f9fa]">
               Trading Direction
             </CardTitle>
           </CardHeader>
@@ -489,7 +483,6 @@ export default function DashboardPage() {
                       border: "1px solid #12e9ee20",
                       borderRadius: "8px",
                       fontSize: "12px",
-                      fontFamily: "Clash Grotesk",
                     }}
                   />
                   <Bar dataKey="long" stackId="a" fill="#12e9ee" name="Long" />
@@ -508,7 +501,7 @@ export default function DashboardPage() {
         {/* Latest Trades Card */}
         <Card className="md:col-span-4 dark:dark-card bg-white dark:bg-gradient-to-br dark:from-[#062f3a] dark:to-[#083c5a] hover:shadow-lg transition-all duration-300 dark:shadow-[#12e9ee]/5">
           <CardHeader>
-            <CardTitle className="font-['Clash_Display'] text-gray-900 dark:text-[#f6f9fa]">
+            <CardTitle className="text-gray-900 dark:text-[#f6f9fa]">
               Latest Trades
             </CardTitle>
           </CardHeader>
@@ -581,7 +574,7 @@ function Badge({
 }) {
   let className = `
     inline-flex items-center rounded-full px-2.5 py-1 
-    text-xs font-clash-grotesk font-medium 
+    text-xs font-medium 
     transition-all duration-300
   `;
 

@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { Search, Filter, Eye, Key, ChartLine } from "lucide-react";
 import Link from "next/link";
+import Title from "@/components/layout/title";
+import Description from "@/components/layout/description";
 
 interface Account {
   accountNumber: string;
@@ -128,17 +130,9 @@ const AccountsOverview = () => {
   return (
     <div className="mx-auto min-h-screen bg-white dark:bg-[#040a14] text-black dark:text-[#f6f9fa]">
       <div className="mb-8">
-        <h1
-          className="text-4xl font-clash-display font-bold mb-2 bg-gradient-to-r from-black to-gray-700 bg-clip-text text-transparent
-                     dark:from-[#12e9ee] dark:to-[#486ebb]"
-        >
-          Accounts Overview
-        </h1>
-        <p className="text-gray-600 dark:text-[#f6f9fa]/80 font-clash-grotesk">
-          Monitor and manage all trading accounts
-        </p>
+        <Title title="Accounts Overview" />
+        <Description description="     Monitor and manage all trading accounts" />
       </div>
-
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-[#f6f9fa]/60" />
@@ -149,7 +143,7 @@ const AccountsOverview = () => {
                      rounded-lg bg-white dark:bg-[#062f3a] text-gray-800 
                      dark:text-[#f6f9fa] focus:outline-none focus:ring-2 
                      focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                     font-clash-grotesk transition-all duration-300"
+                      transition-all duration-300"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -161,7 +155,7 @@ const AccountsOverview = () => {
                      rounded-lg bg-white dark:bg-[#062f3a] text-gray-800 
                      dark:text-[#f6f9fa] focus:outline-none focus:ring-2 
                      focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                     font-clash-grotesk transition-all duration-300 appearance-none"
+  transition-all duration-300 appearance-none"
             value={selectedProgram}
             onChange={(e) => setSelectedProgram(e.target.value)}
           >
@@ -189,22 +183,22 @@ const AccountsOverview = () => {
           >
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="font-clash-display font-semibold text-lg text-gray-900 dark:text-[#f6f9fa]">
+                <h3 className="  font-semibold text-lg text-gray-900 dark:text-[#f6f9fa]">
                   {account.accountNumber}
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-[#f6f9fa]/60 font-clash-grotesk">
+                <p className="text-sm text-gray-500 dark:text-[#f6f9fa]/60 ">
                   {account.program}
                 </p>
               </div>
               <span
-                className={`inline-flex px-2.5 py-1 rounded-full text-xs font-clash-grotesk font-medium
+                className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium
                             ${getStatusColor(account.status)} dark:glow-teal`}
               >
                 {account.status}
               </span>
             </div>
 
-            <div className="space-y-3 mb-6 font-clash-grotesk">
+            <div className="space-y-3 mb-6 ">
               <div className="flex justify-between">
                 <span className="text-gray-500 dark:text-[#f6f9fa]/60">
                   End Date
@@ -229,7 +223,7 @@ const AccountsOverview = () => {
                 className="flex-1 flex items-center justify-center gap-2 px-3 py-2 
                          bg-gray-100 dark:bg-[#12e9ee]/10 text-gray-700 dark:text-[#12e9ee]
                          rounded-lg hover:bg-gray-200 dark:hover:bg-[#12e9ee]/20 
-                         transition-all duration-300 font-clash-grotesk"
+                         transition-all duration-300  "
               >
                 <Key className="w-4 h-4" />
                 <span>Credentials</span>
@@ -239,7 +233,7 @@ const AccountsOverview = () => {
                 className="flex-1 flex items-center justify-center gap-2 px-3 py-2 
                          bg-teal-500 dark:bg-[#12e9ee] text-white dark:text-[#040a14]
                          rounded-lg hover:bg-teal-600 dark:hover:bg-[#12e9ee]/90 
-                         transition-all duration-300 font-clash-grotesk dark:glow-teal"
+                         transition-all duration-300   dark:glow-teal"
               >
                 <ChartLine className="w-4 h-4" />
                 <span>Statistics</span>
@@ -250,7 +244,7 @@ const AccountsOverview = () => {
       </div>
 
       {filteredAccounts.length === 0 && (
-        <div className="text-center py-8 text-gray-500 dark:text-[#f6f9fa]/60 font-clash-grotesk">
+        <div className="text-center py-8 text-gray-500 dark:text-[#f6f9fa]/60  ">
           No accounts found matching your criteria.
         </div>
       )}
@@ -268,7 +262,7 @@ const AccountsOverview = () => {
                        p-6 w-full max-w-md animate-in fade-in duration-200"
           >
             <h3
-              className="text-xl font-clash-display font-semibold mb-4 
+              className="text-xl   font-semibold mb-4 
                         text-gray-900 dark:text-[#f6f9fa]"
             >
               MT5 Credentials
@@ -277,7 +271,7 @@ const AccountsOverview = () => {
               <div>
                 <label
                   className="block text-sm text-gray-500 dark:text-[#f6f9fa]/60 
-                               font-clash-grotesk mb-1"
+                                 mb-1"
                 >
                   Login
                 </label>
@@ -290,13 +284,13 @@ const AccountsOverview = () => {
                   }
                   className="w-full px-3 py-2 border border-gray-200 dark:border-[#12e9ee]/20 
                          rounded-lg bg-gray-50 dark:bg-[#040a14] text-gray-800 
-                         dark:text-[#f6f9fa] font-clash-grotesk"
+                         dark:text-[#f6f9fa]  "
                 />
               </div>
               <div>
                 <label
                   className="block text-sm text-gray-500 dark:text-[#f6f9fa]/60 
-                               font-clash-grotesk mb-1"
+                                 mb-1"
                 >
                   Password
                 </label>
@@ -309,11 +303,11 @@ const AccountsOverview = () => {
                   }
                   className="w-full px-3 py-2 border border-gray-200 dark:border-[#12e9ee]/20 
                          rounded-lg bg-gray-50 dark:bg-[#040a14] text-gray-800 
-                         dark:text-[#f6f9fa] font-clash-grotesk"
+                         dark:text-[#f6f9fa]  "
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-500 dark:text-[#f6f9fa]/60 font-clash-grotesk mb-1">
+                <label className="block text-sm text-gray-500 dark:text-[#f6f9fa]/60   mb-1">
                   Server
                 </label>
                 <input
@@ -325,7 +319,7 @@ const AccountsOverview = () => {
                   }
                   className="w-full px-3 py-2 border border-gray-200 dark:border-[#12e9ee]/20 
                          rounded-lg bg-gray-50 dark:bg-[#040a14] text-gray-800 
-                         dark:text-[#f6f9fa] font-clash-grotesk"
+                         dark:text-[#f6f9fa]  "
                 />
               </div>
             </div>
@@ -334,7 +328,7 @@ const AccountsOverview = () => {
               className="w-full mt-6 px-4 py-2 bg-teal-500 dark:bg-[#12e9ee] 
                       text-white dark:text-[#040a14] rounded-lg 
                       hover:bg-teal-600 dark:hover:bg-[#12e9ee]/90 
-                      transition-all duration-300 font-clash-grotesk 
+                      transition-all duration-300   
                       dark:glow-teal"
             >
               Close

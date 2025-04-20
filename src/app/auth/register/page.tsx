@@ -107,13 +107,13 @@ export default function RegisterPage() {
             <Logo />
           </div>
           <CardTitle
-            className="text-2xl font-clash-display font-bold text-center 
+            className="text-2xl   font-bold text-center 
                              text-gray-900 dark:text-[#f6f9fa]"
           >
             Create Account
           </CardTitle>
           <CardDescription
-            className="text-center text-sm font-clash-grotesk 
+            className="text-center text-sm   
                                   text-gray-600 dark:text-[#f6f9fa]/80"
           >
             Enter your details below to get started
@@ -126,7 +126,7 @@ export default function RegisterPage() {
               className="mb-4 bg-red-50 dark:bg-red-500/10 
                                                 border border-red-100 dark:border-red-500/20"
             >
-              <AlertDescription className="text-red-600 dark:text-red-400 text-sm font-clash-grotesk">
+              <AlertDescription className="text-red-600 dark:text-red-400 text-sm  ">
                 {error}
               </AlertDescription>
             </Alert>
@@ -139,7 +139,7 @@ export default function RegisterPage() {
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-clash-grotesk text-gray-700 dark:text-[#f6f9fa]/80">
+                      <FormLabel className="text-xs   text-gray-700 dark:text-[#f6f9fa]/80">
                         First Name
                       </FormLabel>
                       <FormControl>
@@ -149,11 +149,11 @@ export default function RegisterPage() {
                                    bg-white dark:bg-[#062f3a] text-gray-800 
                                    dark:text-[#f6f9fa] focus:ring-2 
                                    focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                                   font-clash-grotesk transition-all duration-300"
+                                     transition-all duration-300"
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500 dark:text-red-400 font-clash-grotesk" />
+                      <FormMessage className="text-xs text-red-500 dark:text-red-400  " />
                     </FormItem>
                   )}
                 />
@@ -162,7 +162,7 @@ export default function RegisterPage() {
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-clash-grotesk text-gray-700 dark:text-[#f6f9fa]/80">
+                      <FormLabel className="text-xs   text-gray-700 dark:text-[#f6f9fa]/80">
                         Last Name
                       </FormLabel>
                       <FormControl>
@@ -172,11 +172,11 @@ export default function RegisterPage() {
                                    bg-white dark:bg-[#062f3a] text-gray-800 
                                    dark:text-[#f6f9fa] focus:ring-2 
                                    focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                                   font-clash-grotesk transition-all duration-300"
+                                     transition-all duration-300"
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500 dark:text-red-400 font-clash-grotesk" />
+                      <FormMessage className="text-xs text-red-500 dark:text-red-400  " />
                     </FormItem>
                   )}
                 />
@@ -188,7 +188,7 @@ export default function RegisterPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-clash-grotesk text-gray-700 dark:text-[#f6f9fa]/80">
+                      <FormLabel className="text-xs   text-gray-700 dark:text-[#f6f9fa]/80">
                         Email
                       </FormLabel>
                       <FormControl>
@@ -199,11 +199,11 @@ export default function RegisterPage() {
                                    bg-white dark:bg-[#062f3a] text-gray-800 
                                    dark:text-[#f6f9fa] focus:ring-2 
                                    focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                                   font-clash-grotesk transition-all duration-300"
+                                     transition-all duration-300"
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500 dark:text-red-400 font-clash-grotesk" />
+                      <FormMessage className="text-xs text-red-500 dark:text-red-400  " />
                     </FormItem>
                   )}
                 />
@@ -212,7 +212,7 @@ export default function RegisterPage() {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-clash-grotesk text-gray-700 dark:text-[#f6f9fa]/80">
+                      <FormLabel className="text-xs   text-gray-700 dark:text-[#f6f9fa]/80">
                         Phone (Optional)
                       </FormLabel>
                       <FormControl>
@@ -222,11 +222,11 @@ export default function RegisterPage() {
                                    bg-white dark:bg-[#062f3a] text-gray-800 
                                    dark:text-[#f6f9fa] focus:ring-2 
                                    focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                                   font-clash-grotesk transition-all duration-300"
+                                     transition-all duration-300"
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500 dark:text-red-400 font-clash-grotesk" />
+                      <FormMessage className="text-xs text-red-500 dark:text-red-400  " />
                     </FormItem>
                   )}
                 />
@@ -238,7 +238,7 @@ export default function RegisterPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-clash-grotesk text-gray-700 dark:text-[#f6f9fa]/80">
+                      <FormLabel className="text-xs   text-gray-700 dark:text-[#f6f9fa]/80">
                         Password
                       </FormLabel>
                       <FormControl>
@@ -250,7 +250,7 @@ export default function RegisterPage() {
                                      bg-white dark:bg-[#062f3a] text-gray-800 
                                      dark:text-[#f6f9fa] focus:ring-2 
                                      focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                                     font-clash-grotesk transition-all duration-300"
+                                       transition-all duration-300"
                             {...field}
                           />
                           <Button
@@ -271,7 +271,7 @@ export default function RegisterPage() {
                           </Button>
                         </div>
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500 dark:text-red-400 font-clash-grotesk" />
+                      <FormMessage className="text-xs text-red-500 dark:text-red-400  " />
                     </FormItem>
                   )}
                 />
@@ -280,7 +280,7 @@ export default function RegisterPage() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-clash-grotesk text-gray-700 dark:text-[#f6f9fa]/80">
+                      <FormLabel className="text-xs   text-gray-700 dark:text-[#f6f9fa]/80">
                         Confirm Password
                       </FormLabel>
                       <FormControl>
@@ -292,7 +292,7 @@ export default function RegisterPage() {
                                      bg-white dark:bg-[#062f3a] text-gray-800 
                                      dark:text-[#f6f9fa] focus:ring-2 
                                      focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                                     font-clash-grotesk transition-all duration-300"
+                                       transition-all duration-300"
                             {...field}
                           />
                           <Button
@@ -315,7 +315,7 @@ export default function RegisterPage() {
                           </Button>
                         </div>
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500 dark:text-red-400 font-clash-grotesk" />
+                      <FormMessage className="text-xs text-red-500 dark:text-red-400  " />
                     </FormItem>
                   )}
                 />
@@ -343,7 +343,7 @@ export default function RegisterPage() {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="text-xs font-clash-grotesk text-gray-700 dark:text-[#f6f9fa]/80">
+                      <FormLabel className="text-xs   text-gray-700 dark:text-[#f6f9fa]/80">
                         I agree to the{" "}
                         <Link
                           href="/terms"
@@ -363,7 +363,7 @@ export default function RegisterPage() {
                           privacy policy
                         </Link>
                       </FormLabel>
-                      <FormMessage className="text-xs text-red-500 dark:text-red-400 font-clash-grotesk" />
+                      <FormMessage className="text-xs text-red-500 dark:text-red-400  " />
                     </div>
                   </FormItem>
                 )}
@@ -374,7 +374,7 @@ export default function RegisterPage() {
                 className="w-full h-9 bg-teal-500 dark:bg-[#12e9ee] text-white 
                        dark:text-[#040a14] hover:bg-teal-600 
                        dark:hover:bg-[#12e9ee]/90 transition-all duration-300 
-                       font-clash-grotesk dark:glow-teal group"
+                         dark:glow-teal group"
                 disabled={isLoading}
               >
                 <span className="text-sm group-hover:scale-105 transition-transform inline-block">
@@ -386,7 +386,7 @@ export default function RegisterPage() {
         </CardContent>
         <CardFooter className="pt-0 pb-4">
           <div
-            className="text-xs text-center w-full font-clash-grotesk 
+            className="text-xs text-center w-full   
                      text-gray-600 dark:text-[#f6f9fa]/80"
           >
             Already have an account?{" "}

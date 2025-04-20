@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { Search, ChevronDown, Trophy, ExternalLink } from "lucide-react";
+import Title from "@/components/layout/title";
+import Description from "@/components/layout/description";
 
 interface Trader {
   rank: number;
@@ -81,15 +83,8 @@ const LeaderboardPage = () => {
   return (
     <div className="mx-auto min-h-screen bg-white dark:bg-[#040a14] text-black dark:text-[#f6f9fa]">
       <div className="mb-8">
-        <h1
-          className="text-4xl font-clash-display font-bold mb-2 bg-gradient-to-r from-black to-gray-700 bg-clip-text text-transparent
-                     dark:from-[#12e9ee] dark:to-[#486ebb]"
-        >
-          Leaderboard
-        </h1>
-        <p className="text-gray-600 dark:text-[#f6f9fa]/80 font-clash-grotesk">
-          Top performing traders in our community
-        </p>
+        <Title title="Leaderboard" />
+        <Description description="Top performing traders in our community" />
       </div>
 
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
@@ -102,7 +97,7 @@ const LeaderboardPage = () => {
                      rounded-lg bg-white dark:bg-[#062f3a] text-gray-800 
                      dark:text-[#f6f9fa] focus:outline-none focus:ring-2 
                      focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                     font-clash-grotesk transition-all duration-300"
+                       transition-all duration-300"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -113,7 +108,7 @@ const LeaderboardPage = () => {
                      border border-gray-200 dark:border-[#12e9ee]/20 rounded-lg 
                      bg-white dark:bg-[#062f3a] text-gray-800 dark:text-[#f6f9fa] 
                      focus:outline-none focus:ring-2 focus:ring-teal-500 
-                     dark:focus:ring-[#12e9ee]/50 font-clash-grotesk 
+                     dark:focus:ring-[#12e9ee]/50   
                      transition-all duration-300"
             value={selectedProgram}
             onChange={(e) => setSelectedProgram(e.target.value)}
@@ -145,43 +140,43 @@ const LeaderboardPage = () => {
             <thead>
               <tr className="border-b border-gray-200 dark:border-[#12e9ee]/20">
                 <th
-                  className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                  className="px-6 py-4 text-left text-sm   font-semibold 
                            text-gray-600 dark:text-[#f6f9fa]/80"
                 >
                   Rank
                 </th>
                 <th
-                  className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                  className="px-6 py-4 text-left text-sm   font-semibold 
                            text-gray-600 dark:text-[#f6f9fa]/80"
                 >
                   Username
                 </th>
                 <th
-                  className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                  className="px-6 py-4 text-left text-sm   font-semibold 
                            text-gray-600 dark:text-[#f6f9fa]/80"
                 >
                   Account Number
                 </th>
                 <th
-                  className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                  className="px-6 py-4 text-left text-sm   font-semibold 
                            text-gray-600 dark:text-[#f6f9fa]/80"
                 >
                   Program
                 </th>
                 <th
-                  className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                  className="px-6 py-4 text-left text-sm   font-semibold 
                            text-gray-600 dark:text-[#f6f9fa]/80"
                 >
                   Value Growth
                 </th>
                 <th
-                  className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                  className="px-6 py-4 text-left text-sm   font-semibold 
                            text-gray-600 dark:text-[#f6f9fa]/80"
                 >
                   Status
                 </th>
                 <th
-                  className="px-6 py-4 text-left text-sm font-clash-grotesk font-semibold 
+                  className="px-6 py-4 text-left text-sm   font-semibold 
                            text-gray-600 dark:text-[#f6f9fa]/80"
                 >
                   Actions
@@ -205,7 +200,7 @@ const LeaderboardPage = () => {
                         />
                       )}
                       <span
-                        className={`font-clash-grotesk font-semibold ${getRankColor(
+                        className={`  font-semibold ${getRankColor(
                           trader.rank
                         )}`}
                       >
@@ -213,21 +208,21 @@ const LeaderboardPage = () => {
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 font-clash-grotesk font-medium text-gray-900 dark:text-[#f6f9fa]">
+                  <td className="px-6 py-4   font-medium text-gray-900 dark:text-[#f6f9fa]">
                     {trader.username}
                   </td>
-                  <td className="px-6 py-4 font-clash-grotesk text-gray-500 dark:text-[#f6f9fa]/60">
+                  <td className="px-6 py-4   text-gray-500 dark:text-[#f6f9fa]/60">
                     {trader.accountNumber}
                   </td>
-                  <td className="px-6 py-4 font-clash-grotesk text-gray-900 dark:text-[#f6f9fa]">
+                  <td className="px-6 py-4   text-gray-900 dark:text-[#f6f9fa]">
                     {trader.program}
                   </td>
-                  <td className="px-6 py-4 font-clash-grotesk font-semibold text-teal-500 dark:text-[#12e9ee]">
+                  <td className="px-6 py-4   font-semibold text-teal-500 dark:text-[#12e9ee]">
                     {trader.valueGrowth.toFixed(2)}%
                   </td>
                   <td className="px-6 py-4">
                     <span
-                      className={`inline-flex px-2.5 py-1 rounded-full text-xs font-clash-grotesk 
+                      className={`inline-flex px-2.5 py-1 rounded-full text-xs   
                                  font-medium ${getStatusColor(trader.status)}`}
                     >
                       {trader.status}
@@ -235,7 +230,7 @@ const LeaderboardPage = () => {
                   </td>
                   <td className="px-6 py-4">
                     <button
-                      className="flex items-center gap-1 font-clash-grotesk text-[#486ebb] 
+                      className="flex items-center gap-1   text-[#486ebb] 
                                    hover:text-[#12e9ee] transition-colors group"
                     >
                       <ExternalLink className="w-4 h-4 group-hover:scale-110 transition-transform" />

@@ -78,13 +78,13 @@ export default function LoginPage() {
         <CardHeader className="space-y-1 pb-6">
           <Logo />
           <CardTitle
-            className="text-3xl font-clash-display font-bold text-center 
+            className="text-3xl   font-bold text-center 
                              text-gray-900 dark:text-[#f6f9fa]"
           >
             Dashboard
           </CardTitle>
           <CardDescription
-            className="text-center font-clash-grotesk 
+            className="text-center   
                                   text-gray-600 dark:text-[#f6f9fa]/80"
           >
             Enter your credentials to sign in to your account
@@ -97,7 +97,7 @@ export default function LoginPage() {
               className="bg-red-50 dark:bg-red-500/10 
                                                 border border-red-100 dark:border-red-500/20"
             >
-              <AlertDescription className="text-red-600 dark:text-red-400 font-clash-grotesk">
+              <AlertDescription className="text-red-600 dark:text-red-400  ">
                 {error}
               </AlertDescription>
             </Alert>
@@ -109,7 +109,7 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-clash-grotesk text-gray-700 dark:text-[#f6f9fa]/80">
+                    <FormLabel className="  text-gray-700 dark:text-[#f6f9fa]/80">
                       Email
                     </FormLabel>
                     <FormControl>
@@ -119,11 +119,11 @@ export default function LoginPage() {
                                  bg-white dark:bg-[#062f3a] text-gray-800 
                                  dark:text-[#f6f9fa] focus:ring-2 
                                  focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                                 font-clash-grotesk transition-all duration-300"
+                                   transition-all duration-300"
                         {...field}
                       />
                     </FormControl>
-                    <FormMessage className="text-red-500 dark:text-red-400 font-clash-grotesk" />
+                    <FormMessage className="text-red-500 dark:text-red-400  " />
                   </FormItem>
                 )}
               />
@@ -133,7 +133,7 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-clash-grotesk text-gray-700 dark:text-[#f6f9fa]/80">
+                    <FormLabel className="  text-gray-700 dark:text-[#f6f9fa]/80">
                       Password
                     </FormLabel>
                     <FormControl>
@@ -145,7 +145,7 @@ export default function LoginPage() {
                                    bg-white dark:bg-[#062f3a] text-gray-800 
                                    dark:text-[#f6f9fa] focus:ring-2 
                                    focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                                   font-clash-grotesk transition-all duration-300"
+                                     transition-all duration-300"
                           {...field}
                         />
                         <Button
@@ -169,7 +169,7 @@ export default function LoginPage() {
                         </Button>
                       </div>
                     </FormControl>
-                    <FormMessage className="text-red-500 dark:text-red-400 font-clash-grotesk" />
+                    <FormMessage className="text-red-500 dark:text-red-400  " />
                   </FormItem>
                 )}
               />
@@ -177,7 +177,7 @@ export default function LoginPage() {
               <div className="flex items-center justify-end">
                 <Link
                   href="/auth/forgot-password"
-                  className="text-sm font-clash-grotesk text-teal-500 dark:text-[#12e9ee] 
+                  className="text-sm   text-teal-500 dark:text-[#12e9ee] 
                            hover:text-teal-600 dark:hover:text-[#12e9ee]/90 
                            underline-offset-4 hover:underline transition-colors"
                 >
@@ -190,7 +190,7 @@ export default function LoginPage() {
                 className="w-full bg-teal-500 dark:bg-[#12e9ee] text-white 
                          dark:text-[#040a14] hover:bg-teal-600 
                          dark:hover:bg-[#12e9ee]/90 transition-all duration-300 
-                         font-clash-grotesk dark:glow-teal group"
+                           dark:glow-teal group"
                 disabled={isLoading}
               >
                 <span className="group-hover:scale-105 transition-transform inline-block">
@@ -202,7 +202,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div
-            className="text-sm text-center font-clash-grotesk 
+            className="text-sm text-center   
                        text-gray-600 dark:text-[#f6f9fa]/80"
           >
             Don&apos;t have an account?{" "}

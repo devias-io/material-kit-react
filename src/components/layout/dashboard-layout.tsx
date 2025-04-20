@@ -20,28 +20,17 @@ export default function DashboardLayout({
 }: DashboardLayoutProps) {
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
+  const toggleSidebar = () => {
+    setShowMobileSidebar(!showMobileSidebar);
+  };
+
   return (
     <div className="flex min-h-screen relative flex-col md:flex-row">
-      {/* Mobile sidebar toggle */}
-      <Button
-        variant="outline"
-        size="icon"
-        className="fixed left-4 top-3 z-40 rounded-full md:hidden"
-        onClick={() => setShowMobileSidebar(!showMobileSidebar)}
-      >
-        {showMobileSidebar ? (
-          <X className="h-5 w-5" />
-        ) : (
-          <Menu className="h-5 w-5" />
-        )}
-        <span className="sr-only">Toggle menu</span>
-      </Button>
-
       {/* Mobile sidebar backdrop */}
       {showMobileSidebar && (
         <div
           className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm md:hidden"
-          onClick={() => setShowMobileSidebar(false)}
+          onClick={toggleSidebar}
         />
       )}
 
@@ -55,8 +44,8 @@ export default function DashboardLayout({
       </div>
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col md:pl-64 ">
-        <Header user={user} />
+      <div className="flex flex-1 flex-col md:pl-64">
+        <Header user={user} onMenuClick={toggleSidebar} />
         <main className="flex-1 px-4 py-4 md:px-6 md:py-6">{children}</main>
       </div>
     </div>

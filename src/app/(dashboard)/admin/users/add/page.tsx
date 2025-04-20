@@ -34,7 +34,7 @@ const AddUserPage = () => {
             href="/admin/users"
             className="flex items-center gap-2 text-gray-600 dark:text-[#f6f9fa]/70 
                      hover:text-gray-900 dark:hover:text-[#12e9ee] transition-colors 
-                     font-clash-grotesk group"
+                       group"
           >
             <ArrowLeft className="w-5 h-5 group-hover:transform group-hover:-translate-x-1 transition-transform" />
             <span>Back to Users</span>
@@ -43,14 +43,14 @@ const AddUserPage = () => {
 
         <div className="mb-8">
           <h1
-            className="text-4xl font-clash-display font-bold mb-2 
+            className="text-4xl   font-bold mb-2 
                        text-gray-900 dark:text-[#f6f9fa]
                        bg-gradient-to-r from-gray-900 to-gray-700 dark:from-[#12e9ee] dark:to-[#486ebb] 
                        bg-clip-text text-transparent"
           >
             Add New User
           </h1>
-          <p className="text-gray-600 dark:text-[#f6f9fa]/70 font-clash-grotesk text-lg">
+          <p className="text-gray-600 dark:text-[#f6f9fa]/70   text-lg">
             Create a new user account with specific permissions
           </p>
         </div>
@@ -66,7 +66,7 @@ const AddUserPage = () => {
               <div
                 className="bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 
                            text-red-600 dark:text-red-400 p-4 rounded-lg flex items-center gap-2
-                           font-clash-grotesk"
+                            "
               >
                 <AlertCircle className="w-5 h-5" />
                 <p>{error}</p>
@@ -76,7 +76,7 @@ const AddUserPage = () => {
             <div className="space-y-6">
               <div>
                 <label
-                  className="block text-sm font-medium mb-2 font-clash-grotesk
+                  className="block text-sm font-medium mb-2  
                                text-gray-700 dark:text-[#f6f9fa]/80"
                 >
                   User ID
@@ -91,7 +91,7 @@ const AddUserPage = () => {
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-[#12e9ee]/20 
                            rounded-lg bg-white dark:bg-[#062f3a] text-gray-800 dark:text-[#f6f9fa] 
                            focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                           font-clash-grotesk transition-all duration-300"
+                             transition-all duration-300"
                     placeholder="Enter user ID (max 20 characters)"
                     maxLength={20}
                     value={formData.userId}
@@ -101,14 +101,14 @@ const AddUserPage = () => {
                     }}
                   />
                 </div>
-                <p className="text-xs text-gray-500 dark:text-[#f6f9fa]/50 mt-2 font-clash-grotesk">
+                <p className="text-xs text-gray-500 dark:text-[#f6f9fa]/50 mt-2  ">
                   Up to 20 characters, no spaces, case sensitive
                 </p>
               </div>
 
               <div>
                 <label
-                  className="block text-sm font-medium mb-2 font-clash-grotesk
+                  className="block text-sm font-medium mb-2  
                                text-gray-700 dark:text-[#f6f9fa]/80"
                 >
                   Email Address
@@ -123,7 +123,7 @@ const AddUserPage = () => {
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-[#12e9ee]/20 
                            rounded-lg bg-white dark:bg-[#062f3a] text-gray-800 dark:text-[#f6f9fa] 
                            focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                           font-clash-grotesk transition-all duration-300"
+                             transition-all duration-300"
                     placeholder="Enter email address"
                     value={formData.email}
                     onChange={(e) =>
@@ -135,7 +135,7 @@ const AddUserPage = () => {
 
               <div>
                 <label
-                  className="block text-sm font-medium mb-2 font-clash-grotesk
+                  className="block text-sm font-medium mb-2  
                                text-gray-700 dark:text-[#f6f9fa]/80"
                 >
                   Password
@@ -150,7 +150,7 @@ const AddUserPage = () => {
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-[#12e9ee]/20 
                            rounded-lg bg-white dark:bg-[#062f3a] text-gray-800 dark:text-[#f6f9fa] 
                            focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                           font-clash-grotesk transition-all duration-300"
+                             transition-all duration-300"
                     placeholder="Enter password"
                     value={formData.password}
                     onChange={(e) =>
@@ -162,7 +162,7 @@ const AddUserPage = () => {
 
               <div>
                 <label
-                  className="block text-sm font-medium mb-2 font-clash-grotesk
+                  className="block text-sm font-medium mb-2  
                                text-gray-700 dark:text-[#f6f9fa]/80"
                 >
                   First Name
@@ -177,7 +177,7 @@ const AddUserPage = () => {
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-[#12e9ee]/20 
                            rounded-lg bg-white dark:bg-[#062f3a] text-gray-800 dark:text-[#f6f9fa] 
                            focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-[#12e9ee]/50 
-                           font-clash-grotesk transition-all duration-300"
+                             transition-all duration-300"
                     placeholder="Enter first name"
                     value={formData.firstName}
                     onChange={(e) =>
@@ -194,7 +194,7 @@ const AddUserPage = () => {
                 className="w-full px-6 py-3 bg-teal-500 dark:bg-[#12e9ee] 
                          text-white dark:text-[#040a14] rounded-lg 
                          hover:bg-teal-600 dark:hover:bg-[#12e9ee]/90 
-                         transition-all duration-300 font-clash-grotesk 
+                         transition-all duration-300   
                          dark:glow-teal group relative overflow-hidden"
               >
                 <div
