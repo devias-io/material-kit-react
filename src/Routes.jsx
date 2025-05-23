@@ -13,6 +13,7 @@ import SignUp from './views/SignUp';
 import SignIn from './views/SignIn';
 import UnderDevelopment from './views/UnderDevelopment';
 import NotFound from './views/NotFound';
+import FinanceHome from './views/FinanceHome'; // Updated import
 
 export default class Routes extends Component {
   render() {
@@ -72,6 +73,11 @@ export default class Routes extends Component {
           component={UnderDevelopment}
           exact
           path="/under-development"
+        />
+        <Route // Updated route
+          component={FinanceHome}
+          exact
+          path="/finance-home"
         />
         <Route
           component={NotFound}

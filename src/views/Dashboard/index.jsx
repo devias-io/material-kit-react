@@ -117,6 +117,24 @@ class Dashboard extends Component {
             >
               <OrdersTable className={classes.item} />
             </Grid>
+            <Grid
+              item
+              lg={3}
+              sm={6}
+              xl={3}
+              xs={12}
+            >
+              <Budget className={classes.item} />
+            </Grid>
+            <Grid
+              item
+              lg={3}
+              sm={6}
+              xl={3}
+              xs={12}
+            >
+              <Users className={classes.item} />
+            </Grid>
           </Grid>
         </div>
       </DashboardLayout>

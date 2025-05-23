@@ -30,7 +30,8 @@ import {
   ImageOutlined as ImageIcon,
   InfoOutlined as InfoIcon,
   AccountBoxOutlined as AccountBoxIcon,
-  SettingsOutlined as SettingsIcon
+  SettingsOutlined as SettingsIcon,
+  DescriptionOutlined as DescriptionIcon // New Icon
 } from '@material-ui/icons';
 
 // Component styles
@@ -193,6 +194,20 @@ class Sidebar extends Component {
             <ListItemText
               classes={{ primary: classes.listItemText }}
               primary="Settings"
+            />
+          </ListItem>
+          <ListItem // Finance Home Link
+            activeClassName={classes.activeListItem}
+            className={classes.listItem}
+            component={NavLink}
+            to="/finance-home"
+          >
+            <ListItemIcon className={classes.listItemIcon}>
+              <DescriptionIcon />
+            </ListItemIcon>
+            <ListItemText
+              classes={{ primary: classes.listItemText }}
+              primary="Finance Home"
             />
           </ListItem>
         </List>
