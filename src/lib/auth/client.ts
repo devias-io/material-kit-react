@@ -11,9 +11,9 @@ function generateToken(): string {
 const user = {
   id: 'USR-000',
   avatar: '/assets/avatar.png',
-  firstName: 'Sofia',
+  firstName: 'Anupama',
   lastName: 'Rivers',
-  email: 'sofia@devias.io',
+  email: 'anupama@gmail.com',
 } satisfies User;
 
 export interface SignUpParams {
@@ -51,21 +51,48 @@ class AuthClient {
     return { error: 'Social authentication not implemented' };
   }
 
-  async signInWithPassword(params: SignInWithPasswordParams): Promise<{ error?: string }> {
-    const { email, password } = params;
+  // async signInWithPassword(params: SignInWithPasswordParams): Promise<{ error?: string }> {
+  //   const { email, password } = params;
 
-    // Make API request
+  //   // Make API request
 
-    // We do not handle the API, so we'll check if the credentials match with the hardcoded ones.
-    if (email !== 'sofia@devias.io' || password !== 'Secret1') {
-      return { error: 'Invalid credentials' };
+  //   // We do not handle the API, so we'll check if the credentials match with the hardcoded ones.
+  //   if (email !== 'anupama@gmail.com' || password !== 'Secret1') {
+  //     return { error: 'Invalid credentials' };
+  //   }
+
+  //   const token = generateToken();
+  //   localStorage.setItem('custom-auth-token', token);
+
+  //   return {};
+  // }
+
+async signInWithPassword(params: SignInWithPasswordParams): Promise<{ error?: string }> {
+  try {
+    const res = await fetch('/api/mock-login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return { error: data.error || 'Invalid login' };
     }
 
-    const token = generateToken();
-    localStorage.setItem('custom-auth-token', token);
+    localStorage.setItem('custom-auth-token', data.token);
+    localStorage.setItem('custom-auth-user', JSON.stringify(data.user));
 
     return {};
+  } catch (err) {
+    return { error: 'Network error' };
   }
+}
+
+
 
   async resetPassword(_: ResetPasswordParams): Promise<{ error?: string }> {
     return { error: 'Password reset not implemented' };
