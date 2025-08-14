@@ -17,7 +17,7 @@ function CustomThemeProvider({ children }: ThemeProviderProps): React.JSX.Elemen
 
   return (
     <EmotionCache options={{ key: 'mui' }}>
-      <ThemeProvider disableTransitionOnChange theme={theme} defaultMode="light">
+      <ThemeProvider disableTransitionOnChange theme={theme} defaultMode="dark">
         <CssBaseline />
         {children}
       </ThemeProvider>
