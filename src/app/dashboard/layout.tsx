@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
+// The Container component is no longer needed here
 import GlobalStyles from '@mui/material/GlobalStyles';
 
 import { AuthGuard } from '@/components/auth/auth-guard';
@@ -39,9 +39,11 @@ export default function Layout({ children }: LayoutProps): React.JSX.Element {
         <Box sx={{ display: 'flex', flex: '1 1 auto', flexDirection: 'column', pl: { lg: 'var(--SideNav-width)' } }}>
           <MainNav />
           <main>
-            <Container maxWidth="xl" sx={{ py: '64px' }}>
+            {/* --- THIS SECTION IS UPDATED --- */}
+            {/* Replaced the restrictive Container with a simple Box for padding */}
+            <Box sx={{ p: 3 }}> {/* You can adjust padding here, e.g., '24px' */}
               {children}
-            </Container>
+            </Box>
           </main>
         </Box>
       </Box>

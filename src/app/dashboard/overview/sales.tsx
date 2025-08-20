@@ -7,10 +7,10 @@ import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import CardHeader from '@mui/material/CardHeader';
 import Divider from '@mui/material/Divider';
-import { alpha, useTheme } from '@mui/material/styles';
 import type { SxProps } from '@mui/material/styles';
-import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/ssr/ArrowClockwise';
-import { ArrowRightIcon } from '@phosphor-icons/react/dist/ssr/ArrowRight';
+import { alpha, useTheme } from '@mui/material/styles';
+import { ArrowClockwise as ArrowClockwiseIcon } from '@phosphor-icons/react/dist/ssr/ArrowClockwise';
+import { ArrowRight as ArrowRightIcon } from '@phosphor-icons/react/dist/ssr/ArrowRight';
 import type { ApexOptions } from 'apexcharts';
 
 import { Chart } from '@/components/core/chart';
@@ -27,18 +27,18 @@ export function Sales({ chartSeries, sx }: SalesProps): React.JSX.Element {
     <Card sx={sx}>
       <CardHeader
         action={
-          <Button color="inherit" size="small" startIcon={<ArrowClockwiseIcon fontSize="var(--icon-fontSize-md)" />}>
+          <Button color="secondary" size="small" startIcon={<ArrowClockwiseIcon />}>
             Sync
           </Button>
         }
-        title="Sales"
+        title="Monthly Insights"
       />
       <CardContent>
         <Chart height={350} options={chartOptions} series={chartSeries} type="bar" width="100%" />
       </CardContent>
       <Divider />
       <CardActions sx={{ justifyContent: 'flex-end' }}>
-        <Button color="inherit" endIcon={<ArrowRightIcon fontSize="var(--icon-fontSize-md)" />} size="small">
+        <Button color="inherit" endIcon={<ArrowRightIcon />} size="small">
           Overview
         </Button>
       </CardActions>
