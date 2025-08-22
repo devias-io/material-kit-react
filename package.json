@@ -32,11 +32,14 @@
     "@phosphor-icons/react": "^2.1.10",
     "apexcharts": "^4.7.0",
     "dayjs": "^1.11.13",
+    "lucide-react": "^0.541.0",
     "next": "^15.5.0",
     "react": "^19.1.1",
     "react-apexcharts": "^1.7.0",
     "react-dom": "^19.1.1",
     "react-hook-form": "7.57.0",
+    "recharts": "^3.1.2",
+    "tailwind": "^4.0.0",
     "zod": "3.25.57"
   },
   "devDependencies": {

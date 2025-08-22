@@ -1,6 +1,8 @@
+'use client'; // <-- 1. Add this to use hooks
+
 import * as React from 'react';
+import { usePathname } from 'next/navigation'; // <-- 2. Import the hook
 import Box from '@mui/material/Box';
-// The Container component is no longer needed here
 import GlobalStyles from '@mui/material/GlobalStyles';
 
 import { AuthGuard } from '@/components/auth/auth-guard';
@@ -11,40 +13,66 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+// 3. Define the routes that should take up the full page
+const fullPageRoutes = ['/signin', '/signup', '/forgot-password'];
+
 export default function Layout({ children }: LayoutProps): React.JSX.Element {
+  const pathname = usePathname(); // Get the current URL path
+
+  // 4. Check if the current path is a full-page route
+  const isFullPage = fullPageRoutes.includes(pathname);
+
+  // If it's a full-page route, render only the children inside the AuthGuard
+  if (isFullPage) {
+    return <AuthGuard>{children}</AuthGuard>;
+  }
+
+  // Otherwise, render the standard dashboard layout
   return (
     <AuthGuard>
       <GlobalStyles
         styles={{
           body: {
             '--MainNav-height': '56px',
-            '--MainNav-zIndex': 1000,
-            '--SideNav-width': '280px',
-            '--SideNav-zIndex': 1100,
-            '--MobileNav-width': '320px',
-            '--MobileNav-zIndex': 1100,
+            '--SideNav-width': '260px',
           },
         }}
       />
       <Box
         sx={{
-          bgcolor: 'var(--mui-palette-background-default)',
           display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-          minHeight: '100%',
+          height: '100vh',
+          overflow: 'hidden',
         }}
       >
+        {/* Sidebar */}
         <SideNav />
-        <Box sx={{ display: 'flex', flex: '1 1 auto', flexDirection: 'column', pl: { lg: 'var(--SideNav-width)' } }}>
+
+        {/* Main content */}
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            pl: { lg: 'var(--SideNav-width)' },
+          }}
+        >
+          {/* Top bar */}
           <MainNav />
-          <main>
-            {/* --- THIS SECTION IS UPDATED --- */}
-            {/* Replaced the restrictive Container with a simple Box for padding */}
-            <Box sx={{ p: 3 }}> {/* You can adjust padding here, e.g., '24px' */}
-              {children}
-            </Box>
-          </main>
+
+          {/* Dashboard content */}
+          <Box
+            component="main"
+            sx={{
+              flex: 1,
+              p: 3,
+              bgcolor: 'var(--mui-palette-background-default)',
+              overflowY: 'auto',
+            }}
+          >
+            {children}
+          </Box>
         </Box>
       </Box>
     </AuthGuard>

@@ -15,18 +15,35 @@ export interface TotalProfitProps {
 
 export function TotalProfit({ sx, value }: TotalProfitProps): React.JSX.Element {
   return (
-    <Card sx={sx}>
-      <CardContent>
-        <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }} spacing={3}>
-          <Stack spacing={1}>
-            <Typography color="text.secondary" variant="overline">
-              Total Donations
-            </Typography>
-            <Typography variant="h4">{value}</Typography>
-          </Stack>
-          <Avatar sx={{ backgroundColor: 'var(--mui-palette-primary-main)', height: '56px', width: '56px' }}>
+    <Card
+      sx={{
+        width: 340,   // set fixed width
+        height: 300,  // same as width → makes it square
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...sx,
+      }}
+    >
+      <CardContent sx={{ width: '100%', height: '100%' }}>
+        <Stack
+          direction="column"
+          sx={{ alignItems: 'center', justifyContent: 'center', height: '100%' }}
+          spacing={2}
+        >
+          <Avatar
+            sx={{
+              backgroundColor: 'var(--mui-palette-primary-main)',
+              height: 120,
+              width: 120,
+            }}
+          >
             <CurrencyInrIcon />
           </Avatar>
+          <Typography color="text.secondary" variant="h6">
+            Total Donations
+          </Typography>
+          <Typography variant="h2">{value}</Typography>
         </Stack>
       </CardContent>
     </Card>

@@ -6,51 +6,46 @@ import { useColorScheme } from '@mui/material/styles';
 
 import { NoSsr } from '@/components/core/no-ssr';
 
-const HEIGHT = 60;
-const WIDTH = 60;
+// --- CHANGE 1: LARGER LOGO SIZE ---
+// I've increased these values to make the logo bigger.
+// You can adjust these numbers further to get the perfect size.
+const HEIGHT = 258; // Example: Increased height
+const WIDTH = 521;  // Example: Proportional width
 
-type Color = 'dark' | 'light';
 
+// The props interfaces are simplified for the single logo.
 export interface LogoProps {
-  color?: Color;
-  emblem?: boolean;
   height?: number;
   width?: number;
 }
 
-export function Logo({ color = 'dark', emblem, height = HEIGHT, width = WIDTH }: LogoProps): React.JSX.Element {
-  let url: string;
+export function Logo({ height = HEIGHT, width = WIDTH }: LogoProps): React.JSX.Element {
+  const url = '/assets/logo.png';
 
-  if (emblem) {
-    url = color === 'light' ? '/assets/logo-emblem.svg' : '/assets/logo-emblem--dark.svg';
-  } else {
-    url = color === 'light' ? '/assets/logo.svg' : '/assets/logo--dark.svg';
-  }
-
-  return <Box alt="logo" component="img" height={height} src={url} width={width} />;
+  // The sx={{ width: 'auto' }} here prevents the logo from ever being distorted.
+  return <Box alt="logo" component="img" height={height} src={url} sx={{ width: 'auto' }} />;
 }
 
+
+// This wrapper component is kept for compatibility with your application.
 export interface DynamicLogoProps {
-  colorDark?: Color;
-  colorLight?: Color;
-  emblem?: boolean;
   height?: number;
   width?: number;
 }
 
 export function DynamicLogo({
-  colorDark = 'light',
-  colorLight = 'dark',
   height = HEIGHT,
   width = WIDTH,
   ...props
 }: DynamicLogoProps): React.JSX.Element {
   const { colorScheme } = useColorScheme();
-  const color = colorScheme === 'dark' ? colorDark : colorLight;
 
   return (
-    <NoSsr fallback={<Box sx={{ height: `${height}px`, width: `${width}px` }} />}>
-      <Logo color={color} height={height} width={width} {...props} />
+    // --- CHANGE 2: DARK FALLBACK BACKGROUND ---
+    // The "bgcolor" property was added here to match your dark theme's background.
+    // This removes the "white circular thing" during the initial load.
+    <NoSsr fallback={<Box sx={{ height: `${height}px`, width: `${width}px`, bgcolor: '#090E23' }} />}>
+      <Logo height={height} width={width} {...props} />
     </NoSsr>
   );
 }

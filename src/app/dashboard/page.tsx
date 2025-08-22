@@ -24,43 +24,47 @@ export default function Page(): JSX.Element {
         boxSizing: 'border-box',
       }}
     >
-      {/* Stat Cards - wider */}
-      <Grid item lg={6} sm={12} xs={12}>
+      {/* ====== Stat Cards - Side by side ====== */}
+      <Grid item xs={12} md={3}>
         <TotalCustomers value="100+" />
       </Grid>
-      <Grid item lg={6} sm={12} xs={12}>
+      <Grid item xs={12} md={3}>
         <TotalProfit value="₹5,00,000" />
       </Grid>
-      <Grid item lg={6} sm={12} xs={12}>
+      <Grid item xs={12} md={3}>
         <TodaysDonation value="₹5,00,000" />
       </Grid>
-      <Grid item lg={6} sm={12} xs={12}>
+      <Grid item xs={12} md={3}>
         <PrashadOrders value="25+" />
       </Grid>
 
-      {/* Charts Row - take more space */}
-      <Grid item xs={12}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={9}>
-            <Sales
-              chartSeries={[
-                { name: 'This year', data: [18, 16, 5, 8, 3, 14, 14, 16, 17, 19, 18, 20] },
-              ]}
-              sx={{ height: 450, width: '100%' }}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Traffic
-              chartSeries={[63, 15, 22]}
-              labels={['Donation', 'Puja Booking', 'Prashad']}
-              sx={{ height: 450, width: '100%' }}
-            />
-          </Grid>
-        </Grid>
-      </Grid>
+      {/* ====== Charts Row ====== */}
+     <Grid item xs={12}>
+  <Grid
+    container
+    spacing={3}
+    sx={{ width: '250%' }} // increase total width by 1.5x
+  >
+    <Grid item xs={12} md={12}>
+      <Sales
+        chartSeries={[
+          { name: 'This year', data: [18, 16, 5, 8, 3, 14, 14, 16, 17, 19, 18, 20] },
+        ]}
+        sx={{ height: 480, width: '690px' }}
+      />
+    </Grid>
+    <Grid item xs={12} md={3}>
+      <Traffic
+        chartSeries={[63, 15, 22]}
+        labels={['Donation', 'Puja Booking', 'Prashad']}
+        sx={{ height: 480, width: '690px' }}
+      />
+    </Grid>
+  </Grid>
+</Grid>
 
-      {/* Table - full width */}
-      <Grid item xs={12}>
+      {/* ====== Table - full width ====== */}
+      <Grid item xs={18}>
         <LatestOrders />
       </Grid>
     </Grid>

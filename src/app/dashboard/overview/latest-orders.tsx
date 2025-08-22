@@ -16,6 +16,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { DotsThreeVertical as DotsThreeVerticalIcon } from '@phosphor-icons/react/dist/ssr/DotsThreeVertical';
 import type { SxProps } from '@mui/material/styles';
+
 // Sample data matching your new design
 const clients = [
   { id: 1, name: 'Roohbaba', clientId: '#123456', mobile: '9876543210', regDate: '10/05/25', amount: '₹5,000' },
@@ -29,7 +30,8 @@ export function LatestOrders({ sx }: { sx?: SxProps }): React.JSX.Element {
     <Card sx={sx}>
       <CardHeader title="Recent Clients" action={<Button size="small">Filter</Button>} />
       <Box sx={{ overflowX: 'auto' }}>
-        <Table sx={{ minWidth: 800 }}>
+        {/* Changed minWidth from 800 to 1200 */}
+        <Table sx={{ minWidth: 1400 }}>
           <TableHead>
             <TableRow>
               <TableCell>Sr. No.</TableCell>
