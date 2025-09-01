@@ -62,10 +62,10 @@ export async function POST(request: NextRequest, { params }: { params: { carteir
 
     const model = (prisma as any)[modelName];
     
-    // 🔥 BUSCAR ATIVOS REAIS DO BANCO
-    console.log('🔍 Buscando ativos reais do banco...');
+    // 🔥 BUSCAR TODOS OS ATIVOS DO BANCO (SEM FILTRO DE USERID)
+    console.log('🔍 Buscando TODOS os ativos do banco...');
     const ativosReais = await model.findMany({
-      where: { userId: user.id },
+      // where: { userId: user.id }, ← REMOVIDO
       select: { id: true, ticker: true }
     });
     
@@ -96,8 +96,8 @@ export async function POST(request: NextRequest, { params }: { params: { carteir
         atualizacoes.push(
           model.update({
             where: { 
-              id: idReal,
-              userId: user.id 
+              id: idReal
+              // userId: user.id ← REMOVIDO
             },
             data: { 
               editadoEm: timestampOrdem
@@ -111,6 +111,12 @@ export async function POST(request: NextRequest, { params }: { params: { carteir
     
     // Executar todas as atualizações
     await prisma.$transaction(atualizacoes);
+    
+    // Limpar cache após reordenação
+    const chaveCache = `dados_mestres_${carteira}`;
+    if (typeof cacheDadosMestres !== 'undefined') {
+      cacheDadosMestres.delete(chaveCache);
+    }
     
     console.log(`✅ Reordenação da carteira ${carteira} concluída com ${atualizacoes.length} ativos`);
     

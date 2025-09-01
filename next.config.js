@@ -9,6 +9,7 @@ const nextConfig = {
   
   experimental: {
     forceSwcTransforms: true,
+    serverComponentsExternalPackages: ['sharp']
   },
   
   images: {
@@ -18,15 +19,20 @@ const nextConfig = {
     ],
   },
   
+  // Configurações para upload de arquivos
+  serverRuntimeConfig: {
+    maxFileSize: '10mb'
+  },
+  
   async headers() {
     return [
-      // 🔥 REMOVER CACHE DAS APIs FINANCEIRAS
+      // Headers para APIs financeiras (sem cache)
       {
         source: '/api/financial/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'no-store, must-revalidate', // 👈 SEM CACHE!
+            value: 'no-store, must-revalidate',
           },
         ],
       },
@@ -39,7 +45,26 @@ const nextConfig = {
           },
         ],
       },
+      // Headers específicos para upload de carteiras
+      {
+        source: '/api/carteiras/upload',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*'
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'POST, OPTIONS'
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization'
+          }
+        ]
+      }
     ];
   },
 }
+
 module.exports = nextConfig;

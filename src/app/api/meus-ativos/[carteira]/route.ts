@@ -92,7 +92,7 @@ async function getAuthenticatedUser(request: NextRequest) {
       return null;
     }
 
-    debugLog('✅ Usuário encontrado:', user.email, 'ID:', user.id);
+    debugLog('✅ Usuário encontrado:', user.email);
     return user;
   } catch (error) {
     debugLog('❌ Erro na autenticação:', error);
@@ -138,61 +138,41 @@ function verificarPermissaoComCache(plano: string, carteira: string): boolean {
   return temPermissao;
 }
 
-// 📊 FUNÇÃO PARA BUSCAR DADOS MESTRES - CORRIGIDA!
+// 📊 FUNÇÃO PARA BUSCAR DADOS MESTRES - CORRIGIDA PARA MOSTRAR TODOS OS DADOS
 async function buscarDadosMestres(carteira: string): Promise<any[]> {
-  // 🔧 CORREÇÃO: Buscar o ID real do admin no banco
-  const adminUser = await prisma.user.findUnique({
-    where: { email: 'admin@fatosdobolsa.com' },
-    select: { id: true }
-  });
-  
-  if (!adminUser) {
-    console.error('❌ Usuário admin não encontrado no banco!');
-    return [];
-  }
-  
-  const ADMIN_USER_ID = adminUser.id; // ✅ Agora usando ID real
-  console.log(`📊 Buscando dados mestres para ${carteira} - Admin ID: ${ADMIN_USER_ID}`);
+  console.log(`📊 Buscando dados mestres para ${carteira} - TODOS OS DADOS DO BANCO`);
   
   switch (carteira) {
     case 'microCaps':
       return await prisma.userMicroCaps.findMany({
-        where: { userId: ADMIN_USER_ID },
         orderBy: { editadoEm: 'asc' }
       });
     case 'smallCaps':
       return await prisma.userSmallCaps.findMany({
-        where: { userId: ADMIN_USER_ID },
         orderBy: { editadoEm: 'asc' }
       });
     case 'dividendos':
       return await prisma.userDividendos.findMany({
-        where: { userId: ADMIN_USER_ID },
         orderBy: { editadoEm: 'asc' }
       });
     case 'fiis':
       return await prisma.userFiis.findMany({
-        where: { userId: ADMIN_USER_ID },
         orderBy: { editadoEm: 'asc' }
       });
     case 'dividendosInternacional':
       return await prisma.userDividendosInternacional.findMany({
-        where: { userId: ADMIN_USER_ID },
         orderBy: { editadoEm: 'asc' }
       });
     case 'etfs':
       return await prisma.userEtfs.findMany({
-        where: { userId: ADMIN_USER_ID },
         orderBy: { editadoEm: 'asc' }
       });
     case 'projetoAmerica':
       return await prisma.userProjetoAmerica.findMany({
-        where: { userId: ADMIN_USER_ID },
         orderBy: { editadoEm: 'asc' }
       });
     case 'exteriorStocks':
       return await prisma.userExteriorStocks.findMany({
-        where: { userId: ADMIN_USER_ID },
         orderBy: { editadoEm: 'asc' }
       });
     default:
@@ -443,8 +423,6 @@ export async function GET(
   }
 }
 
-// 🔥 ADICIONAR ESTA FUNÇÃO POST LOGO APÓS A FUNÇÃO GET
-
 // 🔍 POST - CRIAR NOVO ATIVO
 export async function POST(
   request: NextRequest,
@@ -578,11 +556,16 @@ export async function POST(
     debugLog('✅ Ativo criado:', ativoCriado.id);
     console.log(`✅ Ativo ${dadosCreate.ticker} criado na carteira ${params.carteira} pelo usuário ${user.email} (${user.plan})`);
     
-    // 7. Registrar auditoria de sucesso
+    // 7. Limpar cache após criação
+    const chaveCache = `dados_mestres_${params.carteira}`;
+    cacheDadosMestres.delete(chaveCache);
+    console.log(`🔄 Cache limpo para ${params.carteira} após criação`);
+    
+    // 8. Registrar auditoria de sucesso
     auditData.totalItensRetornados = 1;
     registrarAcessoAuditoria(auditData as AuditLog);
     
-    // 8. Preparar resposta
+    // 9. Preparar resposta
     const ativoSerializado = {
       ...ativoCriado,
       createdAt: ativoCriado.createdAt?.toISOString(),
@@ -594,7 +577,7 @@ export async function POST(
       requestTime: Date.now() - inicioRequest
     };
     
-    // 9. Headers de resposta
+    // 10. Headers de resposta
     const response = NextResponse.json(ativoSerializado);
     response.headers.set('X-Operation', 'CREATE');
     response.headers.set('X-Access-Level', getAccessLevel(user.plan, params.carteira));
@@ -613,6 +596,255 @@ export async function POST(
   }
 }
 
+// 🔍 PUT - EDITAR ATIVO (MANTENDO FUNCIONALIDADE DE REORDENAÇÃO)
+export async function PUT(request: NextRequest, { params }: { params: { carteira: string } }) {
+  try {
+    console.log('✏️ INICIO PUT - Carteira:', params.carteira);
+    
+    // Autenticação
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
+    const { carteira } = params;
+    const body = await request.json();
+    
+    // Verificar se é reordenação ou edição individual
+    if (body.novosAtivos && Array.isArray(body.novosAtivos)) {
+      // REORDENAÇÃO
+      console.log('🔄 REORDENAÇÃO detectada para:', carteira);
+      
+      const CARTEIRA_MODELS = {
+        microCaps: 'userMicroCaps',
+        smallCaps: 'userSmallCaps', 
+        dividendos: 'userDividendos',
+        fiis: 'userFiis',
+        dividendosInternacional: 'userDividendosInternacional',
+        etfs: 'userEtfs',
+        projetoAmerica: 'userProjetoAmerica',
+        exteriorStocks: 'userExteriorStocks'
+      } as const;
+      
+      const modelName = CARTEIRA_MODELS[carteira as keyof typeof CARTEIRA_MODELS];
+      if (!modelName) {
+        return NextResponse.json({ error: 'Carteira inválida' }, { status: 400 });
+      }
+
+      const model = (prisma as any)[modelName];
+      
+      // Atualizar ordem de todos os ativos
+      const atualizacoes = body.novosAtivos.map(async (ativo: any, index: number) => {
+        return model.update({
+          where: { id: ativo.id },
+          data: { 
+            ordem: index,
+            editadoEm: new Date()
+          }
+        });
+      });
+      
+      await Promise.all(atualizacoes);
+      
+      // Limpar cache após reordenação
+      const chaveCache = `dados_mestres_${carteira}`;
+      cacheDadosMestres.delete(chaveCache);
+      
+      console.log(`✅ Reordenação concluída para ${carteira}`);
+      return NextResponse.json({ success: true, message: 'Reordenação realizada com sucesso' });
+      
+    } else {
+      // EDIÇÃO INDIVIDUAL
+      const { id, ...dadosAtualizacao } = body;
+      
+      console.log('✏️ Editando ativo ID:', id);
+      
+      if (!id) {
+        return NextResponse.json({ error: 'ID é obrigatório' }, { status: 400 });
+      }
+      
+      const CARTEIRA_MODELS = {
+        microCaps: 'userMicroCaps',
+        smallCaps: 'userSmallCaps', 
+        dividendos: 'userDividendos',
+        fiis: 'userFiis',
+        dividendosInternacional: 'userDividendosInternacional',
+        etfs: 'userEtfs',
+        projetoAmerica: 'userProjetoAmerica',
+        exteriorStocks: 'userExteriorStocks'
+      } as const;
+      
+      const modelName = CARTEIRA_MODELS[carteira as keyof typeof CARTEIRA_MODELS];
+      if (!modelName) {
+        return NextResponse.json({ error: 'Carteira inválida' }, { status: 400 });
+      }
+
+      const model = (prisma as any)[modelName];
+      
+      // Preparar dados para atualização
+      const dadosUpdate: any = {
+        editadoEm: new Date()
+      };
+      
+      // Campos obrigatórios
+      if (dadosAtualizacao.ticker) {
+        dadosUpdate.ticker = dadosAtualizacao.ticker.toUpperCase();
+      }
+      if (dadosAtualizacao.setor) {
+        dadosUpdate.setor = dadosAtualizacao.setor;
+      }
+      if (dadosAtualizacao.dataEntrada) {
+        dadosUpdate.dataEntrada = dadosAtualizacao.dataEntrada;
+      }
+      if (dadosAtualizacao.precoEntrada) {
+        dadosUpdate.precoEntrada = parseFloat(dadosAtualizacao.precoEntrada);
+      }
+      
+      // Campos opcionais
+      if (dadosAtualizacao.precoTeto !== undefined) {
+        dadosUpdate.precoTeto = dadosAtualizacao.precoTeto ? parseFloat(dadosAtualizacao.precoTeto) : null;
+      }
+      if (dadosAtualizacao.precoTetoBDR !== undefined) {
+        dadosUpdate.precoTetoBDR = dadosAtualizacao.precoTetoBDR ? parseFloat(dadosAtualizacao.precoTetoBDR) : null;
+      }
+      if (dadosAtualizacao.posicaoEncerrada !== undefined) {
+        dadosUpdate.posicaoEncerrada = dadosAtualizacao.posicaoEncerrada;
+      }
+      if (dadosAtualizacao.dataSaida) {
+        dadosUpdate.dataSaida = dadosAtualizacao.dataSaida;
+      }
+      if (dadosAtualizacao.precoSaida !== undefined) {
+        dadosUpdate.precoSaida = dadosAtualizacao.precoSaida ? parseFloat(dadosAtualizacao.precoSaida) : null;
+      }
+      if (dadosAtualizacao.motivoEncerramento) {
+        dadosUpdate.motivoEncerramento = dadosAtualizacao.motivoEncerramento;
+      }
+      
+      console.log('✏️ Dados para atualizar:', dadosUpdate);
+      
+      // Atualizar no banco (SEM filtro de userId para permitir edição de qualquer registro)
+      const ativoAtualizado = await model.update({
+        where: { id: id },
+        data: dadosUpdate
+      });
+      
+      // Limpar cache após edição
+      const chaveCache = `dados_mestres_${carteira}`;
+      cacheDadosMestres.delete(chaveCache);
+      
+      console.log('✅ Ativo atualizado com sucesso:', ativoAtualizado.id);
+      
+      return NextResponse.json({
+        success: true,
+        ativo: ativoAtualizado,
+        message: `Ativo ${ativoAtualizado.ticker} atualizado com sucesso`
+      });
+    }
+    
+  } catch (error) {
+    debugLog('❌ Erro PUT:', error);
+    auditData.acessoPermitido = false;
+    auditData.totalItensRetornados = 0;
+    registrarAcessoAuditoria(auditData as AuditLog);
+    
+    console.error(`❌ [ERROR] PUT ${auditData.userEmail} - ${params.carteira}:`, error);
+    return NextResponse.json({ 
+      error: 'Erro interno',
+      details: (error as Error).message 
+    }, { status: 500 });
+  }
+}
+
+// 🔍 DELETE - REMOVER ATIVO
+export async function DELETE(request: NextRequest, { params }: { params: { carteira: string } }) {
+  try {
+    console.log('🗑️ INICIO DELETE - Carteira:', params.carteira);
+    
+    // Autenticação
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
+    const { carteira } = params;
+    const body = await request.json();
+    const { id } = body;
+    
+    console.log('🗑️ Removendo ativo ID:', id);
+    
+    if (!id) {
+      return NextResponse.json({ error: 'ID é obrigatório' }, { status: 400 });
+    }
+    
+    const CARTEIRA_MODELS = {
+      microCaps: 'userMicroCaps',
+      smallCaps: 'userSmallCaps', 
+      dividendos: 'userDividendos',
+      fiis: 'userFiis',
+      dividendosInternacional: 'userDividendosInternacional',
+      etfs: 'userEtfs',
+      projetoAmerica: 'userProjetoAmerica',
+      exteriorStocks: 'userExteriorStocks'
+    } as const;
+    
+    const modelName = CARTEIRA_MODELS[carteira as keyof typeof CARTEIRA_MODELS];
+    if (!modelName) {
+      return NextResponse.json({ error: 'Carteira inválida' }, { status: 400 });
+    }
+
+    const model = (prisma as any)[modelName];
+    
+    // Verificar se o ativo existe (SEM filtro de userId)
+    const ativoExistente = await model.findFirst({
+      where: { id: id },
+      select: { 
+        id: true, 
+        ticker: true,
+        setor: true 
+      }
+    });
+    
+    if (!ativoExistente) {
+      console.log('❌ Ativo não encontrado');
+      return NextResponse.json({ 
+        error: 'Ativo não encontrado' 
+      }, { status: 404 });
+    }
+    
+    console.log('✅ Ativo encontrado:', ativoExistente.ticker);
+    
+    // Remover do banco (SEM filtro de userId)
+    const ativoRemovido = await model.delete({
+      where: { id: id }
+    });
+    
+    // Limpar cache após remoção
+    const chaveCache = `dados_mestres_${carteira}`;
+    cacheDadosMestres.delete(chaveCache);
+    
+    console.log('✅ Ativo removido com sucesso:', ativoRemovido.id);
+    
+    return NextResponse.json({
+      success: true,
+      ativo: ativoRemovido,
+      message: `Ativo ${ativoRemovido.ticker} removido com sucesso`
+    });
+    
+  } catch (error) {
+    console.error('❌ Erro na remoção:', error);
+    
+    if (error instanceof Error && error.message.includes('Record to delete does not exist')) {
+      return NextResponse.json({ 
+        error: 'Ativo não encontrado para remoção'
+      }, { status: 404 });
+    }
+    
+    return NextResponse.json({ 
+      error: 'Erro ao remover ativo',
+      details: (error as Error).message 
+    }, { status: 500 });
+  }
+}
 
 // 📊 ENDPOINT PARA ESTATÍSTICAS (ADMIN ONLY)
 export async function OPTIONS(request: NextRequest) {
@@ -634,231 +866,4 @@ export async function OPTIONS(request: NextRequest) {
       acessosNegadosPercent: (estatisticasUso.acessosNegados / estatisticasUso.totalRequests * 100).toFixed(2) + '%'
     }
   });
-}
-
-// 🔍 PUT - EDITAR ATIVO
-export async function PUT(request: NextRequest, { params }: { params: { carteira: string } }) {
-  try {
-    console.log('✏️ INICIO EDIÇÃO - Carteira:', params.carteira);
-    
-    // Autenticação
-    const user = await getAuthenticatedUser(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
-
-    const { carteira } = params;
-    const body = await request.json();
-    const { id, ...dadosAtualizacao } = body;
-    
-    console.log('✏️ Editando ativo ID:', id);
-    console.log('✏️ Dados recebidos:', dadosAtualizacao);
-    
-    if (!id) {
-      return NextResponse.json({ error: 'ID é obrigatório' }, { status: 400 });
-    }
-    
-    // Usar a mesma estrutura do arquivo de reordenação
-    const CARTEIRA_MODELS = {
-      microCaps: 'userMicroCaps',
-      smallCaps: 'userSmallCaps', 
-      dividendos: 'userDividendos',
-      fiis: 'userFiis',
-      dividendosInternacional: 'userDividendosInternacional',
-      etfs: 'userEtfs',
-      projetoAmerica: 'userProjetoAmerica',
-      exteriorStocks: 'userExteriorStocks'
-    } as const;
-    
-    const modelName = CARTEIRA_MODELS[carteira as keyof typeof CARTEIRA_MODELS];
-    if (!modelName) {
-      return NextResponse.json({ error: 'Carteira inválida' }, { status: 400 });
-    }
-
-    const model = (prisma as any)[modelName];
-    
-    // Preparar dados para atualização
-    const dadosUpdate: any = {
-      editadoEm: new Date()
-    };
-    
-    // Campos obrigatórios
-    if (dadosAtualizacao.ticker) {
-      dadosUpdate.ticker = dadosAtualizacao.ticker.toUpperCase();
-    }
-    if (dadosAtualizacao.setor) {
-      dadosUpdate.setor = dadosAtualizacao.setor;
-    }
-    if (dadosAtualizacao.dataEntrada) {
-      dadosUpdate.dataEntrada = dadosAtualizacao.dataEntrada;
-    }
-    if (dadosAtualizacao.precoEntrada) {
-      dadosUpdate.precoEntrada = parseFloat(dadosAtualizacao.precoEntrada);
-    }
-    
-    // Campos opcionais
-    if (dadosAtualizacao.precoTeto !== undefined) {
-      dadosUpdate.precoTeto = dadosAtualizacao.precoTeto ? parseFloat(dadosAtualizacao.precoTeto) : null;
-    }
-    if (dadosAtualizacao.precoTetoBDR !== undefined) {
-      dadosUpdate.precoTetoBDR = dadosAtualizacao.precoTetoBDR ? parseFloat(dadosAtualizacao.precoTetoBDR) : null;
-    }
-    if (dadosAtualizacao.posicaoEncerrada !== undefined) {
-      dadosUpdate.posicaoEncerrada = dadosAtualizacao.posicaoEncerrada;
-    }
-    if (dadosAtualizacao.dataSaida) {
-      dadosUpdate.dataSaida = dadosAtualizacao.dataSaida;
-    }
-    if (dadosAtualizacao.precoSaida !== undefined) {
-      dadosUpdate.precoSaida = dadosAtualizacao.precoSaida ? parseFloat(dadosAtualizacao.precoSaida) : null;
-    }
-    if (dadosAtualizacao.motivoEncerramento) {
-      dadosUpdate.motivoEncerramento = dadosAtualizacao.motivoEncerramento;
-    }
-    
-    console.log('✏️ Dados para atualizar:', dadosUpdate);
-    
-    // 🔥 ATUALIZAR NO BANCO - IGUAL AO PADRÃO DE REORDENAÇÃO
-    const ativoAtualizado = await model.update({
-      where: { 
-        id: id,
-        userId: user.id  // Garantir que só edita próprios ativos
-      },
-      data: dadosUpdate
-    });
-    
-    console.log('✅ Ativo atualizado com sucesso:', ativoAtualizado.id);
-    console.log(`✅ Ativo ${ativoAtualizado.ticker} atualizado na carteira ${carteira}`);
-    
-    return NextResponse.json({
-      success: true,
-      ativo: ativoAtualizado,
-      message: `Ativo ${ativoAtualizado.ticker} atualizado com sucesso`
-    });
-    
-  } catch (error) {
-    console.error('❌ Erro na edição:', error);
-    
-    // Log detalhado do erro
-    if (error instanceof Error) {
-      console.error('❌ Detalhes do erro:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
-    }
-    
-    return NextResponse.json({ 
-      error: 'Erro ao editar ativo',
-      details: (error as Error).message 
-    }, { status: 500 });
-  }
-}
-
-// 🔍 DELETE - REMOVER ATIVO
-export async function DELETE(request: NextRequest, { params }: { params: { carteira: string } }) {
-  try {
-    console.log('🗑️ INICIO REMOÇÃO - Carteira:', params.carteira);
-    
-    // Autenticação
-    const user = await getAuthenticatedUser(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
-
-    const { carteira } = params;
-    const body = await request.json();
-    const { id } = body;
-    
-    console.log('🗑️ Removendo ativo ID:', id);
-    
-    if (!id) {
-      return NextResponse.json({ error: 'ID é obrigatório' }, { status: 400 });
-    }
-    
-    // Usar a mesma estrutura do arquivo de reordenação
-    const CARTEIRA_MODELS = {
-      microCaps: 'userMicroCaps',
-      smallCaps: 'userSmallCaps', 
-      dividendos: 'userDividendos',
-      fiis: 'userFiis',
-      dividendosInternacional: 'userDividendosInternacional',
-      etfs: 'userEtfs',
-      projetoAmerica: 'userProjetoAmerica',
-      exteriorStocks: 'userExteriorStocks'
-    } as const;
-    
-    const modelName = CARTEIRA_MODELS[carteira as keyof typeof CARTEIRA_MODELS];
-    if (!modelName) {
-      return NextResponse.json({ error: 'Carteira inválida' }, { status: 400 });
-    }
-
-    const model = (prisma as any)[modelName];
-    
-    // 🔍 PRIMEIRO: Verificar se o ativo existe e pertence ao usuário
-    console.log('🔍 Verificando se ativo existe e pertence ao usuário...');
-    const ativoExistente = await model.findFirst({
-      where: { 
-        id: id,
-        userId: user.id 
-      },
-      select: { 
-        id: true, 
-        ticker: true,
-        setor: true 
-      }
-    });
-    
-    if (!ativoExistente) {
-      console.log('❌ Ativo não encontrado ou não pertence ao usuário');
-      return NextResponse.json({ 
-        error: 'Ativo não encontrado ou sem permissão para remover' 
-      }, { status: 404 });
-    }
-    
-    console.log('✅ Ativo encontrado:', ativoExistente.ticker);
-    
-    // 🗑️ REMOVER DO BANCO
-    console.log('🗑️ Removendo ativo do banco...');
-    const ativoRemovido = await model.delete({
-      where: { 
-        id: id,
-        userId: user.id  // Dupla verificação de segurança
-      }
-    });
-    
-    console.log('✅ Ativo removido com sucesso:', ativoRemovido.id);
-    console.log(`✅ Ativo ${ativoRemovido.ticker} removido da carteira ${carteira} pelo usuário ${user.email}`);
-    
-    return NextResponse.json({
-      success: true,
-      ativo: ativoRemovido,
-      message: `Ativo ${ativoRemovido.ticker} removido com sucesso`
-    });
-    
-  } catch (error) {
-    console.error('❌ Erro na remoção:', error);
-    
-    // Log detalhado do erro
-    if (error instanceof Error) {
-      console.error('❌ Detalhes do erro:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
-      
-      // Verificar se é erro de registro não encontrado
-      if (error.message.includes('Record to delete does not exist')) {
-        return NextResponse.json({ 
-          error: 'Ativo não encontrado para remoção',
-          details: 'O ativo pode já ter sido removido ou não existe'
-        }, { status: 404 });
-      }
-    }
-    
-    return NextResponse.json({ 
-      error: 'Erro ao remover ativo',
-      details: (error as Error).message 
-    }, { status: 500 });
-  }
 }
