@@ -1,5 +1,7 @@
 // app/api/cron/update-ativos/route.ts
-export async function GET() {
+export const dynamic = 'force-dynamic'
+
+export async function GET(request: Request) {  // <-- Adicione request como parâmetro
   // Verificar auth do cron
   if (process.env.NODE_ENV === 'production') {
     const authHeader = request.headers.get('authorization');
