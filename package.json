@@ -34,6 +34,7 @@
     "@phosphor-icons/react": "2.1.6",
     "@prisma/client": "^6.10.1",
     "@tanstack/react-query": "^5.83.0",
+    "@upstash/redis": "^1.35.3",
     "apexcharts": "3.49.2",
     "bcryptjs": "^3.0.2",
     "dayjs": "1.11.11",
