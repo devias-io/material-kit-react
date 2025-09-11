@@ -2061,10 +2061,23 @@ useEffect(() => {
     try {
       console.log('🔄 Carregando relatórios da API...');
       setLoading(true);
-      
+
+      // Recuperar token (se disponível) do cookie ou localStorage
+      const token =
+        typeof window !== 'undefined'
+          ?
+              document.cookie.match(/auth-token=([^;]+)/)?.[1] ||
+              localStorage.getItem('auth-token') ||
+              ''
+          : '';
+
       const response = await fetch('/api/relatorio-semanal?admin=true', {
         method: 'GET',
         credentials: 'include',
+        headers: {
+          ...(user?.email ? { 'X-User-Email': user.email } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
       
       if (!response.ok) {
@@ -2123,7 +2136,7 @@ useEffect(() => {
   };
   
   loadRelatorios();
-}, []);
+}, [user]);
 
 // 💾 SALVAR RELATÓRIO NA API
 const saveRelatorio = useCallback(async (relatorio: RelatorioSemanalData) => {
