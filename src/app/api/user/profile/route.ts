@@ -2,22 +2,23 @@ export const dynamic = 'force-dynamic'; // 👈 ADICIONAR ESTA LINHA AQUI
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { auth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const userEmail = request.headers.get('x-user-email');
-    
-    if (!userEmail) {
-      return NextResponse.json({ 
-        error: 'Usuário não autenticado' 
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({
+        error: 'Usuário não autenticado'
       }, { status: 401 });
     }
 
     // Buscar dados completos do usuário
     const user = await prisma.user.findUnique({
-      where: { email: userEmail.toLowerCase() },
+      where: { id: session.user.id },
       include: {
         purchases: {
           orderBy: { createdAt: 'desc' },
@@ -70,18 +71,18 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const userEmail = request.headers.get('x-user-email');
+    const session = await auth();
     const { firstName, lastName, avatar } = await request.json();
-    
-    if (!userEmail) {
-      return NextResponse.json({ 
-        error: 'Usuário não autenticado' 
+
+    if (!session?.user?.id) {
+      return NextResponse.json({
+        error: 'Usuário não autenticado'
       }, { status: 401 });
     }
 
     // Atualizar dados do usuário (apenas nome e avatar)
     const updatedUser = await prisma.user.update({
-      where: { email: userEmail.toLowerCase() },
+      where: { id: session.user.id },
       data: {
         firstName,
         lastName,
