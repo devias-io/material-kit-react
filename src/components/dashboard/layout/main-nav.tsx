@@ -18,7 +18,6 @@ import { usePopover } from '@/hooks/use-popover';
 import { useUser } from '@/hooks/use-user';
 import { useDataStore } from '@/hooks/useDataStore';
 import { useNotifications } from '@/hooks/useNotifications';
-import { authClient } from '@/lib/auth/client';
 import { MobileNav } from './mobile-nav';
 import { UserPopover } from './user-popover';
 import { NotificationPopover } from '@/components/core/notification-popover';
@@ -89,85 +88,55 @@ export function MainNav(): React.JSX.Element {
   const notificationPopover = usePopover<HTMLButtonElement>();
   const router = useRouter();
   
-  const { user } = useUser();
+  const { user, checkSession } = useUser();
   const [userAvatar, setUserAvatar] = React.useState<string>('/assets/avatar.png');
+  const avatarRef = React.useRef(userAvatar);
+  React.useEffect(() => {
+    avatarRef.current = userAvatar;
+  }, [userAvatar]);
   
   const ativos = useAtivos();
-const { notifications, unreadCount } = useNotifications();
+  const { notifications, unreadCount } = useNotifications();
 
-  // Verificar localStorage para avatar
+  // Atualiza avatar quando o usuário do contexto muda
   React.useEffect(() => {
-    const checkAvatar = () => {
-      try {
-        // Primeiro tentar do contexto user
-        if (user?.avatar) {
-          setUserAvatar(user.avatar);
-          return;
-        }
-
-        // Depois tentar do localStorage
+    try {
+      if (user?.avatar) {
+        setUserAvatar(user.avatar);
+      } else {
         const userData = localStorage.getItem('user-data');
         if (userData) {
           const parsed = JSON.parse(userData);
-          if (parsed.avatar && parsed.avatar !== userAvatar) {
-            console.log('🔄 MainNav: Avatar atualizado');
+          if (parsed.avatar) {
             setUserAvatar(parsed.avatar);
           }
         }
-      } catch (error) {
-        console.error('Erro ao verificar avatar:', error);
       }
-    };
+    } catch (error) {
+      console.error('Erro ao carregar avatar:', error);
+    }
+  }, [user]);
 
-    // Verificar imediatamente
-    checkAvatar();
-    
-    // Verificar a cada 1 segundo
-    const interval = setInterval(checkAvatar, 1000);
-    
-    // NOVO: Escutar evento storage
-    window.addEventListener('storage', checkAvatar);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', checkAvatar);
-    };
-  }, [user, userAvatar]);
-
-  // NOVO: Sync entre dispositivos via banco
+  // Reage apenas a eventos de atualização do storage
   React.useEffect(() => {
-    const syncWithDatabase = async () => {
+    const handleStorage = () => {
       try {
-        const response = await fetch('/api/user/profile', {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          const userData = await response.json();
-          if (userData.user?.avatar && userData.user.avatar !== userAvatar) {
-            console.log('🔄 MainNav: Sincronizando do banco');
-            setUserAvatar(userData.user.avatar);
-
-            // Atualizar localStorage também
-            const currentUserData = localStorage.getItem('user-data') || '{}';
-            const parsedUserData = JSON.parse(currentUserData);
-            parsedUserData.avatar = userData.user.avatar;
-            localStorage.setItem('user-data', JSON.stringify(parsedUserData));
+        const userData = localStorage.getItem('user-data');
+        if (userData) {
+          const parsed = JSON.parse(userData);
+          if (parsed.avatar && parsed.avatar !== avatarRef.current) {
+            setUserAvatar(parsed.avatar);
+            checkSession?.();
           }
         }
       } catch (error) {
-        console.error('Erro ao sincronizar:', error);
+        console.error('Erro ao processar evento storage:', error);
       }
     };
 
-    // Verificar a cada 10 segundos
-    const interval = setInterval(syncWithDatabase, 10000);
-
-    return () => clearInterval(interval);
-  }, [userAvatar]);
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [checkSession]);
 
   const handleAtivoSelect = (ativo) => {
     if (ativo) {
