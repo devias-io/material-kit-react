@@ -76,7 +76,7 @@ export function UserPopover({ anchorEl, onClose, open }: UserPopoverProps): Reac
             const filteredUser = Object.fromEntries(
               Object.entries(parsedUser).filter(([, v]) => v != null)
             );
-            setUserData(prev => ({ ...prev, ...filteredUser }));
+            setUserData(prev => ({ ...(prev ?? {}), ...filteredUser }));
           } catch (error) {
             console.error('Error parsing user data from storage:', error);
           }
