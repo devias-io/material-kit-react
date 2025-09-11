@@ -11,7 +11,7 @@ import { useUser } from '@/hooks/use-user';
 
 export default function Page(): React.JSX.Element {
 
-  if (isLoading || !user) {
+const { user, isLoading } = useUser();
     return (
       <Stack spacing={3}>
         <Typography variant="h4" sx={{ color: '#1E293B', fontWeight: '700' }}>
