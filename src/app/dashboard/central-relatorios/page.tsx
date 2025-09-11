@@ -107,7 +107,7 @@ async function detectarUsuarioValido(): Promise<string | null> {
       console.log(`🔍 [AUTH] Testando email: ${email}`);
       
       const response = await fetch('/api/user/profile', {
-        headers: { 'x-user-email': email }
+        credentials: 'include'
       });
       
       if (response.ok) {
@@ -150,20 +150,9 @@ async function setupAuthInterceptor() {
   // Configurar interceptor global
   const originalFetch = window.fetch;
   window.fetch = function(url: string, options: RequestInit = {}) {
-    
-    // Adicionar header de autenticação para todas as APIs
     if (url.includes('/api/')) {
-      options.headers = {
-        ...options.headers,
-        'x-user-email': userEmail
-      };
-      
-      // Log apenas para APIs de relatórios (evitar spam)
-      if (url.includes('relatorio')) {
-        console.log(`🔑 [AUTH] Request autenticado: ${url.split('/').pop()} (${userEmail})`);
-      }
+      options.credentials = 'include';
     }
-    
     return originalFetch(url, options);
   };
   
@@ -191,7 +180,7 @@ async function trocarUsuario(novoEmail: string) {
     console.log(`🔄 [AUTH] Testando novo usuário: ${novoEmail}`);
     
     const response = await fetch('/api/user/profile', {
-      headers: { 'x-user-email': novoEmail }
+      credentials: 'include'
     });
     
     if (response.ok) {

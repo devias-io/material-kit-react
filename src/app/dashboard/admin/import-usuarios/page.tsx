@@ -116,9 +116,9 @@ export default function ImportUsuariosPage() {
         try {
           const response = await fetch('/api/admin/bulk-import', {
             method: 'POST',
+            credentials: 'include',
             headers: {
-              'Content-Type': 'application/json',
-              'x-user-email': 'admin@fatosdobolsa.com'
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({ users: batch })
           });

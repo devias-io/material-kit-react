@@ -123,27 +123,22 @@ function AdminRelatorioSemanal() {
     setError(null);
     
     try {
-      const token = 'fake-admin-token';
-      const userEmail = 'admin@fatosdobolsa.com';
       const method = relatorio.id ? 'PUT' : 'POST';
       
       console.log('📤 [DEBUG] Preparando requisição:', {
         method,
         url: '/api/relatorio-semanal',
         headers: {
-          'Content-Type': 'application/json',
-          'authorization': `Bearer ${token}`,
-          'x-user-email': userEmail
+          'Content-Type': 'application/json'
         },
         bodySize: JSON.stringify(relatorio).length
       });
       
       const response = await fetch('/api/relatorio-semanal', {
         method,
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'authorization': `Bearer ${token}`,
-          'x-user-email': userEmail
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(relatorio)
       });
@@ -184,17 +179,14 @@ function AdminRelatorioSemanal() {
     
     try {
       const publishedReport = { ...relatorio, status: 'published' as const };
-      const token = 'fake-admin-token';
-      const userEmail = 'admin@fatosdobolsa.com';
-      
+
       console.log('📤 [DEBUG] Dados para publicação:', publishedReport);
       
       const response = await fetch('/api/relatorio-semanal', {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'authorization': `Bearer ${token}`,
-          'x-user-email': userEmail
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(publishedReport)
       });
