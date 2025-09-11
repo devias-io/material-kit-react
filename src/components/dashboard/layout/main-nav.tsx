@@ -88,7 +88,6 @@ export function MainNav(): React.JSX.Element {
   const notificationPopover = usePopover<HTMLButtonElement>();
   const router = useRouter();
   
-  const { user, checkSession } = useUser();
   const [userAvatar, setUserAvatar] = React.useState<string>('/assets/avatar.png');
   const avatarRef = React.useRef(userAvatar);
   React.useEffect(() => {
@@ -116,27 +115,6 @@ export function MainNav(): React.JSX.Element {
       console.error('Erro ao carregar avatar:', error);
     }
   }, [user]);
-
-  // Reage apenas a eventos de atualização do storage
-  React.useEffect(() => {
-    const handleStorage = () => {
-      try {
-        const userData = localStorage.getItem('user-data');
-        if (userData) {
-          const parsed = JSON.parse(userData);
-          if (parsed.avatar && parsed.avatar !== avatarRef.current) {
-            setUserAvatar(parsed.avatar);
-            checkSession?.();
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao processar evento storage:', error);
-      }
-    };
-
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, [checkSession]);
 
   const handleAtivoSelect = (ativo) => {
     if (ativo) {

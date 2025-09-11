@@ -12,13 +12,10 @@ import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Grid from '@mui/material/Unstable_Grid2';
 import Alert from '@mui/material/Alert';
+import { useUser } from '@/hooks/use-user';
 
-interface AccountDetailsFormProps {
-  user: any;
-  onUpdate: (data: any) => void;
-}
-
-export function AccountDetailsForm({ user, onUpdate }: AccountDetailsFormProps): React.JSX.Element {
+export function AccountDetailsForm(): React.JSX.Element {
+  const { user, refreshProfile } = useUser();
   const [loading, setLoading] = React.useState(false);
   const [success, setSuccess] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -59,21 +56,7 @@ export function AccountDetailsForm({ user, onUpdate }: AccountDetailsFormProps):
       });
 
       if (response.ok) {
-        const data = await response.json();
-        onUpdate({
-          firstName: formData.firstName,
-          lastName: formData.lastName
-        });
-        
-        // Atualizar localStorage também
-        const userData = localStorage.getItem('user-data');
-        if (userData) {
-          const parsedUser = JSON.parse(userData);
-          parsedUser.firstName = formData.firstName;
-          parsedUser.lastName = formData.lastName;
-          localStorage.setItem('user-data', JSON.stringify(parsedUser));
-        }
-        
+        await refreshProfile?.();
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
       } else {
