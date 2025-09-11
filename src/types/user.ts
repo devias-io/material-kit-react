@@ -9,5 +9,7 @@ export interface User {
   customPermissions?: string[];  // ← Adicionado customPermissions
   status?: 'ACTIVE' | 'INACTIVE' | 'PENDING';  // ← Adicionado status
   expirationDate?: string;  // ← Adicionado expirationDate
+  createdAt?: string;
+  totalPurchases?: number;
   [key: string]: unknown;
 }
