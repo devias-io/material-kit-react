@@ -73,13 +73,9 @@ export default function CentralDuvidas() {
   // Carregar perguntas reais da API
   const loadQuestions = async () => {
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const response = await fetch('/api/questions', {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         }
       });
@@ -110,14 +106,10 @@ export default function CentralDuvidas() {
 
     setSubmitting(true);
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const response = await fetch('/api/questions', {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(newQuestion)
@@ -142,14 +134,10 @@ export default function CentralDuvidas() {
   // Fechar dúvida
   const handleCloseQuestion = async (questionId: string) => {
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const response = await fetch(`/api/questions/${questionId}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ status: 'FECHADA' })

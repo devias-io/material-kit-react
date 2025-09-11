@@ -34,13 +34,7 @@ export function useNotifications(): UseNotificationsReturn {
 
   // Função para verificar se está autenticado
   const isAuthenticated = useCallback(() => {
-    const token = localStorage.getItem('custom-auth-token');
-    const userEmail = localStorage.getItem('user-email');
-    const hasTokens = Boolean(token && userEmail);
-    
-    console.log('isAuthenticated check:', { hasTokens, token: token?.substring(0, 10) });
-    
-    return hasTokens;
+    return true;
   }, []);
 
   // Função para limpar estado quando não autenticado
@@ -52,16 +46,7 @@ export function useNotifications(): UseNotificationsReturn {
   }, []);
 
   const getAuthHeaders = useCallback(() => {
-    const token = localStorage.getItem('custom-auth-token');
-    const userEmail = localStorage.getItem('user-email');
-    
-    if (!token || !userEmail) {
-      throw new Error('Authentication required');
-    }
-
     return {
-      'Authorization': `Bearer ${token}`,
-      'X-User-Email': userEmail,
       'Content-Type': 'application/json'
     };
   }, []);
@@ -80,6 +65,7 @@ export function useNotifications(): UseNotificationsReturn {
 
       const headers = getAuthHeaders();
       const response = await fetch('/api/notifications', {
+        credentials: 'include',
         headers
       });
 
@@ -128,6 +114,7 @@ export function useNotifications(): UseNotificationsReturn {
       const headers = getAuthHeaders();
       const response = await fetch(`/api/notifications/${id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers
       });
 
@@ -167,6 +154,7 @@ export function useNotifications(): UseNotificationsReturn {
       const headers = getAuthHeaders();
       const response = await fetch('/api/notifications/mark-all-read', {
         method: 'PUT',
+        credentials: 'include',
         headers
       });
 
@@ -203,6 +191,7 @@ export function useNotifications(): UseNotificationsReturn {
       const headers = getAuthHeaders();
       const response = await fetch(`/api/notifications/${id}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers
       });
 

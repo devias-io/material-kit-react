@@ -99,9 +99,6 @@ export default function SearchComponent({ isAdmin = false, onResultClick }: Sear
     setError('');
 
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-
       const params = new URLSearchParams({
         q: searchQuery,
         category,
@@ -111,9 +108,8 @@ export default function SearchComponent({ isAdmin = false, onResultClick }: Sear
       });
 
       const response = await fetch(`/api/questions/search?${params.toString()}`, {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         }
       });

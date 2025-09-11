@@ -247,21 +247,12 @@ const api = {
     try {
       if (typeof window === 'undefined') return [];
       
-      const userEmail = localStorage.getItem('user-email');
-      const token = localStorage.getItem('custom-auth-token');
-      
-      if (!userEmail || !token) {
-        console.log('⚠️ Credenciais não encontradas');
-        return [];
-      }
-      
-      console.log(`🔄 API: Buscando ${carteira} para ${userEmail}`);
-      
+      console.log(`🔄 API: Buscando ${carteira}`);
+
       const response = await fetch(`/api/meus-ativos/${carteira}`, {
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'x-user-email': userEmail, // 🔥 CORRIGIDO: minúsculo!
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         }
       });
       
@@ -283,15 +274,11 @@ const api = {
     try {
       if (typeof window === 'undefined') throw new Error('Server-side não suportado');
       
-      const userEmail = localStorage.getItem('user-email');
-      const token = localStorage.getItem('custom-auth-token');
-      
       const response = await fetch(`/api/meus-ativos/${carteira}`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'x-user-email': userEmail || '', // 🔥 CORRIGIDO: minúsculo!
-          'Authorization': `Bearer ${token || ''}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(dados)
       });
@@ -311,15 +298,11 @@ const api = {
     try {
       if (typeof window === 'undefined') throw new Error('Server-side não suportado');
       
-      const userEmail = localStorage.getItem('user-email');
-      const token = localStorage.getItem('custom-auth-token');
-      
       const response = await fetch(`/api/meus-ativos/${carteira}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'x-user-email': userEmail || '', // 🔥 CORRIGIDO: minúsculo!
-          'Authorization': `Bearer ${token || ''}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ id, ...dados })
       });
@@ -339,15 +322,11 @@ const api = {
     try {
       if (typeof window === 'undefined') throw new Error('Server-side não suportado');
       
-      const userEmail = localStorage.getItem('user-email');
-      const token = localStorage.getItem('custom-auth-token');
-      
       const response = await fetch(`/api/meus-ativos/${carteira}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'x-user-email': userEmail || '', // 🔥 CORRIGIDO: minúsculo!
-          'Authorization': `Bearer ${token || ''}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ id })
       });
@@ -367,15 +346,11 @@ const api = {
     try {
       if (typeof window === 'undefined') throw new Error('Server-side não suportado');
       
-      const userEmail = localStorage.getItem('user-email');
-      const token = localStorage.getItem('custom-auth-token');
-      
       const response = await fetch(`/api/meus-ativos/${carteira}/reorder`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'x-user-email': userEmail || '', // 🔥 CORRIGIDO: minúsculo!
-          'Authorization': `Bearer ${token || ''}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ novosAtivos })
       });
@@ -458,15 +433,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
 
   // 🔥 VERIFICAÇÃO DE AUTENTICAÇÃO SIMPLES
   const isAuthenticated = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    
-    try {
-      const userEmail = localStorage.getItem('user-email');
-      const token = localStorage.getItem('custom-auth-token');
-      return !!(userEmail && token && userEmail.includes('@'));
-    } catch {
-      return false;
-    }
+    return !!user?.id;
   }, [user?.id]);
 
   // 🔥 REACT QUERIES SIMPLIFICADAS COM ENABLED CORRETO
@@ -1072,7 +1039,6 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       cotacaoUSD,
       credenciais: {
         hasEmail: !!localStorage.getItem('user-email'),
-        hasToken: !!localStorage.getItem('custom-auth-token'),
         email: localStorage.getItem('user-email')
       }
     });

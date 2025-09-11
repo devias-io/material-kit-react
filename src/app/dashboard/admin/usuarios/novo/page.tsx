@@ -48,14 +48,10 @@ export default function NovoUsuarioPage() {
     setError(null);
 
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-
       const response = await fetch('/api/admin/users', {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail || '',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(formData)

@@ -74,15 +74,11 @@ export function AccountSecurity({ user }: AccountSecurityProps): React.JSX.Eleme
     setSuccess(false);
 
     try {
-      const userEmail = localStorage.getItem('user-email');
-      const token = localStorage.getItem('custom-auth-token');
-
       const response = await fetch('/api/auth/change-password', {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Email': userEmail || '',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(formData)
       });

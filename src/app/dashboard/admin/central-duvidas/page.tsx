@@ -230,19 +230,15 @@ export default function AdminCentralDuvidas() {
 
   const loadQuestions = async () => {
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const params = new URLSearchParams();
       if (filters.status) params.append('status', filters.status);
       if (filters.category) params.append('category', filters.category);
       // IMPORTANTE: Filtrar apenas perguntas reais (não FAQs virtuais)
       params.append('excludeVirtual', 'true');
-      
+
       const response = await fetch(`/api/questions?${params.toString()}`, {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         }
       });
@@ -260,13 +256,9 @@ export default function AdminCentralDuvidas() {
 
   const loadStats = async () => {
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const response = await fetch('/api/questions/stats', {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         }
       });
@@ -285,16 +277,13 @@ export default function AdminCentralDuvidas() {
   const loadFAQs = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
+
       const params = new URLSearchParams();
       if (faqFilters.category) params.append('category', faqFilters.category);
-      
+
       const response = await fetch(`/api/faq?${params.toString()}`, {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         }
       });
@@ -321,14 +310,10 @@ export default function AdminCentralDuvidas() {
 
     setCreatingFaq(true);
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const response = await fetch('/api/faq/create', {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(createFaqData)
@@ -359,19 +344,15 @@ export default function AdminCentralDuvidas() {
   const loadTemplates = async (questionCategory?: string) => {
     setLoadingTemplates(true);
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const params = new URLSearchParams();
       params.append('isActive', 'true');
       if (questionCategory) {
         params.append('category', questionCategory);
       }
-      
+
       const response = await fetch(`/api/response-templates?${params.toString()}`, {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         }
       });
@@ -391,14 +372,10 @@ export default function AdminCentralDuvidas() {
 
   const handleUseTemplate = async (template: ResponseTemplate) => {
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       await fetch(`/api/response-templates/${template.id}/use`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         }
       });
@@ -422,14 +399,10 @@ export default function AdminCentralDuvidas() {
     if (!selectedAnswer) return;
 
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const response = await fetch(`/api/answers/${selectedAnswer.id}/faq`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -478,14 +451,10 @@ export default function AdminCentralDuvidas() {
 
     setSubmitting(true);
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const response = await fetch(`/api/questions/${selectedQuestion.id}/answers`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -512,14 +481,10 @@ export default function AdminCentralDuvidas() {
 
   const handleStatusChange = async (questionId: string, newStatus: string) => {
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const response = await fetch(`/api/questions/${questionId}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ status: newStatus })

@@ -2062,12 +2062,9 @@ useEffect(() => {
       console.log('🔄 Carregando relatórios da API...');
       setLoading(true);
       
-      // ✅ ADICIONAR HEADERS DE AUTENTICAÇÃO
       const response = await fetch('/api/relatorio-semanal?admin=true', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('custom-auth-token')}`,
-          'X-User-Email': localStorage.getItem('user-email')}
+        credentials: 'include',
       });
       
       if (!response.ok) {
@@ -2137,14 +2134,10 @@ const saveRelatorio = useCallback(async (relatorio: RelatorioSemanalData) => {
     console.log('💾 Salvando relatório na API...', relatorio);
     
     // ADICIONAR headers de autenticação
-    const token = localStorage.getItem('custom-auth-token');
-    const userEmail = localStorage.getItem('user-email');
-    
     const response = await fetch('/api/relatorio-semanal', {
       method: 'POST',
+      credentials: 'include',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'X-User-Email': userEmail,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(relatorio)
@@ -2202,9 +2195,6 @@ const deleteRelatorio = useCallback(async (id: string) => {
   try {
     console.log('🗑️ Iniciando exclusão do relatório:', id);
     
-    const token = localStorage.getItem('custom-auth-token');
-    const userEmail = localStorage.getItem('user-email');
-    
     // Encontrar o relatório
     const relatorio = relatorios.find(r => r.id === id);
     if (!relatorio) {
@@ -2219,9 +2209,8 @@ const deleteRelatorio = useCallback(async (id: string) => {
       
       const unpublishResponse = await fetch('/api/relatorio-semanal', {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(relatorioRascunho)
@@ -2239,9 +2228,8 @@ const deleteRelatorio = useCallback(async (id: string) => {
     
     const deleteResponse = await fetch(`/api/relatorio-semanal?id=${id}`, {
       method: 'DELETE',
+      credentials: 'include',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'X-User-Email': userEmail,
         'Content-Type': 'application/json'
       }
     });

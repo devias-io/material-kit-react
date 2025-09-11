@@ -114,16 +114,12 @@ export default function EditUserPage() {
   const loadUser = async () => {
     try {
       setLoading(true);
-      
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
+
       console.log('🔍 Debug - Carregando usuário e compras:', userId);
-      
+
       const response = await fetch(`/api/admin/users/${userId}`, {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail || '',
           'Content-Type': 'application/json'
         }
       });
@@ -154,15 +150,11 @@ export default function EditUserPage() {
 
     try {
       setSaving(true);
-      
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
 
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail || '',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(user)
@@ -183,14 +175,10 @@ export default function EditUserPage() {
 
   const handleDelete = async () => {
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail || '',
           'Content-Type': 'application/json'
         }
       });

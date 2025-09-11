@@ -85,13 +85,6 @@ export default function PublicFAQ() {
   const loadFAQs = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
-      if (!token || !userEmail) {
-        setError('Acesso não autorizado');
-        return;
-      }
 
       const params = new URLSearchParams();
       
@@ -100,9 +93,8 @@ export default function PublicFAQ() {
       }
 
       const response = await fetch(`/api/faq?${params.toString()}`, {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         }
       });

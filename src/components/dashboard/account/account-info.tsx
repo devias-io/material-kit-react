@@ -54,15 +54,11 @@ export function AccountInfo({ user, onUpdate }: AccountInfoProps): React.JSX.Ele
         const avatarData = e.target?.result as string;
         
         // Atualizar no servidor
-        const userEmail = localStorage.getItem('user-email');
-        const token = localStorage.getItem('custom-auth-token');
-
         const response = await fetch('/api/user/profile', {
           method: 'PUT',
+          credentials: 'include',
           headers: {
-            'Content-Type': 'application/json',
-            'X-User-Email': userEmail || '',
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             firstName: user.firstName,

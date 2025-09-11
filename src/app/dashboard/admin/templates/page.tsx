@@ -126,17 +126,13 @@ export default function AdminTemplatesManager() {
 
   const loadTemplates = async () => {
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const params = new URLSearchParams();
       if (filters.category) params.append('category', filters.category);
       if (filters.isActive) params.append('isActive', filters.isActive);
-      
+
       const response = await fetch(`/api/response-templates?${params.toString()}`, {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         }
       });
@@ -154,13 +150,9 @@ export default function AdminTemplatesManager() {
 
   const loadStats = async () => {
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const response = await fetch('/api/response-templates/stats', {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         }
       });
@@ -187,10 +179,7 @@ export default function AdminTemplatesManager() {
 
     setSubmitting(true);
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
-      const url = editingTemplate 
+      const url = editingTemplate
         ? `/api/response-templates/${editingTemplate.id}`
         : '/api/response-templates';
       
@@ -198,9 +187,8 @@ export default function AdminTemplatesManager() {
       
       const response = await fetch(url, {
         method,
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(formData)
@@ -226,14 +214,10 @@ export default function AdminTemplatesManager() {
     if (!confirm('Tem certeza que deseja excluir este template?')) return;
 
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const response = await fetch(`/api/response-templates/${templateId}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         }
       });
@@ -252,14 +236,10 @@ export default function AdminTemplatesManager() {
   // Alterar status ativo/inativo
   const handleToggleActive = async (template: ResponseTemplate) => {
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       const response = await fetch(`/api/response-templates/${template.id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ isActive: !template.isActive })
