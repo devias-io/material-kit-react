@@ -4,6 +4,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { auth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
@@ -60,39 +61,20 @@ function registrarAcessoAuditoria(auditData: AuditLog) {
   }
 }
 
-// ✅ FUNÇÃO DE AUTENTICAÇÃO (igual ao /api/user/me)
-async function getAuthenticatedUser(request: NextRequest) {
+// ✅ FUNÇÃO DE AUTENTICAÇÃO UTILIZANDO COOKIES
+async function getAuthenticatedUser(_request: NextRequest) {
   try {
-    debugLog('🔍 Iniciando autenticação...');
-    
-    const userEmail = request.headers.get('x-user-email');
-    debugLog('🔍 Email do header:', userEmail);
-    
-    if (!userEmail) {
-      debugLog('❌ Email não fornecido');
-      return null;
-    }
+    debugLog('🔍 Iniciando autenticação via cookies...');
 
-    // Buscar no banco de dados
-    debugLog('🔍 Buscando usuário no banco...');
-    const user = await prisma.user.findUnique({
-      where: { email: userEmail },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        plan: true,
-        status: true
-      }
-    });
+    const session = await auth();
+    const user = session?.user;
 
     if (!user) {
-      debugLog('❌ Usuário não encontrado no banco');
+      debugLog('❌ Usuário não autenticado');
       return null;
     }
 
-    debugLog('✅ Usuário encontrado:', user.email);
+    debugLog('✅ Usuário autenticado:', user.email);
     return user;
   } catch (error) {
     debugLog('❌ Erro na autenticação:', error);
