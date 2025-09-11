@@ -40,7 +40,7 @@ export function UserProvider({ children }: UserProviderProps): React.JSX.Element
 
   const checkSession = React.useCallback(async (): Promise<void> => {
     try {
-
+      const response = await fetch('/api/auth/me', { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         if (data.user) {
