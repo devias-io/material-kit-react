@@ -31,7 +31,8 @@ export async function auth() {
         plan: true,
         status: true,
         expirationDate: true,
-        customPermissions: true
+        customPermissions: true,
+        avatar: true
       }
     })
 
@@ -60,6 +61,7 @@ export async function auth() {
         name: `${user.firstName} ${user.lastName}`,
         email: user.email,
         plan: user.plan,
+        avatar: user.avatar,
         canUploadPortfolio: hasVipAccess,
         hasVipAccess
       }
