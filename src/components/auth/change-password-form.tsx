@@ -62,9 +62,9 @@ export function ChangePasswordForm({ userEmail, onSuccess }: ChangePasswordFormP
       try {
         const response = await fetch('/api/auth/change-password', {
           method: 'POST',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
-            'X-User-Email': userEmail || '',
           },
           body: JSON.stringify(values),
         });

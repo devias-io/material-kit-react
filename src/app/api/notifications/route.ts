@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { auth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
@@ -7,20 +8,13 @@ const prisma = new PrismaClient();
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userEmail = request.headers.get('X-User-Email');
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const session = await auth();
 
-    if (!userEmail || !token) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: userEmail }
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const user = session.user;
 
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -79,18 +73,15 @@ export async function GET(request: NextRequest) {
 // POST - Criar nova notificação (para admins)
 export async function POST(request: NextRequest) {
   try {
-    const userEmail = request.headers.get('X-User-Email');
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const session = await auth();
 
-    if (!userEmail || !token) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: userEmail }
-    });
+    const user = session.user;
 
-    if (!user || user.plan !== 'ADMIN') {
+    if (user.plan !== 'ADMIN') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
