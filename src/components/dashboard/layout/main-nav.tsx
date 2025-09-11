@@ -87,6 +87,7 @@ export function MainNav(): React.JSX.Element {
   const userPopover = usePopover<HTMLDivElement>();
   const notificationPopover = usePopover<HTMLButtonElement>();
   const router = useRouter();
+  const { user } = useUser(); // ← ADICIONE ESTA LINHA
   
   const [userAvatar, setUserAvatar] = React.useState<string>('/assets/avatar.png');
   const avatarRef = React.useRef(userAvatar);
