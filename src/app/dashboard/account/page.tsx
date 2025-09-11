@@ -18,15 +18,8 @@ export default function Page(): React.JSX.Element {
   React.useEffect(() => {
     const loadUserProfile = async () => {
       try {
-        const userEmail = localStorage.getItem('user-email');
-        const token = localStorage.getItem('custom-auth-token');
-        if (!userEmail || !token) return;
-
         const response = await fetch('/api/user/profile', {
-          headers: {
-            'X-User-Email': userEmail,
-            'Authorization': `Bearer ${token}`
-          }
+          credentials: 'include'
         });
 
         if (response.ok) {
@@ -47,18 +40,11 @@ export default function Page(): React.JSX.Element {
 
   const handleProfileUpdate = async (updatedData: any) => {
     try {
-      const userEmail = localStorage.getItem('user-email');
-      const token = localStorage.getItem('custom-auth-token');
-      
-      if (!userEmail) return;
-
-      // Salvar no banco via API
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'X-User-Email': userEmail,
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(updatedData)
       });

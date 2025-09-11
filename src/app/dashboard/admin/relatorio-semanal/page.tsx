@@ -9,17 +9,8 @@ export default function AdminRelatorioPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Verificar apenas se tem tokens básicos de autenticação
-    const token = localStorage.getItem('custom-auth-token');
-    const userEmail = localStorage.getItem('user-email');
-    
-    if (!token || !userEmail) {
-      router.push('/login');
-      return;
-    }
-    
     setLoading(false);
-  }, [router]);
+  }, []);
 
   if (loading) {
     return (

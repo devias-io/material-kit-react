@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import { cookies } from 'next/headers';
 
 // Função para tentar auth server-side primeiro, depois fallback
 async function getUserId(req: NextRequest): Promise<string | null> {
@@ -21,27 +20,17 @@ async function getUserId(req: NextRequest): Promise<string | null> {
     // Se vier um token no header, use ele
     return 'user_from_token';
   }
-  // Se tudo falhar, usar o usuário admin logado
-  const cookieStore = cookies();
-  const hasAuthToken = cookieStore.get('custom-auth-token');
-  
-  if (hasAuthToken) {
-    // Usuário está logado via client-side, vamos usar um ID baseado no email
-    // Buscar usuário admin no banco
-    const adminUser = await prisma.user.findFirst({
-      where: { 
-        OR: [
-          { email: 'jacbdias@gmail.com' },
-          { plan: 'ADMIN' }
-        ]
-      }
-    });
-    
-    if (adminUser) {
-      return adminUser.id;
+  // Se tudo falhar, tentar usar um usuário admin como fallback
+  const adminUser = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: 'jacbdias@gmail.com' },
+        { plan: 'ADMIN' }
+      ]
     }
-  }
-  return null;
+  });
+
+  return adminUser?.id || null;
 }
 
 export async function POST(req: NextRequest) {

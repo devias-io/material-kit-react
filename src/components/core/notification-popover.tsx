@@ -103,14 +103,10 @@ export function NotificationPopover({
     if (!notification.read) {
       try {
         setLocalLoading(true);
-        const token = localStorage.getItem('custom-auth-token');
-        const userEmail = localStorage.getItem('user-email');
-        
         await fetch(`/api/notifications/${notification.id}`, {
           method: 'PUT',
+          credentials: 'include',
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'X-User-Email': userEmail || '',
             'Content-Type': 'application/json'
           }
         });
@@ -135,14 +131,10 @@ export function NotificationPopover({
     
     try {
       setLocalLoading(true);
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       await fetch(`/api/notifications/${notificationId}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail || '',
           'Content-Type': 'application/json'
         }
       });
@@ -162,14 +154,10 @@ export function NotificationPopover({
     
     try {
       setLocalLoading(true);
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       await fetch(`/api/notifications/${notificationId}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail || '',
           'Content-Type': 'application/json'
         }
       });
@@ -187,14 +175,10 @@ export function NotificationPopover({
   const handleMarkAllAsRead = async () => {
     try {
       setLocalLoading(true);
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
       await fetch('/api/notifications/mark-all-read', {
         method: 'PUT',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-User-Email': userEmail || '',
           'Content-Type': 'application/json'
         }
       });

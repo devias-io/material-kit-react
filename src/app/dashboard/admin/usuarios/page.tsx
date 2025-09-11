@@ -67,25 +67,11 @@ export default function AdminUsersPage() {
       setError(null);
       
       console.log('🔄 Iniciando carregamento de usuários...');
-      
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
-      console.log('📋 Dados de autenticação:', { 
-        hasToken: !!token, 
-        userEmail,
-        tokenLength: token?.length 
-      });
-      
-      if (!userEmail) {
-        throw new Error('Email do usuário não encontrado. Faça login novamente.');
-      }
-      
+
       const response = await fetch('/api/admin/users', {
         method: 'GET',
+        credentials: 'include',
         headers: {
-          'authorization': `Bearer ${token || ''}`,
-          'x-user-email': userEmail,
           'content-type': 'application/json',
           'Accept': 'application/json'
         }
@@ -147,14 +133,10 @@ export default function AdminUsersPage() {
     if (!confirm(`Tem certeza que deseja excluir o usuário "${userName}"?`)) return;
 
     try {
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token || ''}`,
-          'x-user-email': userEmail || '',
           'Content-Type': 'application/json'
         }
       });
@@ -250,11 +232,9 @@ export default function AdminUsersPage() {
 
   // Debug info para desenvolvimento
   const debugInfo = React.useMemo(() => {
-    const token = localStorage.getItem('custom-auth-token');
     const userEmail = localStorage.getItem('user-email');
-    
+
     return {
-      hasToken: !!token,
       userEmail,
       currentUser: user,
       usersCount: users.length,

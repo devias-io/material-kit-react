@@ -138,30 +138,24 @@ const { notifications, unreadCount } = useNotifications();
   React.useEffect(() => {
     const syncWithDatabase = async () => {
       try {
-        const token = localStorage.getItem('custom-auth-token');
-        const userEmail = localStorage.getItem('user-email');
-        
-        if (token && userEmail) {
-          const response = await fetch('/api/user/profile', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'X-User-Email': userEmail,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (response.ok) {
-            const userData = await response.json();
-            if (userData.user?.avatar && userData.user.avatar !== userAvatar) {
-              console.log('🔄 MainNav: Sincronizando do banco');
-              setUserAvatar(userData.user.avatar);
-              
-              // Atualizar localStorage também
-              const currentUserData = localStorage.getItem('user-data') || '{}';
-              const parsedUserData = JSON.parse(currentUserData);
-              parsedUserData.avatar = userData.user.avatar;
-              localStorage.setItem('user-data', JSON.stringify(parsedUserData));
-            }
+        const response = await fetch('/api/user/profile', {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          if (userData.user?.avatar && userData.user.avatar !== userAvatar) {
+            console.log('🔄 MainNav: Sincronizando do banco');
+            setUserAvatar(userData.user.avatar);
+
+            // Atualizar localStorage também
+            const currentUserData = localStorage.getItem('user-data') || '{}';
+            const parsedUserData = JSON.parse(currentUserData);
+            parsedUserData.avatar = userData.user.avatar;
+            localStorage.setItem('user-data', JSON.stringify(parsedUserData));
           }
         }
       } catch (error) {
@@ -171,7 +165,7 @@ const { notifications, unreadCount } = useNotifications();
 
     // Verificar a cada 10 segundos
     const interval = setInterval(syncWithDatabase, 10000);
-    
+
     return () => clearInterval(interval);
   }, [userAvatar]);
 

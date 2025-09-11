@@ -143,18 +143,10 @@ export default function RenovacoesDashboard() {
       
       console.log('🔄 Buscando dados reais da API de usuários...');
       
-      const token = localStorage.getItem('custom-auth-token');
-      const userEmail = localStorage.getItem('user-email');
-      
-      if (!userEmail) {
-        throw new Error('Email do usuário não encontrado. Faça login novamente.');
-      }
-      
       const response = await fetch('/api/admin/users', {
         method: 'GET',
+        credentials: 'include',
         headers: {
-          'authorization': `Bearer ${token || ''}`,
-          'x-user-email': userEmail,
           'content-type': 'application/json',
           'Accept': 'application/json'
         }
