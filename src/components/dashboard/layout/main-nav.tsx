@@ -88,58 +88,33 @@ export function MainNav(): React.JSX.Element {
   const notificationPopover = usePopover<HTMLButtonElement>();
   const router = useRouter();
   
-  const { user, refreshProfile } = useUser();
   const [userAvatar, setUserAvatar] = React.useState<string>('/assets/avatar.png');
+  const avatarRef = React.useRef(userAvatar);
+  React.useEffect(() => {
+    avatarRef.current = userAvatar;
+  }, [userAvatar]);
   
   const ativos = useAtivos();
-const { notifications, unreadCount } = useNotifications();
+  const { notifications, unreadCount } = useNotifications();
 
-  // Verificar localStorage para avatar
+  // Atualiza avatar quando o usuário do contexto muda
   React.useEffect(() => {
-    const checkAvatar = () => {
-      try {
-        // Primeiro tentar do contexto user
-        if (user?.avatar) {
-          setUserAvatar(user.avatar);
-          return;
-        }
-
-        // Depois tentar do localStorage
+    try {
+      if (user?.avatar) {
+        setUserAvatar(user.avatar);
+      } else {
         const userData = localStorage.getItem('user-data');
         if (userData) {
           const parsed = JSON.parse(userData);
-          if (parsed.avatar && parsed.avatar !== userAvatar) {
-            console.log('🔄 MainNav: Avatar atualizado');
+          if (parsed.avatar) {
             setUserAvatar(parsed.avatar);
           }
         }
-      } catch (error) {
-        console.error('Erro ao verificar avatar:', error);
       }
-    };
-
-    // Verificar imediatamente
-    checkAvatar();
-    
-    // Verificar a cada 1 segundo
-    const interval = setInterval(checkAvatar, 1000);
-    
-    // NOVO: Escutar evento storage
-    window.addEventListener('storage', checkAvatar);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', checkAvatar);
-    };
-  }, [user, userAvatar]);
-
-  // Sincronizar com o servidor periodicamente
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      refreshProfile?.();
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [refreshProfile]);
+    } catch (error) {
+      console.error('Erro ao carregar avatar:', error);
+    }
+  }, [user]);
 
   const handleAtivoSelect = (ativo) => {
     if (ativo) {

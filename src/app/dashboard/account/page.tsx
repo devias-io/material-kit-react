@@ -10,7 +10,6 @@ import { AccountSubscription } from '@/components/dashboard/account/account-subs
 import { useUser } from '@/hooks/use-user';
 
 export default function Page(): React.JSX.Element {
-  const { user, isLoading } = useUser();
 
   if (isLoading || !user) {
     return (
@@ -36,15 +35,11 @@ export default function Page(): React.JSX.Element {
       <Grid container spacing={3}>
         <Grid lg={4} md={6} xs={12}>
           <Stack spacing={3}>
-            <AccountInfo />
-            <AccountSubscription />
           </Stack>
         </Grid>
 
         <Grid lg={8} md={6} xs={12}>
           <Stack spacing={3}>
-            <AccountDetailsForm />
-            <AccountSecurity />
           </Stack>
         </Grid>
       </Grid>
