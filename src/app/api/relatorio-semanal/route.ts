@@ -1,11 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { notifyNewReport } from '@/utils/notifications';
+import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const prisma = new PrismaClient();
+
+// Centraliza a autenticação de administradores
+async function authenticateAdmin(request: NextRequest) {
+  const session = await auth();
+
+  if (session?.user) {
+    if (session.user.plan !== 'ADMIN') {
+      return { user: null, status: 403 };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id }
+    });
+
+    return { user, status: user ? 200 : 401 };
+  }
+
+  const userEmail = request.headers.get('X-User-Email');
+  const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+
+  if (!userEmail || !token) {
+    return { user: null, status: 401 };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: userEmail }
+  });
+
+  if (!user || user.plan !== 'ADMIN') {
+    return { user: null, status: 403 };
+  }
+
+  return { user, status: 200 };
+}
 
 // Função para transformar dados do Prisma para o formato esperado pelo React
 function transformPrismaData(relatorio: any) {
@@ -62,20 +97,12 @@ export async function GET(request: NextRequest) {
     const isAdmin = searchParams.get('admin') === 'true';
     
     if (isAdmin) {
-      // ADMIN: Verificar autenticação
-      const userEmail = request.headers.get('X-User-Email');
-      const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+      // ADMIN: Autenticação via cookie (auth) ou headers
+      const { user, status } = await authenticateAdmin(request);
 
-      if (!userEmail || !token) {
-        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-      }
-
-      const user = await prisma.user.findUnique({
-        where: { email: userEmail }
-      });
-
-      if (!user || user.plan !== 'ADMIN') {
-        return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+      if (!user) {
+        const message = status === 401 ? 'Authentication required' : 'Admin access required';
+        return NextResponse.json({ error: message }, { status });
       }
 
       // Buscar todos os relatórios para admin
@@ -123,20 +150,12 @@ export async function GET(request: NextRequest) {
 // POST - Criar/Atualizar relatório (com autenticação)
 export async function POST(request: NextRequest) {
   try {
-    // Verificar autenticação
-    const userEmail = request.headers.get('X-User-Email');
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    // Verificar autenticação via cookie ou headers
+    const { user, status } = await authenticateAdmin(request);
 
-    if (!userEmail || !token) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: userEmail }
-    });
-
-    if (!user || user.plan !== 'ADMIN') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    if (!user) {
+      const message = status === 401 ? 'Authentication required' : 'Admin access required';
+      return NextResponse.json({ error: message }, { status });
     }
 
     const data = await request.json();
@@ -290,20 +309,12 @@ export async function POST(request: NextRequest) {
 // DELETE - Deletar relatório
 export async function DELETE(request: NextRequest) {
   try {
-    // Verificar autenticação
-    const userEmail = request.headers.get('X-User-Email');
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    // Verificar autenticação via cookie ou headers
+    const { user, status } = await authenticateAdmin(request);
 
-    if (!userEmail || !token) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: userEmail }
-    });
-
-    if (!user || user.plan !== 'ADMIN') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    if (!user) {
+      const message = status === 401 ? 'Authentication required' : 'Admin access required';
+      return NextResponse.json({ error: message }, { status });
     }
 
     const { searchParams } = new URL(request.url);
