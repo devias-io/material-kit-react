@@ -10,6 +10,7 @@ import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
+import { useUser } from '@/hooks/use-user';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -23,12 +24,8 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-interface AccountInfoProps {
-  user: any;
-  onUpdate: (data: any) => void;
-}
-
-export function AccountInfo({ user, onUpdate }: AccountInfoProps): React.JSX.Element {
+export function AccountInfo(): React.JSX.Element {
+  const { user, refreshProfile } = useUser();
   const [uploading, setUploading] = React.useState(false);
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,35 +58,14 @@ export function AccountInfo({ user, onUpdate }: AccountInfoProps): React.JSX.Ele
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            firstName: user.firstName,
-            lastName: user.lastName,
+            firstName: user?.firstName,
+            lastName: user?.lastName,
             avatar: avatarData
           })
         });
 
         if (response.ok) {
-          // Atualizar estado local
-          onUpdate({ avatar: avatarData });
-          
-          // Atualizar localStorage
-          let userData = localStorage.getItem('user-data');
-          if (userData) {
-            const parsedUser = JSON.parse(userData);
-            parsedUser.avatar = avatarData;
-            localStorage.setItem('user-data', JSON.stringify(parsedUser));
-          } else {
-            const newUserData = {
-              firstName: user.firstName,
-              lastName: user.lastName,
-              email: user.email,
-              avatar: avatarData
-            };
-            localStorage.setItem('user-data', JSON.stringify(newUserData));
-          }
-          
-          // Disparar evento para outros componentes
-          window.dispatchEvent(new Event('storage'));
-          
+          await refreshProfile?.();
         } else {
           alert('Erro ao fazer upload da foto');
         }

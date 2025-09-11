@@ -8,12 +8,10 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import { useUser } from '@/hooks/use-user';
 
-interface AccountSubscriptionProps {
-  user: any;
-}
-
-export function AccountSubscription({ user }: AccountSubscriptionProps): React.JSX.Element {
+export function AccountSubscription(): React.JSX.Element {
+  const { user } = useUser();
   const isExpired = (expirationDate?: string) => {
     if (!expirationDate) return false;
     return new Date(expirationDate) < new Date();

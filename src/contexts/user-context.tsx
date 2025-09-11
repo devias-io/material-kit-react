@@ -8,6 +8,7 @@ export interface UserContextValue {
   error: string | null;
   isLoading: boolean;
   checkSession?: () => Promise<void>;
+  refreshProfile?: () => Promise<void>;
 }
 
 export const UserContext = React.createContext<UserContextValue | undefined>(undefined);
@@ -22,22 +23,52 @@ export function UserProvider({ children }: UserProviderProps): React.JSX.Element
     error: null,
     isLoading: true,
   });
+  const refreshProfile = React.useCallback(async (): Promise<void> => {
+    try {
+      const response = await fetch('/api/user/profile', { credentials: 'include' });
+      if (response.ok) {
+        const data = await response.json();
+        setState(prev => ({ ...prev, user: data.user ?? prev.user }));
+        if (typeof window !== 'undefined' && data.user) {
+          localStorage.setItem('user-data', JSON.stringify(data.user));
+        }
+      }
+    } catch (err) {
+      logger.error(err);
+    }
+  }, []);
 
   const checkSession = React.useCallback(async (): Promise<void> => {
     try {
+      setState(prev => ({ ...prev, isLoading: true }));
       const response = await fetch('/api/auth/me', { credentials: 'include' });
 
       if (response.ok) {
         const data = await response.json();
-        setState({ user: data.user ?? null, error: null, isLoading: false });
+        if (data.user) {
+          setState({ user: data.user, error: null, isLoading: true });
+          await refreshProfile();
+          setState(prev => ({ ...prev, error: null, isLoading: false }));
+        } else {
+          setState({ user: null, error: null, isLoading: false });
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('user-data');
+          }
+        }
       } else {
         setState({ user: null, error: null, isLoading: false });
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('user-data');
+        }
       }
     } catch (err) {
       logger.error(err);
       setState({ user: null, error: 'Something went wrong', isLoading: false });
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user-data');
+      }
     }
-  }, []);
+  }, [refreshProfile]);
 
   React.useEffect(() => {
     checkSession().catch((err: unknown) => {
@@ -45,7 +76,7 @@ export function UserProvider({ children }: UserProviderProps): React.JSX.Element
     });
   }, [checkSession]);
 
-  return <UserContext.Provider value={{ ...state, checkSession }}>{children}</UserContext.Provider>;
+  return <UserContext.Provider value={{ ...state, checkSession, refreshProfile }}>{children}</UserContext.Provider>;
 }
 
 export const UserConsumer = UserContext.Consumer;

@@ -15,12 +15,10 @@ import Alert from '@mui/material/Alert';
 import FormHelperText from '@mui/material/FormHelperText';
 import { Eye as EyeIcon } from '@phosphor-icons/react/dist/ssr/Eye';
 import { EyeSlash as EyeSlashIcon } from '@phosphor-icons/react/dist/ssr/EyeSlash';
+import { useUser } from '@/hooks/use-user';
 
-interface AccountSecurityProps {
-  user: any;
-}
-
-export function AccountSecurity({ user }: AccountSecurityProps): React.JSX.Element {
+export function AccountSecurity(): React.JSX.Element {
+  useUser();
   const [loading, setLoading] = React.useState(false);
   const [success, setSuccess] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);

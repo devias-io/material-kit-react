@@ -18,7 +18,6 @@ import { usePopover } from '@/hooks/use-popover';
 import { useUser } from '@/hooks/use-user';
 import { useDataStore } from '@/hooks/useDataStore';
 import { useNotifications } from '@/hooks/useNotifications';
-import { authClient } from '@/lib/auth/client';
 import { MobileNav } from './mobile-nav';
 import { UserPopover } from './user-popover';
 import { NotificationPopover } from '@/components/core/notification-popover';
@@ -89,7 +88,7 @@ export function MainNav(): React.JSX.Element {
   const notificationPopover = usePopover<HTMLButtonElement>();
   const router = useRouter();
   
-  const { user } = useUser();
+  const { user, refreshProfile } = useUser();
   const [userAvatar, setUserAvatar] = React.useState<string>('/assets/avatar.png');
   
   const ativos = useAtivos();
@@ -134,40 +133,13 @@ const { notifications, unreadCount } = useNotifications();
     };
   }, [user, userAvatar]);
 
-  // NOVO: Sync entre dispositivos via banco
+  // Sincronizar com o servidor periodicamente
   React.useEffect(() => {
-    const syncWithDatabase = async () => {
-      try {
-        const response = await fetch('/api/user/profile', {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          const userData = await response.json();
-          if (userData.user?.avatar && userData.user.avatar !== userAvatar) {
-            console.log('🔄 MainNav: Sincronizando do banco');
-            setUserAvatar(userData.user.avatar);
-
-            // Atualizar localStorage também
-            const currentUserData = localStorage.getItem('user-data') || '{}';
-            const parsedUserData = JSON.parse(currentUserData);
-            parsedUserData.avatar = userData.user.avatar;
-            localStorage.setItem('user-data', JSON.stringify(parsedUserData));
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao sincronizar:', error);
-      }
-    };
-
-    // Verificar a cada 10 segundos
-    const interval = setInterval(syncWithDatabase, 10000);
-
+    const interval = setInterval(() => {
+      refreshProfile?.();
+    }, 10000);
     return () => clearInterval(interval);
-  }, [userAvatar]);
+  }, [refreshProfile]);
 
   const handleAtivoSelect = (ativo) => {
     if (ativo) {
