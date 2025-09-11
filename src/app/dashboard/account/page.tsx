@@ -10,8 +10,9 @@ import { AccountSubscription } from '@/components/dashboard/account/account-subs
 import { useUser } from '@/hooks/use-user';
 
 export default function Page(): React.JSX.Element {
-
-const { user, isLoading } = useUser();
+  const { user, isLoading } = useUser();
+  
+  if (isLoading || !user) {  // ADICIONE ESTA LINHA
     return (
       <Stack spacing={3}>
         <Typography variant="h4" sx={{ color: '#1E293B', fontWeight: '700' }}>
@@ -20,7 +21,7 @@ const { user, isLoading } = useUser();
       </Stack>
     );
   }
-
+  
   return (
     <Stack spacing={4} sx={{ p: 3 }}>
       <div>
@@ -31,15 +32,19 @@ const { user, isLoading } = useUser();
           Gerencie suas informações pessoais e configurações de segurança
         </Typography>
       </div>
-
+      
       <Grid container spacing={3}>
         <Grid lg={4} md={6} xs={12}>
           <Stack spacing={3}>
+            <AccountInfo />
           </Stack>
         </Grid>
-
+        
         <Grid lg={8} md={6} xs={12}>
           <Stack spacing={3}>
+            <AccountDetailsForm />
+            <AccountSecurity />
+            <AccountSubscription />
           </Stack>
         </Grid>
       </Grid>
