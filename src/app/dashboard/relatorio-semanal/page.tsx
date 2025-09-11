@@ -861,26 +861,7 @@ const CompanyLogo = ({ ticker, fallbackColor, isProvento, temAnalise }: { ticker
         position: 'relative'
       }}>
         {isProvento ? '💰' : '📰'}
-        {/* Badge de análise trimestral */}
-        {temAnalise && (
-          <div style={{
-            position: 'absolute',
-            top: '-4px',
-            right: '-4px',
-            width: '18px',
-            height: '18px',
-            backgroundColor: '#22c55e',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '10px',
-            border: '2px solid white',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-          }}>
-            📊
-          </div>
-        )}
+
       </div>
     );
   }
@@ -928,26 +909,6 @@ const CompanyLogo = ({ ticker, fallbackColor, isProvento, temAnalise }: { ticker
           boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
         }}>
           💰
-        </div>
-      )}
-      {/* Badge de análise trimestral */}
-      {temAnalise && (
-        <div style={{
-          position: 'absolute',
-          top: '-4px',
-          right: '-4px',
-          width: '18px',
-          height: '18px',
-          backgroundColor: '#22c55e',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '10px',
-          border: '2px solid white',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-        }}>
-          📊
         </div>
       )}
     </div>
