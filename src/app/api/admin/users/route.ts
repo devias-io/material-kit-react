@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { enviarEmailCredenciais } from '@/lib/auth/email';
 import { hashPassword, gerarSenhaSegura } from '@/lib/auth/password'; // ✅ ADICIONADO
+import { auth } from '@/lib/auth';
 
 const prisma = new PrismaClient({
   datasourceUrl: process.env.NODE_ENV === 'production' 
@@ -12,30 +13,12 @@ const prisma = new PrismaClient({
 });
 
 // Função de autenticação
-async function verifyAuth(request: NextRequest) {
+async function verifyAuth() {
   try {
-    const userEmail = request.headers.get('x-user-email');
-    const authHeader = request.headers.get('authorization');
-    
-    console.log('🔍 Verificando autenticação:', { userEmail, hasAuth: !!authHeader });
-    
-    if (!userEmail) {
-      console.log('❌ Email não fornecido');
-      return null;
+    const session = await auth();
+    if (session?.user?.plan === 'ADMIN') {
+      return session.user;
     }
-    
-    if (userEmail === 'admin@fatosdobolsa.com') {
-      console.log('✅ Admin verificado:', userEmail);
-      return {
-        id: 'ADM-001',
-        firstName: 'Admin',
-        lastName: 'Sistema',
-        email: userEmail,
-        plan: 'ADMIN'
-      };
-    }
-    
-    console.log('❌ Usuário não autorizado:', userEmail);
     return null;
   } catch (error) {
     console.error('❌ Erro na verificação:', error);
@@ -53,7 +36,7 @@ export async function GET(request: NextRequest) {
     };
     
     // Verificar autenticação
-    const admin = await verifyAuth(request);
+    const admin = await verifyAuth();
     if (!admin) {
       return NextResponse.json(
         { 
@@ -284,7 +267,7 @@ export async function POST(request: NextRequest) {
     };
     
     // Verificar autenticação
-    const admin = await verifyAuth(request);
+    const admin = await verifyAuth();
     if (!admin) {
       return NextResponse.json(
         { 
