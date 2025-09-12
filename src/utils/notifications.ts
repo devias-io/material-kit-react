@@ -80,14 +80,18 @@ actionUrl: `/dashboard/recursos-exclusivos/central-duvidas#${questionId}`,
 }
 
 // Trigger: Quando um novo relatório é criado
-export async function notifyNewReport(reportData: any, createdByAdminName: string) {
+export async function notifyNewReport(
+  reportData: any,
+  createdByAdminName: string,
+  allowedPlans: string[]
+) {
   try {
     // Buscar todos os usuários ativos para notificar
     const activeUsers = await prisma.user.findMany({
       where: {
         status: 'ACTIVE',
         plan: {
-          in: ['VIP', 'LITE', 'LITE_V2', 'RENDA_PASSIVA', 'FIIS', 'AMERICA']
+          in: allowedPlans
         }
       },
       select: {

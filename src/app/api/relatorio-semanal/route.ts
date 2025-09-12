@@ -260,7 +260,11 @@ export async function POST(request: NextRequest) {
     if (wasPublished) {
       try {
         const adminName = `${user.firstName} ${user.lastName}`;
-        await notifyNewReport(relatorio, adminName);
+        await notifyNewReport(
+          relatorio,
+          adminName,
+          ['VIP', 'LITE', 'LITE_V2', 'RENDA_PASSIVA', 'FIIS', 'AMERICA']
+        );
         console.log('Notificações enviadas para usuários sobre novo relatório');
       } catch (notificationError) {
         console.error('Erro ao enviar notificações:', notificationError);
