@@ -205,6 +205,8 @@ export default function AdminCentralDuvidas() {
   const [faqToEdit, setFaqToEdit] = useState<FAQ | null>(null);
   const [editFaqTitle, setEditFaqTitle] = useState('');
   const [editFaqOrder, setEditFaqOrder] = useState(0);
+  const [editFaqContent, setEditFaqContent] = useState('');
+  const [editFaqCategory, setEditFaqCategory] = useState('GERAL');
 
   const [deleteFaqDialogOpen, setDeleteFaqDialogOpen] = useState(false);
   const [faqToDelete, setFaqToDelete] = useState<FAQ | null>(null);
@@ -451,6 +453,8 @@ export default function AdminCentralDuvidas() {
     setFaqToEdit(faq);
     setEditFaqTitle(faq.faqTitle || '');
     setEditFaqOrder(faq.faqOrder || 0);
+    setEditFaqContent(faq.content || '');
+    setEditFaqCategory(faq.question.category || 'GERAL');
     setEditFaqModalOpen(true);
   };
 
@@ -467,7 +471,9 @@ export default function AdminCentralDuvidas() {
         body: JSON.stringify({
           isFaq: true,
           faqTitle: editFaqTitle,
-          faqOrder: editFaqOrder
+          faqOrder: editFaqOrder,
+          content: editFaqContent,
+          category: editFaqCategory
         })
       });
 
@@ -1297,37 +1303,58 @@ export default function AdminCentralDuvidas() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Editar FAQ</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1 }}>
-            <TextField
-              label="Título da FAQ"
-              value={editFaqTitle}
-              onChange={(e) => setEditFaqTitle(e.target.value)}
-              fullWidth
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              label="Ordem de exibição"
-              type="number"
-              value={editFaqOrder}
-              onChange={(e) => setEditFaqOrder(Number(e.target.value))}
-              fullWidth
-              helperText="0 = primeiro, números maiores aparecem depois"
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditFaqModalOpen(false)}>Cancelar</Button>
-          <Button
-            onClick={handleUpdateFaq}
-            variant="contained"
-            disabled={!editFaqTitle.trim()}
-          >
-            Salvar
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DialogTitle>Editar FAQ</DialogTitle>
+      <DialogContent>
+        <Box sx={{ pt: 1 }}>
+          <TextField
+            label="Título da FAQ"
+            value={editFaqTitle}
+            onChange={(e) => setEditFaqTitle(e.target.value)}
+            fullWidth
+            sx={{ mb: 2 }}
+          />
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Categoria</InputLabel>
+            <Select
+              value={editFaqCategory}
+              label="Categoria"
+              onChange={(e) => setEditFaqCategory(e.target.value)}
+            >
+              {Object.entries(categoryLabels).map(([key, label]) => (
+                <MenuItem key={key} value={key}>{label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            label="Ordem de exibição"
+            type="number"
+            value={editFaqOrder}
+            onChange={(e) => setEditFaqOrder(Number(e.target.value))}
+            fullWidth
+            helperText="0 = primeiro, números maiores aparecem depois"
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            label="Conteúdo da FAQ"
+            value={editFaqContent}
+            onChange={(e) => setEditFaqContent(e.target.value)}
+            multiline
+            rows={8}
+            fullWidth
+          />
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setEditFaqModalOpen(false)}>Cancelar</Button>
+        <Button
+          onClick={handleUpdateFaq}
+          variant="contained"
+          disabled={!editFaqTitle.trim() || !editFaqContent.trim()}
+        >
+          Salvar
+        </Button>
+      </DialogActions>
+    </Dialog>
 
       {/* Dialog de Confirmar Exclusão de FAQ */}
       <Dialog
