@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { verifyToken } from '@/utils/auth';
 
 // Função auxiliar de autenticação centralizada
 async function authenticateAdmin(request: NextRequest) {
@@ -21,12 +22,7 @@ async function authenticateAdmin(request: NextRequest) {
         const token = authTokenMatch[1];
         
         try {
-          const jwt = require('jsonwebtoken');
-          const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-            userId: string;
-            email: string;
-            plan: string;
-          };
+          const decoded = verifyToken(token);
           
           const user = await prisma.user.findUnique({
             where: { id: decoded.userId },
