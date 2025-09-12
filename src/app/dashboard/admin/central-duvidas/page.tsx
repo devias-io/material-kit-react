@@ -200,6 +200,14 @@ export default function AdminCentralDuvidas() {
   const [selectedAnswer, setSelectedAnswer] = useState<Answer | null>(null);
   const [faqTitle, setFaqTitle] = useState('');
   const [faqOrder, setFaqOrder] = useState(0);
+
+  const [editFaqModalOpen, setEditFaqModalOpen] = useState(false);
+  const [faqToEdit, setFaqToEdit] = useState<FAQ | null>(null);
+  const [editFaqTitle, setEditFaqTitle] = useState('');
+  const [editFaqOrder, setEditFaqOrder] = useState(0);
+
+  const [deleteFaqDialogOpen, setDeleteFaqDialogOpen] = useState(false);
+  const [faqToDelete, setFaqToDelete] = useState<FAQ | null>(null);
   
   // Estados para criar FAQ
   const [showCreateFaqModal, setShowCreateFaqModal] = useState(false);
@@ -436,6 +444,72 @@ export default function AdminCentralDuvidas() {
       }
     } catch (err) {
       setError('Erro ao alterar status FAQ');
+    }
+  };
+
+  const handleEditFaq = (faq: FAQ) => {
+    setFaqToEdit(faq);
+    setEditFaqTitle(faq.faqTitle || '');
+    setEditFaqOrder(faq.faqOrder || 0);
+    setEditFaqModalOpen(true);
+  };
+
+  const handleUpdateFaq = async () => {
+    if (!faqToEdit) return;
+
+    try {
+      const response = await fetch(`/api/answers/${faqToEdit.id}/faq`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          isFaq: true,
+          faqTitle: editFaqTitle,
+          faqOrder: editFaqOrder
+        })
+      });
+
+      if (response.ok) {
+        setSuccess('FAQ atualizada com sucesso!');
+        setEditFaqModalOpen(false);
+        setFaqToEdit(null);
+        loadFAQs();
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Erro ao atualizar FAQ');
+      }
+    } catch (err) {
+      setError('Erro ao atualizar FAQ');
+    }
+  };
+
+  const handleDeleteFaq = (faq: FAQ) => {
+    setFaqToDelete(faq);
+    setDeleteFaqDialogOpen(true);
+  };
+
+  const confirmDeleteFaq = async () => {
+    if (!faqToDelete) return;
+
+    try {
+      const response = await fetch(`/api/answers/${faqToDelete.id}/faq`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        setSuccess('FAQ removida com sucesso!');
+        setDeleteFaqDialogOpen(false);
+        setFaqToDelete(null);
+        loadFAQs();
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Erro ao remover FAQ');
+      }
+    } catch (err) {
+      setError('Erro ao remover FAQ');
     }
   };
 
@@ -953,13 +1027,17 @@ export default function AdminCentralDuvidas() {
                       <TableCell align="center">
                         <Stack direction="row" spacing={0.5} justifyContent="center">
                           <Tooltip title="Editar">
-                            <IconButton size="small">
+                            <IconButton size="small" onClick={() => handleEditFaq(faq)}>
                               <Edit />
                             </IconButton>
                           </Tooltip>
-                          
+
                           <Tooltip title="Excluir">
-                            <IconButton size="small" color="error">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteFaq(faq)}
+                            >
                               <Delete />
                             </IconButton>
                           </Tooltip>
@@ -1212,9 +1290,65 @@ export default function AdminCentralDuvidas() {
         </DialogActions>
       </Dialog>
 
+      {/* Modal de Editar FAQ */}
+      <Dialog
+        open={editFaqModalOpen}
+        onClose={() => setEditFaqModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Editar FAQ</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1 }}>
+            <TextField
+              label="Título da FAQ"
+              value={editFaqTitle}
+              onChange={(e) => setEditFaqTitle(e.target.value)}
+              fullWidth
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              label="Ordem de exibição"
+              type="number"
+              value={editFaqOrder}
+              onChange={(e) => setEditFaqOrder(Number(e.target.value))}
+              fullWidth
+              helperText="0 = primeiro, números maiores aparecem depois"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditFaqModalOpen(false)}>Cancelar</Button>
+          <Button
+            onClick={handleUpdateFaq}
+            variant="contained"
+            disabled={!editFaqTitle.trim()}
+          >
+            Salvar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog de Confirmar Exclusão de FAQ */}
+      <Dialog
+        open={deleteFaqDialogOpen}
+        onClose={() => setDeleteFaqDialogOpen(false)}
+      >
+        <DialogTitle>Excluir FAQ</DialogTitle>
+        <DialogContent>
+          <Typography>Tem certeza que deseja excluir esta FAQ?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteFaqDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={confirmDeleteFaq} variant="contained" color="error">
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Modal de Criar FAQ */}
-      <Dialog 
-        open={showCreateFaqModal} 
+      <Dialog
+        open={showCreateFaqModal}
         onClose={() => setShowCreateFaqModal(false)}
         maxWidth="md"
         fullWidth
