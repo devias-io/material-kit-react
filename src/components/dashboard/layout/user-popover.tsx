@@ -40,7 +40,7 @@ export function UserPopover({ anchorEl, onClose, open }: UserPopoverProps): Reac
       try {
         const { data: user } = await authClient.getUser();
         if (user) {
-          setUserData(user);
+          setUserData(prev => ({ ...(prev ?? {}), ...(user || {}) }));
           
           // Verificar se há dados no localStorage
           const userDataFromStorage = localStorage.getItem('user-data');
