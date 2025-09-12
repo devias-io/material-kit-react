@@ -63,6 +63,7 @@ import {
   Delete,
   DragIndicator
 } from '@mui/icons-material';
+import { useUser } from '@/hooks/use-user';
 
 // Tipos (mesmo do arquivo anterior)
 interface Question {
@@ -172,6 +173,7 @@ const planLabels = {
 };
 
 export default function AdminCentralDuvidas() {
+  const { user } = useUser();
   // Estados principais
   const [currentTab, setCurrentTab] = useState(0);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -310,11 +312,20 @@ export default function AdminCentralDuvidas() {
 
     setCreatingFaq(true);
     try {
+      const token =
+        typeof window !== 'undefined'
+          ? document.cookie.match(/auth-token=([^;]+)/)?.[1] ||
+            localStorage.getItem('auth-token') ||
+            ''
+          : '';
+
       const response = await fetch('/api/faq/create', {
         method: 'POST',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(user?.email ? { 'X-User-Email': user.email } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify(createFaqData)
       });
