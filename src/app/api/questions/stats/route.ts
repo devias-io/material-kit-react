@@ -1,21 +1,21 @@
 // src/app/api/questions/stats/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { auth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
 // GET - Estatísticas para dashboard admin
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const userEmail = request.headers.get('X-User-Email');
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const session = await auth();
 
-    if (!userEmail || !token) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: userEmail }
+      where: { id: session.user.id }
     });
 
     if (!user || user.plan !== 'ADMIN') {

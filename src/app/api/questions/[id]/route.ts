@@ -1,24 +1,24 @@
 // src/app/api/questions/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { auth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
 // GET - Buscar pergunta específica
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const userEmail = request.headers.get('X-User-Email');
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const session = await auth();
 
-    if (!userEmail || !token) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: userEmail }
+      where: { id: session.user.id }
     });
 
     if (!user) {
@@ -99,15 +99,14 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const userEmail = request.headers.get('X-User-Email');
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const session = await auth();
 
-    if (!userEmail || !token) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: userEmail }
+      where: { id: session.user.id }
     });
 
     if (!user) {
@@ -201,19 +200,18 @@ export async function PUT(
 
 // DELETE - Deletar pergunta (só admin ou dono)
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const userEmail = request.headers.get('X-User-Email');
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const session = await auth();
 
-    if (!userEmail || !token) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: userEmail }
+      where: { id: session.user.id }
     });
 
     if (!user) {

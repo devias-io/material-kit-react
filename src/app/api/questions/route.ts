@@ -1,6 +1,7 @@
 // src/app/api/questions/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { auth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
@@ -8,16 +9,15 @@ const prisma = new PrismaClient();
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userEmail = request.headers.get('X-User-Email');
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const session = await auth();
 
-    if (!userEmail || !token) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     // Buscar usuário
     const user = await prisma.user.findUnique({
-      where: { email: userEmail }
+      where: { id: session.user.id }
     });
 
     if (!user) {
@@ -134,15 +134,14 @@ export async function GET(request: NextRequest) {
 // POST - Criar nova pergunta (só usuários)
 export async function POST(request: NextRequest) {
   try {
-    const userEmail = request.headers.get('X-User-Email');
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const session = await auth();
 
-    if (!userEmail || !token) {
+    if (!session?.user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: userEmail }
+      where: { id: session.user.id }
     });
 
     if (!user) {
