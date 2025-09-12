@@ -6,12 +6,7 @@ const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
-    const userEmail = request.headers.get('X-User-Email');
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-
-    if (!userEmail || !token) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+    // Public endpoint: no authentication headers are required
 
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');

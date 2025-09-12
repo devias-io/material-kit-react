@@ -73,6 +73,10 @@ Within the download you'll find the following directories and files:
 		└── dashboard
 ```
 
+## FAQ API
+
+The `/api/faq` endpoint is public and does not require `Authorization` or `X-User-Email` headers.
+
 ## Resources
 
 - More freebies like this one: https://devias.io

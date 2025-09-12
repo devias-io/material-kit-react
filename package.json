@@ -4,7 +4,6 @@
   "author": "Devias",
   "licence": "MIT",
   "homepage": "https://devias.io",
-  "private": false,
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -14,7 +13,8 @@
     "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit",
     "format:write": "prettier --write \"**/*.{js,jsx,mjs,ts,tsx,mdx}\" --cache",
-    "format:check": "prettier --check \"**/*.{js,jsx,mjs,ts,tsx,mdx}\" --cache"
+    "format:check": "prettier --check \"**/*.{js,jsx,mjs,ts,tsx,mdx}\" --cache",
+    "test": "jest"
   },
   "dependencies": {
     "@emotion/cache": "11.11.0",
