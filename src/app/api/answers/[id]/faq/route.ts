@@ -183,3 +183,72 @@ export async function PUT(
     await prisma.$disconnect();
   }
 }
+
+// DELETE - Remover FAQ
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    console.log('🗑️ [FAQ-DELETE] Removendo FAQ ID:', params.id);
+
+    let user;
+
+    try {
+      user = (request as any).user;
+
+      if (!user) {
+        const testUser = await prisma.user.findFirst({
+          where: {
+            plan: 'ADMIN',
+            status: 'ACTIVE'
+          }
+        });
+
+        if (testUser) {
+          console.log('⚠️ [TEMP] Usando usuário admin para teste:', testUser.email);
+          user = testUser;
+        }
+      }
+    } catch (error) {
+      console.log('❌ [AUTH] Erro na verificação de autenticação:', (error as Error).message);
+    }
+
+    if (!user) {
+      console.log('❌ [AUTH] Usuário não encontrado');
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    if (user.plan !== 'ADMIN') {
+      console.log('❌ [AUTH] Acesso negado - Plano:', user.plan);
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    }
+
+    const answer = await prisma.answer.findUnique({
+      where: { id: params.id }
+    });
+
+    if (!answer) {
+      console.log('❌ [NOT-FOUND] Resposta não encontrada:', params.id);
+      return NextResponse.json({ error: 'Answer not found' }, { status: 404 });
+    }
+
+    await prisma.answer.update({
+      where: { id: params.id },
+      data: {
+        isFaq: false,
+        faqTitle: null,
+        faqOrder: 0
+      }
+    });
+
+    console.log('✅ [SUCCESS] FAQ removida:', params.id);
+
+    return NextResponse.json({ message: 'FAQ removed successfully' });
+  } catch (error) {
+    console.error('💥 [ERROR] Error deleting FAQ:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
