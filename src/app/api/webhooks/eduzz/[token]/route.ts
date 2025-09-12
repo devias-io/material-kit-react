@@ -205,7 +205,8 @@ export async function POST(
           where: { email },
           data: {
             status: 'INACTIVE',
-            expirationDate: new Date(Date.now() - 24 * 60 * 60 * 1000) // Ontem
+            expirationDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Ontem
+            origin: 'EDUZZ'
           }
         });
 
@@ -281,7 +282,8 @@ export async function POST(
           plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
           status: 'ACTIVE',
           hotmartCustomerId: transactionId,
-          expirationDate: calculateExpirationDate()
+          expirationDate: calculateExpirationDate(),
+          origin: 'EDUZZ'
         }
       });
       
@@ -306,6 +308,7 @@ export async function POST(
           status: 'ACTIVE',
           hotmartCustomerId: transactionId,
           expirationDate: calculateExpirationDate(),
+          origin: 'EDUZZ',
           password: tempPassword, // ⚠️ SENHA SEM HASH (deve ser corrigido em produção)
           passwordCreatedAt: new Date(),
           mustChangePassword: true,

@@ -40,6 +40,7 @@ interface User {
   totalPurchases: number;
   purchaseCount: number;
   expirationDate?: string;
+  origin: 'MANUAL' | 'HOTMART' | 'KIWIFY' | 'EDUZZ';
 }
 
 export default function AdminUsersPage() {
@@ -570,6 +571,9 @@ export default function AdminUsersPage() {
                   Status
                 </TableCell>
                 <TableCell sx={{ color: '#475569', fontWeight: '600', borderBottom: '1px solid #E2E8F0', py: 2 }}>
+                  Origem
+                </TableCell>
+                <TableCell sx={{ color: '#475569', fontWeight: '600', borderBottom: '1px solid #E2E8F0', py: 2 }}>
                   Criado em
                 </TableCell>
                 <TableCell sx={{ color: '#475569', fontWeight: '600', borderBottom: '1px solid #E2E8F0', py: 2 }}>
@@ -660,6 +664,9 @@ export default function AdminUsersPage() {
                         color={getStatusColor(user.status) as any}
                         sx={{ fontWeight: '500', fontSize: '0.75rem' }}
                       />
+                    </TableCell>
+                    <TableCell sx={{ color: '#64748B', borderBottom: '1px solid #F1F5F9', py: 2, fontSize: '0.875rem' }}>
+                      {user.origin}
                     </TableCell>
                     <TableCell sx={{ color: '#64748B', borderBottom: '1px solid #F1F5F9', py: 2, fontSize: '0.875rem' }}>
                       {formatDate(user.createdAt)}

@@ -43,7 +43,7 @@ interface User {
   lastName: string;
   email: string;
   avatar?: string;
-  plan: 'VIP' | 'LITE' | 'RENDA_PASSIVA' | 'FIIS' | 'AMERICA' | 'ADMIN';
+  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'AMERICA' | 'ADMIN';
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING';
   hotmartCustomerId?: string;
   createdAt: string;
@@ -52,6 +52,7 @@ interface User {
   purchaseCount: number;
   expirationDate?: string;
   customPermissions?: string[];
+  origin: 'MANUAL' | 'HOTMART' | 'KIWIFY' | 'EDUZZ';
 }
 
 interface Purchase {
@@ -518,8 +519,8 @@ export default function EditUserPage() {
                     <Select
                       value={user.status}
                       onChange={(e) => setUser({ ...user, status: e.target.value as any })}
-                      sx={{ 
-                        color: '#1E293B', 
+                      sx={{
+                        color: '#1E293B',
                         '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' },
                         '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#CBD5E1' },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#3B82F6', borderWidth: '2px' }
@@ -530,6 +531,23 @@ export default function EditUserPage() {
                       <MenuItem value="PENDING">⏳ Pendente</MenuItem>
                     </Select>
                   </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Origem"
+                    value={user.origin}
+                    InputProps={{ readOnly: true }}
+                    sx={{
+                      '& .MuiInputBase-input': { color: '#1E293B' },
+                      '& .MuiInputLabel-root': { color: '#64748B' },
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': { borderColor: '#E2E8F0' },
+                        '&:hover fieldset': { borderColor: '#CBD5E1' },
+                        '&.Mui-focused fieldset': { borderColor: '#3B82F6', borderWidth: '2px' },
+                      }
+                    }}
+                  />
                 </Grid>
                 <Grid item xs={12}>
                   <TextField

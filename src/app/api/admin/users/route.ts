@@ -149,6 +149,7 @@ export async function GET(request: NextRequest) {
           avatar: user.avatar || null,
           plan: user.plan,
           status: user.status,
+          origin: user.origin,
           
           // 🔥 DADOS DO HOTMART (essenciais para liberação de membros)
           hotmartCustomerId: hotmartInfo?.hotmartCustomerId || user.hotmartCustomerId || null,
@@ -178,6 +179,7 @@ export async function GET(request: NextRequest) {
           avatar: null,
           plan: user.plan,
           status: user.status,
+          origin: user.origin,
           hotmartCustomerId: user.hotmartCustomerId || null,
           createdAt: new Date().toISOString(),
           lastLogin: null,
@@ -344,6 +346,7 @@ export async function POST(request: NextRequest) {
         password: hashedPassword, // ✅ USANDO HASH SEGURO
         plan: plan as any,
         status: 'ACTIVE',
+        origin: 'MANUAL',
         mustChangePassword: true, // ✅ FORÇA MUDANÇA NO PRIMEIRO ACESSO
         hotmartCustomerId: hotmartCustomerId || null
       }
@@ -399,7 +402,8 @@ export async function POST(request: NextRequest) {
         lastName: novoUsuario.lastName,
         plan: novoUsuario.plan,
         status: novoUsuario.status,
-        hotmartCustomerId: novoUsuario.hotmartCustomerId
+        hotmartCustomerId: novoUsuario.hotmartCustomerId,
+        origin: novoUsuario.origin
       },
       email: {
         sent: emailSent,

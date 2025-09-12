@@ -76,7 +76,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       totalPurchases: user.totalPurchases || 0,
       purchaseCount: user.purchaseCount || 0,
       expirationDate: user.expirationDate?.toISOString(),
-      customPermissions: user.customPermissions || []
+      customPermissions: user.customPermissions || [],
+      origin: user.origin
     };
 
     console.log(`✅ Encontradas ${purchases.length} compras para o usuário`);
@@ -156,7 +157,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       totalPurchases: updatedUser.totalPurchases || 0,
       purchaseCount: updatedUser.purchaseCount || 0,
       expirationDate: updatedUser.expirationDate?.toISOString(),
-      customPermissions: updatedUser.customPermissions || []
+      customPermissions: updatedUser.customPermissions || [],
+      origin: updatedUser.origin
     };
 
     return NextResponse.json({ user: formattedUser });

@@ -16,6 +16,7 @@ model User {
   avatar                  String?
   plan                    String                        @default("LITE")
   status                  String                        @default("ACTIVE")
+  origin                  String                        @default("MANUAL")
   hotmartCustomerId       String?
   expirationDate          DateTime?
   customPermissions       String?                       @default("[]")
