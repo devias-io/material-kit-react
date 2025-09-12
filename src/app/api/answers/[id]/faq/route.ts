@@ -76,9 +76,9 @@ export async function PUT(
     console.log('🔍 [FOUND] Resposta encontrada:', answer.id);
 
     const body = await request.json();
-    const { isFaq, faqTitle, faqOrder = 0 } = body;
+    const { isFaq, faqTitle, faqOrder = 0, content, category } = body;
 
-    console.log('📝 [DATA] Dados recebidos:', { isFaq, faqTitle, faqOrder });
+    console.log('📝 [DATA] Dados recebidos:', { isFaq, faqTitle, faqOrder, content, category });
 
     // Validações
     if (isFaq !== undefined && typeof isFaq !== 'boolean') {
@@ -94,8 +94,20 @@ export async function PUT(
     }
 
     if (typeof faqOrder !== 'number' || faqOrder < 0) {
-      return NextResponse.json({ 
-        error: 'faqOrder must be a non-negative number' 
+      return NextResponse.json({
+        error: 'faqOrder must be a non-negative number'
+      }, { status: 400 });
+    }
+
+    if (content !== undefined && typeof content !== 'string') {
+      return NextResponse.json({
+        error: 'content must be a string'
+      }, { status: 400 });
+    }
+
+    if (category !== undefined && typeof category !== 'string') {
+      return NextResponse.json({
+        error: 'category must be a string'
       }, { status: 400 });
     }
 
@@ -128,13 +140,25 @@ export async function PUT(
       }
     }
 
+    const updateData: any = {
+      isFaq: finalIsFaq,
+      faqTitle: finalIsFaq && finalFaqTitle ? finalFaqTitle.trim() : null,
+      faqOrder: finalIsFaq ? faqOrder : 0
+    };
+
+    if (content !== undefined) {
+      updateData.content = content;
+    }
+
+    if (category !== undefined) {
+      updateData.question = {
+        update: { category }
+      };
+    }
+
     const updatedAnswer = await prisma.answer.update({
       where: { id: params.id },
-      data: {
-        isFaq: finalIsFaq,
-        faqTitle: finalIsFaq && finalFaqTitle ? finalFaqTitle.trim() : null,
-        faqOrder: finalIsFaq ? faqOrder : 0
-      },
+      data: updateData,
       include: {
         question: {
           select: {
