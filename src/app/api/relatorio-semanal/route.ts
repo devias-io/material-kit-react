@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { notifyNewReport } from '@/utils/notifications';
 import { auth } from '@/lib/auth';
+import { verifyToken } from '@/utils/auth';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -24,22 +25,20 @@ async function authenticateAdmin(request: NextRequest) {
     return { user, status: user ? 200 : 401 };
   }
 
-  const userEmail = request.headers.get('X-User-Email');
   const token = request.headers.get('Authorization')?.replace('Bearer ', '');
 
-  if (!userEmail || !token) {
+  try {
+    const payload = verifyToken(token);
+    const user = await prisma.user.findUnique({ where: { email: payload.email } });
+
+    if (!user || user.plan !== 'ADMIN') {
+      return { user: null, status: 403 };
+    }
+
+    return { user, status: 200 };
+  } catch {
     return { user: null, status: 401 };
   }
-
-  const user = await prisma.user.findUnique({
-    where: { email: userEmail }
-  });
-
-  if (!user || user.plan !== 'ADMIN') {
-    return { user: null, status: 403 };
-  }
-
-  return { user, status: 200 };
 }
 
 // Função para transformar dados do Prisma para o formato esperado pelo React

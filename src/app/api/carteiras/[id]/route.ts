@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { verifyToken } from '@/utils/auth';
 
 // Mesma função de autenticação que funciona na API de ativos
 async function authenticateAdmin(request: NextRequest) {
@@ -18,13 +19,8 @@ async function authenticateAdmin(request: NextRequest) {
       if (authTokenMatch) {
         const token = authTokenMatch[1];
         
-        try {
-          const jwt = require('jsonwebtoken');
-          const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-            userId: string;
-            email: string;
-            plan: string;
-          };
+          try {
+            const decoded = verifyToken(token);
           
           const user = await prisma.user.findUnique({
             where: { id: decoded.userId },
@@ -55,8 +51,8 @@ async function authenticateAdmin(request: NextRequest) {
             };
             console.log('✅ Autenticação alternativa bem-sucedida');
           }
-        } catch (jwtError) {
-          console.log('❌ Erro JWT:', jwtError.message);
+        } catch (error) {
+          console.log('❌ Erro JWT:', (error as Error).message);
         }
       }
     }

@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'; // 👈 ADICIONAR ESTA LINHA AQUI
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import jwt from 'jsonwebtoken';
+import { verifyToken } from '@/utils/auth';
 
 function mapearStatus(statusBanco: string): string {
   const statusLower = statusBanco.toLowerCase();
@@ -54,11 +54,7 @@ export async function GET(request: NextRequest) {
           const token = authTokenMatch[1];
           
           try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-              userId: string;
-              email: string;
-              plan: string;
-            };
+            const decoded = verifyToken(token);
             
             const user = await prisma.user.findUnique({
               where: { id: decoded.userId },
@@ -89,8 +85,8 @@ export async function GET(request: NextRequest) {
               };
               console.log('✅ Autenticação alternativa bem-sucedida');
             }
-          } catch (jwtError) {
-            console.log('❌ Erro JWT:', jwtError.message);
+          } catch (error) {
+            console.log('❌ Erro JWT:', (error as Error).message);
           }
         }
       }
@@ -283,11 +279,7 @@ export async function PUT(request: NextRequest) {
           const token = authTokenMatch[1];
           
           try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-              userId: string;
-              email: string;
-              plan: string;
-            };
+            const decoded = verifyToken(token);
             
             const user = await prisma.user.findUnique({
               where: { id: decoded.userId },
@@ -318,8 +310,8 @@ export async function PUT(request: NextRequest) {
               };
               console.log('✅ Autenticação alternativa bem-sucedida');
             }
-          } catch (jwtError) {
-            console.log('❌ Erro JWT:', jwtError.message);
+          } catch (error) {
+            console.log('❌ Erro JWT:', (error as Error).message);
           }
         }
       }

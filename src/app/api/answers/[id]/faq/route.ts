@@ -1,6 +1,7 @@
 // src/app/api/answers/[id]/faq/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { verifyToken } from '@/utils/auth';
 
 const prisma = new PrismaClient();
 
@@ -10,16 +11,15 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const userEmail = request.headers.get('X-User-Email');
     const token = request.headers.get('Authorization')?.replace('Bearer ', '');
 
-    if (!userEmail || !token) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    let user;
+    try {
+      const payload = verifyToken(token);
+      user = await prisma.user.findUnique({ where: { email: payload.email } });
+    } catch (error) {
+      return NextResponse.json({ error: (error as Error).message }, { status: 401 });
     }
-
-    const user = await prisma.user.findUnique({
-      where: { email: userEmail }
-    });
 
     if (!user || user.plan !== 'ADMIN') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
