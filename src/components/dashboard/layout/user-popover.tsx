@@ -38,36 +38,25 @@ export function UserPopover({ anchorEl, onClose, open }: UserPopoverProps): Reac
   React.useEffect(() => {
     const loadUserData = async () => {
       try {
-        // Buscar direto da API já que authClient está com problemas
-        const response = await fetch('/api/user/profile', { 
-          credentials: 'include' 
-        });
-        
-        if (response.ok) {
-          const user = await response.json();
-          setUserData({
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            avatar: user.avatar
-          });
+        const { data: user } = await authClient.getUser();
+        if (user) {
+          setUserData(user);
           
-          // Salvar no localStorage para cache
-          localStorage.setItem('user-data', JSON.stringify(user));
+          // Verificar se há dados no localStorage
+          const userDataFromStorage = localStorage.getItem('user-data');
+          if (userDataFromStorage) {
+            try {
+              const parsedUser = JSON.parse(userDataFromStorage);
+              if (parsedUser.avatar) {
+                setUserData(prev => ({ ...prev, avatar: parsedUser.avatar }));
+              }
+            } catch (error) {
+              console.error('Error parsing user data from storage:', error);
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading user data:', error);
-        
-        // Tentar carregar do localStorage como fallback
-        const cached = localStorage.getItem('user-data');
-        if (cached) {
-          try {
-            const user = JSON.parse(cached);
-            setUserData(user);
-          } catch (err) {
-            console.error('Error parsing cached data:', err);
-          }
-        }
       }
     };
 
@@ -120,25 +109,12 @@ export function UserPopover({ anchorEl, onClose, open }: UserPopoverProps): Reac
     }
   }, [checkSession, router]);
 
-  // Criar displayName com fallbacks inteligentes
-  const displayName = React.useMemo(() => {
-    if (!userData) return 'Carregando...';
-    
-    // Se tem firstName ou lastName, usa eles
-    if (userData.firstName || userData.lastName) {
-      return `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
-    }
-    
-    // Se não tem nome mas tem email, usa a parte antes do @
-    if (userData.email) {
-      return userData.email.split('@')[0];
-    }
-    
-    return 'Usuário';
-  }, [userData]);
+  const displayName = userData 
+    ? `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
+    : 'Carregando...';
   
   const displayEmail = userData?.email || 'carregando...';
-  const avatarSrc = userData?.avatar || undefined;
+const avatarSrc = userData?.avatar || undefined;
 
   return (
     <Popover
