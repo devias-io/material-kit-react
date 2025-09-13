@@ -34,19 +34,6 @@ export async function GET(_request: NextRequest) {
       }
     });
 
-    // Por categoria
-    const questionsByCategory = await prisma.question.groupBy({
-      by: ['category'],
-      _count: {
-        category: true
-      },
-      orderBy: {
-        _count: {
-          category: 'desc'
-        }
-      }
-    });
-
     // Por prioridade
     const questionsByPriority = await prisma.question.groupBy({
       by: ['priority'],
@@ -179,10 +166,6 @@ export async function GET(_request: NextRequest) {
         byStatus: questionsByStatus.map(item => ({
           status: item.status,
           count: item._count.status
-        })),
-        byCategory: questionsByCategory.map(item => ({
-          category: item.category,
-          count: item._count.category
         })),
         byPriority: questionsByPriority.map(item => ({
           priority: item.priority,
