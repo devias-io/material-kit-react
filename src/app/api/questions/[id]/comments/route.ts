@@ -31,8 +31,10 @@ export async function POST(
     }
 
     const isAdmin = user.plan === 'ADMIN';
-    const isOwner = question.userId === user.id;
-    if (!isAdmin && !isOwner) {
+    if (!isAdmin) {
+      console.warn(
+        `Unauthorized comment creation attempt by user ${user.id} on question ${params.id}`
+      );
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
