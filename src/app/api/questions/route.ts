@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { Prisma } from '@prisma/client';
 
 // GET - Listar perguntas
 export async function GET(request: NextRequest) {
@@ -165,8 +166,19 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error fetching questions:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('GET /api/questions failed:', error);
+
+    let errorMessage = 'Internal server error';
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      errorMessage = 'Database error';
+    }
+
+    if (process.env.NODE_ENV === 'development' && error instanceof Error) {
+      errorMessage += `: ${error.message}`;
+    }
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -232,7 +244,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ question }, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating question:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('POST /api/questions failed:', error);
+
+    let errorMessage = 'Internal server error';
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      errorMessage = 'Database error';
+    }
+
+    if (process.env.NODE_ENV === 'development' && error instanceof Error) {
+      errorMessage += `: ${error.message}`;
+    }
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
