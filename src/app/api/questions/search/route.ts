@@ -1,6 +1,5 @@
 // src/app/api/questions/search/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
 // GET - Busca inteligente em perguntas e respostas
@@ -36,25 +35,18 @@ export async function GET(request: NextRequest) {
 
     const isAdmin = user.plan === 'ADMIN';
     
-    // Construir query base
-    let whereClause: any = {};
 
-    // Se não é admin, só buscar suas próprias perguntas
-    if (!isAdmin) {
-      whereClause.userId = user.id;
-    }
+    const whereCategory = category && category !== 'ALL'
+      ? Prisma.sql`AND q.category = ${category}`
+      : Prisma.empty;
 
-    // Filtro por categoria se especificado
-    if (category && category !== 'ALL') {
-      whereClause.category = category;
-    }
+    const whereUser = !isAdmin
+      ? Prisma.sql`AND q."userId" = ${user.id}`
+      : Prisma.empty;
 
-    // Busca por texto usando PostgreSQL full-text search
-    const searchConditions = [];
-    
     // Buscar em perguntas
-    const questionResults = await prisma.$queryRaw`
-      SELECT 
+    const questionQuery = Prisma.sql`
+      SELECT
         q.id,
         q.title,
         q.content,
@@ -71,19 +63,22 @@ export async function GET(request: NextRequest) {
       FROM questions q
       JOIN "User" u ON q."userId" = u.id
       WHERE to_tsvector('portuguese', q.title || ' ' || q.content) @@ plainto_tsquery('portuguese', ${query})
-      ${!isAdmin ? `AND q."userId" = ${user.id}` : ''}
-      ${category && category !== 'ALL' ? `AND q.category = '${category}'` : ''}
+      ${whereUser}
+      ${whereCategory}
       ORDER BY rank DESC
       LIMIT ${limit}
       OFFSET ${(page - 1) * limit}
-    ` as any[];
+    `;
+    const questionResults = await prisma.$queryRaw(questionQuery) as any[];
 
     let answerResults: any[] = [];
     
     // Buscar em respostas se includeAnswers for true
     if (includeAnswers) {
-      answerResults = await prisma.$queryRaw`
-        SELECT 
+      const whereFaq = includeFaq ? Prisma.sql`AND a."isFaq" = true` : Prisma.empty;
+
+      const answerQuery = Prisma.sql`
+        SELECT
           a.id,
           a.content,
           a."createdAt",
@@ -101,20 +96,21 @@ export async function GET(request: NextRequest) {
         JOIN questions q ON a."questionId" = q.id
         JOIN "User" admin ON a."adminId" = admin.id
         WHERE to_tsvector('portuguese', a.content) @@ plainto_tsquery('portuguese', ${query})
-        ${!isAdmin ? `AND q."userId" = ${user.id}` : ''}
-        ${category && category !== 'ALL' ? `AND q.category = '${category}'` : ''}
-        ${includeFaq ? 'AND a."isFaq" = true' : ''}
+        ${whereUser}
+        ${whereCategory}
+        ${whereFaq}
         ORDER BY rank DESC
         LIMIT ${limit}
         OFFSET ${(page - 1) * limit}
-      ` as any[];
+      `;
+      answerResults = await prisma.$queryRaw(answerQuery) as any[];
     }
 
     // Buscar FAQ específicas se includeFaq for true
     let faqResults: any[] = [];
     if (includeFaq) {
-      faqResults = await prisma.$queryRaw`
-        SELECT 
+      const faqQuery = Prisma.sql`
+        SELECT
           a.id,
           a.content,
           a."faqTitle",
@@ -132,11 +128,12 @@ export async function GET(request: NextRequest) {
         JOIN "User" admin ON a."adminId" = admin.id
         WHERE a."isFaq" = true
         AND to_tsvector('portuguese', COALESCE(a."faqTitle", '') || ' ' || a.content) @@ plainto_tsquery('portuguese', ${query})
-        ${category && category !== 'ALL' ? `AND q.category = '${category}'` : ''}
+        ${whereCategory}
         ORDER BY rank DESC, a."faqOrder" ASC
         LIMIT ${limit}
         OFFSET ${(page - 1) * limit}
-      ` as any[];
+      `;
+      faqResults = await prisma.$queryRaw(faqQuery) as any[];
     }
 
     // Combinar resultados e ordenar por relevância
@@ -147,31 +144,32 @@ export async function GET(request: NextRequest) {
     ].sort((a, b) => parseFloat(b.rank) - parseFloat(a.rank));
 
     // Contar totais para paginação
-    const totalQuestions = await prisma.$queryRaw`
+    const totalQuestionsQuery = Prisma.sql`
       SELECT COUNT(*) as count
       FROM questions q
       WHERE to_tsvector('portuguese', q.title || ' ' || q.content) @@ plainto_tsquery('portuguese', ${query})
-      ${!isAdmin ? `AND q."userId" = ${user.id}` : ''}
-      ${category && category !== 'ALL' ? `AND q.category = '${category}'` : ''}
-    ` as any[];
+      ${whereUser}
+      ${whereCategory}
+    `;
+    const totalQuestions = await prisma.$queryRaw(totalQuestionsQuery) as any[];
 
-    const totalAnswers = includeAnswers ? await prisma.$queryRaw`
+    const totalAnswers = includeAnswers ? await prisma.$queryRaw(Prisma.sql`
       SELECT COUNT(*) as count
       FROM answers a
       JOIN questions q ON a."questionId" = q.id
       WHERE to_tsvector('portuguese', a.content) @@ plainto_tsquery('portuguese', ${query})
-      ${!isAdmin ? `AND q."userId" = ${user.id}` : ''}
-      ${category && category !== 'ALL' ? `AND q.category = '${category}'` : ''}
-    ` as any[] : [{ count: 0 }];
+      ${whereUser}
+      ${whereCategory}
+    `) as any[] : [{ count: 0 }];
 
-    const totalFaqs = includeFaq ? await prisma.$queryRaw`
+    const totalFaqs = includeFaq ? await prisma.$queryRaw(Prisma.sql`
       SELECT COUNT(*) as count
       FROM answers a
       JOIN questions q ON a."questionId" = q.id
       WHERE a."isFaq" = true
       AND to_tsvector('portuguese', COALESCE(a."faqTitle", '') || ' ' || a.content) @@ plainto_tsquery('portuguese', ${query})
-      ${category && category !== 'ALL' ? `AND q.category = '${category}'` : ''}
-    ` as any[] : [{ count: 0 }];
+      ${whereCategory}
+    `) as any[] : [{ count: 0 }];
 
     const total = Number(totalQuestions[0].count) + Number(totalAnswers[0].count) + Number(totalFaqs[0].count);
 
