@@ -29,6 +29,7 @@ function loadRoute() {
   function customRequire(p) {
     if (p === '@/lib/auth') return authMock;
     if (p === '@prisma/client') return prismaModuleMock;
+    if (p === '@/lib/prisma') return { prisma: prismaClientMock };
     return require(p);
   }
   compiled(module.exports, customRequire, module, filePath, path.dirname(filePath));
