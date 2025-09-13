@@ -48,6 +48,7 @@ model User {
   microCaps               UserMicroCaps[]
   projetoAmerica          UserProjetoAmerica[]
   smallCaps               UserSmallCaps[]
+  comments                Comment[]
 }
 
 model Purchase {
@@ -530,6 +531,7 @@ model Question {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   answers     Answer[]
+  comments    Comment[]
   closer      User?            @relation("QuestionsClosed", fields: [closedBy], references: [id])
   user        User             @relation("UserQuestions", fields: [userId], references: [id], onDelete: Cascade)
 
@@ -554,6 +556,7 @@ model Answer {
   isFaq      Boolean  @default(false)
   admin      User     @relation("AdminAnswers", fields: [adminId], references: [id])
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  comments   Comment[]
 
   @@index([questionId])
   @@index([adminId])
@@ -561,6 +564,24 @@ model Answer {
   @@index([isFaq])
   @@index([faqOrder])
   @@map("answers")
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  content    String
+  questionId String
+  answerId   String?
+  authorId   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answer     Answer?  @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+  @@index([answerId])
+  @@index([authorId])
+  @@map("comments")
 }
 
 model ResponseTemplate {

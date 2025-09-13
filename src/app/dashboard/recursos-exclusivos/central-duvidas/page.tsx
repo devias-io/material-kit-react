@@ -3,6 +3,16 @@
 import React, { useState, useEffect } from 'react';
 
 // Tipos
+interface Comment {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: {
+    firstName: string;
+    lastName: string;
+  };
+}
+
 interface Question {
   id: string;
   title: string;
@@ -10,6 +20,7 @@ interface Question {
   status: 'NOVA' | 'RESPONDIDA' | 'FECHADA';
   createdAt: string;
   answers: Answer[];
+  comments: Comment[];
   readByAdmin: boolean;
 }
 
@@ -22,6 +33,7 @@ interface Answer {
     lastName: string;
   };
   readByUser: boolean;
+  comments: Comment[];
 }
 
 const statusLabels = {
@@ -43,9 +55,6 @@ export default function CentralDuvidas() {
   const [success, setSuccess] = useState('');
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const limit = 5;
 
   useEffect(() => {
     const checkMobile = () => {
@@ -140,6 +149,43 @@ export default function CentralDuvidas() {
       }
     } catch (err) {
       setError('Erro ao fechar dúvida');
+    }
+  };
+
+  const handleCommentChange = (key: string, value: string) => {
+    setCommentInputs(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleSubmitComment = async (
+    questionId: string,
+    key: string,
+    answerId?: string
+  ) => {
+    const content = commentInputs[key];
+    if (!content || !content.trim()) {
+      setError('Comentário vazio');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/questions/${questionId}/comments`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ content, answerId })
+      });
+
+      if (response.ok) {
+        handleCommentChange(key, '');
+        loadQuestions();
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Erro ao enviar comentário');
+      }
+    } catch (err) {
+      setError('Erro de conexão');
     }
   };
 
@@ -561,6 +607,57 @@ export default function CentralDuvidas() {
                         </p>
                       </div>
 
+                      {/* Comentários da pergunta */}
+                      {question.comments.length > 0 && (
+                        <div style={{
+                          marginTop: '16px',
+                          paddingLeft: '16px',
+                          borderLeft: '2px solid #e5e7eb',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '8px'
+                        }}>
+                          {question.comments.map((comment) => (
+                            <div key={comment.id} style={{ fontSize: '14px', color: '#374151' }}>
+                              <strong>{comment.author.firstName} {comment.author.lastName}:</strong> {comment.content}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div style={{ marginTop: '12px' }}>
+                        <textarea
+                          value={commentInputs[`question-${question.id}`] || ''}
+                          onChange={(e) => handleCommentChange(`question-${question.id}`, e.target.value)}
+                          placeholder="Adicione um comentário"
+                          rows={3}
+                          style={{
+                            width: '100%',
+                            padding: '8px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '8px',
+                            resize: 'vertical',
+                            fontFamily: 'inherit',
+                            fontSize: '14px'
+                          }}
+                        />
+                        <button
+                          onClick={() => handleSubmitComment(question.id, `question-${question.id}`)}
+                          style={{
+                            marginTop: '8px',
+                            backgroundColor: '#374151',
+                            color: 'white',
+                            border: 'none',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Comentar
+                        </button>
+                      </div>
+
                       {/* Respostas */}
                       {question.answers.length > 0 && (
                         <div>
@@ -621,6 +718,56 @@ export default function CentralDuvidas() {
                                   whiteSpace: 'pre-wrap'
                                 }}>
                                   {answer.content}
+                                </div>
+
+                                {answer.comments.length > 0 && (
+                                  <div style={{
+                                    marginTop: '16px',
+                                    paddingLeft: '16px',
+                                    borderLeft: '2px solid #e5e7eb',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '8px'
+                                  }}>
+                                    {answer.comments.map((comment) => (
+                                      <div key={comment.id} style={{ fontSize: '14px', color: '#374151' }}>
+                                        <strong>{comment.author.firstName} {comment.author.lastName}:</strong> {comment.content}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                <div style={{ marginTop: '12px' }}>
+                                  <textarea
+                                    value={commentInputs[`answer-${answer.id}`] || ''}
+                                    onChange={(e) => handleCommentChange(`answer-${answer.id}`, e.target.value)}
+                                    placeholder="Adicione um comentário"
+                                    rows={3}
+                                    style={{
+                                      width: '100%',
+                                      padding: '8px',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '8px',
+                                      resize: 'vertical',
+                                      fontFamily: 'inherit',
+                                      fontSize: '14px'
+                                    }}
+                                  />
+                                  <button
+                                    onClick={() => handleSubmitComment(question.id, `answer-${answer.id}`, answer.id)}
+                                    style={{
+                                      marginTop: '8px',
+                                      backgroundColor: '#374151',
+                                      color: 'white',
+                                      border: 'none',
+                                      padding: '6px 12px',
+                                      borderRadius: '6px',
+                                      fontSize: '13px',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    Comentar
+                                  </button>
                                 </div>
                               </div>
                             ))}
