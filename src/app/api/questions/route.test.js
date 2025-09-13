@@ -77,3 +77,29 @@ describe('questions route pagination', () => {
   });
 });
 
+describe('questions route excludeVirtual filter', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('excludes questions with faq answers when excludeVirtual=true', async () => {
+    const { GET } = loadRoute();
+
+    authMock.auth.mockResolvedValue({ user: { id: '1' } });
+    prismaClientMock.user.findUnique.mockResolvedValue({ id: '1', plan: 'USER' });
+    prismaClientMock.question.findMany.mockResolvedValue([]);
+    prismaClientMock.question.count.mockResolvedValue(0);
+
+    const req = { url: 'http://localhost/api/questions?excludeVirtual=true' };
+    await GET(req);
+
+    expect(prismaClientMock.question.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          answers: { none: { isFaq: true } }
+        })
+      })
+    );
+  });
+});
+
