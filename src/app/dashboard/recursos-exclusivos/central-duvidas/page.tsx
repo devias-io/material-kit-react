@@ -43,6 +43,9 @@ export default function CentralDuvidas() {
   const [success, setSuccess] = useState('');
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 5;
 
   useEffect(() => {
     const checkMobile = () => {
@@ -55,9 +58,10 @@ export default function CentralDuvidas() {
   }, []);
 
   // Carregar perguntas reais da API
-  const loadQuestions = async () => {
+  const loadQuestions = async (page = currentPage) => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/questions', {
+      const response = await fetch(`/api/questions?page=${page}&limit=${limit}`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
@@ -67,8 +71,11 @@ export default function CentralDuvidas() {
       if (response.ok) {
         const data = await response.json();
         setQuestions(data.questions);
+        setCurrentPage(data.pagination.page);
+        setTotal(data.pagination.total);
+        setError('');
       } else {
-        setError('Erro ao carregar suas dúvidas');
+        setError('Erro ao carregar dúvidas. Tente novamente.');
       }
     } catch (err) {
       setError('Erro de conexão');
@@ -78,7 +85,7 @@ export default function CentralDuvidas() {
   };
 
   useEffect(() => {
-    loadQuestions();
+    loadQuestions(1);
   }, []);
 
   // Criar nova pergunta
@@ -103,7 +110,7 @@ export default function CentralDuvidas() {
         setSuccess('Dúvida enviada com sucesso! Você receberá uma resposta em breve.');
         setOpenDialog(false);
         setNewQuestion({ title: '', content: '' });
-        loadQuestions();
+        loadQuestions(1);
       } else {
         const data = await response.json();
         setError(data.error || 'Erro ao enviar dúvida');
@@ -129,7 +136,7 @@ export default function CentralDuvidas() {
 
       if (response.ok) {
         setSuccess('Dúvida marcada como resolvida!');
-        loadQuestions();
+        loadQuestions(currentPage);
       }
     } catch (err) {
       setError('Erro ao fechar dúvida');
@@ -383,26 +390,28 @@ export default function CentralDuvidas() {
             padding: '48px 24px',
             textAlign: 'center'
           }}>
-            <h3 style={{ 
-              fontSize: '20px', 
-              fontWeight: '500', 
-              color: '#374151', 
-              margin: '0 0 8px 0' 
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: '500',
+              color: '#374151',
+              margin: '0 0 8px 0'
             }}>
-              Nenhuma dúvida ainda
+              {currentPage === 1 ? 'Nenhuma dúvida ainda' : 'Nenhuma dúvida nesta página'}
             </h3>
-            <p style={{ 
-              color: '#6b7280', 
-              fontSize: '14px', 
-              margin: '0' 
+            <p style={{
+              color: '#6b7280',
+              fontSize: '14px',
+              margin: '0'
             }}>
-              Faça sua primeira pergunta para nossos especialistas
+              {currentPage === 1
+                ? 'Faça sua primeira pergunta para nossos especialistas'
+                : 'Tente navegar para outra página ou crie uma nova pergunta'}
             </p>
           </div>
         ) : (
           <div style={{ display: 'grid', gap: '16px' }}>
             {questions.map((question) => (
-              <div 
+              <div
                 key={question.id}
                 style={{
                   backgroundColor: '#ffffff',
@@ -664,6 +673,54 @@ export default function CentralDuvidas() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Paginação */}
+        {total > limit && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: '24px'
+          }}>
+            <button
+              onClick={() => currentPage > 1 && loadQuestions(currentPage - 1)}
+              disabled={currentPage === 1}
+              style={{
+                backgroundColor: '#f3f4f6',
+                color: '#374151',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Anterior
+            </button>
+
+            <span style={{ color: '#6b7280', fontSize: '14px' }}>
+              Página {currentPage} de {Math.ceil(total / limit)}
+            </span>
+
+            <button
+              onClick={() => currentPage < Math.ceil(total / limit) && loadQuestions(currentPage + 1)}
+              disabled={currentPage >= Math.ceil(total / limit)}
+              style={{
+                backgroundColor: '#f3f4f6',
+                color: '#374151',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: currentPage >= Math.ceil(total / limit) ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Próxima
+            </button>
           </div>
         )}
       </div>
