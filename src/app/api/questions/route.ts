@@ -27,8 +27,18 @@ export async function GET(request: NextRequest) {
     
     // Filtros opcionais
     const status = searchParams.get('status');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+
+    // Parse paginação com valores padrão seguros
+    const parsePositiveInt = (value: string | null, defaultValue: number) => {
+      const parsed = Number(value);
+      if (!value || Number.isNaN(parsed) || parsed < 1) {
+        return defaultValue;
+      }
+      return Math.floor(parsed);
+    };
+
+    const page = parsePositiveInt(searchParams.get('page'), 1);
+    const limit = parsePositiveInt(searchParams.get('limit'), 10);
 
     // Query base
     let whereClause: any = {};
