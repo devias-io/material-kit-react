@@ -118,7 +118,10 @@ export async function GET(request: NextRequest) {
 
     const relatorios = await prisma.relatorio.findMany({
       where: {
-        dataUpload: { not: null }
+        // ✅ CORREÇÃO: Usar isNot em vez de not
+        dataUpload: {
+          not: null
+        }
       },
       orderBy: [
         { ticker: 'asc' },
