@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useUser } from '@/hooks/use-user';
 
 // Tipos
 interface Comment {
@@ -22,6 +23,7 @@ interface Question {
   answers: Answer[];
   comments: Comment[];
   readByAdmin: boolean;
+  user: { id: string };
 }
 
 interface Answer {
@@ -60,6 +62,7 @@ export default function CentralDuvidas() {
   const [total, setTotal] = useState(0);
   const limit = 10;
   const [commentInputs, setCommentInputs] = useState<{ [key: string]: string }>({});
+  const { user: currentUser } = useUser();
 
   useEffect(() => {
     const checkMobile = () => {
@@ -630,38 +633,40 @@ export default function CentralDuvidas() {
                         </div>
                       )}
 
-                      <div style={{ marginTop: '12px' }}>
-                        <textarea
-                          value={commentInputs[`question-${question.id}`] || ''}
-                          onChange={(e) => handleCommentChange(`question-${question.id}`, e.target.value)}
-                          placeholder="Adicione um comentário"
-                          rows={3}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '8px',
-                            resize: 'vertical',
-                            fontFamily: 'inherit',
-                            fontSize: '14px'
-                          }}
-                        />
-                        <button
-                          onClick={() => handleSubmitComment(question.id, `question-${question.id}`)}
-                          style={{
-                            marginTop: '8px',
-                            backgroundColor: '#374151',
-                            color: 'white',
-                            border: 'none',
-                            padding: '6px 12px',
-                            borderRadius: '6px',
-                            fontSize: '13px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Comentar
-                        </button>
-                      </div>
+                      {currentUser?.id !== question.user.id && (
+                        <div style={{ marginTop: '12px' }}>
+                          <textarea
+                            value={commentInputs[`question-${question.id}`] || ''}
+                            onChange={(e) => handleCommentChange(`question-${question.id}`, e.target.value)}
+                            placeholder="Adicione um comentário"
+                            rows={3}
+                            style={{
+                              width: '100%',
+                              padding: '8px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '8px',
+                              resize: 'vertical',
+                              fontFamily: 'inherit',
+                              fontSize: '14px'
+                            }}
+                          />
+                          <button
+                            onClick={() => handleSubmitComment(question.id, `question-${question.id}`)}
+                            style={{
+                              marginTop: '8px',
+                              backgroundColor: '#374151',
+                              color: 'white',
+                              border: 'none',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              fontSize: '13px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Comentar
+                          </button>
+                        </div>
+                      )}
 
                       {/* Respostas */}
                       {question.answers.length > 0 && (
@@ -742,38 +747,40 @@ export default function CentralDuvidas() {
                                   </div>
                                 )}
 
-                                <div style={{ marginTop: '12px' }}>
-                                  <textarea
-                                    value={commentInputs[`answer-${answer.id}`] || ''}
-                                    onChange={(e) => handleCommentChange(`answer-${answer.id}`, e.target.value)}
-                                    placeholder="Adicione um comentário"
-                                    rows={3}
-                                    style={{
-                                      width: '100%',
-                                      padding: '8px',
-                                      border: '1px solid #d1d5db',
-                                      borderRadius: '8px',
-                                      resize: 'vertical',
-                                      fontFamily: 'inherit',
-                                      fontSize: '14px'
-                                    }}
-                                  />
-                                  <button
-                                    onClick={() => handleSubmitComment(question.id, `answer-${answer.id}`, answer.id)}
-                                    style={{
-                                      marginTop: '8px',
-                                      backgroundColor: '#374151',
-                                      color: 'white',
-                                      border: 'none',
-                                      padding: '6px 12px',
-                                      borderRadius: '6px',
-                                      fontSize: '13px',
-                                      cursor: 'pointer'
-                                    }}
-                                  >
-                                    Comentar
-                                  </button>
-                                </div>
+                                {currentUser?.id !== question.user.id && (
+                                  <div style={{ marginTop: '12px' }}>
+                                    <textarea
+                                      value={commentInputs[`answer-${answer.id}`] || ''}
+                                      onChange={(e) => handleCommentChange(`answer-${answer.id}`, e.target.value)}
+                                      placeholder="Adicione um comentário"
+                                      rows={3}
+                                      style={{
+                                        width: '100%',
+                                        padding: '8px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '8px',
+                                        resize: 'vertical',
+                                        fontFamily: 'inherit',
+                                        fontSize: '14px'
+                                      }}
+                                    />
+                                    <button
+                                      onClick={() => handleSubmitComment(question.id, `answer-${answer.id}`, answer.id)}
+                                      style={{
+                                        marginTop: '8px',
+                                        backgroundColor: '#374151',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '6px 12px',
+                                        borderRadius: '6px',
+                                        fontSize: '13px',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      Comentar
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
