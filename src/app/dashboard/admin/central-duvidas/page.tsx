@@ -50,7 +50,6 @@ import {
   CheckCircle,
   Schedule,
   Person,
-  Category,
   Refresh,
   FilterList,
   Assignment,
@@ -70,7 +69,6 @@ interface Question {
   id: string;
   title: string;
   content: string;
-  category: string;
   status: 'NOVA' | 'RESPONDIDA' | 'FECHADA';
   createdAt: string;
   readByAdmin: boolean;
@@ -107,7 +105,6 @@ interface FAQ {
     id: string;
     title: string;
     content: string;
-    category: string;
     createdAt: string;
   };
   admin: {
@@ -127,7 +124,6 @@ interface Stats {
   };
   breakdown: {
     byStatus: Array<{ status: string; count: number }>;
-    byCategory: Array<{ category: string; count: number }>;
     byPriority: Array<{ priority: string; count: number }>;
   };
 }
@@ -136,25 +132,10 @@ interface ResponseTemplate {
   id: string;
   title: string;
   content: string;
-  category: string;
   isActive: boolean;
   usageCount: number;
   createdAt: string;
 }
-
-const categoryLabels = {
-  'SMALL_CAPS': 'Small Caps',
-  'MICRO_CAPS': 'Micro Caps',
-  'DIVIDENDOS': 'Dividendos',
-  'FIIS': 'Fundos Imobiliários',
-  'INTERNACIONAL_ETFS': 'ETFs Internacionais',
-  'INTERNACIONAL_STOCKS': 'Stocks Internacionais',
-  'INTERNACIONAL_DIVIDENDOS': 'Dividendos Internacionais',
-  'PROJETO_AMERICA': 'Projeto América',
-  'GERAL': 'Geral',
-  'TECNICO': 'Análise Técnica',
-  'FISCAL': 'Questões Fiscais'
-};
 
 const statusLabels = {
   'NOVA': 'Nova',
@@ -206,7 +187,6 @@ export default function AdminCentralDuvidas() {
   const [editFaqTitle, setEditFaqTitle] = useState('');
   const [editFaqOrder, setEditFaqOrder] = useState(0);
   const [editFaqContent, setEditFaqContent] = useState('');
-  const [editFaqCategory, setEditFaqCategory] = useState('GERAL');
 
   const [deleteFaqDialogOpen, setDeleteFaqDialogOpen] = useState(false);
   const [faqToDelete, setFaqToDelete] = useState<FAQ | null>(null);
@@ -216,19 +196,13 @@ export default function AdminCentralDuvidas() {
   const [createFaqData, setCreateFaqData] = useState({
     title: '',
     content: '',
-    category: 'GERAL',
     faqOrder: 0
   });
   const [creatingFaq, setCreatingFaq] = useState(false);
   
   // Filtros
   const [filters, setFilters] = useState({
-    status: 'NOVA',
-    category: ''
-  });
-
-  const [faqFilters, setFaqFilters] = useState({
-    category: ''
+    status: 'NOVA'
   });
 
   // Carregar dados
@@ -244,7 +218,6 @@ export default function AdminCentralDuvidas() {
     try {
       const params = new URLSearchParams();
       if (filters.status) params.append('status', filters.status);
-      if (filters.category) params.append('category', filters.category);
       // IMPORTANTE: Filtrar apenas perguntas reais (não FAQs virtuais)
       params.append('excludeVirtual', 'true');
 
@@ -290,10 +263,7 @@ export default function AdminCentralDuvidas() {
     try {
       setLoading(true);
 
-      const params = new URLSearchParams();
-      if (faqFilters.category) params.append('category', faqFilters.category);
-
-      const response = await fetch(`/api/faq?${params.toString()}`, {
+      const response = await fetch(`/api/faq`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
@@ -346,7 +316,6 @@ export default function AdminCentralDuvidas() {
         setCreateFaqData({
           title: '',
           content: '',
-          category: 'GERAL',
           faqOrder: 0
         });
         loadFAQs(); // Recarregar apenas FAQs
@@ -362,14 +331,11 @@ export default function AdminCentralDuvidas() {
   };
 
   // Todas as outras funções permanecem iguais...
-  const loadTemplates = async (questionCategory?: string) => {
+  const loadTemplates = async () => {
     setLoadingTemplates(true);
     try {
       const params = new URLSearchParams();
       params.append('isActive', 'true');
-      if (questionCategory) {
-        params.append('category', questionCategory);
-      }
 
       const response = await fetch(`/api/response-templates?${params.toString()}`, {
         credentials: 'include',
@@ -454,7 +420,6 @@ export default function AdminCentralDuvidas() {
     setEditFaqTitle(faq.faqTitle || '');
     setEditFaqOrder(faq.faqOrder || 0);
     setEditFaqContent(faq.content || '');
-    setEditFaqCategory(faq.question.category || 'GERAL');
     setEditFaqModalOpen(true);
   };
 
@@ -472,8 +437,7 @@ export default function AdminCentralDuvidas() {
           isFaq: true,
           faqTitle: editFaqTitle,
           faqOrder: editFaqOrder,
-          content: editFaqContent,
-          category: editFaqCategory
+          content: editFaqContent
         })
       });
 
@@ -521,12 +485,12 @@ export default function AdminCentralDuvidas() {
 
   useEffect(() => {
     loadData();
-  }, [currentTab, filters, faqFilters]);
+  }, [currentTab, filters]);
 
   const handleOpenResponseModal = (question: Question) => {
     setSelectedQuestion(question);
     setShowResponseModal(true);
-    loadTemplates(question.category);
+    loadTemplates();
   };
 
   const filteredTemplates = templates.filter(template =>
@@ -749,21 +713,6 @@ export default function AdminCentralDuvidas() {
                   </FormControl>
                 </Grid>
                 
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Categoria</InputLabel>
-                    <Select
-                      value={filters.category}
-                      onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-                      label="Categoria"
-                    >
-                      <MenuItem value="">Todas</MenuItem>
-                      {Object.entries(categoryLabels).map(([key, label]) => (
-                        <MenuItem key={key} value={key}>{label}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
               </Grid>
             </CardContent>
           </Card>
@@ -796,17 +745,11 @@ export default function AdminCentralDuvidas() {
                           </Typography>
                           
                           <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-                            <Chip 
-                              label={statusLabels[question.status]} 
+                            <Chip
+                              label={statusLabels[question.status]}
                               color={getStatusColor(question.status)}
                               size="small"
                               icon={question.status === 'NOVA' ? <Schedule /> : <CheckCircle />}
-                            />
-                            <Chip 
-                              label={categoryLabels[question.category as keyof typeof categoryLabels]} 
-                              variant="outlined"
-                              size="small"
-                              icon={<Category />}
                             />
                           </Stack>
 
@@ -935,23 +878,7 @@ export default function AdminCentralDuvidas() {
                 </Box>
               </Box>
               
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Categoria</InputLabel>
-                    <Select
-                      value={faqFilters.category}
-                      onChange={(e) => setFaqFilters({ ...faqFilters, category: e.target.value })}
-                      label="Categoria"
-                    >
-                      <MenuItem value="">Todas</MenuItem>
-                      {Object.entries(categoryLabels).map(([key, label]) => (
-                        <MenuItem key={key} value={key}>{label}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
+              <Grid container spacing={2}></Grid>
             </CardContent>
           </Card>
 
@@ -1011,14 +938,6 @@ export default function AdminCentralDuvidas() {
                       </TableCell>
                       
                       <TableCell>
-                        <Chip 
-                          label={categoryLabels[faq.question.category as keyof typeof categoryLabels]} 
-                          variant="outlined"
-                          size="small"
-                        />
-                      </TableCell>
-                      
-                      <TableCell>
                         <Typography variant="body2">
                           {faq.admin.firstName} {faq.admin.lastName}
                         </Typography>
@@ -1074,15 +993,9 @@ export default function AdminCentralDuvidas() {
                 <Typography variant="h6" gutterBottom>
                   {selectedQuestion.title}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Por: {selectedQuestion.user.firstName} {selectedQuestion.user.lastName}
-                  <Chip 
-                    label={categoryLabels[selectedQuestion.category as keyof typeof categoryLabels]} 
-                    size="small" 
-                    variant="outlined" 
-                    sx={{ ml: 1 }}
-                  />
-                </Typography>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Por: {selectedQuestion.user.firstName} {selectedQuestion.user.lastName}
+                  </Typography>
                 <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
                   {selectedQuestion.content}
                 </Typography>
@@ -1142,11 +1055,6 @@ export default function AdminCentralDuvidas() {
       >
         <DialogTitle>
           Selecionar Template
-          {selectedQuestion && (
-            <Typography variant="body2" color="text.secondary">
-              Categoria: {categoryLabels[selectedQuestion.category as keyof typeof categoryLabels]}
-            </Typography>
-          )}
         </DialogTitle>
         <DialogContent>
           <TextField
@@ -1201,13 +1109,8 @@ export default function AdminCentralDuvidas() {
                           <Typography variant="subtitle1">
                             {template.title}
                           </Typography>
-                          <Chip 
-                            label={categoryLabels[template.category as keyof typeof categoryLabels]} 
-                            size="small" 
-                            variant="outlined"
-                          />
                           {template.usageCount > 0 && (
-                            <Chip 
+                            <Chip
                               icon={<TrendingUp />}
                               label={`${template.usageCount} usos`}
                               size="small"
@@ -1313,18 +1216,6 @@ export default function AdminCentralDuvidas() {
             fullWidth
             sx={{ mb: 2 }}
           />
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Categoria</InputLabel>
-            <Select
-              value={editFaqCategory}
-              label="Categoria"
-              onChange={(e) => setEditFaqCategory(e.target.value)}
-            >
-              {Object.entries(categoryLabels).map(([key, label]) => (
-                <MenuItem key={key} value={key}>{label}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
           <TextField
             label="Ordem de exibição"
             type="number"
@@ -1392,21 +1283,6 @@ export default function AdminCentralDuvidas() {
                   fullWidth
                   placeholder="Ex: Como calcular dividend yield?"
                 />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Categoria</InputLabel>
-                  <Select
-                    value={createFaqData.category}
-                    onChange={(e) => setCreateFaqData({ ...createFaqData, category: e.target.value })}
-                    label="Categoria"
-                  >
-                    {Object.entries(categoryLabels).map(([key, label]) => (
-                      <MenuItem key={key} value={key}>{label}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
               </Grid>
               
               <Grid item xs={12} sm={6}>

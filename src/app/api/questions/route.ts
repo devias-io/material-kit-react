@@ -29,7 +29,6 @@ export async function GET(request: NextRequest) {
     
     // Filtros opcionais
     const status = searchParams.get('status');
-    const category = searchParams.get('category');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
 
@@ -46,9 +45,6 @@ export async function GET(request: NextRequest) {
       whereClause.status = status;
     }
     
-    if (category) {
-      whereClause.category = category;
-    }
 
     // Para admins, buscar perguntas específicas de outros usuários
     const targetUserId = searchParams.get('userId');
@@ -149,7 +145,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, content, category = 'GERAL', priority = 'NORMAL' } = body;
+    const { title, content, priority = 'NORMAL' } = body;
 
     // Validações
     if (!title || !content) {
@@ -174,7 +170,6 @@ export async function POST(request: NextRequest) {
       data: {
         title,
         content,
-        category,
         priority,
         userId: user.id
       },

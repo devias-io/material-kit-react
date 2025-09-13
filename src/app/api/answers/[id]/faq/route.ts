@@ -61,8 +61,7 @@ export async function PUT(
           select: {
             id: true,
             title: true,
-            content: true,
-            category: true
+            content: true
           }
         }
       }
@@ -76,9 +75,9 @@ export async function PUT(
     console.log('🔍 [FOUND] Resposta encontrada:', answer.id);
 
     const body = await request.json();
-    const { isFaq, faqTitle, faqOrder = 0, content, category } = body;
+    const { isFaq, faqTitle, faqOrder = 0, content } = body;
 
-    console.log('📝 [DATA] Dados recebidos:', { isFaq, faqTitle, faqOrder, content, category });
+    console.log('📝 [DATA] Dados recebidos:', { isFaq, faqTitle, faqOrder, content });
 
     // Validações
     if (isFaq !== undefined && typeof isFaq !== 'boolean') {
@@ -105,11 +104,6 @@ export async function PUT(
       }, { status: 400 });
     }
 
-    if (category !== undefined && typeof category !== 'string') {
-      return NextResponse.json({
-        error: 'category must be a string'
-      }, { status: 400 });
-    }
 
     // Se está marcando como FAQ, gerar um título se não fornecido
     let finalFaqTitle = faqTitle;
@@ -119,23 +113,20 @@ export async function PUT(
       finalFaqTitle = answer.question.title;
     }
 
-    // Verificar se já existe FAQ com mesmo título na categoria (se marcando como FAQ)
+    // Verificar se já existe FAQ com mesmo título (se marcando como FAQ)
     if (finalIsFaq && finalFaqTitle) {
       const existingFaq = await prisma.answer.findFirst({
         where: {
           isFaq: true,
           faqTitle: finalFaqTitle.trim(),
-          question: {
-            category: answer.question.category
-          },
-          id: { not: params.id } // Excluir a resposta atual
+          id: { not: params.id }
         }
       });
 
       if (existingFaq) {
         console.log('❌ [DUPLICATE] FAQ com mesmo título já existe');
-        return NextResponse.json({ 
-          error: 'A FAQ with this title already exists in this category' 
+        return NextResponse.json({
+          error: 'A FAQ with this title already exists'
         }, { status: 400 });
       }
     }
@@ -150,11 +141,6 @@ export async function PUT(
       updateData.content = content;
     }
 
-    if (category !== undefined) {
-      updateData.question = {
-        update: { category }
-      };
-    }
 
     const updatedAnswer = await prisma.answer.update({
       where: { id: params.id },
@@ -164,8 +150,7 @@ export async function PUT(
           select: {
             id: true,
             title: true,
-            content: true,
-            category: true
+            content: true
           }
         },
         admin: {

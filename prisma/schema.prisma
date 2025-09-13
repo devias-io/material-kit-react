@@ -520,7 +520,7 @@ model Question {
   id          String           @id @default(cuid())
   title       String
   content     String
-  category    QuestionCategory @default(GERAL)
+  category    QuestionCategory @default(GERAL) // deprecated
   priority    QuestionPriority @default(NORMAL)
   status      QuestionStatus   @default(NOVA)
   userId      String
@@ -535,7 +535,6 @@ model Question {
 
   @@index([userId])
   @@index([status])
-  @@index([category])
   @@index([createdAt])
   @@index([userId, status])
   @@map("questions")

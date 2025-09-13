@@ -7,7 +7,6 @@ interface Question {
   id: string;
   title: string;
   content: string;
-  category: string;
   status: 'NOVA' | 'RESPONDIDA' | 'FECHADA';
   createdAt: string;
   answers: Answer[];
@@ -25,20 +24,6 @@ interface Answer {
   readByUser: boolean;
 }
 
-const categoryLabels = {
-  'SMALL_CAPS': 'Small Caps',
-  'MICRO_CAPS': 'Micro Caps', 
-  'DIVIDENDOS': 'Dividendos',
-  'FIIS': 'Fundos Imobiliários',
-  'INTERNACIONAL_ETFS': 'ETFs Internacionais',
-  'INTERNACIONAL_STOCKS': 'Stocks Internacionais',
-  'INTERNACIONAL_DIVIDENDOS': 'Dividendos Internacionais',
-  'PROJETO_AMERICA': 'Projeto América',
-  'GERAL': 'Geral',
-  'TECNICO': 'Análise Técnica',
-  'FISCAL': 'Questões Fiscais'
-};
-
 const statusLabels = {
   'NOVA': 'Aguardando Resposta',
   'RESPONDIDA': 'Respondida',
@@ -51,8 +36,7 @@ export default function CentralDuvidas() {
   const [openDialog, setOpenDialog] = useState(false);
   const [newQuestion, setNewQuestion] = useState({
     title: '',
-    content: '',
-    category: 'GERAL'
+    content: ''
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -112,13 +96,13 @@ export default function CentralDuvidas() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(newQuestion)
+        body: JSON.stringify({ title: newQuestion.title, content: newQuestion.content })
       });
 
       if (response.ok) {
         setSuccess('Dúvida enviada com sucesso! Você receberá uma resposta em breve.');
         setOpenDialog(false);
-        setNewQuestion({ title: '', content: '', category: 'GERAL' });
+        setNewQuestion({ title: '', content: '' });
         loadQuestions();
       } else {
         const data = await response.json();
@@ -502,19 +486,6 @@ export default function CentralDuvidas() {
                        question.status === 'RESPONDIDA' ? 'Respondida' : 'Fechada'}
                     </div>
                     
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      backgroundColor: '#f3f4f6',
-                      color: '#6b7280',
-                      padding: '3px 8px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: '500'
-                    }}>
-                      {categoryLabels[question.category]}
-                    </div>
-                    
                     {hasUnreadAnswers(question) && (
                       <div style={{
                         display: 'inline-flex',
@@ -806,38 +777,6 @@ export default function CentralDuvidas() {
                     fontFamily: 'inherit'
                   }}
                 />
-              </div>
-
-              <div style={{ marginBottom: '32px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '8px'
-                }}>
-                  Categoria
-                </label>
-                <select
-                  value={newQuestion.category}
-                  onChange={(e) => setNewQuestion({ ...newQuestion, category: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    fontSize: '15px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                    backgroundColor: 'white'
-                  }}
-                >
-                  {Object.entries(categoryLabels).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               {/* Botões */}

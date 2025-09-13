@@ -13,7 +13,6 @@ interface FAQ {
     id: string;
     title: string;
     content: string;
-    category: string;
     createdAt: string;
   };
   admin: {
@@ -33,35 +32,6 @@ interface FAQData {
   };
 }
 
-const categoryLabels = {
-  'SMALL_CAPS': 'Small Caps',
-  'MICRO_CAPS': 'Micro Caps',
-  'DIVIDENDOS': 'Dividendos',
-  'FIIS': 'Fundos Imobiliários',
-  'INTERNACIONAL_ETFS': 'ETFs Internacionais',
-  'INTERNACIONAL_STOCKS': 'Stocks Internacionais',
-  'INTERNACIONAL_DIVIDENDOS': 'Dividendos Internacionais',
-  'PROJETO_AMERICA': 'Projeto América',
-  'GERAL': 'Geral',
-  'TECNICO': 'Análise Técnica',
-  'FISCAL': 'Questões Fiscais'
-};
-
-const getCategoryColor = (category: string) => {
-  const colors = {
-    'DIVIDENDOS': '#10b981',
-    'FIIS': '#3b82f6',
-    'SMALL_CAPS': '#6b7280',
-    'MICRO_CAPS': '#6b7280',
-    'INTERNACIONAL_ETFS': '#f59e0b',
-    'INTERNACIONAL_STOCKS': '#3b82f6',
-    'PROJETO_AMERICA': '#10b981',
-    'GERAL': '#6b7280',
-    'TECNICO': '#3b82f6',
-    'FISCAL': '#f59e0b'
-  };
-  return colors[category] || '#6b7280';
-};
 
 export default function PublicFAQ() {
   const [faqData, setFaqData] = useState<FAQData | null>(null);
