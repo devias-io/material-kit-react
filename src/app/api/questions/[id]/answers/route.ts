@@ -1,10 +1,8 @@
 // src/app/api/questions/[id]/answers/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { notifyQuestionAnswered } from '@/utils/notifications';
 import { auth } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 // POST - Criar resposta (só admin)
 export async function POST(
@@ -140,14 +138,13 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Internal server error',
       details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }
+
 
 // GET - Listar respostas de uma pergunta
 export async function GET(
@@ -245,11 +242,9 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Internal server error',
       details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }
