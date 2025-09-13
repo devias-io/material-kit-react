@@ -28,7 +28,13 @@ export async function GET(request: NextRequest) {
         orderBy: [
           { ticker: 'asc' },
           { dataReferencia: 'desc' }
-        ]
+        ],
+        include: {
+          reportFiles: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
+        },
       });
     }
 
@@ -48,7 +54,9 @@ export async function GET(request: NextRequest) {
       tamanhoArquivo: relatorio.tamanhoArquivo || undefined,
       tipoPdf: (relatorio.tipoPdf as 'base64' | 'referencia') || undefined,
       hashArquivo: relatorio.hashArquivo || undefined,
-      solicitarReupload: relatorio.solicitarReupload || undefined
+      solicitarReupload: relatorio.solicitarReupload || undefined,
+      status: relatorio.reportFiles[0]?.status || undefined,
+      pdfUrl: relatorio.reportFiles[0]?.pdfUrl || undefined,
     }));
 
     return NextResponse.json({
@@ -102,8 +110,18 @@ export async function POST(request: NextRequest) {
         tamanhoArquivo: dados.tamanhoArquivo || null,
         tipoPdf: dados.tipoPdf || null,
         hashArquivo: dados.hashArquivo || null,
-        solicitarReupload: dados.solicitarReupload || false
-      }
+        solicitarReupload: dados.solicitarReupload || false,
+      },
+      include: { reportFiles: true },
+    });
+
+    // Registrar status inicial como "pendente"
+    await prisma.reportFile.create({
+      data: {
+        reportId: novoRelatorio.id,
+        status: 'pendente',
+        pdfUrl: novoRelatorio.arquivoPdf || null,
+      },
     });
 
     return NextResponse.json({
@@ -124,7 +142,9 @@ export async function POST(request: NextRequest) {
         tamanhoArquivo: novoRelatorio.tamanhoArquivo || undefined,
         tipoPdf: novoRelatorio.tipoPdf || undefined,
         hashArquivo: novoRelatorio.hashArquivo || undefined,
-        solicitarReupload: novoRelatorio.solicitarReupload || undefined
+        solicitarReupload: novoRelatorio.solicitarReupload || undefined,
+        status: 'pendente',
+        pdfUrl: novoRelatorio.arquivoPdf || undefined,
       }
     }, { status: 201 });
 

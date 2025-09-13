@@ -461,7 +461,21 @@ const migrarDadosParaAPI = useCallback(async () => {
         alert('❌ Erro ao excluir relatórios do ticker');
       }
     }
-}, [tickerParaExcluir, excluirPorTicker, carregarEstatisticas]);
+  }, [tickerParaExcluir, excluirPorTicker, carregarEstatisticas]);
+
+  const handleReprocessar = useCallback(async (id: string) => {
+    try {
+      await fetch('/api/report-files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportId: id, status: 'pendente' }),
+      });
+      await carregarEstatisticas(true);
+      alert('🔄 Reprocessamento iniciado');
+    } catch (error) {
+      alert('❌ Erro ao reprocessar relatório');
+    }
+  }, [carregarEstatisticas]);
 
   const handleSelecionar = useCallback((id: string) => {
     setRelatoriosSelecionados(prev => 
@@ -1040,6 +1054,7 @@ const migrarDadosParaAPI = useCallback(async () => {
                         <TableCell>Referência</TableCell>
                         <TableCell>Visualização</TableCell>
                         <TableCell>PDF</TableCell>
+                        <TableCell>Status</TableCell>
                         <TableCell align="center">Ações</TableCell>
                       </TableRow>
                     </TableHead>
@@ -1119,6 +1134,29 @@ const migrarDadosParaAPI = useCallback(async () => {
                                   Sem PDF
                                 </Typography>
                               )}
+                            </TableCell>
+
+                            <TableCell>
+                              <Stack direction="row" spacing={1} alignItems="center">
+                                <Chip
+                                  label={relatorio.status || 'pendente'}
+                                  size="small"
+                                  color={
+                                    relatorio.status === 'pronto'
+                                      ? 'success'
+                                      : relatorio.status === 'erro'
+                                      ? 'error'
+                                      : relatorio.status === 'processando'
+                                      ? 'info'
+                                      : 'warning'
+                                  }
+                                />
+                                {relatorio.status === 'erro' && (
+                                  <Button size="small" onClick={() => handleReprocessar(relatorio.id)}>
+                                    Reprocessar
+                                  </Button>
+                                )}
+                              </Stack>
                             </TableCell>
 
                             <TableCell align="center">

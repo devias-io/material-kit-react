@@ -19,6 +19,8 @@ export interface RelatorioAPI {
   tipoPdf?: 'base64' | 'referencia';
   hashArquivo?: string;
   solicitarReupload?: boolean;
+  status?: 'pendente' | 'processando' | 'pronto' | 'erro';
+  pdfUrl?: string;
 }
 
 export interface EstatisticasRelatorios {
@@ -109,8 +111,22 @@ export function useRelatoriosUpload() {
   const [progresso, setProgresso] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
+  const registrarStatus = useCallback(async (reportId: string, status: string, pdfUrl?: string) => {
+    try {
+      await fetch('/api/report-files', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reportId, status, pdfUrl }),
+      });
+    } catch (err) {
+      console.error('Erro ao registrar status do relatório:', err);
+    }
+  }, []);
+
   const uploadRelatorio = useCallback(async (
-    relatorio: Omit<RelatorioAPI, 'id' | 'dataUpload'>, 
+    relatorio: Omit<RelatorioAPI, 'id' | 'dataUpload' | 'status' | 'pdfUrl'>,
     metadata?: MetadataUpload
   ) => {
     setLoading(true);
@@ -140,12 +156,28 @@ export function useRelatoriosUpload() {
       }
 
       const resultado = await response.json();
+      const reportId: string | undefined = resultado.relatorio?.id;
+
+      if (reportId) {
+        await registrarStatus(reportId, 'processando');
+        await registrarStatus(
+          reportId,
+          'pronto',
+          resultado.relatorio?.arquivoPdf
+        );
+      }
+
       setProgresso(100);
 
       return resultado;
 
     } catch (error) {
       console.error('Erro no upload do relatório:', error);
+      if (error instanceof Error && (error as any).reportId) {
+        try {
+          await registrarStatus((error as any).reportId, 'erro');
+        } catch {}
+      }
       setError(error instanceof Error ? error.message : 'Erro no upload');
       throw error;
     } finally {
@@ -156,7 +188,7 @@ export function useRelatoriosUpload() {
   }, []);
 
   const uploadRelatoriosLote = useCallback(async (
-    relatorios: Omit<RelatorioAPI, 'id' | 'dataUpload'>[], 
+    relatorios: Omit<RelatorioAPI, 'id' | 'dataUpload' | 'status' | 'pdfUrl'>[],
     metadata?: MetadataUpload
   ) => {
     setLoading(true);

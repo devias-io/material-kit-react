@@ -464,6 +464,7 @@ model Relatorio {
   dataUpload        DateTime @default(now())
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  reportFiles       ReportFile[]
 
   @@index([ticker])
   @@index([tipo])
@@ -471,6 +472,18 @@ model Relatorio {
   @@index([ticker, tipo])
   @@index([ticker, dataReferencia])
   @@map("relatorios")
+}
+
+model ReportFile {
+  reportId  String
+  pdfUrl    String?
+  status    String
+  createdAt DateTime @default(now())
+  report    Relatorio @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@id([reportId, createdAt])
+  @@index([reportId])
+  @@map("report_files")
 }
 
 model AnaliseTrimestreData {
