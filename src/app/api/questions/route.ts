@@ -73,6 +73,36 @@ export async function GET(request: NextRequest) {
                 lastName: true,
                 email: true
               }
+            },
+            comments: {
+              include: {
+                author: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true
+                  }
+                }
+              },
+              orderBy: {
+                createdAt: 'asc'
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'asc'
+          }
+        },
+        comments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
             }
           },
           orderBy: {
