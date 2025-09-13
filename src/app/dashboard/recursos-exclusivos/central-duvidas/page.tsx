@@ -56,6 +56,11 @@ export default function CentralDuvidas() {
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
+  const [commentInputs, setCommentInputs] = useState<{ [key: string]: string }>({});
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
