@@ -163,6 +163,9 @@ export default function AdminCentralDuvidas() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
   
   // Estados para respostas
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
@@ -206,20 +209,23 @@ export default function AdminCentralDuvidas() {
   });
 
   // Carregar dados
-  const loadData = async () => {
+  const loadData = async (page = currentPage) => {
     if (currentTab === 0) {
-      await Promise.all([loadQuestions(), loadStats()]);
+      await Promise.all([loadQuestions(page), loadStats()]);
     } else {
       await loadFAQs();
     }
   };
 
-  const loadQuestions = async () => {
+  const loadQuestions = async (page = currentPage) => {
+    setLoading(true);
     try {
       const params = new URLSearchParams();
       if (filters.status) params.append('status', filters.status);
       // IMPORTANTE: Filtrar apenas perguntas reais (não FAQs virtuais)
       params.append('excludeVirtual', 'true');
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
 
       const response = await fetch(`/api/questions?${params.toString()}`, {
         credentials: 'include',
@@ -231,11 +237,16 @@ export default function AdminCentralDuvidas() {
       if (response.ok) {
         const data = await response.json();
         setQuestions(data.questions);
+        setCurrentPage(data.pagination.page);
+        setTotal(data.pagination.total);
+        setError('');
       } else {
-        setError('Erro ao carregar perguntas');
+        setError('Erro ao carregar perguntas. Tente novamente.');
       }
     } catch (err) {
       setError('Erro de conexão');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -484,7 +495,8 @@ export default function AdminCentralDuvidas() {
   };
 
   useEffect(() => {
-    loadData();
+    setCurrentPage(1);
+    loadData(1);
   }, [currentTab, filters]);
 
   const handleOpenResponseModal = (question: Question) => {
@@ -725,14 +737,15 @@ export default function AdminCentralDuvidas() {
                   Nenhuma dúvida encontrada
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Tente ajustar os filtros ou aguarde novas perguntas dos usuários
+                  Tente ajustar os filtros, navegar entre as páginas ou aguardar novas perguntas dos usuários
                 </Typography>
               </CardContent>
             </Card>
           ) : (
-            <Box>
-              {questions.map((question) => (
-                <Card key={question.id} sx={{ mb: 2, border: question.readByAdmin ? 1 : 2, borderColor: question.readByAdmin ? 'divider' : 'primary.main' }}>
+            <>
+              <Box>
+                {questions.map((question) => (
+                  <Card key={question.id} sx={{ mb: 2, border: question.readByAdmin ? 1 : 2, borderColor: question.readByAdmin ? 'divider' : 'primary.main' }}>
                   <Accordion>
                     <AccordionSummary expandIcon={<ExpandMore />}>
                       <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', pr: 2 }}>
@@ -843,7 +856,29 @@ export default function AdminCentralDuvidas() {
                   </Accordion>
                 </Card>
               ))}
-            </Box>
+              </Box>
+              {total > limit && (
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => loadQuestions(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    Anterior
+                  </Button>
+                  <Typography variant="body2" color="text.secondary">
+                    Página {currentPage} de {Math.ceil(total / limit)}
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    onClick={() => loadQuestions(currentPage + 1)}
+                    disabled={currentPage >= Math.ceil(total / limit)}
+                  >
+                    Próxima
+                  </Button>
+                </Stack>
+              )}
+            </>
           )}
         </>
       )}

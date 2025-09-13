@@ -1,9 +1,6 @@
 // src/app/api/questions/search/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, Prisma } from '@prisma/client';
 import { auth } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 // GET - Busca inteligente em perguntas e respostas
 export async function GET(request: NextRequest) {
