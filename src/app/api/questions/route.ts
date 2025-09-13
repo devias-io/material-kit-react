@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
     
     // Filtros opcionais
     const status = searchParams.get('status');
+    const excludeVirtual = searchParams.get('excludeVirtual') === 'true';
 
     // Parse paginação com valores padrão seguros
     const parsePositiveInt = (value: string | null, defaultValue: number) => {
@@ -58,6 +59,10 @@ export async function GET(request: NextRequest) {
     const targetUserId = searchParams.get('userId');
     if (isAdmin && targetUserId) {
       whereClause.userId = targetUserId;
+    }
+
+    if (excludeVirtual) {
+      whereClause.answers = { none: { isFaq: true } };
     }
 
     const questions = await prisma.question.findMany({
