@@ -102,6 +102,9 @@ export async function GET(request: NextRequest) {
     console.log(`🌍 [STATS] Buscando todos os relatórios disponíveis`);
 
     const relatorios = await prisma.relatorio.findMany({
+      where: {
+        dataUpload: { not: null }
+      },
       orderBy: [
         { ticker: 'asc' },
         { dataReferencia: 'desc' }
@@ -135,8 +138,8 @@ export async function GET(request: NextRequest) {
     const tamanhoTotalMB = tamanhoTotalBytes / (1024 * 1024);
     
     // Data do último upload
-    const ultimoUpload = relatorios.length > 0 
-      ? Math.max(...relatorios.map(r => r.dataUpload.getTime()))
+    const ultimoUpload = relatorios.length > 0
+      ? Math.max(...relatorios.map(r => r.dataUpload ? r.dataUpload.getTime() : 0))
       : null;
     
     const dataUltimoUpload = ultimoUpload 
@@ -150,7 +153,7 @@ export async function GET(request: NextRequest) {
       nome: relatorio.nome,
       tipo: relatorio.tipo as 'trimestral' | 'anual' | 'apresentacao' | 'outros',
       dataReferencia: relatorio.dataReferencia,
-      dataUpload: relatorio.dataUpload.toISOString(),
+      dataUpload: relatorio.dataUpload ? relatorio.dataUpload.toISOString() : undefined,
       linkCanva: relatorio.linkCanva || undefined,
       linkExterno: relatorio.linkExterno || undefined,
       tipoVisualizacao: relatorio.tipoVisualizacao as 'iframe' | 'canva' | 'link' | 'pdf',
