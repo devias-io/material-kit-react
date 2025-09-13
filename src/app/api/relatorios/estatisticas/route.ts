@@ -102,11 +102,16 @@ export async function GET(request: NextRequest) {
     console.log(`🌍 [STATS] Buscando todos os relatórios disponíveis`);
 
     const relatorios = await prisma.relatorio.findMany({
-      // SEM WHERE CLAUSE - mostra todos os relatórios
       orderBy: [
         { ticker: 'asc' },
         { dataReferencia: 'desc' }
-      ]
+      ],
+      include: {
+        reportFiles: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
     });
 
     console.log('📋 [STATS] Relatórios encontrados:', relatorios.length);
@@ -154,7 +159,9 @@ export async function GET(request: NextRequest) {
       tamanhoArquivo: relatorio.tamanhoArquivo || undefined,
       tipoPdf: (relatorio.tipoPdf as 'base64' | 'referencia') || undefined,
       hashArquivo: relatorio.hashArquivo || undefined,
-      solicitarReupload: relatorio.solicitarReupload || undefined
+      solicitarReupload: relatorio.solicitarReupload || undefined,
+      status: relatorio.reportFiles[0]?.status || undefined,
+      pdfUrl: relatorio.reportFiles[0]?.pdfUrl || undefined,
     }));
 
     // Estatísticas por ticker
