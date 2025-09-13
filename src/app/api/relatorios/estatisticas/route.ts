@@ -43,6 +43,7 @@ async function getAuthenticatedUser(request: NextRequest) {
   }
 }
 
+
 // 👑 VERIFICAR PERMISSÕES FLEXÍVEIS
 function getPermissions(user: any, isPublic: boolean) {
   if (isPublic) {
@@ -86,6 +87,20 @@ function getPermissions(user: any, isPublic: boolean) {
 
 // 📊 GET - Obter estatísticas dos relatórios (ACESSO PÚBLICO)
 export async function GET(request: NextRequest) {
+  try {
+    await prisma.$connect();
+  } catch (error) {
+    console.error('❌ [DB] Erro ao conectar ao banco de dados:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Serviço temporariamente indisponível - falha na conexão com o banco de dados',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      },
+      { status: 503 }
+    );
+  }
+
   try {
     console.log('📊 [STATS] INICIO - Obter estatísticas (acesso público permitido)');
     
@@ -203,10 +218,10 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ [STATS] Erro ao calcular estatísticas dos relatórios:', error);
-    
+
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Erro interno do servidor ao calcular estatísticas',
         details: error instanceof Error ? error.message : 'Erro desconhecido',
         // Retornar dados vazios em caso de erro
@@ -217,6 +232,10 @@ export async function GET(request: NextRequest) {
         relatorios: []
       },
       { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect().catch(disconnectError =>
+      console.error('❌ [DB] Erro ao desconectar do banco de dados:', disconnectError)
     );
   }
 }
