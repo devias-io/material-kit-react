@@ -696,3 +696,17 @@ model AtivoInformacao {
   
   @@map("ativos_informacao")
 }
+
+model Report {
+  id        String   @id @default(cuid())
+  canvaId   String
+  name      String?
+  iframeUrl String?
+  status    String   @default("pending")
+  progress  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@map("reports")
+}
