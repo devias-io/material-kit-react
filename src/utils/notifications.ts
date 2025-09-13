@@ -1,8 +1,6 @@
 // src/utils/notifications.ts - Funções utilitárias para disparar notificações
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 interface CreateNotificationParams {
   userId: string;
