@@ -331,14 +331,24 @@ export async function POST(request: NextRequest) {
 
     const sucessoTotal = errosProcessamento.length === 0;
     const houveSucessoParcial = !sucessoTotal && totalCriados > 0;
+    const nenhumRelatorioCriado = totalCriados === 0;
+
+    let message: string;
+    if (sucessoTotal) {
+      message = `Processamento concluído com sucesso (${totalCriados}/${relatorios.length}).`;
+    } else if (nenhumRelatorioCriado) {
+      message =
+        totalDuplicados > 0
+          ? 'Nenhum relatório criado: todos os itens já existiam.'
+          : 'Nenhum relatório criado devido a erros durante o processamento.';
+    } else {
+      message = `Processamento concluído com avisos. Inseridos ${totalCriados} de ${relatorios.length} relatórios.`;
+    }
 
     const resposta = {
       success: sucessoTotal,
       partialSuccess: houveSucessoParcial,
-      message:
-        sucessoTotal
-          ? `Processamento concluído com sucesso (${totalCriados}/${relatorios.length}).`
-          : `Processamento concluído com avisos. Inseridos ${totalCriados} de ${relatorios.length} relatórios.`,
+      message,
       resultados: {
         totalRecebidos: relatorios.length,
         totalValidos: validos.length,
@@ -361,7 +371,9 @@ export async function POST(request: NextRequest) {
       houveSucessoParcial,
     });
 
-    return NextResponse.json(resposta, { status: sucessoTotal ? 201 : 200 });
+    const statusCode = sucessoTotal ? 201 : totalDuplicados > 0 ? 409 : 400;
+
+    return NextResponse.json(resposta, { status: statusCode });
   } catch (error) {
     console.error('Erro ao processar lote de relatórios:', error);
 
