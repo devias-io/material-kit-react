@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 const TIPOS_VALIDOS = new Set(['trimestral', 'anual', 'apresentacao', 'outros']);
 const TIPOS_VISUALIZACAO_VALIDOS = new Set(['iframe', 'canva', 'link', 'pdf']);
