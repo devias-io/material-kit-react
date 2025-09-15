@@ -207,6 +207,10 @@ export default function CentralRelatorios() {
   const [dialogAberto, setDialogAberto] = useState(false);
   const [dialogBackup, setDialogBackup] = useState(false);
   const [dialogMigracao, setDialogMigracao] = useState(false);
+  const [dialogUploadLote, setDialogUploadLote] = useState(false);
+  const [jsonUploadLote, setJsonUploadLote] = useState('');
+  const [nomeArquivoUploadLote, setNomeArquivoUploadLote] = useState('');
+  const [erroUploadLote, setErroUploadLote] = useState<string | null>(null);
   const [etapaProcessamento, setEtapaProcessamento] = useState<string>('');
   
   // 🗑️ Estados para exclusão (similar à agenda)
@@ -228,92 +232,189 @@ export default function CentralRelatorios() {
     arquivoPdf: null
   });
 
+  const resetUploadLote = useCallback(() => {
+    setJsonUploadLote('');
+    setNomeArquivoUploadLote('');
+    setErroUploadLote(null);
+  }, []);
+
+  const fecharDialogUploadLote = useCallback(() => {
+    setDialogUploadLote(false);
+    resetUploadLote();
+  }, [resetUploadLote]);
+
   // ✅ CARREGAR ESTATÍSTICAS AO MONTAR COMPONENTE
-useEffect(() => {
-  const initializeApp = async () => {
-    if (!user) return;
-    setupAuthInterceptor(user.email, user.plan); // Configurar auth com usuário atual
-    carregarEstatisticas(); // SÓ DEPOIS executar
-    verificarMigracaoIndexedDB();
-  };
+  useEffect(() => {
+    const initializeApp = async () => {
+      if (!user) return;
+      setupAuthInterceptor(user.email, user.plan); // Configurar auth com usuário atual
+      carregarEstatisticas(); // SÓ DEPOIS executar
+      verificarMigracaoIndexedDB();
+    };
 
-  initializeApp();
-}, [user, carregarEstatisticas]);
+    initializeApp();
+  }, [user, carregarEstatisticas]);
 
-// 🔄 VERIFICAR SE PRECISA MIGRAR DO LOCALSTORAGE APENAS
-const verificarMigracaoIndexedDB = useCallback(async () => {
-  try {
-    // Verificar apenas localStorage (mais simples e seguro)
-    const dadosLocalStorage = localStorage.getItem('relatorios_central');
-    
-    if (dadosLocalStorage) {
-      setDialogMigracao(true);
+  // 🔄 VERIFICAR SE PRECISA MIGRAR DO LOCALSTORAGE APENAS
+  const verificarMigracaoIndexedDB = useCallback(async () => {
+    try {
+      // Verificar apenas localStorage (mais simples e seguro)
+      const dadosLocalStorage = localStorage.getItem('relatorios_central');
+
+      if (dadosLocalStorage) {
+        setDialogMigracao(true);
+      }
+    } catch (error) {
+      console.log('Nenhum dado local encontrado para migração');
     }
-  } catch (error) {
-    console.log('Nenhum dado local encontrado para migração');
-  }
-}, []);
+  }, []);
 
-// 🔄 MIGRAR DADOS DO LOCALSTORAGE PARA API
-const migrarDadosParaAPI = useCallback(async () => {
-  try {
-    setEtapaProcessamento('Coletando dados do localStorage...');
-    
-    let relatoriosParaMigrar: any[] = [];
-    
-    // Coletar apenas do localStorage
-    const dadosLocalStorage = localStorage.getItem('relatorios_central');
-    if (dadosLocalStorage) {
-      const dados = JSON.parse(dadosLocalStorage);
-      Object.entries(dados).forEach(([ticker, relatoriosTicker]: [string, any[]]) => {
-        relatoriosTicker.forEach(relatorio => {
-          relatoriosParaMigrar.push({
-            ...relatorio,
-            ticker: relatorio.ticker || ticker
+  // 🔄 MIGRAR DADOS DO LOCALSTORAGE PARA API
+  const migrarDadosParaAPI = useCallback(async () => {
+    try {
+      setEtapaProcessamento('Coletando dados do localStorage...');
+
+      let relatoriosParaMigrar: any[] = [];
+
+      // Coletar apenas do localStorage
+      const dadosLocalStorage = localStorage.getItem('relatorios_central');
+      if (dadosLocalStorage) {
+        const dados = JSON.parse(dadosLocalStorage);
+        Object.entries(dados).forEach(([ticker, relatoriosTicker]: [string, any[]]) => {
+          relatoriosTicker.forEach(relatorio => {
+            relatoriosParaMigrar.push({
+              ...relatorio,
+              ticker: relatorio.ticker || ticker
+            });
           });
         });
-      });
+      }
+
+      if (relatoriosParaMigrar.length > 0) {
+        setEtapaProcessamento(`Enviando ${relatoriosParaMigrar.length} relatórios para API...`);
+
+        // Upload em lote para API
+        await uploadRelatoriosLote(relatoriosParaMigrar, {
+          nomeArquivo: 'migracao_localStorage',
+          totalItens: relatoriosParaMigrar.length,
+          itensProcessados: relatoriosParaMigrar.length
+        });
+
+        // Fazer backup antes de limpar
+        const blob = new Blob([JSON.stringify(relatoriosParaMigrar, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `backup_migracao_${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        // Limpar dados antigos
+        localStorage.removeItem('relatorios_central');
+
+        // Recarregar dados
+        await carregarEstatisticas();
+
+        alert(`✅ Migração concluída!\n\n${relatoriosParaMigrar.length} relatórios foram migrados para a API.\n\nBackup foi baixado automaticamente.`);
+      } else {
+        alert('Nenhum dado encontrado para migrar.');
+      }
+
+      setDialogMigracao(false);
+
+    } catch (error) {
+      console.error('Erro na migração:', error);
+      alert('❌ Erro na migração. Dados preservados no localStorage.');
+    } finally {
+      setEtapaProcessamento('');
     }
-    
-    if (relatoriosParaMigrar.length > 0) {
-      setEtapaProcessamento(`Enviando ${relatoriosParaMigrar.length} relatórios para API...`);
-      
-      // Upload em lote para API
-      await uploadRelatoriosLote(relatoriosParaMigrar, {
-        nomeArquivo: 'migracao_localStorage',
-        totalItens: relatoriosParaMigrar.length,
-        itensProcessados: relatoriosParaMigrar.length
-      });
-      
-      // Fazer backup antes de limpar
-      const blob = new Blob([JSON.stringify(relatoriosParaMigrar, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `backup_migracao_${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-      
-      // Limpar dados antigos
-      localStorage.removeItem('relatorios_central');
-      
-      // Recarregar dados
-      await carregarEstatisticas();
-      
-      alert(`✅ Migração concluída!\n\n${relatoriosParaMigrar.length} relatórios foram migrados para a API.\n\nBackup foi baixado automaticamente.`);
-    } else {
-      alert('Nenhum dado encontrado para migrar.');
+  }, [uploadRelatoriosLote, carregarEstatisticas]);
+
+  const handleArquivoUploadLote = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const arquivo = event.target.files?.[0];
+
+    if (!arquivo) {
+      return;
     }
-    
-    setDialogMigracao(false);
-    
-  } catch (error) {
-    console.error('Erro na migração:', error);
-    alert('❌ Erro na migração. Dados preservados no localStorage.');
-  } finally {
-    setEtapaProcessamento('');
-  }
-}, [uploadRelatoriosLote, carregarEstatisticas]);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const conteudo = e.target?.result ? String(e.target.result) : '';
+      setJsonUploadLote(conteudo);
+      setNomeArquivoUploadLote(arquivo.name);
+      setErroUploadLote(null);
+    };
+
+    reader.onerror = () => {
+      setErroUploadLote('Não foi possível ler o arquivo selecionado.');
+    };
+
+    reader.readAsText(arquivo);
+    event.target.value = '';
+  }, []);
+
+  const handleUploadLote = useCallback(async () => {
+    try {
+      setErroUploadLote(null);
+
+      const conteudo = jsonUploadLote.trim();
+
+      if (!conteudo) {
+        setErroUploadLote('Informe os relatórios em formato JSON ou selecione um arquivo.');
+        return;
+      }
+
+      let dadosJson: any = JSON.parse(conteudo);
+      const relatorios = Array.isArray(dadosJson)
+        ? dadosJson
+        : Array.isArray(dadosJson.relatorios)
+          ? dadosJson.relatorios
+          : null;
+
+      if (!Array.isArray(relatorios)) {
+        setErroUploadLote('Formato inválido. Utilize um array de relatórios ou um objeto com a propriedade "relatorios".');
+        return;
+      }
+
+      const relatoriosValidos = relatorios.filter((item: any) => item && typeof item === 'object');
+
+      if (relatoriosValidos.length === 0) {
+        setErroUploadLote('Nenhum relatório válido encontrado para envio.');
+        return;
+      }
+
+      setEtapaProcessamento('Enviando relatórios em lote...');
+
+      await uploadRelatoriosLote(relatoriosValidos, {
+        nomeArquivo: nomeArquivoUploadLote || 'upload_lote_manual',
+        totalItens: relatoriosValidos.length,
+        itensProcessados: relatoriosValidos.length
+      });
+
+      await carregarEstatisticas(true);
+
+      alert(`✅ ${relatoriosValidos.length} relatórios enviados em lote!`);
+      fecharDialogUploadLote();
+    } catch (error) {
+      console.error('Erro ao enviar relatórios em lote:', error);
+
+      if (error instanceof SyntaxError) {
+        setErroUploadLote('JSON inválido. Verifique o conteúdo informado.');
+      } else {
+        setErroUploadLote(error instanceof Error ? error.message : 'Erro ao enviar relatórios em lote.');
+      }
+
+      alert('❌ Erro ao enviar relatórios em lote.');
+    } finally {
+      setEtapaProcessamento('');
+    }
+  }, [
+    jsonUploadLote,
+    nomeArquivoUploadLote,
+    uploadRelatoriosLote,
+    carregarEstatisticas,
+    fecharDialogUploadLote
+  ]);
 
   // 📤 SALVAR RELATÓRIO VIA API
   const salvarRelatorioIndividual = useCallback(async () => {
@@ -854,9 +955,9 @@ const migrarDadosParaAPI = useCallback(async () => {
       {/* Botões de ação */}
       <Grid container spacing={2} mb={4}>
         <Grid item xs={12} md={3}>
-          <Button 
-            fullWidth 
-            onClick={() => setDialogAberto(true)} 
+          <Button
+            fullWidth
+            onClick={() => setDialogAberto(true)}
             startIcon={<AddIcon />}
             sx={{
               background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
@@ -876,9 +977,34 @@ const migrarDadosParaAPI = useCallback(async () => {
           </Button>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Button 
-            fullWidth 
-            onClick={() => setDialogBackup(true)} 
+          <Button
+            fullWidth
+            onClick={() => {
+              resetUploadLote();
+              setDialogUploadLote(true);
+            }}
+            startIcon={<CloudUploadIcon />}
+            sx={{
+              background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+              color: 'white',
+              borderRadius: '12px',
+              padding: '12px 20px',
+              textTransform: 'none',
+              fontWeight: 500,
+              fontSize: '0.95rem',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+              '&:hover': {
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+              }
+            }}
+          >
+            Upload em Lote
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Button
+            fullWidth
+            onClick={() => setDialogBackup(true)}
             startIcon={<BackupIcon />}
             sx={{
               border: '1px solid #e2e8f0',
@@ -1293,8 +1419,8 @@ const migrarDadosParaAPI = useCallback(async () => {
       </Dialog>
 
       {/* Dialog de Migração */}
-      <Dialog 
-        open={dialogMigracao} 
+      <Dialog
+        open={dialogMigracao}
         onClose={() => setDialogMigracao(false)}
         maxWidth="sm"
         fullWidth
@@ -1331,8 +1457,163 @@ const migrarDadosParaAPI = useCallback(async () => {
         </DialogActions>
       </Dialog>
 
+      {/* Dialog - Upload em Lote */}
+      <Dialog
+        open={dialogUploadLote}
+        onClose={() => !isCarregando && fecharDialogUploadLote()}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontSize: '1.25rem',
+            fontWeight: 600,
+            color: '#1e293b',
+            borderBottom: '1px solid #e2e8f0'
+          }}
+        >
+          ☁️ Upload em Lote de Relatórios
+        </DialogTitle>
+        <DialogContent sx={{ p: 3 }}>
+          <Stack spacing={3}>
+            <Alert
+              severity="info"
+              sx={{
+                borderRadius: '12px',
+                border: '1px solid #dbeafe',
+                backgroundColor: '#f0f9ff'
+              }}
+            >
+              <Typography sx={{ fontSize: '0.875rem' }}>
+                Selecione um arquivo JSON ou cole abaixo uma lista de relatórios. Aceitamos um array de objetos ou um
+                objeto com a propriedade <strong>relatorios</strong>.
+              </Typography>
+            </Alert>
+
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              alignItems={{ xs: 'stretch', sm: 'center' }}
+            >
+              <Button
+                component="label"
+                startIcon={<CloudUploadIcon />}
+                sx={{
+                  border: '2px dashed #cbd5e1',
+                  borderRadius: '12px',
+                  padding: '12px 20px',
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  color: '#1d4ed8',
+                  backgroundColor: '#f8fafc',
+                  '&:hover': {
+                    backgroundColor: '#f1f5f9',
+                    borderColor: '#94a3b8'
+                  }
+                }}
+              >
+                Selecionar arquivo JSON
+                <input
+                  hidden
+                  type="file"
+                  accept="application/json,.json"
+                  onChange={handleArquivoUploadLote}
+                />
+              </Button>
+
+              {nomeArquivoUploadLote && (
+                <Chip
+                  label={nomeArquivoUploadLote}
+                  onDelete={() => {
+                    setNomeArquivoUploadLote('');
+                    setErroUploadLote(null);
+                  }}
+                  sx={{
+                    backgroundColor: '#e0f2fe',
+                    color: '#0c4a6e',
+                    '& .MuiChip-deleteIcon': {
+                      color: '#0ea5e9'
+                    }
+                  }}
+                />
+              )}
+            </Stack>
+
+            <TextField
+              fullWidth
+              multiline
+              minRows={6}
+              label="Conteúdo JSON"
+              placeholder='[{ "ticker": "PETR4", "nome": "Relatório" }]'
+              value={jsonUploadLote}
+              onChange={(event) => {
+                setJsonUploadLote(event.target.value);
+                if (erroUploadLote) {
+                  setErroUploadLote(null);
+                }
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px'
+                }
+              }}
+            />
+
+            {erroUploadLote && (
+              <Alert
+                severity="error"
+                sx={{
+                  borderRadius: '12px',
+                  border: '1px solid #fecaca',
+                  backgroundColor: '#fee2e2'
+                }}
+              >
+                <Typography sx={{ fontSize: '0.875rem' }}>{erroUploadLote}</Typography>
+              </Alert>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, borderTop: '1px solid #e2e8f0' }}>
+          <Button
+            onClick={fecharDialogUploadLote}
+            disabled={isCarregando}
+            sx={{
+              color: '#64748b',
+              textTransform: 'none',
+              fontWeight: 500
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleUploadLote}
+            disabled={isCarregando || !jsonUploadLote.trim()}
+            startIcon={uploadLoading ? <CircularProgress size={16} /> : <CloudUploadIcon />}
+            sx={{
+              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+              color: 'white',
+              borderRadius: '8px',
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:disabled': {
+                backgroundColor: '#e2e8f0',
+                color: '#94a3b8'
+              }
+            }}
+          >
+            {uploadLoading ? 'Enviando...' : 'Enviar Relatórios'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Dialog - Novo Relatório Individual - (MANTIDO IGUAL) */}
-      <Dialog 
+      <Dialog
         open={dialogAberto} 
         onClose={() => !isCarregando && setDialogAberto(false)} 
         maxWidth="md" 
