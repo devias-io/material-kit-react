@@ -261,68 +261,116 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const gerarChaveCombinacao = (ticker: string, nome: string, dataReferencia: string) =>
+      `${ticker.toUpperCase()}::${nome}::${dataReferencia}`;
+
     const errosProcessamento: ErroProcessamento[] = [...errosValidacao];
     let totalCriados = 0;
     let totalDuplicados = 0;
 
-    for (const relatorio of validos) {
-      try {
-        const existente = await prisma.relatorio.findFirst({
-          where: {
-            ticker: relatorio.dados.ticker,
-            nome: relatorio.dados.nome,
-            dataReferencia: relatorio.dados.dataReferencia,
-          },
-          select: { id: true },
-        });
+    const condicoesBusca = validos.map((relatorio) => ({
+      ticker: relatorio.dados.ticker,
+      nome: relatorio.dados.nome,
+      dataReferencia: relatorio.dados.dataReferencia,
+    }));
 
-        if (existente) {
-          totalDuplicados += 1;
-          errosProcessamento.push({
-            index: relatorio.index,
-            ticker: relatorio.ticker,
-            nome: relatorio.nome,
-            motivo: 'Já existe relatório com mesmo ticker, nome e data de referência',
-          });
-          continue;
-        }
+    let combinacoesExistentes = new Set<string>();
 
-        const novoRelatorio = await prisma.relatorio.create({
-          data: relatorio.dados,
-        });
-        totalCriados += 1;
+    if (condicoesBusca.length > 0) {
+      const relatoriosExistentes = await prisma.relatorio.findMany({
+        where: {
+          OR: condicoesBusca,
+        },
+        select: {
+          ticker: true,
+          nome: true,
+          dataReferencia: true,
+        },
+      });
 
-        try {
-          await prisma.reportFile.create({
-            data: {
-              reportId: novoRelatorio.id,
-              status: 'pendente',
-              pdfUrl: novoRelatorio.arquivoPdf ?? null,
-            },
-          });
-        } catch (erroReportFile) {
-          console.warn('⚠️ Erro ao registrar status inicial do relatório', {
-            relatorioId: novoRelatorio.id,
-            error: erroReportFile,
-          });
-          errosProcessamento.push({
-            index: relatorio.index,
-            ticker: relatorio.ticker,
-            nome: relatorio.nome,
-            motivo: 'Relatório criado, mas falhou ao registrar status inicial',
-          });
-        }
-      } catch (erro) {
-        console.error('❌ Erro ao processar relatório do lote', {
-          ticker: relatorio.ticker,
-          nome: relatorio.nome,
-          error: erro,
-        });
+      combinacoesExistentes = new Set(
+        relatoriosExistentes.map((item) =>
+          gerarChaveCombinacao(item.ticker, item.nome, item.dataReferencia),
+        ),
+      );
+    }
+
+    const relatoriosParaCriar: RelatorioNormalizado[] = [];
+
+    validos.forEach((relatorio) => {
+      const combinacao = gerarChaveCombinacao(
+        relatorio.dados.ticker,
+        relatorio.dados.nome,
+        relatorio.dados.dataReferencia,
+      );
+
+      if (combinacoesExistentes.has(combinacao)) {
+        totalDuplicados += 1;
         errosProcessamento.push({
           index: relatorio.index,
           ticker: relatorio.ticker,
           nome: relatorio.nome,
-          motivo: erro instanceof Error ? erro.message : 'Erro desconhecido ao salvar relatório',
+          motivo: 'Já existe relatório com mesmo ticker, nome e data de referência',
+        });
+        return;
+      }
+
+      relatoriosParaCriar.push(relatorio);
+    });
+
+    if (relatoriosParaCriar.length > 0) {
+      try {
+        const relatoriosCriados = await prisma.$transaction(async (tx) => {
+          await tx.relatorio.createMany({
+            data: relatoriosParaCriar.map((relatorio) => relatorio.dados),
+          });
+
+          const relatoriosInseridos = await tx.relatorio.findMany({
+            where: {
+              OR: relatoriosParaCriar.map((relatorio) => ({
+                ticker: relatorio.dados.ticker,
+                nome: relatorio.dados.nome,
+                dataReferencia: relatorio.dados.dataReferencia,
+              })),
+            },
+            select: {
+              id: true,
+              ticker: true,
+              nome: true,
+              dataReferencia: true,
+              arquivoPdf: true,
+            },
+          });
+
+          for (const relatorio of relatoriosInseridos) {
+            await tx.reportFile.create({
+              data: {
+                reportId: relatorio.id,
+                status: 'pendente',
+                pdfUrl: relatorio.arquivoPdf ?? null,
+              },
+            });
+          }
+
+          return relatoriosInseridos;
+        });
+
+        totalCriados += relatoriosCriados.length;
+      } catch (erroTransacao) {
+        console.error('❌ Erro na transação de criação de relatórios em lote', {
+          error: erroTransacao,
+        });
+
+        relatoriosParaCriar.forEach((relatorio) => {
+          errosProcessamento.push({
+            index: relatorio.index,
+            ticker: relatorio.ticker,
+            nome: relatorio.nome,
+            motivo:
+              erroTransacao instanceof Error
+                ? erroTransacao.message
+                : 'Erro ao salvar relatório em lote',
+          });
         });
       }
     }
