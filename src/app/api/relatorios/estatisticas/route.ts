@@ -117,11 +117,6 @@ export async function GET(request: NextRequest) {
     console.log(`🌍 [STATS] Buscando todos os relatórios disponíveis`);
 
     const relatorios = await prisma.relatorio.findMany({
-      where: {
-        NOT: {
-          dataUpload: null,
-        },
-      },
       orderBy: [
         { ticker: 'asc' },
         { dataReferencia: 'desc' }
