@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -46,6 +47,11 @@ type RelatorioNormalizado = {
     hashArquivo: string | null;
     solicitarReupload: boolean;
   };
+};
+
+type RelatorioParaCriacao = {
+  dados: Prisma.RelatorioCreateManyInput;
+  relatorioOriginal: RelatorioNormalizado;
 };
 
 function normalizarTipo(valor: unknown): 'trimestral' | 'anual' | 'apresentacao' | 'outros' {
@@ -265,65 +271,123 @@ export async function POST(request: NextRequest) {
     let totalCriados = 0;
     let totalDuplicados = 0;
 
-    for (const relatorio of validos) {
-      try {
-        const existente = await prisma.relatorio.findFirst({
-          where: {
+    const combinacoesParaConsulta = Array.from(
+      new Map(
+        validos.map(relatorio => {
+          const chave = `${relatorio.dados.ticker}::${relatorio.dados.nome}::${relatorio.dados.dataReferencia}`;
+          return [chave, {
             ticker: relatorio.dados.ticker,
             nome: relatorio.dados.nome,
             dataReferencia: relatorio.dados.dataReferencia,
-          },
-          select: { id: true },
-        });
+          }];
+        }),
+      ).values(),
+    );
 
-        if (existente) {
-          totalDuplicados += 1;
-          errosProcessamento.push({
-            index: relatorio.index,
-            ticker: relatorio.ticker,
-            nome: relatorio.nome,
-            motivo: 'Já existe relatório com mesmo ticker, nome e data de referência',
-          });
-          continue;
-        }
+    const combinacoesExistentes = new Set<string>();
+    const TAMANHO_CHUNK_CONSULTA = 500;
 
-        const novoRelatorio = await prisma.relatorio.create({
-          data: relatorio.dados,
-        });
-        totalCriados += 1;
+    for (let i = 0; i < combinacoesParaConsulta.length; i += TAMANHO_CHUNK_CONSULTA) {
+      const chunk = combinacoesParaConsulta.slice(i, i + TAMANHO_CHUNK_CONSULTA);
+      if (chunk.length === 0) {
+        continue;
+      }
 
-        try {
-          await prisma.reportFile.create({
-            data: {
-              reportId: novoRelatorio.id,
-              status: 'pendente',
-              pdfUrl: novoRelatorio.arquivoPdf ?? null,
-            },
-          });
-        } catch (erroReportFile) {
-          console.warn('⚠️ Erro ao registrar status inicial do relatório', {
-            relatorioId: novoRelatorio.id,
-            error: erroReportFile,
-          });
-          errosProcessamento.push({
-            index: relatorio.index,
-            ticker: relatorio.ticker,
-            nome: relatorio.nome,
-            motivo: 'Relatório criado, mas falhou ao registrar status inicial',
-          });
-        }
-      } catch (erro) {
-        console.error('❌ Erro ao processar relatório do lote', {
-          ticker: relatorio.ticker,
-          nome: relatorio.nome,
-          error: erro,
-        });
+      const existentes = await prisma.relatorio.findMany({
+        where: {
+          OR: chunk.map(combinacao => ({
+            ticker: combinacao.ticker,
+            nome: combinacao.nome,
+            dataReferencia: combinacao.dataReferencia,
+          })),
+        },
+        select: {
+          ticker: true,
+          nome: true,
+          dataReferencia: true,
+        },
+      });
+
+      existentes.forEach(registro => {
+        combinacoesExistentes.add(`${registro.ticker}::${registro.nome}::${registro.dataReferencia}`);
+      });
+    }
+
+    const relatoriosParaCriacao: RelatorioParaCriacao[] = [];
+    const dadosCreateMany: Prisma.RelatorioCreateManyInput[] = [];
+    const reportFilesParaCriacao: Prisma.ReportFileCreateManyInput[] = [];
+
+    for (const relatorio of validos) {
+      const combinacao = `${relatorio.dados.ticker}::${relatorio.dados.nome}::${relatorio.dados.dataReferencia}`;
+
+      if (combinacoesExistentes.has(combinacao)) {
+        totalDuplicados += 1;
         errosProcessamento.push({
           index: relatorio.index,
           ticker: relatorio.ticker,
           nome: relatorio.nome,
-          motivo: erro instanceof Error ? erro.message : 'Erro desconhecido ao salvar relatório',
+          motivo: 'Já existe relatório com mesmo ticker, nome e data de referência',
         });
+        continue;
+      }
+
+      const dadosRelatorio: Prisma.RelatorioCreateManyInput = {
+        id: randomUUID(),
+        ...relatorio.dados,
+      };
+
+      relatoriosParaCriacao.push({ dados: dadosRelatorio, relatorioOriginal: relatorio });
+      dadosCreateMany.push(dadosRelatorio);
+      reportFilesParaCriacao.push({
+        reportId: dadosRelatorio.id!,
+        status: 'pendente',
+        pdfUrl: dadosRelatorio.arquivoPdf ?? null,
+      });
+    }
+
+    if (dadosCreateMany.length > 0) {
+      try {
+        const [resultadoCreateMany] = await prisma.$transaction([
+          prisma.relatorio.createMany({ data: dadosCreateMany }),
+          prisma.reportFile.createMany({ data: reportFilesParaCriacao }),
+        ]);
+
+        totalCriados += resultadoCreateMany.count;
+      } catch (erroTransacao) {
+        console.error('❌ Erro ao criar relatórios em lote, aplicando fallback individual', erroTransacao);
+
+        for (const item of relatoriosParaCriacao) {
+          try {
+            await prisma.$transaction([
+              prisma.relatorio.create({ data: item.dados }),
+              prisma.reportFile.create({
+                data: {
+                  reportId: item.dados.id!,
+                  status: 'pendente',
+                  pdfUrl: item.dados.arquivoPdf ?? null,
+                },
+              }),
+            ]);
+
+            totalCriados += 1;
+          } catch (erroIndividual) {
+            console.error('❌ Erro ao criar relatório individual após falha em lote', {
+              ticker: item.relatorioOriginal.ticker,
+              nome: item.relatorioOriginal.nome,
+              error: erroIndividual,
+            });
+
+            errosProcessamento.push({
+              index: item.relatorioOriginal.index,
+              ticker: item.relatorioOriginal.ticker,
+              nome: item.relatorioOriginal.nome,
+              motivo:
+                erroIndividual instanceof Error
+                  ? erroIndividual.message
+                  : 'Erro desconhecido ao salvar relatório',
+            });
+          }
+        }
       }
     }
 
