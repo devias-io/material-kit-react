@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+
 import { auth } from '@/lib/auth';
+import { emitNotificationEvent } from '@/lib/notificationsEmitter';
 
 const prisma = new PrismaClient();
 
@@ -115,7 +117,12 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ 
+    emitNotificationEvent(targetUserId, {
+      type: 'refresh',
+      reason: 'created'
+    });
+
+    return NextResponse.json({
       notification,
       message: 'Notification created successfully'
     }, { status: 201 });

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+
 import { auth } from '@/lib/auth';
+import { emitNotificationEvent } from '@/lib/notificationsEmitter';
 
 const prisma = new PrismaClient();
 
@@ -23,6 +25,11 @@ export async function PUT() {
       data: {
         read: true
       }
+    });
+
+    emitNotificationEvent(user.id, {
+      type: 'refresh',
+      reason: 'mark-all-read'
     });
 
     return NextResponse.json({ updatedCount: result.count });

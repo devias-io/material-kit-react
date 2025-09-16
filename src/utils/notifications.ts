@@ -1,6 +1,7 @@
 // src/utils/notifications.ts - Funções utilitárias para disparar notificações
 
 import { prisma } from '@/lib/prisma';
+import { emitNotificationEvent } from '@/lib/notificationsEmitter';
 
 interface CreateNotificationParams {
   userId: string;
@@ -25,8 +26,12 @@ export async function createNotification(params: CreateNotificationParams) {
         metadata: params.metadata || {}
       }
     });
-    
+
     console.log(`📢 Notificação criada para usuário ${params.userId}: ${params.title}`);
+    emitNotificationEvent(params.userId, {
+      type: 'refresh',
+      reason: 'created'
+    });
     return notification;
   } catch (error) {
     console.error('Erro ao criar notificação:', error);
