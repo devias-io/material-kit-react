@@ -12,26 +12,26 @@ export const navItems = [
     page: 'relatorio-semanal'
   },
   
-  { 
-    key: 'overview', 
-    title: 'Small Caps', 
-    href: paths.dashboard.overview,
-    icon: 'chart-pie',
-    page: 'small-caps'
+  {
+    key: 'integrations',
+    title: 'Dividendos',
+    href: paths.dashboard.integrations,
+    icon: 'chart-line-up',
+    page: 'dividendos'
   },
-  { 
-    key: 'customers', 
-    title: 'Micro Caps', 
-    href: paths.dashboard.customers, 
+  {
+    key: 'customers',
+    title: 'Micro Caps',
+    href: paths.dashboard.customers,
     icon: 'chart-bar',
     page: 'micro-caps'
   },
-  { 
-    key: 'integrations', 
-    title: 'Dividendos', 
-    href: paths.dashboard.integrations, 
-    icon: 'chart-line-up',
-    page: 'dividendos'
+  {
+    key: 'overview',
+    title: 'Small Caps',
+    href: paths.dashboard.overview,
+    icon: 'chart-pie',
+    page: 'small-caps'
   },
   { 
     key: 'settings', 
