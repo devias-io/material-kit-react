@@ -1,5 +1,7 @@
 // src/hooks/useNotifications.ts
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+import type { NotificationStreamEvent } from '@/types/notifications';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 const logDev = (...args: Parameters<typeof console.log>) => {
@@ -39,6 +41,28 @@ export function useNotifications(): UseNotificationsReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const isUnmountedRef = useRef(false);
+
+  const clearReconnectTimeout = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
+
+  const closeEventSource = useCallback(() => {
+    if (eventSourceRef.current) {
+      console.log('useNotifications SSE: closing existing connection');
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    clearReconnectTimeout();
+  }, [clearReconnectTimeout]);
+
   // Função para verificar se está autenticado
   const isAuthenticated = useCallback(() => {
     return true;
@@ -46,11 +70,12 @@ export function useNotifications(): UseNotificationsReturn {
 
   // Função para limpar estado quando não autenticado
   const clearState = useCallback(() => {
+    closeEventSource();
     setNotifications([]);
     setUnreadCount(0);
     setError(null);
     setLoading(false);
-  }, []);
+  }, [closeEventSource]);
 
   const getAuthHeaders = useCallback(() => {
     return {
@@ -110,6 +135,72 @@ export function useNotifications(): UseNotificationsReturn {
       setLoading(false);
     }
   }, [getAuthHeaders, isAuthenticated, clearState]);
+
+  const connectEventSource = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (isUnmountedRef.current) {
+      return;
+    }
+
+    if (!isAuthenticated()) {
+      console.log('useNotifications SSE: usuário não autenticado, não conectando');
+      closeEventSource();
+      return;
+    }
+
+    if (typeof EventSource === 'undefined') {
+      console.warn('useNotifications SSE: EventSource não suportado, mantendo dados existentes');
+      return;
+    }
+
+    if (eventSourceRef.current) {
+      return;
+    }
+
+    console.log('useNotifications SSE: conectando ao stream');
+
+    try {
+      const eventSource = new EventSource('/api/notifications/stream', {
+        withCredentials: true
+      });
+
+      eventSourceRef.current = eventSource;
+
+      eventSource.addEventListener('connected', () => {
+        console.log('useNotifications SSE: conexão estabelecida');
+        fetchNotifications();
+      });
+
+      eventSource.addEventListener('refresh', (event: MessageEvent<string>) => {
+        try {
+          const payload: NotificationStreamEvent = JSON.parse(event.data);
+          console.log('useNotifications SSE: evento refresh recebido', payload);
+        } catch (parseError) {
+          console.error('useNotifications SSE: erro ao interpretar evento refresh', parseError);
+        } finally {
+          fetchNotifications();
+        }
+      });
+
+      eventSource.onerror = error => {
+        console.error('useNotifications SSE: erro na conexão', error);
+        closeEventSource();
+
+        if (!isUnmountedRef.current && !reconnectTimeoutRef.current) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectTimeoutRef.current = null;
+            connectEventSource();
+          }, 5000);
+        }
+      };
+    } catch (connectionError) {
+      console.error('useNotifications SSE: falha ao iniciar EventSource', connectionError);
+      closeEventSource();
+    }
+  }, [closeEventSource, fetchNotifications, isAuthenticated]);
 
   const markAsRead = useCallback(async (id: string) => {
     if (!isAuthenticated()) {
@@ -238,7 +329,8 @@ export function useNotifications(): UseNotificationsReturn {
         logDev('useNotifications: Auth perdida, limpando estado');
         clearState();
       } else {
-        logDev('useNotifications: Auth detectada, carregando dados');
+        console.log('useNotifications: Auth detectada, carregando dados');
+        connectEventSource();
         fetchNotifications();
       }
     };
@@ -248,38 +340,25 @@ export function useNotifications(): UseNotificationsReturn {
 
     // Escutar mudanças no localStorage
     window.addEventListener('storage', handleAuthChange);
-    
+
     return () => window.removeEventListener('storage', handleAuthChange);
-  }, [fetchNotifications, isAuthenticated, clearState]);
+  }, [fetchNotifications, isAuthenticated, clearState, connectEventSource]);
 
-  // Polling condicional (apenas se autenticado)
+  // Conexão via SSE para notificações em tempo real
   useEffect(() => {
-    const authStatus = isAuthenticated();
-    logDev('useNotifications POLLING: isAuth =', authStatus);
-
-    if (!authStatus) {
-      logDev('useNotifications POLLING: Não autenticado, pulando polling');
+    if (typeof window === 'undefined') {
       return;
     }
 
-    logDev('useNotifications POLLING: Iniciando interval de 30s');
-    const interval = setInterval(() => {
-      const stillAuth = isAuthenticated();
-      logDev('useNotifications POLLING: Executando... isAuth =', stillAuth);
-
-      if (stillAuth) {
-        logDev('useNotifications POLLING: Fazendo fetchNotifications');
-        fetchNotifications();
-      } else {
-        logDev('useNotifications POLLING: Não autenticado, pulando fetch');
-      }
-    }, 30000); // 30 segundos
+    isUnmountedRef.current = false;
+    connectEventSource();
 
     return () => {
-      logDev('useNotifications POLLING: Limpando interval');
-      clearInterval(interval);
+      isUnmountedRef.current = true;
+      closeEventSource();
+      clearReconnectTimeout();
     };
-  }, [fetchNotifications, isAuthenticated]);
+  }, [connectEventSource, closeEventSource, clearReconnectTimeout]);
 
   return {
     notifications,

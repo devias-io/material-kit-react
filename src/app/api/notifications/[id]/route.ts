@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+
 import { auth } from '@/lib/auth';
+import { emitNotificationEvent } from '@/lib/notificationsEmitter';
 
 const prisma = new PrismaClient();
 
@@ -24,6 +26,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (result.count === 0) {
       return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
     }
+
+    emitNotificationEvent(session.user.id, {
+      type: 'refresh',
+      reason: 'updated'
+    });
 
     return NextResponse.json({ message: 'Notification marked as read' });
   } catch (error) {
@@ -56,6 +63,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     if (result.count === 0) {
       return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
     }
+
+    emitNotificationEvent(session.user.id, {
+      type: 'refresh',
+      reason: 'deleted'
+    });
 
     return NextResponse.json({ message: 'Notification deleted successfully' });
   } catch (error) {
