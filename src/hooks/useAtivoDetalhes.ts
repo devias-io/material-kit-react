@@ -506,6 +506,35 @@ export function useHGBrasilAcoes(ticker: string | undefined) {
 
       console.log(`🇧🇷 [${isMobile ? 'MOBILE' : 'DESKTOP'}] Buscando dados para ${ticker}...`);
 
+      const parseToNumber = (value: unknown): number | undefined => {
+        if (typeof value === 'number' && Number.isFinite(value)) {
+          return value;
+        }
+
+        if (typeof value === 'string') {
+          const cleaned = value.replace(',', '.');
+          const parsed = Number(cleaned);
+          return Number.isFinite(parsed) ? parsed : undefined;
+        }
+
+        return undefined;
+      };
+
+      const pickMetric = (
+        values: unknown[],
+        validate: (value: number) => boolean = (value) => value > 0
+      ): number | undefined => {
+        for (const candidate of values) {
+          const parsed = parseToNumber(candidate);
+          if (parsed === undefined) continue;
+          if (validate(parsed)) {
+            return parsed;
+          }
+        }
+        return undefined;
+      };
+
+      const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
       // Verificar cache primeiro
       const cachedData = localStorage.getItem(`cache_hg_${ticker}`);
@@ -526,41 +555,92 @@ export function useHGBrasilAcoes(ticker: string | undefined) {
 
       // 🎯 ESTRATÉGIA CORRIGIDA: BRAPI PRIMEIRO PARA P/L (MOBILE E DESKTOP)
       console.log(`🎯 PRIORIDADE 1: Buscando P/L via BRAPI com módulo correto...`);
-      
-      try {
-        const brapiUrl = `https://brapi.dev/api/quote/${ticker}?modules=defaultKeyStatistics&token=${BRAPI_TOKEN}`;
-        
-        const brapiHeaders = isMobile ? {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-          'Accept-Language': 'pt-BR,pt;q=0.9'
-        } : {
-          'Accept': 'application/json',
-          'User-Agent': 'Portfolio-App/1.0'
-        };
 
-        const brapiResponse = await fetch(brapiUrl, {
-          method: 'GET',
-          headers: brapiHeaders
-        });
+      const brapiBaseUrl = `https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`;
+      const brapiHeaders: Record<string, string> = {
+        'Accept': 'application/json'
+      };
 
-        if (brapiResponse.ok) {
-          const brapiData = await brapiResponse.json();
-          
-          if (brapiData.results?.[0]?.defaultKeyStatistics) {
-            const stats = brapiData.results[0].defaultKeyStatistics;
-            
-            const plBrapi = stats.trailingPE || stats.forwardPE;
+      if (isMobile) {
+        brapiHeaders['Accept-Language'] = 'pt-BR,pt;q=0.9';
+      }
 
-            if (plBrapi && plBrapi > 0 && plBrapi < 1000) {
-              dadosColetados.pl = plBrapi;
-              dadosColetados.fonte = isMobile ? 'brapi-mobile-principal' : 'brapi-desktop-principal';
-              console.log(`✅ P/L BRAPI principal: ${plBrapi} (${isMobile ? 'mobile' : 'desktop'})`);
-            }
-          }
+      const brapiStrategies = [
+        { nome: 'default-key-statistics', url: `${brapiBaseUrl}&modules=defaultKeyStatistics` },
+        { nome: 'quote-basic', url: brapiBaseUrl },
+        { nome: 'quote-range', url: `${brapiBaseUrl}&range=1d` }
+      ];
+
+      for (const estrategia of brapiStrategies) {
+        if (dadosColetados.pl && dadosColetados.pvp) {
+          break;
         }
-      } catch (brapiErr) {
-        console.log(`❌ BRAPI principal falhou:`, brapiErr.message);
+
+        try {
+          console.log(`🎯 BRAPI tentativa (${estrategia.nome}) para ${ticker}`);
+          const resposta = await fetch(estrategia.url, {
+            method: 'GET',
+            headers: brapiHeaders
+          });
+
+          if (!resposta.ok) {
+            console.log(`⚠️ BRAPI ${estrategia.nome} retornou status ${resposta.status}`);
+            continue;
+          }
+
+          const dadosBrapi = await resposta.json();
+          const resultado = dadosBrapi?.results?.[0];
+
+          if (!resultado) {
+            continue;
+          }
+
+          const estatisticas = resultado.defaultKeyStatistics || {};
+
+          const plValor = pickMetric(
+            [
+              estatisticas.trailingPE,
+              estatisticas.forwardPE,
+              resultado.priceEarnings,
+              resultado.priceEarningsRatio
+            ],
+            (valor) => valor > 0 && valor < 1000
+          );
+
+          if (plValor !== undefined) {
+            dadosColetados.pl = plValor;
+            dadosColetados.fonte = `brapi-${isMobile ? 'mobile' : 'desktop'}-${estrategia.nome}`;
+            console.log(`✅ P/L BRAPI ${estrategia.nome}: ${plValor}`);
+          }
+
+          const pvpValor = pickMetric(
+            [
+              estatisticas.priceToBook,
+              estatisticas.priceToBookMRQ,
+              resultado.priceToBook,
+              resultado.priceBookValueRatio
+            ],
+            (valor) => valor > 0
+          );
+
+          if (pvpValor !== undefined && !dadosColetados.pvp) {
+            dadosColetados.pvp = pvpValor;
+            console.log(`✅ P/VP BRAPI ${estrategia.nome}: ${pvpValor}`);
+          }
+
+          if (dadosColetados.pl && dadosColetados.pvp) {
+            break;
+          }
+        } catch (brapiErr) {
+          console.log(
+            `❌ BRAPI ${estrategia.nome} falhou:`,
+            brapiErr instanceof Error ? brapiErr.message : brapiErr
+          );
+        }
+
+        if (isMobile) {
+          await wait(300);
+        }
       }
 
       // 🇧🇷 PRIORIDADE 2: HG Brasil para outros dados (P/VP, DY, etc.) - SÓ SE NÃO TEM P/L
@@ -572,83 +652,146 @@ export function useHGBrasilAcoes(ticker: string | undefined) {
       
       try {
         const hgUrl = `https://api.hgbrasil.com/finance/stock_price?key=${HG_BRASIL_KEY}&symbol=${ticker}`;
-        
-        let hgData = null;
-        
-        if (isMobile) {
-          // 📱 MOBILE: Estratégia proxy
-          try {
-            const proxyResponse = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(hgUrl)}`, {
-              method: 'GET',
-              headers: {
-                'Accept': 'application/json',
-                'User-Agent': 'Portfolio-App/1.0'
-              }
-            });
-            
-            if (proxyResponse.ok) {
-              const proxyData = await proxyResponse.json();
-              hgData = JSON.parse(proxyData.contents);
-            }
-          } catch (proxyErr) {
-            console.log(`📱 HG Proxy falhou, tentando direto...`);
-            
-            try {
-              const directResponse = await fetch(hgUrl, {
+
+        const hgStrategies = [
+          {
+            nome: 'allorigins-json',
+            executar: async () => {
+              const proxyResponse = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(hgUrl)}`, {
+                method: 'GET',
                 headers: {
-                  'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15'
+                  'Accept': 'application/json'
                 }
               });
-              if (directResponse.ok) {
-                hgData = await directResponse.json();
+
+              if (!proxyResponse.ok) {
+                throw new Error(`Status ${proxyResponse.status}`);
               }
-            } catch (directErr) {
-              console.log(`📱 HG Direto também falhou:`, directErr.message);
+
+              const proxyData = await proxyResponse.json();
+
+              if (!proxyData?.contents) {
+                throw new Error('Resposta vazia do proxy');
+              }
+
+              try {
+                return JSON.parse(proxyData.contents);
+              } catch (parseErr) {
+                throw new Error(
+                  parseErr instanceof Error ? parseErr.message : 'Erro ao parsear JSON do proxy'
+                );
+              }
+            }
+          },
+          {
+            nome: 'allorigins-raw',
+            executar: async () => {
+              const proxyResponse = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(hgUrl)}`);
+
+              if (!proxyResponse.ok) {
+                throw new Error(`Status ${proxyResponse.status}`);
+              }
+
+              const text = await proxyResponse.text();
+
+              if (!text) {
+                throw new Error('Resposta vazia do proxy (raw)');
+              }
+
+              try {
+                return JSON.parse(text);
+              } catch (parseErr) {
+                throw new Error(
+                  parseErr instanceof Error ? parseErr.message : 'Erro ao parsear JSON (raw)'
+                );
+              }
+            }
+          },
+          {
+            nome: 'direto',
+            executar: async () => {
+              const directResponse = await fetch(hgUrl);
+
+              if (!directResponse.ok) {
+                throw new Error(`Status ${directResponse.status}`);
+              }
+
+              return directResponse.json();
             }
           }
-          
-        } else {
-          // 🖥️ DESKTOP: Estratégia original
-          const proxyResponse = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(hgUrl)}`);
-          if (proxyResponse.ok) {
-            const proxyData = await proxyResponse.json();
-            hgData = JSON.parse(proxyData.contents);
+        ];
+
+        let hgData: any = null;
+
+        for (const estrategia of hgStrategies) {
+          try {
+            console.log(`🇧🇷 HG Brasil tentativa (${estrategia.nome}) para ${ticker}`);
+            const resultado = await estrategia.executar();
+
+            if (resultado) {
+              hgData = resultado;
+              console.log(`✅ HG Brasil ${estrategia.nome} funcionou`);
+              break;
+            }
+          } catch (strategyErr) {
+            console.log(
+              `⚠️ HG Brasil ${estrategia.nome} falhou:`,
+              strategyErr instanceof Error ? strategyErr.message : strategyErr
+            );
+          }
+
+          if (isMobile) {
+            await wait(300);
           }
         }
 
         // 🎯 PROCESSAR DADOS HG BRASIL (outros dados que não P/L)
         if (hgData?.results?.[ticker]) {
           const result = hgData.results[ticker];
-          
-          const pvp = result.financials?.price_to_book_ratio || 
-                     result.financials?.priceToBook ||
-                     result.financials?.pvp;
 
-          const dy = result.financials?.dividends?.yield_12m ||
-                    result.financials?.dividend_yield_12m;
+          const pvp = pickMetric(
+            [
+              result.financials?.price_to_book_ratio,
+              result.financials?.priceToBook,
+              result.financials?.pvp
+            ],
+            (valor) => valor > 0
+          );
+
+          const dy = pickMetric(
+            [
+              result.financials?.dividends?.yield_12m,
+              result.financials?.dividend_yield_12m
+            ],
+            (valor) => valor >= 0
+          );
 
           // ✅ MESCLAR DADOS: P/L da BRAPI + outros dados do HG Brasil
           dadosColetados = {
             ...dadosColetados, // Preserva P/L da BRAPI se existir
-            dividendYield12m: dy,
-            dividendSum12m: result.financials?.dividends?.yield_12m_sum,
-            pvp: pvp,
-            roe: result.financials?.return_on_equity,
-            equity: result.financials?.equity,
-            quotaCount: result.financials?.quota_count,
-            equityPerShare: result.financials?.equity_per_share,
+            dividendYield12m: dy ?? dadosColetados.dividendYield12m,
+            dividendSum12m:
+              parseToNumber(result.financials?.dividends?.yield_12m_sum) ?? dadosColetados.dividendSum12m,
+            pvp: pvp ?? dadosColetados.pvp,
+            roe: parseToNumber(result.financials?.return_on_equity),
+            equity: parseToNumber(result.financials?.equity),
+            quotaCount: parseToNumber(result.financials?.quota_count),
+            equityPerShare: parseToNumber(result.financials?.equity_per_share),
             ultimaAtualizacao: new Date().toISOString()
           };
 
           console.log(`✅ HG Brasil outros dados extraídos:`, {
-            pvp: pvp,
-            dy: dy,
+            pvp: dadosColetados.pvp,
+            dy: dadosColetados.dividendYield12m,
             fonte: dadosColetados.fonte
           });
         }
         
       } catch (hgErr) {
-        console.log(`❌ HG Brasil falhou para ${ticker}:`, hgErr.message);
+        console.log(
+          `❌ HG Brasil falhou para ${ticker}:`,
+          hgErr instanceof Error ? hgErr.message : hgErr
+        );
       }
 
       // 🎯 FALLBACK FINAL: P/L Estimado (SÓ se BRAPI falhou)
