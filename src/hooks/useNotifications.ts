@@ -3,6 +3,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 import type { NotificationStreamEvent } from '@/types/notifications';
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+const logDev = (...args: Parameters<typeof console.log>) => {
+  if (isDevelopment) {
+    console.log(...args);
+  }
+};
+
 interface Notification {
   id: string;
   title: string;
@@ -79,7 +86,7 @@ export function useNotifications(): UseNotificationsReturn {
   const fetchNotifications = useCallback(async () => {
     // Verificar auth antes de fazer request
     if (!isAuthenticated()) {
-      console.log('useNotifications: Usuário não autenticado, limpando estado');
+      logDev('useNotifications: Usuário não autenticado, limpando estado');
       clearState();
       return;
     }
@@ -97,7 +104,7 @@ export function useNotifications(): UseNotificationsReturn {
       if (!response.ok) {
         // Tratar diferentes tipos de erro
         if (response.status === 401 || response.status === 404) {
-          console.log('useNotifications: Auth inválida, limpando estado');
+          logDev('useNotifications: Auth inválida, limpando estado');
           clearState();
           return;
         }
@@ -108,7 +115,7 @@ export function useNotifications(): UseNotificationsReturn {
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
       
-      console.log('useNotifications: Dados carregados', {
+      logDev('useNotifications: Dados carregados', {
         total: data.notifications?.length || 0,
         unread: data.unreadCount || 0
       });
@@ -319,7 +326,7 @@ export function useNotifications(): UseNotificationsReturn {
   useEffect(() => {
     const handleAuthChange = () => {
       if (!isAuthenticated()) {
-        console.log('useNotifications: Auth perdida, limpando estado');
+        logDev('useNotifications: Auth perdida, limpando estado');
         clearState();
       } else {
         console.log('useNotifications: Auth detectada, carregando dados');
