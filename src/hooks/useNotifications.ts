@@ -1,6 +1,13 @@
 // src/hooks/useNotifications.ts
 import { useState, useEffect, useCallback } from 'react';
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+const logDev = (...args: Parameters<typeof console.log>) => {
+  if (isDevelopment) {
+    console.log(...args);
+  }
+};
+
 interface Notification {
   id: string;
   title: string;
@@ -54,7 +61,7 @@ export function useNotifications(): UseNotificationsReturn {
   const fetchNotifications = useCallback(async () => {
     // Verificar auth antes de fazer request
     if (!isAuthenticated()) {
-      console.log('useNotifications: Usuário não autenticado, limpando estado');
+      logDev('useNotifications: Usuário não autenticado, limpando estado');
       clearState();
       return;
     }
@@ -72,7 +79,7 @@ export function useNotifications(): UseNotificationsReturn {
       if (!response.ok) {
         // Tratar diferentes tipos de erro
         if (response.status === 401 || response.status === 404) {
-          console.log('useNotifications: Auth inválida, limpando estado');
+          logDev('useNotifications: Auth inválida, limpando estado');
           clearState();
           return;
         }
@@ -83,7 +90,7 @@ export function useNotifications(): UseNotificationsReturn {
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
       
-      console.log('useNotifications: Dados carregados', {
+      logDev('useNotifications: Dados carregados', {
         total: data.notifications?.length || 0,
         unread: data.unreadCount || 0
       });
@@ -228,10 +235,10 @@ export function useNotifications(): UseNotificationsReturn {
   useEffect(() => {
     const handleAuthChange = () => {
       if (!isAuthenticated()) {
-        console.log('useNotifications: Auth perdida, limpando estado');
+        logDev('useNotifications: Auth perdida, limpando estado');
         clearState();
       } else {
-        console.log('useNotifications: Auth detectada, carregando dados');
+        logDev('useNotifications: Auth detectada, carregando dados');
         fetchNotifications();
       }
     };
@@ -248,28 +255,28 @@ export function useNotifications(): UseNotificationsReturn {
   // Polling condicional (apenas se autenticado)
   useEffect(() => {
     const authStatus = isAuthenticated();
-    console.log('useNotifications POLLING: isAuth =', authStatus);
-    
+    logDev('useNotifications POLLING: isAuth =', authStatus);
+
     if (!authStatus) {
-      console.log('useNotifications POLLING: Não autenticado, pulando polling');
+      logDev('useNotifications POLLING: Não autenticado, pulando polling');
       return;
     }
 
-    console.log('useNotifications POLLING: Iniciando interval de 30s');
+    logDev('useNotifications POLLING: Iniciando interval de 30s');
     const interval = setInterval(() => {
       const stillAuth = isAuthenticated();
-      console.log('useNotifications POLLING: Executando... isAuth =', stillAuth);
-      
+      logDev('useNotifications POLLING: Executando... isAuth =', stillAuth);
+
       if (stillAuth) {
-        console.log('useNotifications POLLING: Fazendo fetchNotifications');
+        logDev('useNotifications POLLING: Fazendo fetchNotifications');
         fetchNotifications();
       } else {
-        console.log('useNotifications POLLING: Não autenticado, pulando fetch');
+        logDev('useNotifications POLLING: Não autenticado, pulando fetch');
       }
     }, 30000); // 30 segundos
 
     return () => {
-      console.log('useNotifications POLLING: Limpando interval');
+      logDev('useNotifications POLLING: Limpando interval');
       clearInterval(interval);
     };
   }, [fetchNotifications, isAuthenticated]);
