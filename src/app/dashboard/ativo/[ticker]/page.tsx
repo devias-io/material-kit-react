@@ -1380,8 +1380,44 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
   const normalizarData = useCallback((valor) => {
     if (!valor) return null;
 
-    const data = valor instanceof Date ? new Date(valor.getTime()) : new Date(valor);
-    if (isNaN(data.getTime())) return null;
+    let data = null;
+
+    if (valor instanceof Date) {
+      data = new Date(valor.getTime());
+    } else if (typeof valor === 'string') {
+      const valorString = valor.trim();
+      const formatoBR = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+      const match = valorString.match(formatoBR);
+
+      if (match) {
+        const [, diaStr, mesStr, anoStr] = match;
+        const dia = Number(diaStr);
+        const mesIndex = Number(mesStr) - 1;
+        const ano = Number(anoStr);
+        const dataBrasil = new Date(ano, mesIndex, dia);
+
+        if (
+          !Number.isNaN(dia) &&
+          !Number.isNaN(mesIndex) &&
+          !Number.isNaN(ano) &&
+          dataBrasil.getFullYear() === ano &&
+          dataBrasil.getMonth() === mesIndex &&
+          dataBrasil.getDate() === dia
+        ) {
+          data = dataBrasil;
+        }
+      }
+
+      if (!data) {
+        const dataParseada = new Date(valorString);
+        data = isNaN(dataParseada.getTime()) ? null : dataParseada;
+      }
+    } else {
+      const dataGenerica = new Date(valor);
+      data = isNaN(dataGenerica.getTime()) ? null : dataGenerica;
+    }
+
+    if (!data) return null;
 
     data.setHours(0, 0, 0, 0);
     return data;
