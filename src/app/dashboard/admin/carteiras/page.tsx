@@ -408,16 +408,18 @@ export default function AdminCarteirasPage() {
     }
   };
 
-  const carteirasPendentes = carteiras.filter(c => 
-    ['PENDENTE', 'NOVA', 'EM_ANALISE', 'PROCESSING', 'pending'].includes(c.status?.toLowerCase())
+  const matchesStatus = (status, statuses) => statuses.includes((status ?? '').toLowerCase());
+
+  const carteirasPendentes = carteiras.filter(c =>
+    matchesStatus(c.status, ['pendente', 'nova', 'em_analise', 'processing', 'pending'])
   ).sort((a, b) => {
     const diasA = Math.floor((new Date() - new Date(a.dataEnvio)) / (1000 * 60 * 60 * 24));
     const diasB = Math.floor((new Date() - new Date(b.dataEnvio)) / (1000 * 60 * 60 * 24));
     return diasB - diasA;
   });
 
-  const carteirasAnalisadas = carteiras.filter(c => 
-    ['ANALISADA', 'FECHADA', 'COMPLETED', 'completed', 'analisada', 'fechada'].includes(c.status?.toLowerCase())
+  const carteirasAnalisadas = carteiras.filter(c =>
+    matchesStatus(c.status, ['analisada', 'fechada', 'completed'])
   ).sort((a, b) => {
     const dataA = a.dataAnalise || a.updatedAt || a.dataEnvio;
     const dataB = b.dataAnalise || b.updatedAt || b.dataEnvio;
