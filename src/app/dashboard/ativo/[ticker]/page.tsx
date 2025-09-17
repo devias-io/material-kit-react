@@ -1367,15 +1367,75 @@ const DadosPosicaoExpandidos = React.memo(({
 });
 
 // Histórico de Dividendos com Virtual Scrolling
-const HistoricoDividendos = React.memo(({ ticker, dataEntrada, isFII = false }) => {
+const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII = false }) => {
   const [containerRef, inView] = useInView();
   const [proventos, setProventos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fonte, setFonte] = useState('');
   const [paginaAtual, setPaginaAtual] = useState(1);
   const itensPorPagina = 10;
-  
+
   const { isMobile } = useResponsive();
+
+  const normalizarData = useCallback((valor) => {
+    if (!valor) return null;
+
+    const data = valor instanceof Date ? new Date(valor.getTime()) : new Date(valor);
+    if (isNaN(data.getTime())) return null;
+
+    data.setHours(0, 0, 0, 0);
+    return data;
+  }, []);
+
+  const criarDataFallback = useCallback(() => {
+    const agora = new Date();
+    agora.setHours(0, 0, 0, 0);
+    return agora;
+  }, []);
+
+  const dataEntradaNormalizada = useMemo(() => normalizarData(dataEntrada), [dataEntrada, normalizarData]);
+  const dataSaidaNormalizada = useMemo(() => normalizarData(dataSaida), [dataSaida, normalizarData]);
+
+  const processarProventos = useCallback((listaProventos) => {
+    if (!Array.isArray(listaProventos)) return [];
+
+    return listaProventos
+      .map((item) => {
+        const valorNumerico = typeof item.valor === 'number' ? item.valor : Number(item.valor ?? 0) || 0;
+        const dataBruta = item.dataObj ?? item.dataCom ?? item.data;
+        const dataNormalizada = normalizarData(dataBruta) || criarDataFallback();
+
+        const valorParaFormatacao = Number.isFinite(valorNumerico) ? valorNumerico : 0;
+
+        return {
+          ...item,
+          valor: valorNumerico,
+          dataObj: dataNormalizada,
+          valorFormatado: item.valorFormatado || `R$ ${valorParaFormatacao.toFixed(2).replace('.', ',')}`,
+          tipo: item.tipo || (isFII ? 'Rendimento' : 'Dividendo')
+        };
+      })
+      .filter((item) => {
+        if (!item.dataObj) return false;
+
+        const dataValida = item.dataObj instanceof Date ? item.dataObj : normalizarData(item.dataObj);
+        if (!dataValida || isNaN(dataValida.getTime())) return false;
+
+        if (!item.valor || item.valor <= 0) return false;
+
+        if (dataEntradaNormalizada && dataValida.getTime() < dataEntradaNormalizada.getTime()) return false;
+        if (dataSaidaNormalizada && dataValida.getTime() > dataSaidaNormalizada.getTime()) return false;
+
+        item.dataObj = dataValida;
+        return true;
+      })
+      .sort((a, b) => {
+        const dataA = a.dataObj instanceof Date ? a.dataObj : normalizarData(a.dataObj) || criarDataFallback();
+        const dataB = b.dataObj instanceof Date ? b.dataObj : normalizarData(b.dataObj) || criarDataFallback();
+
+        return dataB.getTime() - dataA.getTime();
+      });
+  }, [criarDataFallback, dataEntradaNormalizada, dataSaidaNormalizada, isFII, normalizarData]);
 
   useEffect(() => {
     if (!inView || !ticker) return;
@@ -1383,12 +1443,14 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, isFII = false }) 
     const carregarProventos = async () => {
       try {
         setLoading(true);
-        
+
         // Tentar cache primeiro
         const cached = cacheUtils.get(`proventos_${ticker}`);
         if (cached) {
-          setProventos(cached);
+          const proventosProcessados = processarProventos(cached);
+          setProventos(proventosProcessados);
           setFonte('cache');
+          setPaginaAtual(1);
           setLoading(false);
           return;
         }
@@ -1404,19 +1466,7 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, isFII = false }) 
             const dadosAPI = await response.json();
             
             if (Array.isArray(dadosAPI) && dadosAPI.length > 0) {
-              proventosEncontrados = dadosAPI.map(item => {
-                const dataObj = item.dataObj ? 
-                  (item.dataObj instanceof Date ? item.dataObj : new Date(item.dataObj)) :
-                  (item.data ? new Date(item.data) : new Date());
-                
-                return {
-                  ...item,
-                  dataObj: isNaN(dataObj.getTime()) ? new Date() : dataObj,
-                  valorFormatado: item.valorFormatado || `R$ ${(item.valor || 0).toFixed(2).replace('.', ',')}`,
-                  tipo: item.tipo || (isFII ? 'Rendimento' : 'Dividendo')
-                };
-              });
-              
+              proventosEncontrados = dadosAPI;
               fonteAtual = 'API';
             }
           }
@@ -1430,18 +1480,7 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, isFII = false }) 
           if (dadosSalvos) {
             try {
               const proventosSalvos = JSON.parse(dadosSalvos);
-              proventosEncontrados = proventosSalvos.map(item => {
-                const dataObj = item.dataCom || item.data || item.dataObj;
-                const dataFinal = dataObj ? 
-                  (dataObj instanceof Date ? dataObj : new Date(dataObj)) :
-                  new Date();
-                
-                return {
-                  ...item,
-                  dataObj: isNaN(dataFinal.getTime()) ? new Date() : dataFinal,
-                  valorFormatado: item.valorFormatado || `R$ ${(item.valor || 0).toFixed(2).replace('.', ',')}`
-                };
-              });
+              proventosEncontrados = proventosSalvos;
               fonteAtual = 'localStorage';
             } catch (err) {
               console.error('Erro localStorage:', err);
@@ -1449,37 +1488,17 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, isFII = false }) 
           }
         }
 
-        const proventosValidos = proventosEncontrados.filter(item => {
-          // Verificar se tem dataObj válida
-          if (!item.dataObj) return false;
-          
-          const data = item.dataObj instanceof Date ? item.dataObj : new Date(item.dataObj);
-          if (isNaN(data.getTime())) return false;
-          
-          // Verificar se tem valor válido
-          if (!item.valor || item.valor <= 0) return false;
-          
-          // Atualizar o item com a data corrigida
-          item.dataObj = data;
-          
-          return true;
-        });
-        
-        proventosValidos.sort((a, b) => {
-          const dateA = a.dataObj instanceof Date ? a.dataObj : new Date(a.dataObj);
-          const dateB = b.dataObj instanceof Date ? b.dataObj : new Date(b.dataObj);
-          return dateB.getTime() - dateA.getTime();
-        });
+        const proventosProcessados = processarProventos(proventosEncontrados);
 
-        setProventos(proventosValidos);
+        setProventos(proventosProcessados);
         setFonte(fonteAtual || 'sem dados');
         setPaginaAtual(1);
-        
+
         // Cache os dados válidos
-        if (proventosValidos.length > 0) {
-          cacheUtils.set(`proventos_${ticker}`, proventosValidos);
+        if (proventosProcessados.length > 0) {
+          cacheUtils.set(`proventos_${ticker}`, proventosProcessados);
         }
-        
+
       } catch (error) {
         console.error('Erro geral:', error);
         setProventos([]);
@@ -1490,7 +1509,7 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, isFII = false }) 
     };
 
     carregarProventos();
-  }, [ticker, isFII, inView]);
+  }, [ticker, inView, processarProventos]);
 
   const { totalProventos, mediaProvento, ultimoProvento } = useMemo(() => {
     const total = proventos.reduce((sum, item) => sum + (item.valor || 0), 0);
@@ -3109,7 +3128,12 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
           
           <AgendaCorporativa ticker={ticker} isFII={tipoAtivo.ehFII} />
 
-          <HistoricoDividendos ticker={ticker} dataEntrada={ativo.dataEntrada} isFII={tipoAtivo.ehFII} />
+          <HistoricoDividendos
+            ticker={ticker}
+            dataEntrada={ativo.dataEntrada}
+            dataSaida={ativo.dataSaida}
+            isFII={tipoAtivo.ehFII}
+          />
 
           <DadosPosicaoExpandidos 
             empresa={ativo} 
