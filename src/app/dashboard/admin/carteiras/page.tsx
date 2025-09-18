@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import EnhancedAdminFeedback from '@/components/EnhancedAdminFeedback';
+import { API_CONFIG, buildBatchApiUrl } from '@/config/apiConfig';
 
 export default function AdminCarteirasPage() {
   const [currentTab, setCurrentTab] = useState(0);
@@ -16,6 +17,8 @@ export default function AdminCarteirasPage() {
   const [expandedAnalysed, setExpandedAnalysed] = useState(new Set());
   const [expandedResumoAtivos, setExpandedResumoAtivos] = useState(new Set());
   const [showDetailedAnalysis, setShowDetailedAnalysis] = useState(null);
+  const [precosAtuais, setPrecosAtuais] = useState(new Map());
+  const [statusCotacoes, setStatusCotacoes] = useState(new Map());
   
   const [stats, setStats] = useState({
     total: 0,
@@ -71,7 +74,38 @@ export default function AdminCarteirasPage() {
     });
   };
 
-  const consolidarAtivosCarteira = (dadosEstruturados) => {
+  const coletarTickers = (dadosEstruturados) => {
+    if (!dadosEstruturados) return [];
+
+    const camposCodigo = ['codigo', 'ticker', 'sigla', 'ativo', 'symbol', 'papel'];
+    const categoriasIgnoradas = new Set(['rendaFixa', 'reserva', 'cripto']);
+    const tickers = new Set();
+
+    Object.entries(dadosEstruturados).forEach(([categoria, itens]) => {
+      if (categoriasIgnoradas.has(categoria) || !Array.isArray(itens)) {
+        return;
+      }
+
+      itens.forEach((item) => {
+        if (!item || typeof item !== 'object') return;
+
+        for (const campo of camposCodigo) {
+          const valor = item[campo];
+          if (typeof valor === 'string') {
+            const normalizado = valor.trim().toUpperCase();
+            if (normalizado) {
+              tickers.add(normalizado);
+              break;
+            }
+          }
+        }
+      });
+    });
+
+    return Array.from(tickers);
+  };
+
+  const consolidarAtivosCarteira = (dadosEstruturados, cotacoes) => {
     if (!dadosEstruturados) return [];
 
     const ativosTemporarios = [];
@@ -111,16 +145,62 @@ export default function AdminCarteirasPage() {
 
     const montarObservacoes = (...itens) => itens.filter(Boolean).join(' • ');
 
+    const obterCotacao = (codigo) => {
+      if (!cotacoes || !codigo || typeof codigo !== 'string') return null;
+      const normalizado = codigo.trim().toUpperCase();
+      if (!normalizado) return null;
+
+      let valorCotacao = null;
+
+      if (cotacoes instanceof Map) {
+        valorCotacao = cotacoes.get(normalizado);
+      } else if (typeof cotacoes === 'object') {
+        valorCotacao = cotacoes[normalizado];
+      }
+
+      return typeof valorCotacao === 'number' && !Number.isNaN(valorCotacao) ? valorCotacao : null;
+    };
+
     // Ações
     (dadosEstruturados.acoes || []).forEach((acao, index) => {
       const quantidade = parseNumero(acao.quantidade);
       const precoMedio = parseNumero(acao.precoMedio);
-      const precoAtual = parseNumero(
+      const precoInformado = parseNumero(
         acao.cotacaoAtual ?? acao.cotacao ?? (acao.valorAtual && quantidade ? acao.valorAtual / quantidade : null)
       );
+      const codigoAtivo = typeof acao.codigo === 'string' ? acao.codigo : '';
+      const precoCotacao = obterCotacao(codigoAtivo);
+      const precoAtual = precoCotacao ?? precoInformado;
       const valorInvestido = calcularValor(parseNumero(acao.valorInvestido), quantidade, precoMedio);
-      const valorAtual = calcularValor(parseNumero(acao.valorAtual), quantidade, precoAtual ?? precoMedio);
-      const rentabilidade = calcularRentabilidade(parseNumero(acao.rentabilidade), valorInvestido, valorAtual);
+      let valorAtual = calcularValor(
+        precoCotacao !== null ? null : parseNumero(acao.valorAtual),
+        quantidade,
+        (precoAtual ?? precoMedio)
+      );
+
+      if (precoCotacao !== null && (valorAtual === null || valorAtual === undefined)) {
+        const valorInformado = parseNumero(acao.valorAtual);
+        if (valorInformado !== null && valorInformado !== undefined) {
+          valorAtual = valorInformado;
+        } else if (typeof quantidade === 'number' && Number.isFinite(quantidade)) {
+          valorAtual = quantidade * precoCotacao;
+        }
+      }
+
+      if (valorAtual === null || valorAtual === undefined) {
+        const valorInformado = parseNumero(acao.valorAtual);
+        if (valorInformado !== null && valorInformado !== undefined) {
+          valorAtual = valorInformado;
+        }
+      }
+
+      let rentabilidade = precoCotacao !== null
+        ? calcularRentabilidade(null, valorInvestido, valorAtual)
+        : calcularRentabilidade(parseNumero(acao.rentabilidade), valorInvestido, valorAtual);
+
+      if (rentabilidade === null || Number.isNaN(rentabilidade)) {
+        rentabilidade = parseNumero(acao.rentabilidade);
+      }
       const pesoInformado = parseNumero(acao.pesoCarteira);
 
       adicionarAtivo({
@@ -144,12 +224,42 @@ export default function AdminCarteirasPage() {
     (dadosEstruturados.fiis || []).forEach((fii, index) => {
       const quantidade = parseNumero(fii.quantidade);
       const precoMedio = parseNumero(fii.precoMedio);
-      const precoAtual = parseNumero(
+      const precoInformado = parseNumero(
         fii.cotacaoAtual ?? fii.cotacao ?? (fii.valorAtual && quantidade ? fii.valorAtual / quantidade : null)
       );
+      const codigoAtivo = typeof fii.codigo === 'string' ? fii.codigo : '';
+      const precoCotacao = obterCotacao(codigoAtivo);
+      const precoAtual = precoCotacao ?? precoInformado;
       const valorInvestido = calcularValor(parseNumero(fii.valorInvestido), quantidade, precoMedio);
-      const valorAtual = calcularValor(parseNumero(fii.valorAtual), quantidade, precoAtual ?? precoMedio);
-      const rentabilidade = calcularRentabilidade(parseNumero(fii.rentabilidade), valorInvestido, valorAtual);
+      let valorAtual = calcularValor(
+        precoCotacao !== null ? null : parseNumero(fii.valorAtual),
+        quantidade,
+        (precoAtual ?? precoMedio)
+      );
+
+      if (precoCotacao !== null && (valorAtual === null || valorAtual === undefined)) {
+        const valorInformado = parseNumero(fii.valorAtual);
+        if (valorInformado !== null && valorInformado !== undefined) {
+          valorAtual = valorInformado;
+        } else if (typeof quantidade === 'number' && Number.isFinite(quantidade)) {
+          valorAtual = quantidade * precoCotacao;
+        }
+      }
+
+      if (valorAtual === null || valorAtual === undefined) {
+        const valorInformado = parseNumero(fii.valorAtual);
+        if (valorInformado !== null && valorInformado !== undefined) {
+          valorAtual = valorInformado;
+        }
+      }
+
+      let rentabilidade = precoCotacao !== null
+        ? calcularRentabilidade(null, valorInvestido, valorAtual)
+        : calcularRentabilidade(parseNumero(fii.rentabilidade), valorInvestido, valorAtual);
+
+      if (rentabilidade === null || Number.isNaN(rentabilidade)) {
+        rentabilidade = parseNumero(fii.rentabilidade);
+      }
       const pesoInformado = parseNumero(fii.pesoCarteira);
 
       adicionarAtivo({
@@ -200,10 +310,40 @@ export default function AdminCarteirasPage() {
       const precoMedioUSD = parseNumero(ativo.precoMedioUSD);
       const precoAtualUSD = parseNumero(ativo.cotacaoUSD ?? ativo.cotacaoAtualUSD);
       const precoMedio = precoMedioUSD !== null ? precoMedioUSD * taxaCambio : null;
-      const precoAtual = precoAtualUSD !== null ? precoAtualUSD * taxaCambio : null;
+      const precoInformado = precoAtualUSD !== null ? precoAtualUSD * taxaCambio : null;
+      const codigoAtivo = typeof ativo.codigo === 'string' ? ativo.codigo : '';
+      const precoCotacao = obterCotacao(codigoAtivo);
+      const precoAtual = precoCotacao ?? precoInformado;
       const valorInvestido = calcularValor(parseNumero(ativo.valorInvestido), quantidade, precoMedio);
-      const valorAtual = calcularValor(parseNumero(ativo.valorAtual), quantidade, precoAtual ?? precoMedio);
-      const rentabilidade = calcularRentabilidade(parseNumero(ativo.rentabilidade), valorInvestido, valorAtual);
+      let valorAtual = calcularValor(
+        precoCotacao !== null ? null : parseNumero(ativo.valorAtual),
+        quantidade,
+        (precoAtual ?? precoMedio)
+      );
+
+      if (precoCotacao !== null && (valorAtual === null || valorAtual === undefined)) {
+        const valorInformado = parseNumero(ativo.valorAtual);
+        if (valorInformado !== null && valorInformado !== undefined) {
+          valorAtual = valorInformado;
+        } else if (typeof quantidade === 'number' && Number.isFinite(quantidade)) {
+          valorAtual = quantidade * precoCotacao;
+        }
+      }
+
+      if (valorAtual === null || valorAtual === undefined) {
+        const valorInformado = parseNumero(ativo.valorAtual);
+        if (valorInformado !== null && valorInformado !== undefined) {
+          valorAtual = valorInformado;
+        }
+      }
+
+      let rentabilidade = precoCotacao !== null
+        ? calcularRentabilidade(null, valorInvestido, valorAtual)
+        : calcularRentabilidade(parseNumero(ativo.rentabilidade), valorInvestido, valorAtual);
+
+      if (rentabilidade === null || Number.isNaN(rentabilidade)) {
+        rentabilidade = parseNumero(ativo.rentabilidade);
+      }
       const pesoInformado = parseNumero(ativo.pesoCarteira);
 
       adicionarAtivo({
@@ -306,7 +446,113 @@ export default function AdminCarteirasPage() {
     });
   };
 
-  const toggleResumoAtivos = (carteiraId) => {
+  const carregarPrecosBrapi = async (carteiraId, dadosEstruturados) => {
+    if (!dadosEstruturados) return;
+
+    if (precosAtuais.has(carteiraId)) {
+      return;
+    }
+
+    const statusAtual = statusCotacoes.get(carteiraId);
+    if (statusAtual?.loading) {
+      return;
+    }
+
+    const tickers = coletarTickers(dadosEstruturados);
+
+    if (!tickers.length) {
+      setPrecosAtuais((prev) => {
+        const atualizado = new Map(prev);
+        atualizado.set(carteiraId, {});
+        return atualizado;
+      });
+      setStatusCotacoes((prev) => {
+        const atualizado = new Map(prev);
+        atualizado.set(carteiraId, { loading: false, error: null });
+        return atualizado;
+      });
+      return;
+    }
+
+    setStatusCotacoes((prev) => {
+      const atualizado = new Map(prev);
+      atualizado.set(carteiraId, { loading: true, error: null });
+      return atualizado;
+    });
+
+    const url = buildBatchApiUrl(tickers);
+    const headers = { ...API_CONFIG.DEFAULT_HEADERS };
+    const maxTentativas = Math.max(1, API_CONFIG.MAX_RETRIES || 1);
+    const atrasoTentativas = API_CONFIG.RETRY_DELAY || 0;
+
+    let tentativa = 0;
+    let ultimoErro = null;
+
+    while (tentativa < maxTentativas) {
+      try {
+        const response = await fetch(url, {
+          headers,
+          cache: 'no-store'
+        });
+
+        if (!response.ok) {
+          throw new Error(`Status ${response.status}`);
+        }
+
+        const data = await response.json();
+        const resultados = Array.isArray(data?.results) ? data.results : [];
+        const cotacoesRecebidas = resultados.reduce((acumulado, item) => {
+          if (!item || typeof item !== 'object') return acumulado;
+
+          const simbolo = (item.symbol || item.ticker || item.stock || '').toString().trim().toUpperCase();
+          const preco = item.regularMarketPrice;
+
+          if (simbolo && typeof preco === 'number' && !Number.isNaN(preco)) {
+            acumulado[simbolo] = preco;
+          }
+
+          return acumulado;
+        }, {});
+
+        setPrecosAtuais((prev) => {
+          const atualizado = new Map(prev);
+          atualizado.set(carteiraId, cotacoesRecebidas);
+          return atualizado;
+        });
+
+        setStatusCotacoes((prev) => {
+          const atualizado = new Map(prev);
+          atualizado.set(carteiraId, { loading: false, error: null });
+          return atualizado;
+        });
+
+        return;
+      } catch (erro) {
+        ultimoErro = erro;
+        tentativa += 1;
+
+        if (tentativa < maxTentativas && atrasoTentativas > 0) {
+          await new Promise((resolver) => setTimeout(resolver, atrasoTentativas));
+        }
+      }
+    }
+
+    setStatusCotacoes((prev) => {
+      const atualizado = new Map(prev);
+      atualizado.set(carteiraId, {
+        loading: false,
+        error: ultimoErro?.message || 'Erro ao carregar cotações'
+      });
+      return atualizado;
+    });
+
+    console.error(`Erro ao carregar cotações da carteira ${carteiraId}:`, ultimoErro);
+    alert('Não foi possível atualizar as cotações agora. Exibindo os valores informados originalmente.');
+  };
+
+  const toggleResumoAtivos = (carteiraId, dadosEstruturados) => {
+    const jaExpandido = expandedResumoAtivos.has(carteiraId);
+
     setExpandedResumoAtivos((prev) => {
       const novo = new Set(prev);
       if (novo.has(carteiraId)) {
@@ -316,10 +562,16 @@ export default function AdminCarteirasPage() {
       }
       return novo;
     });
+
+    if (!jaExpandido && !precosAtuais.has(carteiraId)) {
+      carregarPrecosBrapi(carteiraId, dadosEstruturados);
+    }
   };
 
   const renderResumoAtivosTabela = (carteiraId, dadosEstruturados) => {
-    const ativos = consolidarAtivosCarteira(dadosEstruturados);
+    const cotacoesCarteira = precosAtuais.get(carteiraId);
+    const statusCotacao = statusCotacoes.get(carteiraId) || { loading: false, error: null };
+    const ativos = consolidarAtivosCarteira(dadosEstruturados, cotacoesCarteira);
 
     if (!ativos.length) {
       return null;
@@ -390,7 +642,7 @@ export default function AdminCarteirasPage() {
             </div>
           </div>
           <button
-            onClick={() => toggleResumoAtivos(carteiraId)}
+            onClick={() => toggleResumoAtivos(carteiraId, dadosEstruturados)}
             style={{
               backgroundColor: expandedResumoAtivos.has(carteiraId) ? '#1d4ed8' : '#3b82f6',
               color: 'white',
@@ -407,6 +659,23 @@ export default function AdminCarteirasPage() {
           </button>
         </div>
 
+        {statusCotacao.error && !statusCotacao.loading && (
+          <div
+            style={{
+              margin: '0 20px',
+              marginTop: '12px',
+              padding: '10px 12px',
+              borderRadius: '8px',
+              backgroundColor: '#fef2f2',
+              color: '#b91c1c',
+              fontSize: '12px',
+              fontWeight: '500'
+            }}
+          >
+            Não foi possível atualizar todas as cotações automaticamente. Os valores originais foram mantidos.
+          </div>
+        )}
+
         {expandedResumoAtivos.has(carteiraId) && (
           <div style={{ padding: '0 16px 16px' }}>
             <div style={{ overflowX: 'auto' }}>
@@ -417,7 +686,21 @@ export default function AdminCarteirasPage() {
                     <th style={{ textAlign: 'left', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>CATEGORIA</th>
                     <th style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>QTDE</th>
                     <th style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>PREÇO MÉDIO</th>
-                    <th style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>PREÇO ATUAL</th>
+                    <th
+                      style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}
+                    >
+                      PREÇO ATUAL
+                      {statusCotacao.loading && (
+                        <div style={{ marginTop: '4px', fontSize: '10px', color: '#64748b', fontWeight: '500' }}>
+                          Atualizando...
+                        </div>
+                      )}
+                      {statusCotacao.error && !statusCotacao.loading && (
+                        <div style={{ marginTop: '4px', fontSize: '10px', color: '#dc2626', fontWeight: '500' }}>
+                          Falha ao atualizar
+                        </div>
+                      )}
+                    </th>
                     <th style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>VALOR INVESTIDO</th>
                     <th style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>VALOR ATUAL</th>
                     <th style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>RENTAB.</th>
@@ -458,7 +741,17 @@ export default function AdminCarteirasPage() {
                         <td style={{ padding: '12px 8px', color: '#475569', fontWeight: '600' }}>{ativo.categoria}</td>
                         <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>{formatQuantidade(ativo.quantidade)}</td>
                         <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>{formatCurrency(ativo.precoMedio)}</td>
-                        <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>{formatCurrency(ativo.precoAtual)}</td>
+                        <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                            <span>{formatCurrency(ativo.precoAtual)}</span>
+                            {statusCotacao.loading && index === 0 && (
+                              <span style={{ fontSize: '10px', color: '#64748b', fontStyle: 'italic' }}>Atualizando...</span>
+                            )}
+                            {statusCotacao.error && !statusCotacao.loading && index === 0 && (
+                              <span style={{ fontSize: '10px', color: '#dc2626', fontWeight: '500' }}>Usando dados originais</span>
+                            )}
+                          </div>
+                        </td>
                         <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>{formatCurrency(ativo.valorInvestido)}</td>
                         <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>{formatCurrency(ativo.valorAtual)}</td>
                         <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600', color: rentabilidadeColor }}>{formatPercent(ativo.rentabilidade)}</td>
