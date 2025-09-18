@@ -1,11 +1,29 @@
 import React, { useState, useEffect } from 'react';
 
+const STATUS_PADRAO = 'regular';
+const NOTA_PADRAO = 5;
+const RECOMENDACAO_PADRAO = 'manter';
+
+const gerarIdManual = () => `manual-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
 const EnhancedAdminFeedback = ({ carteira, onSave, onCancel }) => {
   const [activeSection, setActiveSection] = useState('general');
   const [loadingAtivos, setLoadingAtivos] = useState(false);
   const [ativosInfo, setAtivosInfo] = useState([]);
-  
-  const [feedbackData, setFeedbackData] = useState({
+
+  const initialAtivosAnalise = (carteira?.ativosAnalise || []).map(ativo => ({
+    ...ativo,
+    id: ativo.id || ativo.codigo || gerarIdManual(),
+    codigo: ativo.codigo || '',
+    status: ativo.status || STATUS_PADRAO,
+    nota: typeof ativo.nota === 'number' ? ativo.nota : NOTA_PADRAO,
+    comentario: ativo.comentario || '',
+    recomendacao: ativo.recomendacao || RECOMENDACAO_PADRAO,
+    temInformacao: ativo.temInformacao ?? false,
+    informacaoCompleta: ativo.informacaoCompleta ?? null
+  }));
+
+  const [feedbackData, setFeedbackData] = useState(() => ({
     pontuacaoGeral: carteira?.pontuacao || 8.0,
     avaliacoes: {
       qualidade: carteira?.avaliacaoQualidade || 85,
@@ -14,10 +32,15 @@ const EnhancedAdminFeedback = ({ carteira, onSave, onCancel }) => {
     },
     feedbackGeral: carteira?.feedback || '',
     recomendacoes: carteira?.recomendacoes || [],
-    ativosAnalise: carteira?.ativosAnalise || [],
+    ativosAnalise: initialAtivosAnalise,
     setoresAnalise: carteira?.setoresAnalise || [],
     alertas: carteira?.alertas || [],
     proximosPassos: carteira?.proximosPassos || []
+  }));
+
+  const [selectedAtivoId, setSelectedAtivoId] = useState(() => {
+    const primeiroAtivo = initialAtivosAnalise[0];
+    return primeiroAtivo ? (primeiroAtivo.id || primeiroAtivo.codigo) : null;
   });
 
   const [novaRecomendacao, setNovaRecomendacao] = useState({
@@ -28,18 +51,12 @@ const EnhancedAdminFeedback = ({ carteira, onSave, onCancel }) => {
     impacto: ''
   });
 
-  const [novoAtivo, setNovoAtivo] = useState({
-    codigo: '',
-    tipo: 'acao',
-    status: 'bom',
-    nota: 7.0,
-    comentario: '',
-    recomendacao: 'manter'
-  });
-
   const categorias = ['Diversificação', 'Qualidade', 'Risco', 'Setores', 'Alocação', 'Compliance'];
   const prioridades = ['baixa', 'média', 'alta'];
   const statusAtivos = ['excelente', 'bom', 'regular', 'ruim', 'alerta'];
+  const tiposAtivos = ['acao', 'fii', 'etf', 'bdr', 'fundo', 'outro'];
+
+  const obterIdentificadorAtivo = (ativo) => ativo?.id || ativo?.codigo || '';
 
   // Carregar informações dos ativos automaticamente
   useEffect(() => {
@@ -53,31 +70,89 @@ const EnhancedAdminFeedback = ({ carteira, onSave, onCancel }) => {
     try {
       const response = await fetch(`/api/carteiras/${carteira.id}/ativos-info`);
       const data = await response.json();
-      
-      if (data.success) {
-        setAtivosInfo(data.ativos);
-        
-        // Pré-carregar seção de análise de ativos com dados do banco
-        const ativosPreCarregados = data.ativos
-          .filter(ativo => ativo.temInformacao)
-          .map(ativo => ({
-            id: Date.now() + Math.random(),
-            codigo: ativo.codigo,
-            tipo: ativo.tipo.toLowerCase(),
-            status: mapearQualidadeParaStatus(ativo.informacao.qualidade),
-            nota: ativo.informacao.qualidade,
-            comentario: gerarComentarioAutomatico(ativo),
-            recomendacao: ativo.informacao.recomendacao.toLowerCase(),
-            valorCarteira: ativo.valorTotal,
-            pesoCarteira: ativo.pesoCarteira,
-            informacaoCompleta: ativo.informacao
-          }));
 
-        setFeedbackData(prev => ({
-          ...prev,
-          ativosAnalise: [...prev.ativosAnalise, ...ativosPreCarregados]
-        }));
-        
+      if (data.success) {
+        const ativosApi = Array.isArray(data.ativos) ? data.ativos : [];
+        const colecaoBase = ativosApi.map(ativo => {
+          const temInformacao = Boolean(ativo.temInformacao && ativo.informacao);
+          const info = temInformacao ? ativo.informacao : {};
+          const qualidade = temInformacao && typeof info.qualidade === 'number' ? info.qualidade : null;
+
+          return {
+            id: ativo.codigo || gerarIdManual(),
+            codigo: ativo.codigo || '',
+            tipo: (ativo.tipo || 'acao').toLowerCase(),
+            status: qualidade !== null ? mapearQualidadeParaStatus(qualidade) : STATUS_PADRAO,
+            nota: qualidade !== null ? qualidade : NOTA_PADRAO,
+            comentario: temInformacao ? gerarComentarioAutomatico(ativo) : '',
+            recomendacao: info.recomendacao ? info.recomendacao.toLowerCase() : RECOMENDACAO_PADRAO,
+            valorCarteira: ativo.valorTotal ?? ativo.valorCarteira ?? null,
+            pesoCarteira: ativo.pesoCarteira ?? null,
+            temInformacao,
+            informacaoCompleta: temInformacao ? info : null
+          };
+        });
+
+        setAtivosInfo(colecaoBase);
+
+        let ativosMesclados = [];
+        setFeedbackData(prev => {
+          const anteriores = prev.ativosAnalise || [];
+          const codigosBase = new Set(colecaoBase.map(item => item.codigo));
+          const anterioresPorCodigo = new Map(anteriores.map(item => [item.codigo, item]));
+
+          const baseMesclada = colecaoBase.map(base => {
+            const existente = anterioresPorCodigo.get(base.codigo);
+
+            if (existente) {
+              return {
+                ...base,
+                ...existente,
+                id: existente.id || base.id || gerarIdManual(),
+                codigo: base.codigo || existente.codigo || '',
+                temInformacao: base.temInformacao,
+                informacaoCompleta: base.informacaoCompleta,
+                valorCarteira: base.valorCarteira ?? existente.valorCarteira ?? null,
+                pesoCarteira: base.pesoCarteira ?? existente.pesoCarteira ?? null,
+                comentario: existente.comentario || base.comentario,
+                status: existente.status || base.status,
+                nota: typeof existente.nota === 'number' ? existente.nota : base.nota,
+                recomendacao: existente.recomendacao || base.recomendacao
+              };
+            }
+
+            return base;
+          });
+
+          const extras = anteriores
+            .filter(item => !item.codigo || !codigosBase.has(item.codigo))
+            .map(item => ({
+              ...item,
+              id: item.id || item.codigo || gerarIdManual(),
+              codigo: item.codigo || '',
+              status: item.status || STATUS_PADRAO,
+              nota: typeof item.nota === 'number' ? item.nota : NOTA_PADRAO,
+              recomendacao: item.recomendacao || RECOMENDACAO_PADRAO,
+              temInformacao: item.temInformacao ?? false,
+              informacaoCompleta: item.informacaoCompleta ?? null
+            }));
+
+          ativosMesclados = [...baseMesclada, ...extras];
+
+          return {
+            ...prev,
+            ativosAnalise: ativosMesclados
+          };
+        });
+
+        setSelectedAtivoId(prevSelecionado => {
+          if (prevSelecionado && ativosMesclados.some(item => (item.id || item.codigo) === prevSelecionado)) {
+            return prevSelecionado;
+          }
+
+          return ativosMesclados[0] ? (ativosMesclados[0].id || ativosMesclados[0].codigo) : null;
+        });
+
       } else {
         console.error('Erro ao carregar informações dos ativos:', data.error);
       }
@@ -99,35 +174,112 @@ const EnhancedAdminFeedback = ({ carteira, onSave, onCancel }) => {
 
   // Função para gerar comentário automático baseado nas informações do banco
   const gerarComentarioAutomatico = (ativo) => {
-    const info = ativo.informacao;
+    const info = ativo?.informacao;
+
+    if (!info) {
+      return '';
+    }
+
     let comentario = '';
-    
-    comentario += `${info.nome} (${ativo.codigo}) - Setor: ${info.setor}. `;
-    comentario += `Representa ${ativo.pesoCarteira}% da carteira (R$ ${ativo.valorCarteira.toLocaleString('pt-BR')}). `;
-    
-    if (info.fundamentosResumo) {
+    const peso = ativo?.pesoCarteira ?? info?.pesoCarteira;
+    const valor = ativo?.valorCarteira ?? ativo?.valorTotal ?? info?.valorCarteira;
+    const nomeReferencia = info?.nome ? `${info.nome}${ativo?.codigo ? ` (${ativo.codigo})` : ''}` : ativo?.codigo;
+
+    if (nomeReferencia) {
+      comentario += `${nomeReferencia}${info?.setor ? ` - Setor: ${info.setor}` : ''}. `;
+    }
+
+    if (typeof peso === 'number' && typeof valor === 'number') {
+      comentario += `Representa ${peso}% da carteira (R$ ${valor.toLocaleString('pt-BR')}). `;
+    } else if (typeof peso === 'number') {
+      comentario += `Participação de ${peso}% na carteira. `;
+    }
+
+    if (info?.fundamentosResumo) {
       comentario += `${info.fundamentosResumo} `;
     }
-    
-    if (info.pontosFortes && info.pontosFortes.length > 0) {
+
+    if (Array.isArray(info?.pontosFortes) && info.pontosFortes.length > 0) {
       comentario += `Pontos fortes: ${info.pontosFortes.join(', ')}. `;
     }
-    
-    if (info.pontosFracos && info.pontosFracos.length > 0) {
+
+    if (Array.isArray(info?.pontosFracos) && info.pontosFracos.length > 0) {
       comentario += `Pontos de atenção: ${info.pontosFracos.join(', ')}. `;
     }
-    
-    comentario += `Risco classificado como ${info.risco.toLowerCase()}. `;
-    
-    if (info.dividend_yield && ativo.tipo === 'ACAO') {
+
+    if (info?.risco) {
+      comentario += `Risco classificado como ${info.risco.toLowerCase()}. `;
+    }
+
+    if (info?.dividend_yield && String(ativo?.tipo).toUpperCase() === 'ACAO') {
       comentario += `Dividend yield atual: ${info.dividend_yield}%. `;
     }
-    
-    if (info.observacoes) {
+
+    if (info?.observacoes) {
       comentario += `${info.observacoes} `;
     }
-    
+
     return comentario.trim();
+  };
+
+  const handleAtivoChange = (campo, valor) => {
+    if (!selectedAtivoId) return;
+
+    setFeedbackData(prev => ({
+      ...prev,
+      ativosAnalise: (prev.ativosAnalise || []).map(ativo => {
+        if (obterIdentificadorAtivo(ativo) === selectedAtivoId) {
+          return {
+            ...ativo,
+            [campo]: valor
+          };
+        }
+        return ativo;
+      })
+    }));
+  };
+
+  const adicionarAtivoManual = () => {
+    const novoId = gerarIdManual();
+    const novoAtivo = {
+      id: novoId,
+      codigo: '',
+      tipo: 'acao',
+      status: STATUS_PADRAO,
+      nota: NOTA_PADRAO,
+      comentario: '',
+      recomendacao: RECOMENDACAO_PADRAO,
+      valorCarteira: null,
+      pesoCarteira: null,
+      temInformacao: false,
+      informacaoCompleta: null
+    };
+
+    setFeedbackData(prev => ({
+      ...prev,
+      ativosAnalise: [...(prev.ativosAnalise || []), novoAtivo]
+    }));
+    setSelectedAtivoId(novoId);
+  };
+
+  const removerAtivo = (id) => {
+    let restantes = [];
+
+    setFeedbackData(prev => {
+      const filtrados = (prev.ativosAnalise || []).filter(ativo => obterIdentificadorAtivo(ativo) !== id);
+      restantes = filtrados;
+      return {
+        ...prev,
+        ativosAnalise: filtrados
+      };
+    });
+
+    setSelectedAtivoId(prevSelecionado => {
+      if (prevSelecionado === id) {
+        return restantes[0] ? obterIdentificadorAtivo(restantes[0]) : null;
+      }
+      return prevSelecionado;
+    });
   };
 
   const handleSave = () => {
@@ -176,23 +328,6 @@ const EnhancedAdminFeedback = ({ carteira, onSave, onCancel }) => {
       ...prev,
       recomendacoes: prev.recomendacoes.filter((_, i) => i !== index)
     }));
-  };
-
-  const addAtivo = () => {
-    if (novoAtivo.codigo && novoAtivo.comentario) {
-      setFeedbackData(prev => ({
-        ...prev,
-        ativosAnalise: [...prev.ativosAnalise, { ...novoAtivo, id: Date.now() }]
-      }));
-      setNovoAtivo({
-        codigo: '',
-        tipo: 'acao',
-        status: 'bom',
-        nota: 7.0,
-        comentario: '',
-        recomendacao: 'manter'
-      });
-    }
   };
 
   const ScoreSlider = ({ label, value, onChange, max = 100 }) => (
@@ -257,6 +392,9 @@ const EnhancedAdminFeedback = ({ carteira, onSave, onCancel }) => {
       {label}
     </button>
   );
+
+  const ativosAnaliseLista = feedbackData.ativosAnalise || [];
+  const ativoSelecionado = ativosAnaliseLista.find(ativo => obterIdentificadorAtivo(ativo) === selectedAtivoId);
 
   return (
     <div style={{
@@ -696,286 +834,386 @@ const EnhancedAdminFeedback = ({ carteira, onSave, onCancel }) => {
                 Análise Individual de Ativos
               </h3>
 
-              {/* Resumo dos ativos carregados */}
-              {ativosInfo.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
                 <div style={{
-                  backgroundColor: '#e0f2fe',
-                  border: '1px solid #0277bd',
+                  flex: '0 0 320px',
+                  minWidth: '260px',
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e5e7eb',
                   borderRadius: '12px',
-                  padding: '20px',
-                  marginBottom: '24px'
+                  padding: '16px'
                 }}>
-                  <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px', color: '#01579b' }}>
-                    Ativos Identificados na Carteira
-                  </h4>
-                  
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-                    gap: '12px',
-                    marginBottom: '16px'
-                  }}>
-                    {ativosInfo.slice(0, 6).map((ativo, index) => (
-                      <div key={index} style={{
-                        backgroundColor: '#ffffff',
-                        padding: '12px',
-                        borderRadius: '6px',
-                        border: '1px solid #b3e5fc',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}>
-                        <div>
-                          <div style={{ fontWeight: '600', fontSize: '14px' }}>{ativo.codigo}</div>
-                          <div style={{ fontSize: '12px', color: '#666' }}>
-                            {ativo.pesoCarteira}% da carteira
-                          </div>
-                        </div>
-                        <div style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: ativo.temInformacao ? '#4caf50' : '#ff9800'
-                        }} />
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {ativosInfo.length > 6 && (
-                    <div style={{ fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                      ... e mais {ativosInfo.length - 6} ativos
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <div>
+                      <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
+                        Ativos analisados
+                      </h4>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#6b7280' }}>
+                        Selecione um ativo para editar os detalhes.
+                      </p>
                     </div>
-                  )}
-                  
-                  <div style={{ fontSize: '12px', color: '#01579b', marginTop: '12px' }}>
-                    🟢 Com informação pré-carregada • 🟠 Sem informação no banco
-                  </div>
-                </div>
-              )}
-              
-              {/* Form para novo ativo manual */}
-              <div style={{
-                backgroundColor: '#f0fdf4',
-                border: '1px solid #10b981',
-                borderRadius: '12px',
-                padding: '24px',
-                marginBottom: '24px'
-              }}>
-                <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#065f46' }}>
-                  Analisar Ativo Adicional (Manual)
-                </h4>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px' }}>
-                      Código do Ativo
-                    </label>
-                    <input
-                      type="text"
-                      value={novoAtivo.codigo}
-                      onChange={(e) => setNovoAtivo(prev => ({...prev, codigo: e.target.value.toUpperCase()}))}
-                      placeholder="Ex: ITUB4"
+                    <button
+                      onClick={adicionarAtivoManual}
                       style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        border: '1px solid #d1d5db',
+                        backgroundColor: '#1d4ed8',
+                        color: 'white',
+                        border: 'none',
                         borderRadius: '6px',
-                        fontSize: '14px'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px' }}>
-                      Status
-                    </label>
-                    <select
-                      value={novoAtivo.status}
-                      onChange={(e) => setNovoAtivo(prev => ({...prev, status: e.target.value}))}
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontSize: '14px'
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
                       }}
                     >
-                      {statusAtivos.map(status => (
-                        <option key={status} value={status}>
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </option>
-                      ))}
-                    </select>
+                      + Novo
+                    </button>
                   </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px' }}>
-                      Nota (0-10)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      value={novoAtivo.nota}
-                      onChange={(e) => setNovoAtivo(prev => ({...prev, nota: parseFloat(e.target.value)}))}
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontSize: '14px'
-                      }}
-                    />
-                  </div>
-                </div>
-                
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px' }}>
-                    Comentário sobre o Ativo
-                  </label>
-                  <textarea
-                    value={novoAtivo.comentario}
-                    onChange={(e) => setNovoAtivo(prev => ({...prev, comentario: e.target.value}))}
-                    placeholder="Análise detalhada do ativo..."
-                    rows={3}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      resize: 'vertical'
-                    }}
-                  />
-                </div>
-                
-                <button
-                  onClick={addAtivo}
-                  style={{
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    padding: '8px 16px',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Adicionar Análise
-                </button>
-              </div>
 
-              {/* Lista de ativos analisados */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {feedbackData.ativosAnalise.map((ativo, index) => (
-                  <div key={index} style={{
-                    backgroundColor: '#ffffff',
-                    border: ativo.informacaoCompleta ? '2px solid #10b981' : '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    padding: '20px'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <h4 style={{ fontSize: '18px', fontWeight: '700', margin: 0, color: '#1f2937' }}>
-                          {ativo.codigo}
-                        </h4>
-                        
-                        {ativo.informacaoCompleta && (
+                  {ativosInfo.length > 0 && (
+                    <div style={{
+                      backgroundColor: '#eff6ff',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      fontSize: '12px',
+                      color: '#1e3a8a',
+                      marginBottom: '12px'
+                    }}>
+                      <div>Total (API): {ativosInfo.length}</div>
+                      <div>Pré-carregados: {ativosInfo.filter(a => a.temInformacao).length}</div>
+                      <div>Sem informação: {ativosInfo.filter(a => !a.temInformacao).length}</div>
+                    </div>
+                  )}
+
+                  <div style={{ fontSize: '12px', color: '#6b7280', display: 'flex', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                    <span>🟢 Pré-carregado</span>
+                    <span>🟠 Sem informação</span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '420px', overflowY: 'auto' }}>
+                    {ativosAnaliseLista.length > 0 ? (
+                      ativosAnaliseLista.map(ativo => {
+                        const idAtivo = obterIdentificadorAtivo(ativo);
+                        const selecionado = idAtivo === selectedAtivoId;
+                        const temInformacao = Boolean(ativo.temInformacao);
+                        const statusLabel = ativo.status ? ativo.status.charAt(0).toUpperCase() + ativo.status.slice(1) : 'Sem status';
+                        return (
+                          <button
+                            key={idAtivo}
+                            onClick={() => setSelectedAtivoId(idAtivo)}
+                            style={{
+                              border: selecionado ? '2px solid #1d4ed8' : '1px solid #e5e7eb',
+                              backgroundColor: selecionado ? '#eff6ff' : '#ffffff',
+                              borderRadius: '8px',
+                              padding: '12px',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              gap: '12px'
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontWeight: '600', fontSize: '14px', color: '#1f2937' }}>
+                                {ativo.codigo || 'Novo ativo'}
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                                {statusLabel}
+                                {typeof ativo.pesoCarteira === 'number' && !Number.isNaN(ativo.pesoCarteira)
+                                  ? ` • ${ativo.pesoCarteira}% da carteira`
+                                  : ''}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#1f2937' }}>
+                              <span>{temInformacao ? '🟢' : '🟠'}</span>
+                              {typeof ativo.nota === 'number' && !Number.isNaN(ativo.nota) && (
+                                <span style={{ fontWeight: '600', color: '#2563eb' }}>
+                                  {ativo.nota.toFixed(1)}
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div style={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '8px',
+                        border: '1px dashed #cbd5f5',
+                        padding: '16px',
+                        fontSize: '12px',
+                        color: '#6b7280',
+                        textAlign: 'center'
+                      }}>
+                        Nenhum ativo disponível. Clique em “+ Novo” para adicionar manualmente.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{
+                  flex: 1,
+                  minWidth: '320px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '12px',
+                  padding: '24px'
+                }}>
+                  {ativoSelecionado ? (
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                        <div>
+                          <h4 style={{ fontSize: '18px', fontWeight: '700', margin: 0, color: '#1f2937' }}>
+                            {ativoSelecionado.codigo || 'Novo ativo'}
+                          </h4>
+                          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#6b7280' }}>
+                            Ajuste as informações abaixo para personalizar a análise.
+                          </p>
+                        </div>
+                        {ativoSelecionado.temInformacao ? (
                           <span style={{
-                            padding: '2px 6px',
-                            borderRadius: '8px',
-                            fontSize: '10px',
-                            fontWeight: '600',
                             backgroundColor: '#dcfce7',
-                            color: '#166534'
+                            color: '#166534',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            borderRadius: '999px',
+                            padding: '4px 10px'
                           }}>
-                            AUTO
+                            Pré-carregado
+                          </span>
+                        ) : (
+                          <span style={{
+                            backgroundColor: '#fef3c7',
+                            color: '#b45309',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            borderRadius: '999px',
+                            padding: '4px 10px'
+                          }}>
+                            Sem informação
                           </span>
                         )}
-                        
-                        <span style={{
-                          padding: '4px 8px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          backgroundColor: 
-                            ativo.status === 'excelente' ? '#d1fae5' :
-                            ativo.status === 'bom' ? '#dbeafe' :
-                            ativo.status === 'regular' ? '#fef3c7' :
-                            ativo.status === 'alerta' ? '#fed7aa' : '#fee2e2',
-                          color:
-                            ativo.status === 'excelente' ? '#065f46' :
-                            ativo.status === 'bom' ? '#1e40af' :
-                            ativo.status === 'regular' ? '#d97706' :
-                            ativo.status === 'alerta' ? '#ea580c' : '#dc2626'
-                        }}>
-                          {ativo.status.charAt(0).toUpperCase() + ativo.status.slice(1)}
-                        </span>
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {[...Array(5)].map((_, i) => (
-                            <span key={i} style={{
-                              color: i < Math.floor(ativo.nota / 2) ? '#fbbf24' : '#e5e7eb',
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px', color: '#374151' }}>
+                            Código do ativo
+                          </label>
+                          <input
+                            type="text"
+                            value={ativoSelecionado.codigo || ''}
+                            onChange={(e) => handleAtivoChange('codigo', e.target.value.toUpperCase())}
+                            placeholder="Ex: ITUB4"
+                            style={{
+                              width: '100%',
+                              padding: '8px 12px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '6px',
                               fontSize: '14px'
-                            }}>
-                              ⭐
-                            </span>
-                          ))}
-                          <span style={{ marginLeft: '8px', fontSize: '14px', fontWeight: '600' }}>
-                            {ativo.nota}/10
-                          </span>
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px', color: '#374151' }}>
+                            Tipo
+                          </label>
+                          <select
+                            value={ativoSelecionado.tipo || 'acao'}
+                            onChange={(e) => handleAtivoChange('tipo', e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '8px 12px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '6px',
+                              fontSize: '14px'
+                            }}
+                          >
+                            {tiposAtivos.map(tipo => (
+                              <option key={tipo} value={tipo}>
+                                {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
+                              </option>
+                            ))}
+                            {ativoSelecionado.tipo && !tiposAtivos.includes(ativoSelecionado.tipo) && (
+                              <option value={ativoSelecionado.tipo}>{ativoSelecionado.tipo}</option>
+                            )}
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px', color: '#374151' }}>
+                            Status
+                          </label>
+                          <select
+                            value={ativoSelecionado.status || STATUS_PADRAO}
+                            onChange={(e) => handleAtivoChange('status', e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '8px 12px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '6px',
+                              fontSize: '14px'
+                            }}
+                          >
+                            {statusAtivos.map(status => (
+                              <option key={status} value={status}>
+                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                              </option>
+                            ))}
+                            {ativoSelecionado.status && !statusAtivos.includes(ativoSelecionado.status) && (
+                              <option value={ativoSelecionado.status}>{ativoSelecionado.status}</option>
+                            )}
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px', color: '#374151' }}>
+                            Nota (0-10)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="10"
+                            step="0.1"
+                            value={ativoSelecionado.nota ?? ''}
+                            onChange={(e) => {
+                              const valor = e.target.value;
+                              handleAtivoChange('nota', valor === '' ? null : parseFloat(valor));
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '8px 12px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '6px',
+                              fontSize: '14px'
+                            }}
+                          />
                         </div>
                       </div>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {ativo.pesoCarteira && (
-                          <span style={{ 
-                            fontSize: '12px', 
-                            color: '#666',
-                            backgroundColor: '#f3f4f6',
-                            padding: '2px 8px',
-                            borderRadius: '12px'
-                          }}>
-                            {ativo.pesoCarteira}%
-                          </span>
-                        )}
-                        
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px', color: '#374151' }}>
+                            Peso na carteira (%)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={ativoSelecionado.pesoCarteira ?? ''}
+                            onChange={(e) => {
+                              const valor = e.target.value;
+                              handleAtivoChange('pesoCarteira', valor === '' ? null : parseFloat(valor));
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '8px 12px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '6px',
+                              fontSize: '14px'
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px', color: '#374151' }}>
+                            Valor na carteira (R$)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={ativoSelecionado.valorCarteira ?? ''}
+                            onChange={(e) => {
+                              const valor = e.target.value;
+                              handleAtivoChange('valorCarteira', valor === '' ? null : parseFloat(valor));
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '8px 12px',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '6px',
+                              fontSize: '14px'
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: '16px' }}>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px', color: '#374151' }}>
+                          Recomendação
+                        </label>
+                        <input
+                          type="text"
+                          value={ativoSelecionado.recomendacao || ''}
+                          onChange={(e) => handleAtivoChange('recomendacao', e.target.value)}
+                          placeholder="Ex: Manter posição"
+                          style={{
+                            width: '100%',
+                            padding: '8px 12px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '6px',
+                            fontSize: '14px'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ marginBottom: '16px' }}>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '6px', color: '#374151' }}>
+                          Comentário detalhado
+                        </label>
+                        <textarea
+                          value={ativoSelecionado.comentario || ''}
+                          onChange={(e) => handleAtivoChange('comentario', e.target.value)}
+                          rows={5}
+                          placeholder="Descreva a tese, riscos e próximos passos para o ativo."
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            resize: 'vertical'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                          Última atualização automática: {ativoSelecionado.temInformacao ? 'informações importadas da API' : 'preenchimento manual'}
+                        </div>
                         <button
-                          onClick={() => setFeedbackData(prev => ({
-                            ...prev,
-                            ativosAnalise: prev.ativosAnalise.filter((_, i) => i !== index)
-                          }))}
+                          onClick={() => removerAtivo(obterIdentificadorAtivo(ativoSelecionado))}
                           style={{
                             backgroundColor: '#fee2e2',
                             color: '#dc2626',
                             border: 'none',
-                            borderRadius: '4px',
-                            padding: '4px 8px',
-                            cursor: 'pointer',
-                            fontSize: '12px'
+                            borderRadius: '6px',
+                            padding: '8px 16px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: 'pointer'
                           }}
                         >
-                          Remover
+                          Remover ativo
                         </button>
                       </div>
                     </div>
-                    
-                    <p style={{ 
-                      fontSize: '14px', 
-                      color: '#6b7280', 
-                      margin: 0, 
-                      lineHeight: '1.5',
-                      maxHeight: '100px',
-                      overflowY: 'auto'
+                  ) : (
+                    <div style={{
+                      backgroundColor: '#f8fafc',
+                      border: '1px dashed #cbd5f5',
+                      borderRadius: '12px',
+                      padding: '32px',
+                      textAlign: 'center',
+                      color: '#6b7280',
+                      fontSize: '14px'
                     }}>
-                      {ativo.comentario}
-                    </p>
-                  </div>
-                ))}
+                      Selecione um ativo na lista ao lado ou adicione um novo para começar a análise.
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
-
           {/* Feedback Textual */}
           {activeSection === 'feedback' && (
             <div>
