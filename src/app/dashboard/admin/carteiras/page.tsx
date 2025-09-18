@@ -14,6 +14,7 @@ export default function AdminCarteirasPage() {
   const [recomendacoes, setRecomendacoes] = useState('');
   const [showAdvancedFeedback, setShowAdvancedFeedback] = useState(false);
   const [expandedAnalysed, setExpandedAnalysed] = useState(new Set());
+  const [expandedResumoAtivos, setExpandedResumoAtivos] = useState(new Set());
   const [showDetailedAnalysis, setShowDetailedAnalysis] = useState(null);
   
   const [stats, setStats] = useState({
@@ -23,6 +24,470 @@ export default function AdminCarteirasPage() {
     analisada: 0,
     cancelada: 0
   });
+
+  const parseNumero = (valor) => {
+    if (valor === null || valor === undefined || valor === '') return null;
+    if (typeof valor === 'number') {
+      return Number.isFinite(valor) ? valor : null;
+    }
+    if (typeof valor === 'string') {
+      const normalizado = valor
+        .replace(/R\$/gi, '')
+        .replace(/\s+/g, '')
+        .replace(/\./g, '')
+        .replace(',', '.')
+        .replace(/[^0-9.-]/g, '');
+      if (!normalizado) return null;
+      const convertido = parseFloat(normalizado);
+      return Number.isNaN(convertido) ? null : convertido;
+    }
+    return null;
+  };
+
+  const formatCurrency = (valor) => {
+    if (valor === null || valor === undefined || Number.isNaN(valor)) return '—';
+    try {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(valor);
+    } catch (error) {
+      const numero = Number(valor);
+      return Number.isNaN(numero) ? '—' : `R$ ${numero.toFixed(2)}`;
+    }
+  };
+
+  const formatPercent = (valor) => {
+    if (valor === null || valor === undefined || Number.isNaN(valor)) return '—';
+    const sinal = valor > 0 ? '+' : '';
+    return `${sinal}${valor.toFixed(1)}%`;
+  };
+
+  const formatQuantidade = (valor) => {
+    if (valor === null || valor === undefined || Number.isNaN(valor)) return '—';
+    return valor.toLocaleString('pt-BR', {
+      minimumFractionDigits: Number.isInteger(valor) ? 0 : 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  const consolidarAtivosCarteira = (dadosEstruturados) => {
+    if (!dadosEstruturados) return [];
+
+    const ativosTemporarios = [];
+
+    const calcularValor = (valorInformado, quantidade, preco) => {
+      if (valorInformado !== null && valorInformado !== undefined) {
+        return valorInformado;
+      }
+      if (quantidade !== null && quantidade !== undefined && preco !== null && preco !== undefined) {
+        return quantidade * preco;
+      }
+      return null;
+    };
+
+    const calcularRentabilidade = (rentabilidade, valorInvestido, valorAtual) => {
+      if (rentabilidade !== null && rentabilidade !== undefined) {
+        return rentabilidade;
+      }
+      if (
+        valorInvestido !== null &&
+        valorInvestido !== undefined &&
+        valorAtual !== null &&
+        valorAtual !== undefined &&
+        valorInvestido !== 0
+      ) {
+        return ((valorAtual - valorInvestido) / valorInvestido) * 100;
+      }
+      return null;
+    };
+
+    const adicionarAtivo = (ativo, incluirNoTotal = true) => {
+      ativosTemporarios.push({
+        ...ativo,
+        incluirNoTotal
+      });
+    };
+
+    const montarObservacoes = (...itens) => itens.filter(Boolean).join(' • ');
+
+    // Ações
+    (dadosEstruturados.acoes || []).forEach((acao, index) => {
+      const quantidade = parseNumero(acao.quantidade);
+      const precoMedio = parseNumero(acao.precoMedio);
+      const precoAtual = parseNumero(
+        acao.cotacaoAtual ?? acao.cotacao ?? (acao.valorAtual && quantidade ? acao.valorAtual / quantidade : null)
+      );
+      const valorInvestido = calcularValor(parseNumero(acao.valorInvestido), quantidade, precoMedio);
+      const valorAtual = calcularValor(parseNumero(acao.valorAtual), quantidade, precoAtual ?? precoMedio);
+      const rentabilidade = calcularRentabilidade(parseNumero(acao.rentabilidade), valorInvestido, valorAtual);
+      const pesoInformado = parseNumero(acao.pesoCarteira);
+
+      adicionarAtivo({
+        id: `acao-${index}-${acao.codigo || 'nd'}`,
+        codigo: acao.codigo || '—',
+        nome: acao.nome || acao.codigo || 'Ação sem identificação',
+        categoria: 'Ações',
+        quantidade,
+        precoMedio,
+        precoAtual,
+        valorInvestido,
+        valorAtual,
+        rentabilidade,
+        pesoInformado,
+        segmento: acao.setor || acao.segmento || acao.subsetor || '',
+        observacoes: montarObservacoes(acao.observacoes)
+      });
+    });
+
+    // FIIs
+    (dadosEstruturados.fiis || []).forEach((fii, index) => {
+      const quantidade = parseNumero(fii.quantidade);
+      const precoMedio = parseNumero(fii.precoMedio);
+      const precoAtual = parseNumero(
+        fii.cotacaoAtual ?? fii.cotacao ?? (fii.valorAtual && quantidade ? fii.valorAtual / quantidade : null)
+      );
+      const valorInvestido = calcularValor(parseNumero(fii.valorInvestido), quantidade, precoMedio);
+      const valorAtual = calcularValor(parseNumero(fii.valorAtual), quantidade, precoAtual ?? precoMedio);
+      const rentabilidade = calcularRentabilidade(parseNumero(fii.rentabilidade), valorInvestido, valorAtual);
+      const pesoInformado = parseNumero(fii.pesoCarteira);
+
+      adicionarAtivo({
+        id: `fii-${index}-${fii.codigo || 'nd'}`,
+        codigo: fii.codigo || '—',
+        nome: fii.nome || fii.codigo || 'FII sem identificação',
+        categoria: 'FIIs',
+        quantidade,
+        precoMedio,
+        precoAtual,
+        valorInvestido,
+        valorAtual,
+        rentabilidade,
+        pesoInformado,
+        segmento: fii.segmento || fii.setor || '',
+        observacoes: montarObservacoes(fii.observacoes)
+      });
+    });
+
+    // Renda Fixa
+    (dadosEstruturados.rendaFixa || []).forEach((item, index) => {
+      const valorInvestido = parseNumero(item.valorInvestido);
+      const valorAtual = calcularValor(parseNumero(item.valorAtual), null, null) ?? valorInvestido;
+      const rentabilidade = calcularRentabilidade(parseNumero(item.rentabilidade), valorInvestido, valorAtual);
+      const pesoInformado = parseNumero(item.pesoCarteira);
+
+      adicionarAtivo({
+        id: `renda-fixa-${index}`,
+        codigo: item.produto || 'RENDA FIXA',
+        nome: item.banco ? `${item.banco}${item.produto ? ` • ${item.produto}` : ''}` : item.produto || 'Renda Fixa',
+        categoria: 'Renda Fixa',
+        quantidade: null,
+        precoMedio: null,
+        precoAtual: null,
+        valorInvestido,
+        valorAtual,
+        rentabilidade,
+        pesoInformado,
+        segmento: item.tipo || '',
+        observacoes: montarObservacoes(item.vencimento ? `Vencimento: ${item.vencimento}` : '', item.observacoes)
+      });
+    });
+
+    // Exterior
+    (dadosEstruturados.exterior || []).forEach((ativo, index) => {
+      const quantidade = parseNumero(ativo.quantidade);
+      const taxaCambio = parseNumero(ativo.taxaCambio) ?? 5.5;
+      const precoMedioUSD = parseNumero(ativo.precoMedioUSD);
+      const precoAtualUSD = parseNumero(ativo.cotacaoUSD ?? ativo.cotacaoAtualUSD);
+      const precoMedio = precoMedioUSD !== null ? precoMedioUSD * taxaCambio : null;
+      const precoAtual = precoAtualUSD !== null ? precoAtualUSD * taxaCambio : null;
+      const valorInvestido = calcularValor(parseNumero(ativo.valorInvestido), quantidade, precoMedio);
+      const valorAtual = calcularValor(parseNumero(ativo.valorAtual), quantidade, precoAtual ?? precoMedio);
+      const rentabilidade = calcularRentabilidade(parseNumero(ativo.rentabilidade), valorInvestido, valorAtual);
+      const pesoInformado = parseNumero(ativo.pesoCarteira);
+
+      adicionarAtivo({
+        id: `exterior-${index}-${ativo.codigo || 'nd'}`,
+        codigo: ativo.codigo || '—',
+        nome: ativo.nome || ativo.codigo || 'Ativo Exterior',
+        categoria: 'Exterior',
+        quantidade,
+        precoMedio,
+        precoAtual,
+        valorInvestido,
+        valorAtual,
+        rentabilidade,
+        pesoInformado,
+        segmento: ativo.setor || ativo.segmento || '',
+        observacoes: montarObservacoes(ativo.pais, ativo.bolsa)
+      });
+    });
+
+    // Cripto
+    (dadosEstruturados.cripto || []).forEach((cripto, index) => {
+      const quantidade = parseNumero(cripto.quantidade);
+      const precoMedio = parseNumero(cripto.precoMedio);
+      const valorInvestido = calcularValor(parseNumero(cripto.valorInvestido), quantidade, precoMedio);
+      const valorAtual = calcularValor(parseNumero(cripto.valorAtual), quantidade, parseNumero(cripto.cotacaoAtual) ?? precoMedio);
+      const rentabilidade = calcularRentabilidade(parseNumero(cripto.rentabilidade), valorInvestido, valorAtual);
+      const pesoInformado = parseNumero(cripto.pesoCarteira);
+
+      adicionarAtivo({
+        id: `cripto-${index}-${cripto.criptomoeda || 'nd'}`,
+        codigo: cripto.criptomoeda || 'CRIPTO',
+        nome: cripto.exchange ? `${cripto.exchange}${cripto.criptomoeda ? ` • ${cripto.criptomoeda}` : ''}` : cripto.criptomoeda || 'Criptoativo',
+        categoria: 'Cripto',
+        quantidade,
+        precoMedio,
+        precoAtual: null,
+        valorInvestido,
+        valorAtual,
+        rentabilidade,
+        pesoInformado,
+        segmento: cripto.tipo || '',
+        observacoes: montarObservacoes(cripto.exchange)
+      });
+    });
+
+    // Reserva (não conta no peso geral)
+    (dadosEstruturados.reserva || []).forEach((item, index) => {
+      const valor = parseNumero(item.valor);
+      adicionarAtivo({
+        id: `reserva-${index}-${item.onde || 'nd'}`,
+        codigo: item.onde || 'RESERVA',
+        nome: item.banco ? `${item.banco}${item.onde ? ` • ${item.onde}` : ''}` : item.onde || 'Reserva',
+        categoria: 'Reserva',
+        quantidade: null,
+        precoMedio: null,
+        precoAtual: null,
+        valorInvestido: valor,
+        valorAtual: valor,
+        rentabilidade: null,
+        pesoInformado: 0,
+        segmento: item.tipo || '',
+        observacoes: montarObservacoes(item.observacoes)
+      }, false);
+    });
+
+    const totalParaPeso = ativosTemporarios.reduce((acumulado, ativo) => {
+      if (!ativo.incluirNoTotal) return acumulado;
+      const baseValor =
+        typeof ativo.valorAtual === 'number'
+          ? ativo.valorAtual
+          : typeof ativo.valorInvestido === 'number'
+            ? ativo.valorInvestido
+            : 0;
+      return acumulado + (Number.isFinite(baseValor) ? baseValor : 0);
+    }, 0);
+
+    return ativosTemporarios.map((ativo) => {
+      const baseValor =
+        typeof ativo.valorAtual === 'number'
+          ? ativo.valorAtual
+          : typeof ativo.valorInvestido === 'number'
+            ? ativo.valorInvestido
+            : 0;
+
+      const pesoCalculado =
+        typeof ativo.pesoInformado === 'number' && !Number.isNaN(ativo.pesoInformado)
+          ? ativo.pesoInformado
+          : ativo.incluirNoTotal && totalParaPeso > 0
+            ? (baseValor / totalParaPeso) * 100
+            : null;
+
+      const restante = { ...ativo };
+      delete restante.incluirNoTotal;
+      delete restante.pesoInformado;
+
+      return {
+        ...restante,
+        peso: pesoCalculado
+      };
+    });
+  };
+
+  const toggleResumoAtivos = (carteiraId) => {
+    setExpandedResumoAtivos((prev) => {
+      const novo = new Set(prev);
+      if (novo.has(carteiraId)) {
+        novo.delete(carteiraId);
+      } else {
+        novo.add(carteiraId);
+      }
+      return novo;
+    });
+  };
+
+  const renderResumoAtivosTabela = (carteiraId, dadosEstruturados) => {
+    const ativos = consolidarAtivosCarteira(dadosEstruturados);
+
+    if (!ativos.length) {
+      return null;
+    }
+
+    const totalValorInvestido = ativos.reduce((acumulado, ativo) => {
+      return acumulado + (typeof ativo.valorInvestido === 'number' && !Number.isNaN(ativo.valorInvestido) ? ativo.valorInvestido : 0);
+    }, 0);
+
+    const totalValorAtual = ativos.reduce((acumulado, ativo) => {
+      const valor = typeof ativo.valorAtual === 'number' && !Number.isNaN(ativo.valorAtual)
+        ? ativo.valorAtual
+        : (typeof ativo.valorInvestido === 'number' && !Number.isNaN(ativo.valorInvestido) ? ativo.valorInvestido : 0);
+      return acumulado + valor;
+    }, 0);
+
+    const totalPeso = ativos.reduce((acumulado, ativo) => {
+      return acumulado + (typeof ativo.peso === 'number' && !Number.isNaN(ativo.peso) ? ativo.peso : 0);
+    }, 0);
+
+    const rentabilidadeTotal = totalValorInvestido > 0
+      ? ((totalValorAtual - totalValorInvestido) / totalValorInvestido) * 100
+      : null;
+
+    const rentabilidadeTotalColor =
+      typeof rentabilidadeTotal === 'number'
+        ? rentabilidadeTotal > 0
+          ? '#16a34a'
+          : rentabilidadeTotal < 0
+            ? '#dc2626'
+            : '#64748b'
+        : '#64748b';
+
+    const totalPesoColor =
+      typeof totalPeso === 'number' && !Number.isNaN(totalPeso)
+        ? totalPeso > 0
+          ? '#2563eb'
+          : '#64748b'
+        : '#64748b';
+
+    return (
+      <div
+        style={{
+          marginTop: '20px',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          boxShadow: '0 2px 6px rgba(15, 23, 42, 0.08)'
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '16px 20px',
+            backgroundColor: '#f8fafc',
+            borderBottom: '1px solid #e2e8f0',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>Visão Geral dos Ativos</div>
+            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+              {ativos.length} {ativos.length === 1 ? 'ativo' : 'ativos'} consolidados • Patrimônio estimado: {formatCurrency(totalValorAtual)}
+            </div>
+          </div>
+          <button
+            onClick={() => toggleResumoAtivos(carteiraId)}
+            style={{
+              backgroundColor: expandedResumoAtivos.has(carteiraId) ? '#1d4ed8' : '#3b82f6',
+              color: 'white',
+              padding: '10px 18px',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)'
+            }}
+          >
+            {expandedResumoAtivos.has(carteiraId) ? 'Ocultar tabela' : 'Exibir tabela'}
+          </button>
+        </div>
+
+        {expandedResumoAtivos.has(carteiraId) && (
+          <div style={{ padding: '0 16px 16px' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#e2e8f0' }}>
+                    <th style={{ textAlign: 'left', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>ATIVO</th>
+                    <th style={{ textAlign: 'left', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>CATEGORIA</th>
+                    <th style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>QTDE</th>
+                    <th style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>PREÇO MÉDIO</th>
+                    <th style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>PREÇO ATUAL</th>
+                    <th style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>VALOR INVESTIDO</th>
+                    <th style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>VALOR ATUAL</th>
+                    <th style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>RENTAB.</th>
+                    <th style={{ textAlign: 'right', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>PESO</th>
+                    <th style={{ textAlign: 'left', padding: '12px 8px', color: '#0f172a', fontSize: '12px', letterSpacing: '0.05em' }}>NOTAS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ativos.map((ativo, index) => {
+                    const rentabilidadeColor =
+                      typeof ativo.rentabilidade === 'number'
+                        ? ativo.rentabilidade > 0
+                          ? '#16a34a'
+                          : ativo.rentabilidade < 0
+                            ? '#dc2626'
+                            : '#64748b'
+                        : '#64748b';
+
+                    const pesoColor =
+                      typeof ativo.peso === 'number'
+                        ? ativo.peso > 0
+                          ? '#2563eb'
+                          : '#64748b'
+                        : '#64748b';
+
+                    return (
+                      <tr
+                        key={`${ativo.id}-${index}`}
+                        style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8fafc', borderBottom: '1px solid #e2e8f0' }}
+                      >
+                        <td style={{ padding: '12px 8px', color: '#1e293b', fontWeight: '600' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span>{ativo.codigo}</span>
+                            {ativo.nome && <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>{ativo.nome}</span>}
+                            {ativo.segmento && <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase' }}>{ativo.segmento}</span>}
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 8px', color: '#475569', fontWeight: '600' }}>{ativo.categoria}</td>
+                        <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>{formatQuantidade(ativo.quantidade)}</td>
+                        <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>{formatCurrency(ativo.precoMedio)}</td>
+                        <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>{formatCurrency(ativo.precoAtual)}</td>
+                        <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>{formatCurrency(ativo.valorInvestido)}</td>
+                        <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>{formatCurrency(ativo.valorAtual)}</td>
+                        <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600', color: rentabilidadeColor }}>{formatPercent(ativo.rentabilidade)}</td>
+                        <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '600', color: pesoColor }}>{formatPercent(ativo.peso)}</td>
+                        <td style={{ padding: '12px 8px', color: '#475569' }}>{ativo.observacoes || '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr style={{ backgroundColor: '#eff6ff', borderTop: '2px solid #bfdbfe' }}>
+                    <td style={{ padding: '12px 8px', fontWeight: '700', color: '#1d4ed8' }} colSpan={2}>TOTAL CONSOLIDADO</td>
+                    <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>—</td>
+                    <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>—</td>
+                    <td style={{ padding: '12px 8px', textAlign: 'right', color: '#1e293b' }}>—</td>
+                    <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '700', color: '#1e293b' }}>{formatCurrency(totalValorInvestido)}</td>
+                    <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '700', color: '#1e293b' }}>{formatCurrency(totalValorAtual)}</td>
+                    <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '700', color: rentabilidadeTotalColor }}>{formatPercent(rentabilidadeTotal)}</td>
+                    <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: '700', color: totalPesoColor }}>{formatPercent(totalPeso)}</td>
+                    <td style={{ padding: '12px 8px', color: '#475569' }}>—</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   useEffect(() => {
     carregarCarteiras();
@@ -1245,6 +1710,8 @@ export default function AdminCarteirasPage() {
                                   </div>
                                 );
                               })()}
+
+                              {renderResumoAtivosTabela(carteira.id, dadosEstruturados)}
                             </div>
                           ) : (
                             // Fallback para carteiras antigas
@@ -1764,6 +2231,19 @@ export default function AdminCarteirasPage() {
                               )}
                             </div>
                           )}
+
+                          {(() => {
+                            try {
+                              const dadosEstruturados = carteira.dadosEstruturados && typeof carteira.dadosEstruturados === 'string'
+                                ? JSON.parse(carteira.dadosEstruturados)
+                                : carteira.dadosEstruturados;
+
+                              return renderResumoAtivosTabela(carteira.id, dadosEstruturados);
+                            } catch (error) {
+                              console.error('Erro ao processar dados estruturados da carteira analisada:', error);
+                              return null;
+                            }
+                          })()}
 
                           {/* Questionário se existir */}
                           {carteira.questionario && (
