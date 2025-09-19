@@ -6,6 +6,27 @@ const RECOMENDACAO_PADRAO = 'manter';
 
 const gerarIdManual = () => `manual-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
+const sanitizarListaPontos = (lista) => {
+  if (!Array.isArray(lista)) {
+    return [];
+  }
+
+  return lista
+    .map(item => {
+      if (typeof item === 'string') {
+        const texto = item.trim();
+        return texto;
+      }
+      return item;
+    })
+    .filter(item => {
+      if (typeof item === 'string') {
+        return item.length > 0;
+      }
+      return Boolean(item);
+    });
+};
+
 const EnhancedAdminFeedback = ({ carteira, onSave, onCancel }) => {
   const [activeSection, setActiveSection] = useState('general');
   const [loadingAtivos, setLoadingAtivos] = useState(false);
@@ -75,8 +96,18 @@ const EnhancedAdminFeedback = ({ carteira, onSave, onCancel }) => {
         const ativosApi = Array.isArray(data.ativos) ? data.ativos : [];
         const colecaoBase = ativosApi.map(ativo => {
           const temInformacao = Boolean(ativo.temInformacao && ativo.informacao);
-          const info = temInformacao ? ativo.informacao : {};
-          const qualidade = temInformacao && typeof info.qualidade === 'number' ? info.qualidade : null;
+          const infoOriginal = temInformacao ? ativo.informacao : null;
+          const infoSanitizada = infoOriginal
+            ? {
+                ...infoOriginal,
+                pontosFortes: sanitizarListaPontos(infoOriginal.pontosFortes),
+                pontosFracos: sanitizarListaPontos(infoOriginal.pontosFracos)
+              }
+            : null;
+          const qualidade =
+            temInformacao && typeof infoSanitizada?.qualidade === 'number' ? infoSanitizada.qualidade : null;
+
+          const ativoParaComentario = infoSanitizada ? { ...ativo, informacao: infoSanitizada } : ativo;
 
           return {
             id: ativo.codigo || gerarIdManual(),
@@ -84,12 +115,14 @@ const EnhancedAdminFeedback = ({ carteira, onSave, onCancel }) => {
             tipo: (ativo.tipo || 'acao').toLowerCase(),
             status: qualidade !== null ? mapearQualidadeParaStatus(qualidade) : STATUS_PADRAO,
             nota: qualidade !== null ? qualidade : NOTA_PADRAO,
-            comentario: temInformacao ? gerarComentarioAutomatico(ativo) : '',
-            recomendacao: info.recomendacao ? info.recomendacao.toLowerCase() : RECOMENDACAO_PADRAO,
+            comentario: temInformacao ? gerarComentarioAutomatico(ativoParaComentario) : '',
+            recomendacao: infoSanitizada?.recomendacao
+              ? infoSanitizada.recomendacao.toLowerCase()
+              : RECOMENDACAO_PADRAO,
             valorCarteira: ativo.valorTotal ?? ativo.valorCarteira ?? null,
             pesoCarteira: ativo.pesoCarteira ?? null,
             temInformacao,
-            informacaoCompleta: temInformacao ? info : null
+            informacaoCompleta: infoSanitizada
           };
         });
 
@@ -199,12 +232,14 @@ const EnhancedAdminFeedback = ({ carteira, onSave, onCancel }) => {
       comentario += `${info.fundamentosResumo} `;
     }
 
-    if (Array.isArray(info?.pontosFortes) && info.pontosFortes.length > 0) {
-      comentario += `Pontos fortes: ${info.pontosFortes.join(', ')}. `;
+    const pontosFortesSanitizados = sanitizarListaPontos(info?.pontosFortes);
+    if (pontosFortesSanitizados.length > 0) {
+      comentario += `Pontos fortes: ${pontosFortesSanitizados.join(', ')}. `;
     }
 
-    if (Array.isArray(info?.pontosFracos) && info.pontosFracos.length > 0) {
-      comentario += `Pontos de atenção: ${info.pontosFracos.join(', ')}. `;
+    const pontosFracosSanitizados = sanitizarListaPontos(info?.pontosFracos);
+    if (pontosFracosSanitizados.length > 0) {
+      comentario += `Pontos de atenção: ${pontosFracosSanitizados.join(', ')}. `;
     }
 
     if (info?.risco) {
