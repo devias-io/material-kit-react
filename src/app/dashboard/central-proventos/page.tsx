@@ -279,17 +279,34 @@ export default function CentralProventos() {
         
         // Se tem vírgula E ponto, assumir que vírgula é decimal (formato brasileiro)
         if (valor.includes(',') && valor.includes('.')) {
-          // Formato brasileiro: 1.234,56
-          valor = valor.replace(/\./g, '').replace(',', '.');
-        } else if (valor.includes(',')) {
-          // Só vírgula: pode ser decimal ou milhares
-          const partes = valor.split(',');
-          if (partes.length === 2 && partes[1].length <= 2) {
-            // Provavelmente decimal: 123,45
-            valor = valor.replace(',', '.');
+          const ultimaVirgula = valor.lastIndexOf(',');
+          const ultimoPonto = valor.lastIndexOf('.');
+
+          if (ultimaVirgula > ultimoPonto) {
+            // Formato brasileiro: 1.234,56
+            valor = valor.replace(/\./g, '').replace(',', '.');
           } else {
-            // Provavelmente milhares: 1,234
+            // Formato americano: 1,234.56
             valor = valor.replace(/,/g, '');
+          }
+        } else if (valor.includes(',')) {
+          // Só vírgula: última vírgula é decimal, anteriores são milhares
+          const negativo = valor.startsWith('-');
+          const valorSemSinal = negativo ? valor.slice(1) : valor;
+          const ultimaVirgula = valorSemSinal.lastIndexOf(',');
+
+          if (ultimaVirgula !== -1) {
+            const parteInteira = valorSemSinal
+              .slice(0, ultimaVirgula)
+              .replace(/,/g, '');
+            const parteDecimal = valorSemSinal.slice(ultimaVirgula + 1);
+
+            if (parteDecimal.length === 0) {
+              valor = `${negativo ? '-' : ''}${parteInteira || '0'}`;
+            } else {
+              const inteiroNormalizado = parteInteira || '0';
+              valor = `${negativo ? '-' : ''}${inteiroNormalizado}.${parteDecimal}`;
+            }
           }
         }
         
