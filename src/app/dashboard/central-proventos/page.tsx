@@ -142,6 +142,129 @@ export default function CentralProventos() {
       const proventos: ProventoCentral[] = [];
       let errosProcessamento = 0;
       const BATCH_SIZE = 100;
+
+      const detectarDelimitador = (linhaCabecalho: string) => {
+        const cabecalhoLimpo = linhaCabecalho.replace(/^\uFEFF/, '');
+        const delimitadoresPossiveis = [';', ',', '\t', '|'];
+
+        let melhorDelimitador = ',';
+        let maiorPontuacao = -1;
+
+        delimitadoresPossiveis.forEach(delimitador => {
+          const partes = cabecalhoLimpo.split(delimitador);
+          const pontuacao = partes.length;
+          if (pontuacao > maiorPontuacao) {
+            maiorPontuacao = pontuacao;
+            melhorDelimitador = delimitador;
+          }
+        });
+
+        return melhorDelimitador;
+      };
+
+      const parseLinhaCSV = (linha: string, delimitador: string) => {
+        const resultado: string[] = [];
+        let atual = '';
+        let dentroDeAspas = false;
+
+        for (let i = 0; i < linha.length; i++) {
+          const caractere = linha[i];
+
+          if (caractere === '"') {
+            if (dentroDeAspas && linha[i + 1] === '"') {
+              atual += '"';
+              i++;
+            } else {
+              dentroDeAspas = !dentroDeAspas;
+            }
+          } else if (caractere === delimitador && !dentroDeAspas) {
+            resultado.push(atual.trim());
+            atual = '';
+          } else {
+            atual += caractere;
+          }
+        }
+
+        resultado.push(atual.trim());
+
+        return resultado.map(valor => valor.replace(/^"|"$/g, '').trim());
+      };
+
+      const normalizarColuna = (coluna: string) =>
+        coluna
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '');
+
+      const recomporNumeroDecimal = (
+        camposOriginais: string[],
+        indice: number,
+        tamanhoEsperado: number,
+        delimitador: string
+      ) => {
+        if (delimitador !== ',' || indice < 0) return camposOriginais;
+
+        let campos = [...camposOriginais];
+        let seguranca = 0;
+
+        while (campos.length > tamanhoEsperado && indice < campos.length - 1 && seguranca < 5) {
+          const atual = campos[indice];
+          const proximo = campos[indice + 1];
+
+          if (typeof atual !== 'string' || typeof proximo !== 'string') break;
+
+          const atualNormalizado = atual.replace(/R\$/gi, '').trim();
+          const proximoNormalizado = proximo.replace(/R\$/gi, '').trim();
+
+          if (!atualNormalizado || !proximoNormalizado) break;
+
+          if (/[a-z]/i.test(proximoNormalizado)) break;
+
+          const digitosProximos = proximoNormalizado.replace(/[^0-9]/g, '');
+          if (digitosProximos.length === 0 || digitosProximos.length > 6) break;
+
+          campos = [
+            ...campos.slice(0, indice),
+            `${campos[indice]}${delimitador}${campos[indice + 1]}`,
+            ...campos.slice(indice + 2)
+          ];
+
+          seguranca++;
+        }
+
+        return campos;
+      };
+
+      const delimitador = detectarDelimitador(linhas[0]);
+      const cabecalhoOriginal = linhas[0].replace(/^\uFEFF/, '');
+      const cabecalhoPartes = parseLinhaCSV(cabecalhoOriginal, delimitador);
+      const cabecalhoNormalizado = cabecalhoPartes.map(normalizarColuna);
+
+      const obterIndice = (comparador: (valor: string) => boolean, fallback: number) => {
+        const indice = cabecalhoNormalizado.findIndex(comparador);
+        if (indice !== -1) return indice;
+        return fallback < cabecalhoPartes.length ? fallback : -1;
+      };
+
+      const indiceTicker = obterIndice(valor => valor === 'ticker', 0);
+      const indiceValor = obterIndice(
+        valor => valor === 'valor' || valor === 'valorbruto',
+        1
+      );
+      const indiceDataCom = obterIndice(valor => valor === 'datacom' || valor === 'dataex', 2);
+      const indiceDataPagamento = obterIndice(
+        valor => valor === 'datapagamento' || valor === 'datapgto',
+        3
+      );
+      const indiceTipo = obterIndice(valor => valor === 'tipo' || valor === 'tipoprovento', 4);
+      const indiceDividendYield = cabecalhoNormalizado.findIndex(valor => valor.includes('yield'));
+      const possuiDividendYield = indiceDividendYield !== -1;
+
+      if (indiceTicker === -1 || indiceValor === -1 || indiceDataCom === -1) {
+        alert('Arquivo CSV inválido: não foi possível identificar as colunas obrigatórias.');
+        return;
+      }
+
+      const tamanhoEsperado = cabecalhoPartes.length;
       
       // 🔥 FUNÇÃO UNIVERSAL PARA PROCESSAR VALOR (ACEITA QUALQUER FORMATO)
       const processarValor = (valorRaw: string) => {
@@ -226,27 +349,60 @@ export default function CentralProventos() {
             const linha = linhas[i];
             if (!linha) continue;
 
-            // FORMATO: ticker,valor,dataCom,dataPagamento,tipo,dividendYield
-            const partes = linha.split(',').map(p => p.trim());
-            
-            if (partes.length < 6) {
+            let partes = parseLinhaCSV(linha, delimitador);
+
+            if (delimitador === ',' && partes.length > tamanhoEsperado) {
+              partes = recomporNumeroDecimal(partes, indiceValor, tamanhoEsperado, delimitador);
+              if (possuiDividendYield) {
+                partes = recomporNumeroDecimal(
+                  partes,
+                  indiceDividendYield,
+                  tamanhoEsperado,
+                  delimitador
+                );
+              }
+            }
+
+            if (partes.length < tamanhoEsperado) {
+              const partesCompletas = [...partes];
+              while (partesCompletas.length < tamanhoEsperado) {
+                partesCompletas.push('');
+              }
+              partes = partesCompletas;
+            }
+
+            if (partes.length > tamanhoEsperado) {
               errosProcessamento++;
               continue;
             }
-            
-            // 📊 EXTRAIR CAMPOS (FUNCIONA COM QUALQUER FORMATO)
-            const ticker = partes[0];           // TUPY3 ou RURA11 ou BPFF11
-            const valorRaw = partes[1];         // 0.26009606 ou 0.1 ou R$ 0.60
-            const dataComRaw = partes[2];       // 2019-03-19 ou 30/05/2025 ou 28/12/2018
-            const dataPagamentoRaw = partes[3]; // 2019-03-28 ou 06/06/2025 ou 08/01/2019
-            const tipo = partes[4];             // Dividendo ou Rendimento
-            const dividendYieldRaw = partes[5]; // 0.0138 ou 0 ou 0.66
-            
+
+            const ticker = (partes[indiceTicker] || '').trim();
+            const valorRaw = (partes[indiceValor] || '').trim();
+            const dataComRaw = (partes[indiceDataCom] || '').trim();
+            const dataPagamentoRaw =
+              indiceDataPagamento !== -1 && indiceDataPagamento < partes.length
+                ? (partes[indiceDataPagamento] || '').trim()
+                : '';
+            const tipo =
+              indiceTipo !== -1 && indiceTipo < partes.length
+                ? (partes[indiceTipo] || '').trim()
+                : '';
+            const dividendYieldRaw =
+              possuiDividendYield && indiceDividendYield < partes.length
+                ? (partes[indiceDividendYield] || '').trim()
+                : '';
+
             // 🔥 PROCESSAR VALORES COM FUNÇÕES UNIVERSAIS
             const valor = processarValor(valorRaw);
             const dataCom = processarData(dataComRaw);
             const dataPagamento = processarData(dataPagamentoRaw);
-            const dividendYield = parseFloat(dividendYieldRaw) || undefined;
+            let dividendYield: number | undefined;
+            if (possuiDividendYield && dividendYieldRaw !== '') {
+              const valorDividendYield = processarValor(dividendYieldRaw);
+              if (!isNaN(valorDividendYield) && valorDividendYield !== 0) {
+                dividendYield = valorDividendYield;
+              }
+            }
             
             // ✅ VALIDAÇÕES ESPECÍFICAS
             if (!ticker || ticker === '') {
