@@ -1,5 +1,30 @@
-export const processarValor = (valorRaw: string) => {
-  if (!valorRaw || valorRaw === '') return 0;
+const BRAZILIAN_PATTERN = /^-?\d{1,3}(\.\d{3})*,\d+$/;
+const AMERICAN_PATTERN = /^-?\d{1,3}(,\d{3})*\.\d+$/;
+const AMERICAN_MULTIPLE_THOUSANDS_PATTERN = /^-?\d{1,3}(,\d{3}){2,}$/;
+
+const normalizarDecimalComVirgula = (entrada: string): string => {
+  const negativo = entrada.startsWith('-');
+  const semSinal = negativo ? entrada.slice(1) : entrada;
+  const ultimaVirgula = semSinal.lastIndexOf(',');
+
+  if (ultimaVirgula === -1) {
+    return entrada;
+  }
+
+  const parteInteira = semSinal.slice(0, ultimaVirgula).replace(/[^\d]/g, '');
+  const parteDecimal = semSinal.slice(ultimaVirgula + 1).replace(/[^\d]/g, '');
+
+  if (parteDecimal.length === 0) {
+    return `${negativo ? '-' : ''}${parteInteira || '0'}`;
+  }
+
+  return `${negativo ? '-' : ''}${parteInteira || '0'}.${parteDecimal}`;
+};
+
+export const processarValor = (valorRaw: string): number => {
+  if (!valorRaw || valorRaw === '') {
+    return 0;
+  }
 
   let valor = valorRaw
     .toString()
@@ -7,43 +32,38 @@ export const processarValor = (valorRaw: string) => {
     .replace(/\s/g, '')
     .trim();
 
-  if (valor === '') return 0;
+  if (valor === '') {
+    return 0;
+  }
 
-  if (valor.includes(',') && valor.includes('.')) {
-    const ultimaVirgula = valor.lastIndexOf(',');
-    const ultimoPonto = valor.lastIndexOf('.');
+  if (BRAZILIAN_PATTERN.test(valor)) {
+    valor = valor.replace(/\./g, '').replace(',', '.');
+  } else if (AMERICAN_PATTERN.test(valor) || AMERICAN_MULTIPLE_THOUSANDS_PATTERN.test(valor)) {
+    valor = valor.replace(/,/g, '');
+  } else if (valor.includes('.') && valor.includes(',')) {
+    const lastComma = valor.lastIndexOf(',');
+    const lastDot = valor.lastIndexOf('.');
+    const dotCount = (valor.match(/\./g) || []).length;
 
-    if (ultimaVirgula > ultimoPonto) {
-      valor = valor.replace(/\./g, '').replace(',', '.');
-    } else {
+    if (dotCount === 1 && lastDot < lastComma) {
+      const digitsBetween = valor.slice(lastDot + 1, lastComma).replace(/\D/g, '');
+
+      if (digitsBetween.length > 3) {
+        valor = valor.replace(/,/g, '');
+      } else {
+        valor = normalizarDecimalComVirgula(valor);
+      }
+    } else if (lastDot > lastComma) {
       valor = valor.replace(/,/g, '');
+    } else {
+      valor = normalizarDecimalComVirgula(valor);
     }
   } else if (valor.includes(',')) {
-    const negativo = valor.startsWith('-');
-    const valorSemSinal = negativo ? valor.slice(1) : valor;
-    const quantidadeVirgulas = (valorSemSinal.match(/,/g) || []).length;
-
-    const ultimaVirgula = valorSemSinal.lastIndexOf(',');
-    const indicaMilhar =
-      quantidadeVirgulas > 1 ||
-      (quantidadeVirgulas === 1 && /,\d{3}$/.test(valorSemSinal));
-
-    if (indicaMilhar) {
-      const inteiro = valorSemSinal.replace(/,/g, '');
-      valor = `${negativo ? '-' : ''}${inteiro}`;
-    } else if (ultimaVirgula !== -1) {
-      const parteInteira = valorSemSinal.slice(0, ultimaVirgula).replace(/,/g, '');
-      const parteDecimal = valorSemSinal.slice(ultimaVirgula + 1);
-
-      if (parteDecimal.length === 0) {
-        valor = `${negativo ? '-' : ''}${parteInteira || '0'}`;
-      } else {
-        const inteiroNormalizado = parteInteira || '0';
-        valor = `${negativo ? '-' : ''}${inteiroNormalizado}.${parteDecimal}`;
-      }
-    }
+    valor = normalizarDecimalComVirgula(valor);
+  } else {
+    valor = valor.replace(/,/g, '');
   }
 
   const valorNumerico = parseFloat(valor);
-  return isNaN(valorNumerico) ? 0 : valorNumerico;
+  return Number.isNaN(valorNumerico) ? 0 : valorNumerico;
 };
