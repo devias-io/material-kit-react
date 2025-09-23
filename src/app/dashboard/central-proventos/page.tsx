@@ -29,7 +29,8 @@ import {
   useProventosUpload,
   useProventosExport
 } from '@/hooks/useProventosAPI';
-import { processarValor } from './processarValor';
+
+import { processarValor } from '@/utils/processarValor';
 
 // Ícones simples
 const ArrowLeftIcon = () => <span style={{ fontSize: '16px' }}>←</span>;
