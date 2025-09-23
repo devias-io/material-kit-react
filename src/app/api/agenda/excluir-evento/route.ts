@@ -1,7 +1,3 @@
-// ==========================================
-// 🗑️ DELETE /api/agenda/excluir-evento
-// ==========================================
-
 export async function DELETE(request: Request) {
   try {
     const { eventoIndex } = await request.json();
