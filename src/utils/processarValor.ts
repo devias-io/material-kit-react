@@ -6,6 +6,8 @@
 const BRAZILIAN_PATTERN = /^-?\d{1,3}(\.\d{3})*,\d+$/;
 const AMERICAN_PATTERN = /^-?\d{1,3}(,\d{3})*\.\d+$/;
 
+const DIGITOS_COM_PONTOS_PATTERN = /^\d{1,3}(\.\d{3})+$/;
+
 const normalizarDecimalComVirgula = (entrada: string): string => {
   const negativo = entrada.startsWith('-');
   const semSinal = negativo ? entrada.slice(1) : entrada;
@@ -42,7 +44,9 @@ export const processarValor = (valorRaw: string | number): number => {
     .replace(/R\$\s*/gi, '')  // Remove R$ com espaços
     .replace(/\s+/g, '')      // Remove todos os espaços
     .trim();
-  
+
+  const apenasDigitosEPontos = DIGITOS_COM_PONTOS_PATTERN.test(valor);
+
   if (valor === '') {
     return 0;
   }
@@ -73,13 +77,25 @@ export const processarValor = (valorRaw: string | number): number => {
   }
   // 🇧🇷 APENAS VÍRGULA (formato brasileiro simples)
   else if (valor.includes(',') && !valor.includes('.')) {
-    valor = normalizarDecimalComVirgula(valor);
+    const quantidadeDeVirgulas = (valor.match(/,/g) || []).length;
+
+    if (quantidadeDeVirgulas > 1) {
+      valor = valor.replace(/,/g, '');
+    } else {
+      valor = normalizarDecimalComVirgula(valor);
+    }
   }
   // 🧹 REMOVER VÍRGULAS RESTANTES (caso não tenham sido tratadas)
   else {
     valor = valor.replace(/,/g, '');
   }
   
+  // Se restaram apenas milhares separados por ponto (ex.: "182.073.774"),
+  // remover os pontos para preservar todos os dígitos antes da conversão.
+  if (apenasDigitosEPontos) {
+    valor = valor.replace(/\./g, '');
+  }
+
   // Converter para número
   const valorNumerico = parseFloat(valor);
   return isNaN(valorNumerico) ? 0 : valorNumerico;
@@ -105,7 +121,12 @@ export const testarProcessarValor = () => {
     // Casos edge
     { input: '0', expected: 0, desc: 'Zero' },
     { input: '', expected: 0, desc: 'String vazia' },
-    { input: '1000', expected: 1000, desc: 'Número simples' }
+    { input: '1000', expected: 1000, desc: 'Número simples' },
+    {
+      input: '182.073.774',
+      expected: 182073774,
+      desc: 'Milhares com pontos sem decimais'
+    }
   ];
   
   console.log('🧪 TESTANDO processarValor:');
