@@ -143,23 +143,39 @@ export async function DELETE() {
     console.log(`🗑️ Iniciando limpeza de proventos...`);
     
     let totalRemovidos = 0;
-    let hasMore = true;
-    
-    while (hasMore) {
-      const resultado = await prisma.provento.deleteMany({
-        take: 1000 // Deletar no máximo 1000 por vez
+    const BATCH_SIZE = 1000;
+
+    while (true) {
+      const idsBatch = await prisma.provento.findMany({
+        select: { id: true },
+        orderBy: { id: 'asc' },
+        take: BATCH_SIZE
       });
-      
-      totalRemovidos += resultado.count;
-      hasMore = resultado.count === 1000;
-      
-      console.log(`🗑️ Removidos ${resultado.count} proventos (total: ${totalRemovidos})`);
-      
-      if (hasMore) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+
+      if (idsBatch.length === 0) {
+        break;
       }
+
+      const ids = idsBatch.map(item => item.id);
+      const resultado = await prisma.provento.deleteMany({
+        where: {
+          id: {
+            in: ids
+          }
+        }
+      });
+
+      totalRemovidos += resultado.count;
+
+      console.log(`🗑️ Removidos ${resultado.count} proventos (total: ${totalRemovidos})`);
+
+      if (idsBatch.length < BATCH_SIZE) {
+        break;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
-    
+
     // 🧹 LIMPAR TAMBÉM AS ESTATÍSTICAS
     await prisma.proventoEstatistica.deleteMany({});
     
