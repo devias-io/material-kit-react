@@ -110,6 +110,39 @@ export default function CentralProventos() {
     setArquivoSelecionado(file);
   };
 
+  // Função para corrigir valores em escala incorreta
+const corrigirValorIncorreto = (ticker: string, valor: number): number => {
+  if (valor > 50000) {
+    const correcoesEspecificas: { [key: string]: number } = {
+      'LEVE3': 1.90,
+    };
+    
+    if (correcoesEspecificas[ticker]) {
+      console.log(`🔧 Correção específica: ${ticker} ${valor} → ${correcoesEspecificas[ticker]}`);
+      return correcoesEspecificas[ticker];
+    }
+    
+    const fatorCorrecao = 190268766 / 1.90;
+    const valorCorrigido = valor / fatorCorrecao;
+    
+    if (valorCorrigido >= 0.01 && valorCorrigido <= 1000) {
+      console.log(`🔧 Correção automática: ${ticker} ${valor} → ${valorCorrigido.toFixed(2)}`);
+      return Math.round(valorCorrigido * 100) / 100;
+    }
+    
+    const divisores = [1000000, 100000, 10000];
+    for (const divisor of divisores) {
+      const teste = valor / divisor;
+      if (teste >= 0.01 && teste <= 100) {
+        console.log(`🔧 Correção por divisor: ${ticker} ${valor} → ${teste} (÷${divisor})`);
+        return Math.round(teste * 100) / 100;
+      }
+    }
+  }
+  
+  return valor;
+};
+
   // 🌍 VERSÃO UNIVERSAL - ACEITA FORMATO AMERICANO E BRASILEIRO SIMULTANEAMENTE
   const processarCSV = useCallback(async () => {
     if (!arquivoSelecionado) return;
@@ -364,7 +397,8 @@ export default function CentralProventos() {
                 : '';
 
             // 🔥 PROCESSAR VALORES COM FUNÇÕES UNIVERSAIS
-            const valor = processarValor(valorRaw);
+const valorProcessado = processarValor(valorRaw);
+const valor = corrigirValorIncorreto(ticker, valorProcessado);
             const dataCom = processarData(dataComRaw);
             const dataPagamento = processarData(dataPagamentoRaw);
             let dividendYield: number | undefined;
