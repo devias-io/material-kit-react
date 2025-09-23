@@ -16,15 +16,27 @@ function loadProcessarValor() {
 const processarValor = loadProcessarValor();
 
 describe('processarValor', () => {
-  it('interprets multiple commas as thousand separators', () => {
+  it('interprets multiple comma-separated thousands groups as an integer', () => {
     expect(processarValor('3,276,340')).toBe(3276340);
   });
 
-  it('interprets single comma followed by three digits as thousand separator', () => {
-    expect(processarValor('1,234')).toBe(1234);
+  it('treats a single comma as a decimal separator', () => {
+    expect(processarValor('1,234')).toBeCloseTo(1.234);
   });
 
-  it('keeps last comma as decimal separator for fractional values', () => {
-    expect(processarValor('0,0845')).toBeCloseTo(0.0845);
+  it('preserves high precision decimal values with a single comma', () => {
+    expect(processarValor('1,37286685')).toBeCloseTo(1.37286685);
+  });
+
+  it('converts fractional values below one', () => {
+    expect(processarValor('0,125')).toBeCloseTo(0.125);
+  });
+
+  it('parses Brazilian-formatted values with thousands points and decimal comma', () => {
+    expect(processarValor('1.234,56')).toBeCloseTo(1234.56);
+  });
+
+  it('normalizes decimal representations with trailing zeros', () => {
+    expect(processarValor('1,000')).toBe(1);
   });
 });
