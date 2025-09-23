@@ -24,11 +24,12 @@ import {
 import { useAuthAccess } from '@/hooks/use-auth-access';
 
 // 🔄 IMPORTAR NOVOS HOOKS DA API
-import { 
-  useProventosEstatisticas, 
-  useProventosUpload, 
-  useProventosExport 
+import {
+  useProventosEstatisticas,
+  useProventosUpload,
+  useProventosExport
 } from '@/hooks/useProventosAPI';
+import { processarValor } from './processarValor';
 
 // Ícones simples
 const ArrowLeftIcon = () => <span style={{ fontSize: '16px' }}>←</span>;
@@ -265,54 +266,6 @@ export default function CentralProventos() {
       }
 
       const tamanhoEsperado = cabecalhoPartes.length;
-      
-      // 🔥 FUNÇÃO UNIVERSAL PARA PROCESSAR VALOR (ACEITA QUALQUER FORMATO)
-      const processarValor = (valorRaw: string) => {
-        if (!valorRaw || valorRaw === '') return 0;
-        
-        // Remove R$, espaços, e normaliza
-        let valor = valorRaw
-          .toString()
-          .replace(/R\$\s*/g, '')     // Remove R$ e espaços
-          .replace(/\s/g, '')         // Remove todos os espaços
-          .trim();
-        
-        // Se tem vírgula E ponto, assumir que vírgula é decimal (formato brasileiro)
-        if (valor.includes(',') && valor.includes('.')) {
-          const ultimaVirgula = valor.lastIndexOf(',');
-          const ultimoPonto = valor.lastIndexOf('.');
-
-          if (ultimaVirgula > ultimoPonto) {
-            // Formato brasileiro: 1.234,56
-            valor = valor.replace(/\./g, '').replace(',', '.');
-          } else {
-            // Formato americano: 1,234.56
-            valor = valor.replace(/,/g, '');
-          }
-        } else if (valor.includes(',')) {
-          // Só vírgula: última vírgula é decimal, anteriores são milhares
-          const negativo = valor.startsWith('-');
-          const valorSemSinal = negativo ? valor.slice(1) : valor;
-          const ultimaVirgula = valorSemSinal.lastIndexOf(',');
-
-          if (ultimaVirgula !== -1) {
-            const parteInteira = valorSemSinal
-              .slice(0, ultimaVirgula)
-              .replace(/,/g, '');
-            const parteDecimal = valorSemSinal.slice(ultimaVirgula + 1);
-
-            if (parteDecimal.length === 0) {
-              valor = `${negativo ? '-' : ''}${parteInteira || '0'}`;
-            } else {
-              const inteiroNormalizado = parteInteira || '0';
-              valor = `${negativo ? '-' : ''}${inteiroNormalizado}.${parteDecimal}`;
-            }
-          }
-        }
-        
-        const valorNumerico = parseFloat(valor);
-        return isNaN(valorNumerico) ? 0 : valorNumerico;
-      };
       
       // 🗓️ FUNÇÃO UNIVERSAL PARA PROCESSAR DATA (ACEITA QUALQUER FORMATO)
       const processarData = (dataRaw: string) => {
