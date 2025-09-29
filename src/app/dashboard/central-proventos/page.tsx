@@ -378,20 +378,21 @@ export default function CentralProventos() {
             }
             
             // ✅ VALIDAÇÕES ESPECÍFICAS
-            if (!ticker || ticker === '') {
-              errosProcessamento++;
-              continue;
-            }
-            
-            if (valor <= 0) {
-              errosProcessamento++;
-              continue;
-            }
-            
-            if (!dataCom || isNaN(dataCom.getTime())) {
-              errosProcessamento++;
-              continue;
-            }
+if (!ticker || ticker === '') {
+  errosProcessamento++;
+  continue;
+}
+
+// 🔧 ALTERE ESTA LINHA:
+if (valor < 0 || isNaN(valor)) {  // ← ERA: valor <= 0
+  errosProcessamento++;
+  continue;
+}
+
+if (!dataCom || isNaN(dataCom.getTime())) {
+  errosProcessamento++;
+  continue;
+}
             
             // 📝 CRIAR OBJETO PROVENTO
             const proventoProcessado: ProventoCentral = {
