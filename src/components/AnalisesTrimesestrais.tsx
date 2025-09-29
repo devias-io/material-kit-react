@@ -12,8 +12,8 @@
  * - Smooth scrolling no modal
  */
 
-import React, { useState, useEffect, useCallback, memo } from 'react';
-import { Eye, Calendar, TrendingUp, TrendingDown, BarChart3, Target, AlertCircle, ExternalLink, FileText, Building } from 'lucide-react';
+import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
+import { Eye, TrendingUp, TrendingDown, BarChart3, Target, AlertCircle, ExternalLink, Download, FileText } from 'lucide-react';
 
 // Interfaces corrigidas para compatibilidade
 interface MetricaTrimestreData {
@@ -95,6 +95,25 @@ const useIsMobile = () => {
   return isMobile;
 };
 
+const useActionButtonStyle = (isMobile: boolean) =>
+  useMemo<React.CSSProperties>(() => ({
+    backgroundColor: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '12px',
+    padding: '10px 14px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#0f172a',
+    fontSize: '14px',
+    fontWeight: 600,
+    textDecoration: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    width: isMobile ? '100%' : 'auto',
+    justifyContent: 'center'
+  }), [isMobile]);
+
 // Função para validar se a análise tem dados mínimos
 const isAnaliseValida = (analise: AnaliseTrimestreData): boolean => {
   return !!(
@@ -116,6 +135,7 @@ const ModalAnaliseCompleta = memo(({
   onClose: () => void;
 }) => {
   const isMobile = useIsMobile();
+  const actionButtonStyle = useActionButtonStyle(isMobile);
   
   if (!isOpen || !analise) return null;
 
@@ -229,16 +249,18 @@ const ModalAnaliseCompleta = memo(({
                 {analise.titulo}
               </h3>
               
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: isMobile ? '12px' : '16px', 
-                fontSize: isMobile ? '12px' : '14px', 
-                color: '#64748b',
-                flexWrap: 'wrap'
-              }}>
-                <span> {new Date(analise.dataPublicacao).toLocaleDateString('pt-BR')}</span>
-                <span> {analise.autor}</span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: isMobile ? '12px' : '16px',
+                  fontSize: isMobile ? '12px' : '14px',
+                  color: '#64748b',
+                  flexWrap: 'wrap'
+                }}
+              >
+                <span>{new Date(analise.dataPublicacao).toLocaleDateString('pt-BR')}</span>
+                <span>{analise.autor}</span>
               </div>
             </div>
             
@@ -289,8 +311,15 @@ const ModalAnaliseCompleta = memo(({
           {/* Métricas do Trimestre - CORRIGIDO */}
           {Object.keys(analise.metricas).length > 0 && (
             <div style={{ marginBottom: '32px' }}>
-              <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                📊 Métricas do Trimestre
+              <h4
+                style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#1e293b',
+                  marginBottom: '12px'
+                }}
+              >
+                Métricas do Trimestre
               </h4>
               
               <div style={{ 
@@ -300,7 +329,7 @@ const ModalAnaliseCompleta = memo(({
               }}>
                 {analise.metricas.receita && analise.metricas.receita.valor !== undefined && (
                   <div style={{ backgroundColor: '#f0fdf4', padding: '16px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-                    <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#15803d', fontWeight: '600' }}>💰 Receita</h5>
+                    <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#15803d', fontWeight: '600' }}>Receita</h5>
                     <div style={{ fontSize: '20px', fontWeight: '700', color: '#166534' }}>
                       {formatarValorMetrica(analise.metricas.receita)}
                     </div>
@@ -315,7 +344,7 @@ const ModalAnaliseCompleta = memo(({
 
                 {analise.metricas.ebitda && analise.metricas.ebitda.valor !== undefined && (
                   <div style={{ backgroundColor: '#f0f9ff', padding: '16px', borderRadius: '8px', border: '1px solid #7dd3fc' }}>
-                    <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#0c4a6e', fontWeight: '600' }}>📊 EBITDA</h5>
+                    <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#0c4a6e', fontWeight: '600' }}>EBITDA</h5>
                     <div style={{ fontSize: '20px', fontWeight: '700', color: '#0369a1' }}>
                       {formatarValorMetrica(analise.metricas.ebitda)}
                     </div>
@@ -335,7 +364,7 @@ const ModalAnaliseCompleta = memo(({
 
                 {analise.metricas.lucroLiquido && analise.metricas.lucroLiquido.valor !== undefined && (
                   <div style={{ backgroundColor: '#fdf4ff', padding: '16px', borderRadius: '8px', border: '1px solid #d8b4fe' }}>
-                    <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#7c2d12', fontWeight: '600' }}>💎 Lucro Líquido</h5>
+                    <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#7c2d12', fontWeight: '600' }}>Lucro Líquido</h5>
                     <div style={{ fontSize: '20px', fontWeight: '700', color: '#92400e' }}>
                       {formatarValorMetrica(analise.metricas.lucroLiquido)}
                     </div>
@@ -350,7 +379,7 @@ const ModalAnaliseCompleta = memo(({
 
                 {analise.metricas.roe && analise.metricas.roe.valor !== undefined && (
                   <div style={{ backgroundColor: '#fef2f2', padding: '16px', borderRadius: '8px', border: '1px solid #fecaca' }}>
-                    <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#991b1b', fontWeight: '600' }}>🎯 ROE</h5>
+                    <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#991b1b', fontWeight: '600' }}>ROE</h5>
                     <div style={{ fontSize: '20px', fontWeight: '700', color: '#dc2626' }}>
                       {typeof analise.metricas.roe.valor === 'number' ? analise.metricas.roe.valor.toFixed(1) : analise.metricas.roe.valor}%
                     </div>
@@ -387,7 +416,7 @@ const ModalAnaliseCompleta = memo(({
           {(analise.pontosFavoraveis || analise.pontosAtencao) && (
             <div style={{ marginBottom: '32px' }}>
               <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b', marginBottom: '16px' }}>
-                📝 Análise Qualitativa
+                Análise Qualitativa
               </h4>
               
               {/* MOBILE FIRST: Stack vertical em telas pequenas, grid em telas grandes */}
@@ -405,7 +434,7 @@ const ModalAnaliseCompleta = memo(({
                     flex: 1
                   }}>
                     <h5 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', color: '#15803d' }}>
-                      ✅ Pontos Favoráveis
+                      Pontos Favoráveis
                     </h5>
                     <div 
                       style={{ lineHeight: '1.6', color: '#166534', fontSize: isMobile ? '14px' : '16px' }}
@@ -423,7 +452,7 @@ const ModalAnaliseCompleta = memo(({
                     flex: 1
                   }}>
                     <h5 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', color: '#92400e' }}>
-                      ⚠️ Pontos de Atenção
+                      Pontos de Atenção
                     </h5>
                     <div 
                       style={{ lineHeight: '1.6', color: '#92400e', fontSize: isMobile ? '14px' : '16px' }}
@@ -438,32 +467,34 @@ const ModalAnaliseCompleta = memo(({
           {/* Links Externos */}
           {(analise.linkResultado || analise.linkConferencia) && (
             <div style={{ marginBottom: '16px' }}>
-              <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b', marginBottom: '16px' }}>
-                🔗 Materiais Oficiais
+              <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b', marginBottom: '12px' }}>
+                Materiais Oficiais
               </h4>
-              
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: '12px',
+                  flexWrap: 'wrap'
+                }}
+              >
                 {analise.linkResultado && (
                   <a
                     href={analise.linkResultado}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      backgroundColor: '#374151',
-                      color: 'white',
-                      padding: '12px 16px',
-                      borderRadius: '8px',
-                      textDecoration: 'none',
-                      fontSize: '14px',
-                      fontWeight: '600'
+                    onClick={(event) => event.stopPropagation()}
+                    style={{ ...actionButtonStyle }}
+                    onMouseEnter={(event) => {
+                      event.currentTarget.style.backgroundColor = '#f1f5f9';
+                    }}
+                    onMouseLeave={(event) => {
+                      event.currentTarget.style.backgroundColor = '#f8fafc';
                     }}
                   >
-                    <FileText size={16} />
-                    Release de Resultados
-                    <ExternalLink size={14} />
+                    <Download size={16} />
+                    Baixar PDF
                   </a>
                 )}
 
@@ -472,22 +503,17 @@ const ModalAnaliseCompleta = memo(({
                     href={analise.linkConferencia}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      backgroundColor: '#059669',
-                      color: 'white',
-                      padding: '12px 16px',
-                      borderRadius: '8px',
-                      textDecoration: 'none',
-                      fontSize: '14px',
-                      fontWeight: '600'
+                    onClick={(event) => event.stopPropagation()}
+                    style={{ ...actionButtonStyle }}
+                    onMouseEnter={(event) => {
+                      event.currentTarget.style.backgroundColor = '#f1f5f9';
+                    }}
+                    onMouseLeave={(event) => {
+                      event.currentTarget.style.backgroundColor = '#f8fafc';
                     }}
                   >
-                    <Building size={16} />
-                    Conference Call
-                    <ExternalLink size={14} />
+                    <ExternalLink size={16} />
+                    Abrir no site
                   </a>
                 )}
               </div>
@@ -506,6 +532,7 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
   const [error, setError] = useState<string | null>(null);
   const [analiseModalAberta, setAnaliseModalAberta] = useState<AnaliseTrimestreData | null>(null);
   const isMobile = useIsMobile();
+  const actionButtonStyle = useActionButtonStyle(isMobile);
 
   // Carregar análises da API - MELHORADO
   useEffect(() => {
@@ -746,16 +773,26 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
                   </div>
                 )}
 
-                <div style={{ 
-                  display: 'flex', 
-                  flexDirection: isMobile ? 'column' : 'row',
-                  justifyContent: 'space-between', 
-                  alignItems: isMobile ? 'stretch' : 'flex-start', 
-                  marginBottom: '12px',
-                  gap: isMobile ? '12px' : '0'
-                }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: isMobile ? 'column' : 'row',
+                    justifyContent: 'space-between',
+                    alignItems: isMobile ? 'stretch' : 'flex-start',
+                    marginBottom: '12px',
+                    gap: isMobile ? '12px' : '0'
+                  }}
+                >
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '12px',
+                        flexWrap: 'wrap'
+                      }}
+                    >
                       <h4 style={{
                         fontSize: isMobile ? '16px' : '18px',
                         fontWeight: '700',
@@ -766,14 +803,15 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
                         {analise.titulo}
                       </h4>
                     </div>
-                    
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: isMobile ? '8px' : '12px', 
-                      marginBottom: '8px',
-                      flexWrap: 'wrap'
-                    }}>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        flexWrap: 'wrap'
+                      }}
+                    >
                       <span style={{
                         backgroundColor: '#374151',
                         color: 'white',
@@ -783,14 +821,6 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
                         fontWeight: '600'
                       }}>
                         {analise.trimestre}
-                      </span>
-                      
-                      <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>
-                         {new Date(analise.dataPublicacao).toLocaleDateString('pt-BR')}
-                      </span>
-                      
-                      <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>
-                         {analise.autor}
                       </span>
                     </div>
 
@@ -890,32 +920,97 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
                   </div>
                 )}
 
-                {/* Botão Ver Análise - RESPONSIVO */}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: isMobile ? 'center' : 'flex-end', 
-                  marginTop: '16px',
-                  paddingTop: '12px',
-                  borderTop: '1px solid #e2e8f0'
-                }}>
-                  <button style={{
-                    backgroundColor: '#374151',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: isMobile ? '10px 16px' : '8px 16px',
-                    fontSize: isMobile ? '13px' : '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
+                <div
+                  style={{
                     display: 'flex',
+                    flexDirection: isMobile ? 'column' : 'row',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: '6px',
-                    width: isMobile ? '100%' : 'auto',
-                    justifyContent: 'center'
-                  }}>
-                    <Eye size={16} />
-                    {isMobile ? 'Ver Análise' : 'Ver Análise Completa'}
-                  </button>
+                    gap: '16px',
+                    marginTop: '20px',
+                    paddingTop: '16px',
+                    borderTop: '1px solid #e2e8f0'
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                      color: '#64748b',
+                      fontSize: isMobile ? '12px' : '13px'
+                    }}
+                  >
+                    <span>{new Date(analise.dataPublicacao).toLocaleDateString('pt-BR')}</span>
+                    <span>{analise.autor}</span>
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: isMobile ? 'column' : 'row',
+                      alignItems: 'center',
+                      justifyContent: isMobile ? 'stretch' : 'flex-end',
+                      gap: '12px',
+                      width: isMobile ? '100%' : 'auto'
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        abrirModal(analise);
+                      }}
+                      style={{ ...actionButtonStyle }}
+                      onMouseEnter={(event) => {
+                        event.currentTarget.style.backgroundColor = '#f1f5f9';
+                      }}
+                      onMouseLeave={(event) => {
+                        event.currentTarget.style.backgroundColor = '#f8fafc';
+                      }}
+                    >
+                      <Eye size={16} />
+                      Abrir análise
+                    </button>
+
+                    {analise.linkResultado && (
+                      <a
+                        href={analise.linkResultado}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(event) => event.stopPropagation()}
+                        style={{ ...actionButtonStyle }}
+                        onMouseEnter={(event) => {
+                          event.currentTarget.style.backgroundColor = '#f1f5f9';
+                        }}
+                        onMouseLeave={(event) => {
+                          event.currentTarget.style.backgroundColor = '#f8fafc';
+                        }}
+                      >
+                        <Download size={16} />
+                        Baixar PDF
+                      </a>
+                    )}
+
+                    {analise.linkConferencia && (
+                      <a
+                        href={analise.linkConferencia}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(event) => event.stopPropagation()}
+                        style={{ ...actionButtonStyle }}
+                        onMouseEnter={(event) => {
+                          event.currentTarget.style.backgroundColor = '#f1f5f9';
+                        }}
+                        onMouseLeave={(event) => {
+                          event.currentTarget.style.backgroundColor = '#f8fafc';
+                        }}
+                      >
+                        <ExternalLink size={16} />
+                        Abrir no site
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             );
