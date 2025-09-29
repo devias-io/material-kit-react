@@ -1078,92 +1078,92 @@ const AgendaCorporativa = React.memo(({ ticker, isFII = false }) => {
             const proximidade = formatarProximidade(diasAteEvento);
             
             return (
-              <div key={evento.id} style={{ 
-                border: '1px solid #e2e8f0', 
-                borderRadius: '8px',
-                backgroundColor: 'white',
-                marginBottom: '12px',
-                padding: '20px',
-                borderLeftWidth: diasAteEvento <= 7 ? '4px' : '1px',
-                borderLeftColor: diasAteEvento <= 7 ? '#f59e0b' : '#e2e8f0'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      margin: '0 0 8px 0',
-                      color: '#1e293b'
-                    }}>
-                      {evento.titulo}
-                    </h4>
-                    
-                    <p style={{
-                      fontSize: '14px',
-                      color: '#64748b',
-                      margin: '0 0 12px 0',
-                      lineHeight: '1.4'
-                    }}>
-                      {evento.descricao}
-                    </p>
+<div key={evento.id} style={{ 
+  border: '1px solid #e2e8f0', 
+  borderRadius: '8px',
+  backgroundColor: 'white',
+  marginBottom: '12px',
+  padding: '20px',
+  borderLeftWidth: diasAteEvento <= 7 && diasAteEvento >= 0 ? '4px' : '1px',
+  borderLeftColor: diasAteEvento <= 7 && diasAteEvento >= 0 ? '#f59e0b' : '#e2e8f0'
+}}>
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div style={{ flex: 1 }}>
+      <h4 style={{
+        fontSize: '16px',
+        fontWeight: '600',
+        margin: '0 0 8px 0',
+        color: '#1e293b'
+      }}>
+        {evento.titulo}
+      </h4>
+      
+      <p style={{
+        fontSize: '14px',
+        color: '#64748b',
+        margin: '0 0 12px 0',
+        lineHeight: '1.4'
+      }}>
+        {evento.descricao}
+      </p>
 
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <span style={{
-                        backgroundColor: diasAteEvento <= 7 ? '#f59e0b' : diasAteEvento < 0 ? '#6b7280' : '#3b82f6',
-                        color: 'white',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        padding: '4px 8px',
-                        borderRadius: '4px'
-                      }}>
-                        {proximidade}
-                      </span>
-                      
-                      <span style={{
-                        fontSize: '12px',
-                        border: '1px solid #d1d5db',
-                        color: '#6b7280',
-                        padding: '4px 8px',
-                        borderRadius: '4px'
-                      }}>
-                        {evento.tipo}
-                      </span>
-                    </div>
-                  </div>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <span style={{
+          backgroundColor: diasAteEvento < 0 ? '#d1d5db' : diasAteEvento <= 7 ? '#f59e0b' : '#3b82f6',
+          color: diasAteEvento < 0 ? '#6b7280' : 'white',
+          fontSize: '12px',
+          fontWeight: '500',
+          padding: '4px 8px',
+          borderRadius: '4px'
+        }}>
+          {proximidade}
+        </span>
+        
+        <span style={{
+          fontSize: '12px',
+          border: '1px solid #d1d5db',
+          color: '#6b7280',
+          padding: '4px 8px',
+          borderRadius: '4px'
+        }}>
+          {evento.tipo}
+        </span>
+      </div>
+    </div>
 
-                  <div style={{ 
-                    textAlign: 'right',
-                    minWidth: '120px',
-                    marginLeft: '20px'
-                  }}>
-                    <div style={{ 
-                      fontSize: '28px',
-                      fontWeight: '700',
-                      color: diasAteEvento <= 7 ? '#f59e0b' : diasAteEvento < 0 ? '#6b7280' : '#3b82f6',
-                      lineHeight: '1'
-                    }}>
-                      {evento.dataObj ? (
-                        evento.dataObj instanceof Date ? 
-                          evento.dataObj.getDate() :
-                          new Date(evento.dataObj).getDate()
-                      ) : 'N/A'}
-                    </div>
-                    <div style={{ 
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: '#64748b',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      {evento.dataObj ? (
-                        evento.dataObj instanceof Date ? 
-                          evento.dataObj.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) :
-                          new Date(evento.dataObj).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
-                      ) : 'N/A'}
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <div style={{ 
+      textAlign: 'right',
+      minWidth: '120px',
+      marginLeft: '20px'
+    }}>
+      <div style={{ 
+        fontSize: '28px',
+        fontWeight: '700',
+        color: diasAteEvento < 0 ? '#9ca3af' : diasAteEvento <= 7 ? '#f59e0b' : '#3b82f6',
+        lineHeight: '1'
+      }}>
+        {evento.dataObj ? (
+          evento.dataObj instanceof Date ? 
+            evento.dataObj.getDate() :
+            new Date(evento.dataObj).getDate()
+        ) : 'N/A'}
+      </div>
+      <div style={{ 
+        fontSize: '14px',
+        fontWeight: '600',
+        color: '#64748b',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px'
+      }}>
+        {evento.dataObj ? (
+          evento.dataObj instanceof Date ? 
+            evento.dataObj.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) :
+            new Date(evento.dataObj).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+        ) : 'N/A'}
+      </div>
+    </div>
+  </div>
+</div>
             );
           })}
         </div>
