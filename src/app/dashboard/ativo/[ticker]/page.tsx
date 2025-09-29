@@ -1612,7 +1612,6 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
           {isFII ? 'Histórico de Rendimentos (FII)' : 'Histórico de Proventos'}
         </h3>
         
-        )}
       </div>
 
       {!inView ? (
