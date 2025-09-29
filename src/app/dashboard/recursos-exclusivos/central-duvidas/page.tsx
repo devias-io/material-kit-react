@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useUser } from '@/hooks/use-user';
+import styles from './central-duvidas.module.css';
 
-// Tipos
 interface Comment {
   id: string;
   content: string;
@@ -38,51 +38,51 @@ interface Answer {
   comments: Comment[];
 }
 
-const statusLabels = {
-  'NOVA': 'Aguardando Resposta',
-  'RESPONDIDA': 'Respondida',
-  'FECHADA': 'Fechada'
+const statusLabels: Record<Question['status'], string> = {
+  NOVA: 'Aguardando resposta',
+  RESPONDIDA: 'Respondida',
+  FECHADA: 'Fechada',
 };
+
+type StatusFilter = 'ALL' | Question['status'];
+type SortOption = 'RECENT' | 'OLDER';
+
+const sortOptions: { value: SortOption; label: string }[] = [
+  { value: 'RECENT', label: 'Mais recentes primeiro' },
+  { value: 'OLDER', label: 'Mais antigas primeiro' },
+];
 
 export default function CentralDuvidas() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
-  const [newQuestion, setNewQuestion] = useState({
-    title: '',
-    content: ''
-  });
+  const [newQuestion, setNewQuestion] = useState({ title: '', content: '' });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOption, setSortOption] = useState<SortOption>('RECENT');
   const [currentPage, setCurrentPage] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 10;
-  const [commentInputs, setCommentInputs] = useState<{ [key: string]: string }>({});
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const { user: currentUser } = useUser();
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    loadQuestions(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Carregar perguntas reais da API
   const loadQuestions = async (page = currentPage) => {
     setLoading(true);
     try {
       const response = await fetch(`/api/questions?page=${page}&limit=${limit}`, {
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.ok) {
@@ -101,11 +101,6 @@ export default function CentralDuvidas() {
     }
   };
 
-  useEffect(() => {
-    loadQuestions(1);
-  }, []);
-
-  // Criar nova pergunta
   const handleSubmitQuestion = async () => {
     if (!newQuestion.title.trim() || !newQuestion.content.trim()) {
       setError('Título e conteúdo são obrigatórios');
@@ -118,9 +113,9 @@ export default function CentralDuvidas() {
         method: 'POST',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ title: newQuestion.title, content: newQuestion.content })
+        body: JSON.stringify({ title: newQuestion.title, content: newQuestion.content }),
       });
 
       if (response.ok) {
@@ -139,16 +134,15 @@ export default function CentralDuvidas() {
     }
   };
 
-  // Fechar dúvida
   const handleCloseQuestion = async (questionId: string) => {
     try {
       const response = await fetch(`/api/questions/${questionId}`, {
         method: 'PUT',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: 'FECHADA' })
+        body: JSON.stringify({ status: 'FECHADA' }),
       });
 
       if (response.ok) {
@@ -161,14 +155,10 @@ export default function CentralDuvidas() {
   };
 
   const handleCommentChange = (key: string, value: string) => {
-    setCommentInputs(prev => ({ ...prev, [key]: value }));
+    setCommentInputs((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmitComment = async (
-    questionId: string,
-    key: string,
-    answerId?: string
-  ) => {
+  const handleSubmitComment = async (questionId: string, key: string, answerId?: string) => {
     const content = commentInputs[key];
     if (!content || !content.trim()) {
       setError('Comentário vazio');
@@ -180,9 +170,9 @@ export default function CentralDuvidas() {
         method: 'POST',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content, answerId })
+        body: JSON.stringify({ content, answerId }),
       });
 
       if (response.ok) {
@@ -204,7 +194,7 @@ export default function CentralDuvidas() {
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -212,7 +202,7 @@ export default function CentralDuvidas() {
     const now = new Date();
     const date = new Date(dateString);
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Agora há pouco';
     if (diffInHours < 24) return `${diffInHours}h atrás`;
     if (diffInHours < 48) return 'Ontem';
@@ -220,663 +210,394 @@ export default function CentralDuvidas() {
   };
 
   const hasUnreadAnswers = (question: Question) => {
-    return question.answers.some(answer => !answer.readByUser);
+    return question.answers.some((answer) => !answer.readByUser);
   };
 
-  const getStatusIcon = (status: string) => {
+  const statusCounts = useMemo(
+    () =>
+      questions.reduce(
+        (acc, question) => {
+          acc.total += 1;
+          acc[question.status] += 1;
+          return acc;
+        },
+        { total: 0, NOVA: 0, RESPONDIDA: 0, FECHADA: 0 }
+      ),
+    [questions]
+  );
+
+  const filteredQuestions = useMemo(() => {
+    let data = [...questions];
+
+    if (statusFilter !== 'ALL') {
+      data = data.filter((question) => question.status === statusFilter);
+    }
+
+    if (searchTerm.trim()) {
+      const query = searchTerm.toLowerCase();
+      data = data.filter(
+        (question) =>
+          question.title.toLowerCase().includes(query) ||
+          question.content.toLowerCase().includes(query)
+      );
+    }
+
+    return data.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+
+      if (sortOption === 'RECENT') {
+        return dateB - dateA;
+      }
+
+      return dateA - dateB;
+    });
+  }, [questions, statusFilter, searchTerm, sortOption]);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  const getStatusBadgeClass = (status: Question['status']) => {
     switch (status) {
       case 'NOVA':
-        return '⏳';
+        return styles.statusNew;
       case 'RESPONDIDA':
-        return '✓';
+        return styles.statusAnswered;
       case 'FECHADA':
-        return '✓';
+        return styles.statusClosed;
       default:
-        return '⏳';
+        return '';
     }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'NOVA':
-        return '#10b981';
-      case 'RESPONDIDA':
-        return '#10b981';
-      case 'FECHADA':
-        return '#6b7280';
-      default:
-        return '#6b7280';
-    }
-  };
-
-  const handleAccordionChange = (questionId: string) => (isExpanded: boolean) => {
-    setExpandedQuestion(isExpanded ? questionId : null);
   };
 
   if (loading) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        backgroundColor: '#f8f9fa',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: '20px'
-      }}>
-        <p style={{ 
-          color: '#6b7280', 
-          fontSize: '16px'
-        }}>
-          Carregando suas dúvidas...
-        </p>
+      <div className={styles.loadingWrapper}>
+        <p>Carregando suas dúvidas...</p>
       </div>
     );
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f8f9fa', 
-      padding: isMobile ? '16px' : '32px'
-    }}>
-      {/* Header */}
-      <div style={{ marginBottom: isMobile ? '32px' : '48px', maxWidth: '1200px', margin: '0 auto 32px auto' }}>
-        <h1 style={{ 
-          fontSize: isMobile ? '28px' : '42px', 
-          fontWeight: '700', 
-          color: '#111827',
-          margin: '0 0 12px 0',
-          lineHeight: '1.1',
-          letterSpacing: '-0.025em'
-        }}>
-          Central de Dúvidas
-        </h1>
-        <p style={{ 
-          color: '#6b7280', 
-          fontSize: isMobile ? '16px' : '18px',
-          margin: '0',
-          lineHeight: '1.6',
-          fontWeight: '400'
-        }}>
-          Tire suas dúvidas sobre investimentos e receba respostas dos nossos especialistas
-        </p>
-      </div>
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <div>
+            <h1 className={styles.headerTitle}>Central de Dúvidas</h1>
+            <p className={styles.headerSubtitle}>
+              Visualize perguntas, organize respostas e mantenha toda a equipe alinhada.
+            </p>
+          </div>
+          <button type="button" className={styles.primaryButton} onClick={() => setOpenDialog(true)}>
+            Nova pergunta
+          </button>
+        </header>
 
-      {/* Container principal */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Alertas */}
+        <div className={styles.quickLinks}>
+          <button
+            type="button"
+            className={styles.linkButton}
+            onClick={() => (window.location.href = '/dashboard/recursos-exclusivos/faq')}
+          >
+            <span className={styles.linkIcon}>?</span>
+            Central de FAQ
+          </button>
+        </div>
+
+        <section className={styles.summaryGrid}>
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryLabel}>Total</span>
+            <strong className={styles.summaryValue}>{total || statusCounts.total}</strong>
+          </div>
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryLabel}>Novas</span>
+            <strong className={styles.summaryValue}>{statusCounts.NOVA}</strong>
+          </div>
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryLabel}>Respondidas</span>
+            <strong className={styles.summaryValue}>{statusCounts.RESPONDIDA}</strong>
+          </div>
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryLabel}>Fechadas</span>
+            <strong className={styles.summaryValue}>{statusCounts.FECHADA}</strong>
+          </div>
+        </section>
+
         {error && (
-          <div style={{
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '8px',
-            padding: '16px',
-            marginBottom: '24px',
-            color: '#991b1b',
-            fontSize: '14px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>{error}</span>
-              <button 
-                onClick={() => setError('')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#991b1b',
-                  cursor: 'pointer',
-                  fontSize: '18px'
-                }}
-              >
-                ×
-              </button>
-            </div>
+          <div className={`${styles.alert} ${styles.alertError}`}>
+            <span>{error}</span>
+            <button type="button" onClick={() => setError('')} aria-label="Fechar alerta">
+              ×
+            </button>
           </div>
         )}
 
         {success && (
-          <div style={{
-            backgroundColor: '#f0fdf4',
-            border: '1px solid #bbf7d0',
-            borderRadius: '8px',
-            padding: '16px',
-            marginBottom: '24px',
-            color: '#166534',
-            fontSize: '14px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>{success}</span>
-              <button 
-                onClick={() => setSuccess('')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#166534',
-                  cursor: 'pointer',
-                  fontSize: '18px'
-                }}
-              >
-                ×
-              </button>
-            </div>
+          <div className={`${styles.alert} ${styles.alertSuccess}`}>
+            <span>{success}</span>
+            <button type="button" onClick={() => setSuccess('')} aria-label="Fechar alerta">
+              ×
+            </button>
           </div>
         )}
 
-        {/* Botões de ação */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '24px',
-          flexWrap: 'wrap',
-          gap: '12px'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            <span style={{
-              color: '#6b7280',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}>
-              Perguntas frequentes:
-            </span>
-            <button
-              onClick={() => window.location.href = '/dashboard/recursos-exclusivos/faq'}
-              style={{
-                backgroundColor: '#f3f4f6',
-                color: '#374151',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#e5e7eb';
-                e.target.style.borderColor = '#9ca3af';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#f3f4f6';
-                e.target.style.borderColor = '#d1d5db';
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2"/>
-              </svg>
-             FAQ
-            </button>
+        <div className={styles.filtersCard}>
+          <div className={styles.filterTabs}>
+            {(
+              [
+                { value: 'ALL' as StatusFilter, label: `Todos (${statusCounts.total})` },
+                { value: 'NOVA' as StatusFilter, label: `Novos (${statusCounts.NOVA})` },
+                { value: 'RESPONDIDA' as StatusFilter, label: `Respondidos (${statusCounts.RESPONDIDA})` },
+                { value: 'FECHADA' as StatusFilter, label: `Fechados (${statusCounts.FECHADA})` },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                className={`${styles.tabButton} ${statusFilter === tab.value ? styles.tabButtonActive : ''}`}
+                onClick={() => setStatusFilter(tab.value)}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
-          
-          <button
-            onClick={() => setOpenDialog(true)}
-            style={{
-              backgroundColor: '#374151',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#4b5563'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = '#374151'}
-          >
-            Nova Pergunta
-          </button>
+
+          <div className={styles.filterControls}>
+            <div className={styles.searchBox}>
+              <input
+                type="search"
+                placeholder="Buscar por título ou conteúdo"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </div>
+            <select
+              className={styles.select}
+              value={sortOption}
+              onChange={(event) => setSortOption(event.target.value as SortOption)}
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Lista de dúvidas */}
-        {questions.length === 0 ? (
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '16px',
-            border: '1px solid #e5e7eb',
-            padding: '48px 24px',
-            textAlign: 'center'
-          }}>
-            <h3 style={{
-              fontSize: '20px',
-              fontWeight: '500',
-              color: '#374151',
-              margin: '0 0 8px 0'
-            }}>
-              {currentPage === 1 ? 'Nenhuma dúvida ainda' : 'Nenhuma dúvida nesta página'}
-            </h3>
-            <p style={{
-              color: '#6b7280',
-              fontSize: '14px',
-              margin: '0'
-            }}>
-              {currentPage === 1
-                ? 'Faça sua primeira pergunta para nossos especialistas'
-                : 'Tente navegar para outra página ou crie uma nova pergunta'}
-            </p>
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gap: '16px' }}>
-            {questions.map((question) => (
-              <div
-                key={question.id}
-                style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '16px',
-                  border: '1px solid #e5e7eb',
-                  overflow: 'hidden'
-                }}
-              >
-                {/* Header da pergunta */}
-                <div 
-                  style={{
-                    padding: '20px 24px',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.1s'
-                  }}
-                  onClick={() => handleAccordionChange(question.id)(!expandedQuestion || expandedQuestion !== question.id)}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
-                >
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    marginBottom: '12px'
-                  }}>
-                    <h4 style={{ 
-                      fontSize: '16px', 
-                      fontWeight: '500', 
-                      color: '#1f2937', 
-                      margin: '0',
-                      flex: 1
-                    }}>
-                      {question.title}
-                    </h4>
-                    
-                    <div style={{ 
-                      fontSize: '13px', 
-                      color: '#6b7280',
-                      marginLeft: '16px',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {formatDate(question.createdAt)}
-                    </div>
-                    
-                    <div style={{
-                      marginLeft: '16px',
-                      cursor: 'pointer',
-                      transform: expandedQuestion === question.id ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s'
-                    }}>
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path 
-                          d="M4 6L8 10L12 6" 
-                          stroke="#6b7280" 
-                          strokeWidth="2" 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div>
+        <section className={styles.listSection}>
+          {filteredQuestions.length === 0 ? (
+            <div className={styles.emptyState}>
+              <h3>
+                {questions.length === 0
+                  ? 'Nenhuma dúvida encontrada'
+                  : 'Nenhum resultado para os filtros atuais'}
+              </h3>
+              <p>
+                Ajuste os filtros ou registre uma nova pergunta para começar a conversa com nossos especialistas.
+              </p>
+            </div>
+          ) : (
+            filteredQuestions.map((question) => (
+              <article key={question.id} className={styles.questionCard}>
+                <header className={styles.questionHeader}>
+                  <div className={styles.questionHeading}>
+                    <button
+                      type="button"
+                      className={styles.expandButton}
+                      onClick={() =>
+                        setExpandedQuestion((current) => (current === question.id ? null : question.id))
+                      }
+                      aria-expanded={expandedQuestion === question.id}
+                    >
+                      <span className={styles.expandIcon} aria-hidden="true" />
+                      <span className={styles.questionTitle}>{question.title}</span>
+                    </button>
+                    <span className={`${styles.statusBadge} ${getStatusBadgeClass(question.status)}`}>
+                      {statusLabels[question.status]}
+                    </span>
                   </div>
-                  
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '8px'
-                  }}>
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      backgroundColor: getStatusColor(question.status),
-                      color: 'white',
-                      padding: '3px 8px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: '500'
-                    }}>
-                      <span>{getStatusIcon(question.status)}</span>
-                      {question.status === 'NOVA' ? 'Fechada' : 
-                       question.status === 'RESPONDIDA' ? 'Respondida' : 'Fechada'}
-                    </div>
-                    
-                    {hasUnreadAnswers(question) && (
-                      <div style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        backgroundColor: '#6b7280',
-                        color: 'white',
-                        padding: '3px 8px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: '500'
-                      }}>
-                        Nova Resposta
-                      </div>
-                    )}
-                    
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '4px',
-                      color: '#6b7280',
-                      fontSize: '13px'
-                    }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92178 15.4214 5.17163 16.1716C4.42149 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Davi Souza (Close Friends VIP)
-                    </div>
+                  <div className={styles.questionMeta}>
+                    <span>{formatDateRelative(question.createdAt)}</span>
+                    <span>Enviada em {formatDate(question.createdAt)}</span>
+                    <span>
+                      {question.answers.length === 1 ? '1 resposta' : `${question.answers.length} respostas`}
+                    </span>
+                    {hasUnreadAnswers(question) && <span className={styles.unreadBadge}>Novas respostas</span>}
                   </div>
+                </header>
+
+                <div className={styles.questionContent}>
+                  <p>{question.content}</p>
                 </div>
 
-                {/* Conteúdo expandido */}
                 {expandedQuestion === question.id && (
-                  <div style={{ 
-                    borderTop: '1px solid #f3f4f6',
-                    backgroundColor: '#f9fafb'
-                  }}>
-                    {/* Pergunta completa */}
-                    <div style={{ padding: '24px' }}>
-                      <div style={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '12px',
-                        padding: '20px',
-                        marginBottom: '24px'
-                      }}>
-                        <h5 style={{
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          color: '#6b7280',
-                          margin: '0 0 12px 0',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px'
-                        }}>
-                          Pergunta
-                        </h5>
-                        <p style={{
-                          fontSize: '15px',
-                          color: '#374151',
-                          margin: '0',
-                          lineHeight: '1.6',
-                          whiteSpace: 'pre-wrap'
-                        }}>
-                          {question.content}
-                        </p>
-                      </div>
-
-                      {/* Comentários da pergunta */}
-                      {question.comments.length > 0 && (
-                        <div style={{
-                          marginTop: '16px',
-                          paddingLeft: '16px',
-                          borderLeft: '2px solid #e5e7eb',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '8px'
-                        }}>
+                  <div className={styles.detailArea}>
+                    {question.comments.length > 0 && (
+                      <div className={styles.commentsThread}>
+                        <header>
+                          <h4>Comentários internos</h4>
+                        </header>
+                        <div className={styles.threadBody}>
                           {question.comments.map((comment) => (
-                            <div key={comment.id} style={{ fontSize: '14px', color: '#374151' }}>
-                              <strong>{comment.author.firstName} {comment.author.lastName}:</strong> {comment.content}
+                            <div key={comment.id} className={styles.commentItem}>
+                              <div className={styles.commentHeader}>
+                                <strong>
+                                  {comment.author.firstName} {comment.author.lastName}
+                                </strong>
+                                <span>{formatDate(comment.createdAt)}</span>
+                              </div>
+                              <p>{comment.content}</p>
                             </div>
                           ))}
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {currentUser?.id !== question.user.id && (
-                        <div style={{ marginTop: '12px' }}>
-                          <textarea
-                            value={commentInputs[`question-${question.id}`] || ''}
-                            onChange={(e) => handleCommentChange(`question-${question.id}`, e.target.value)}
-                            placeholder="Adicione um comentário"
-                            rows={3}
-                            style={{
-                              width: '100%',
-                              padding: '8px',
-                              border: '1px solid #d1d5db',
-                              borderRadius: '8px',
-                              resize: 'vertical',
-                              fontFamily: 'inherit',
-                              fontSize: '14px'
-                            }}
-                          />
+                    {currentUser?.id !== question.user.id && (
+                      <div className={styles.commentForm}>
+                        <label htmlFor={`comment-question-${question.id}`}>Adicionar comentário interno</label>
+                        <textarea
+                          id={`comment-question-${question.id}`}
+                          value={commentInputs[`question-${question.id}`] || ''}
+                          onChange={(event) => handleCommentChange(`question-${question.id}`, event.target.value)}
+                          placeholder="Escreva atualizações ou orientações para a equipe"
+                          rows={3}
+                        />
+                        <div className={styles.formActions}>
                           <button
+                            type="button"
+                            className={styles.secondaryButton}
+                            onClick={() => handleCommentChange(`question-${question.id}`, '')}
+                            disabled={!commentInputs[`question-${question.id}`]?.trim()}
+                          >
+                            Limpar
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.primaryButton}
                             onClick={() => handleSubmitComment(question.id, `question-${question.id}`)}
-                            style={{
-                              marginTop: '8px',
-                              backgroundColor: '#374151',
-                              color: 'white',
-                              border: 'none',
-                              padding: '6px 12px',
-                              borderRadius: '6px',
-                              fontSize: '13px',
-                              cursor: 'pointer'
-                            }}
                           >
                             Comentar
                           </button>
                         </div>
-                      )}
-
-                      {/* Respostas */}
-                      {question.answers.length > 0 && (
-                        <div>
-                          <h5 style={{
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            color: '#6b7280',
-                            margin: '0 0 16px 0',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px'
-                          }}>
-                            {question.answers.length === 1 ? 'Resposta' : `Respostas (${question.answers.length})`}
-                          </h5>
-                          
-                          <div style={{ display: 'grid', gap: '16px' }}>
-                            {question.answers.map((answer) => (
-                              <div key={answer.id} style={{ 
-                                backgroundColor: '#ffffff',
-                                borderRadius: '12px',
-                                padding: '20px',
-                                border: !answer.readByUser ? '2px solid #f3f4f6' : '1px solid #e5e7eb'
-                              }}>
-                                {/* Header da resposta */}
-                                <div style={{ 
-                                  display: 'flex', 
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                  marginBottom: '16px',
-                                  paddingBottom: '12px',
-                                  borderBottom: '1px solid #f3f4f6'
-                                }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                      <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92178 15.4214 5.17163 16.1716C4.42149 16.9217 4 17.9391 4 19V21" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                      <circle cx="12" cy="7" r="4" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                    <span style={{
-                                      fontSize: '14px',
-                                      fontWeight: '500',
-                                      color: '#374151'
-                                    }}>
-                                      {answer.admin.firstName} {answer.admin.lastName} (Administrador)
-                                    </span>
-                                  </div>
-                                  <span style={{
-                                    fontSize: '12px',
-                                    color: '#6b7280'
-                                  }}>
-                                    {formatDate(answer.createdAt)}
-                                  </span>
-                                </div>
-                                
-                                {/* Conteúdo da resposta */}
-                                <div style={{
-                                  fontSize: '15px',
-                                  color: '#374151',
-                                  lineHeight: '1.6',
-                                  whiteSpace: 'pre-wrap'
-                                }}>
-                                  {answer.content}
-                                </div>
-
-                                {answer.comments.length > 0 && (
-                                  <div style={{
-                                    marginTop: '16px',
-                                    paddingLeft: '16px',
-                                    borderLeft: '2px solid #e5e7eb',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '8px'
-                                  }}>
-                                    {answer.comments.map((comment) => (
-                                      <div key={comment.id} style={{ fontSize: '14px', color: '#374151' }}>
-                                        <strong>{comment.author.firstName} {comment.author.lastName}:</strong> {comment.content}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {currentUser?.id !== question.user.id && (
-                                  <div style={{ marginTop: '12px' }}>
-                                    <textarea
-                                      value={commentInputs[`answer-${answer.id}`] || ''}
-                                      onChange={(e) => handleCommentChange(`answer-${answer.id}`, e.target.value)}
-                                      placeholder="Adicione um comentário"
-                                      rows={3}
-                                      style={{
-                                        width: '100%',
-                                        padding: '8px',
-                                        border: '1px solid #d1d5db',
-                                        borderRadius: '8px',
-                                        resize: 'vertical',
-                                        fontFamily: 'inherit',
-                                        fontSize: '14px'
-                                      }}
-                                    />
-                                    <button
-                                      onClick={() => handleSubmitComment(question.id, `answer-${answer.id}`, answer.id)}
-                                      style={{
-                                        marginTop: '8px',
-                                        backgroundColor: '#374151',
-                                        color: 'white',
-                                        border: 'none',
-                                        padding: '6px 12px',
-                                        borderRadius: '6px',
-                                        fontSize: '13px',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      Comentar
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Ações */}
-                      <div style={{
-                        marginTop: '24px',
-                        paddingTop: '20px',
-                        borderTop: '1px solid #e5e7eb',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '12px'
-                      }}>
-                        {question.status !== 'FECHADA' && question.answers.length > 0 && (
-                          <button
-                            onClick={() => handleCloseQuestion(question.id)}
-                            style={{
-                              backgroundColor: '#10b981',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '6px',
-                              padding: '8px 16px',
-                              fontSize: '13px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              transition: 'background-color 0.2s'
-                            }}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = '#059669'}
-                            onMouseLeave={(e) => e.target.style.backgroundColor = '#10b981'}
-                          >
-                            Marcar como Resolvida
-                          </button>
-                        )}
-                        
-                        {question.status === 'NOVA' && (
-                          <div style={{
-                            color: '#6b7280',
-                            fontSize: '13px'
-                          }}>
-                            Aguardando análise dos especialistas...
-                          </div>
-                        )}
                       </div>
-                    </div>
+                    )}
+
+                    {question.answers.length > 0 && (
+                      <div className={styles.answersArea}>
+                        <h4>
+                          {question.answers.length === 1
+                            ? 'Resposta do especialista'
+                            : `Respostas (${question.answers.length})`}
+                        </h4>
+
+                        {question.answers.map((answer) => (
+                          <div key={answer.id} className={styles.answerCard}>
+                            <div className={styles.answerHeader}>
+                              <div>
+                                <strong>
+                                  {answer.admin.firstName} {answer.admin.lastName}
+                                </strong>
+                                <span>Equipe de especialistas</span>
+                              </div>
+                              <time>{formatDate(answer.createdAt)}</time>
+                            </div>
+                            <div className={styles.answerContent}>
+                              <p>{answer.content}</p>
+                            </div>
+
+                            {answer.comments.length > 0 && (
+                              <div className={styles.followUpComments}>
+                                {answer.comments.map((comment) => (
+                                  <div key={comment.id} className={styles.commentItem}>
+                                    <div className={styles.commentHeader}>
+                                      <strong>
+                                        {comment.author.firstName} {comment.author.lastName}
+                                      </strong>
+                                      <span>{formatDate(comment.createdAt)}</span>
+                                    </div>
+                                    <p>{comment.content}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {currentUser?.id !== question.user.id && (
+                              <div className={styles.commentForm}>
+                                <label htmlFor={`comment-answer-${answer.id}`}>
+                                  Adicionar comentário à resposta
+                                </label>
+                                <textarea
+                                  id={`comment-answer-${answer.id}`}
+                                  value={commentInputs[`answer-${answer.id}`] || ''}
+                                  onChange={(event) => handleCommentChange(`answer-${answer.id}`, event.target.value)}
+                                  placeholder="Registre alinhamentos internos sobre esta resposta"
+                                  rows={3}
+                                />
+                                <div className={styles.formActions}>
+                                  <button
+                                    type="button"
+                                    className={styles.secondaryButton}
+                                    onClick={() => handleCommentChange(`answer-${answer.id}`, '')}
+                                    disabled={!commentInputs[`answer-${answer.id}`]?.trim()}
+                                  >
+                                    Limpar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={styles.primaryButton}
+                                    onClick={() =>
+                                      handleSubmitComment(question.id, `answer-${answer.id}`, answer.id)
+                                    }
+                                  >
+                                    Comentar
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <footer className={styles.cardFooter}>
+                      {question.status !== 'FECHADA' && question.answers.length > 0 ? (
+                        <button
+                          type="button"
+                          className={styles.successButton}
+                          onClick={() => handleCloseQuestion(question.id)}
+                        >
+                          Marcar como resolvida
+                        </button>
+                      ) : (
+                        <span className={styles.mutedText}>Pergunta encerrada</span>
+                      )}
+                    </footer>
                   </div>
                 )}
-              </div>
-            ))}
-          </div>
-        )}
+              </article>
+            ))
+          )}
+        </section>
 
-        {/* Paginação */}
         {total > limit && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: '24px'
-          }}>
+          <div className={styles.pagination}>
             <button
+              type="button"
+              className={styles.secondaryButton}
               onClick={() => currentPage > 1 && loadQuestions(currentPage - 1)}
               disabled={currentPage === 1}
-              style={{
-                backgroundColor: '#f3f4f6',
-                color: '#374151',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
-              }}
             >
               Anterior
             </button>
-
-            <span style={{ color: '#6b7280', fontSize: '14px' }}>
-              Página {currentPage} de {Math.ceil(total / limit)}
+            <span>
+              Página {currentPage} de {totalPages}
             </span>
-
             <button
-              onClick={() => currentPage < Math.ceil(total / limit) && loadQuestions(currentPage + 1)}
-              disabled={currentPage >= Math.ceil(total / limit)}
-              style={{
-                backgroundColor: '#f3f4f6',
-                color: '#374151',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: currentPage >= Math.ceil(total / limit) ? 'not-allowed' : 'pointer'
-              }}
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => currentPage < totalPages && loadQuestions(currentPage + 1)}
+              disabled={currentPage >= totalPages}
             >
               Próxima
             </button>
@@ -884,156 +605,50 @@ export default function CentralDuvidas() {
         )}
       </div>
 
-      {/* Modal nova pergunta */}
       {openDialog && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            width: '100%',
-            maxWidth: '600px',
-            maxHeight: '90vh',
-            overflow: 'auto'
-          }}>
-            {/* Header do modal */}
-            <div style={{
-              padding: '24px',
-              borderBottom: '1px solid #e5e7eb',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <h2 style={{
-                fontSize: '20px',
-                fontWeight: '600',
-                color: '#1f2937',
-                margin: '0'
-              }}>
-                Nova Dúvida
-              </h2>
-              <button
-                onClick={() => setOpenDialog(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#6b7280'
-                }}
-              >
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent} role="dialog" aria-modal="true">
+            <header className={styles.modalHeader}>
+              <h2>Nova dúvida</h2>
+              <button type="button" onClick={() => setOpenDialog(false)} aria-label="Fechar">
                 ×
               </button>
-            </div>
-
-            {/* Conteúdo do modal */}
-            <div style={{ padding: '24px' }}>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '8px'
-                }}>
-                  Título da dúvida
-                </label>
+            </header>
+            <div className={styles.modalBody}>
+              <div className={styles.fieldGroup}>
+                <label htmlFor="new-question-title">Título da dúvida</label>
                 <input
+                  id="new-question-title"
                   type="text"
                   value={newQuestion.title}
-                  onChange={(e) => setNewQuestion({ ...newQuestion, title: e.target.value })}
+                  onChange={(event) => setNewQuestion({ ...newQuestion, title: event.target.value })}
                   placeholder="Descreva sua dúvida de forma objetiva"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    fontSize: '15px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    boxSizing: 'border-box',
-                    outline: 'none'
-                  }}
                 />
               </div>
-
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '8px'
-                }}>
-                  Descrição detalhada
-                </label>
+              <div className={styles.fieldGroup}>
+                <label htmlFor="new-question-content">Descrição detalhada</label>
                 <textarea
+                  id="new-question-content"
                   value={newQuestion.content}
-                  onChange={(e) => setNewQuestion({ ...newQuestion, content: e.target.value })}
+                  onChange={(event) => setNewQuestion({ ...newQuestion, content: event.target.value })}
                   placeholder="Detalhe sua dúvida. Quanto mais específica, melhor será nossa resposta."
                   rows={6}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    fontSize: '15px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                    resize: 'vertical',
-                    fontFamily: 'inherit'
-                  }}
                 />
               </div>
-
-              {/* Botões */}
-              <div style={{ 
-                display: 'flex', 
-                gap: '12px', 
-                justifyContent: 'flex-end'
-              }}>
-                <button
-                  onClick={() => setOpenDialog(false)}
-                  style={{
-                    padding: '10px 20px',
-                    fontSize: '14px',
-                    borderRadius: '6px',
-                    border: '1px solid #d1d5db',
-                    backgroundColor: 'white',
-                    color: '#6b7280',
-                    cursor: 'pointer',
-                    fontWeight: '500'
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSubmitQuestion}
-                  disabled={submitting}
-                  style={{
-                    padding: '10px 20px',
-                    fontSize: '14px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    backgroundColor: submitting ? '#9ca3af' : '#374151',
-                    color: 'white',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    fontWeight: '500'
-                  }}
-                >
-                  {submitting ? 'Enviando...' : 'Enviar Dúvida'}
-                </button>
-              </div>
             </div>
+            <footer className={styles.modalFooter}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setOpenDialog(false)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={handleSubmitQuestion}
+                disabled={submitting}
+              >
+                {submitting ? 'Enviando...' : 'Enviar dúvida'}
+              </button>
+            </footer>
           </div>
         </div>
       )}
