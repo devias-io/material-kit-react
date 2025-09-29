@@ -1633,17 +1633,17 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
             <MetricCard
               title={isMobile ? 'Pagamentos' : 'Nº de Pagamentos'}
               value={proventos.length.toString()}
-              color="#0ea5e9"
+              color="#e2e8f0"
             />
             <MetricCard
               title="Total"
               value={formatCurrency(totalProventos, moeda)}
-              color="#22c55e"
+              color="#e2e8f0"
             />
             <MetricCard
               title="Média"
               value={formatCurrency(mediaProvento, moeda)}
-              color="#eab308"
+              color="#e2e8f0"
             />
             <MetricCard
               title="Último"
