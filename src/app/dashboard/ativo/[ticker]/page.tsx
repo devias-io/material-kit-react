@@ -3053,27 +3053,27 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 subtitle={(() => {
                   if (ticker.match(/\d$/) && !ticker.includes('11')) {
                     if (dadosHGBrasil?.pl && dadosHGBrasil.pl > 0 && dadosHGBrasil.pl < 1000) {
-                      return "HG Brasil";
+                      return "";
                     }
                     if (dadosFinanceiros?.pl && dadosFinanceiros.pl > 0 && dadosFinanceiros.pl < 1000) {
-                      return "BRAPI";
+                      return "";
                     }
                     if (dadosYahoo?.pl && dadosYahoo.pl > 0 && dadosYahoo.pl < 999) {
-                      return "Yahoo";
+                      return "";
                     }
                   } else if (!ticker.match(/\d$/)) {
                     if (dadosYahoo?.pl && dadosYahoo.pl > 0 && dadosYahoo.pl < 999) {
                       return dadosYahoo.fonte || "International";
                     }
                     if (dadosHGBrasil?.pl && dadosHGBrasil.pl > 0 && dadosHGBrasil.pl < 1000) {
-                      return "HG Brasil";
+                      return "";
                     }
                     if (dadosFinanceiros?.pl && dadosFinanceiros.pl > 0 && dadosFinanceiros.pl < 1000) {
-                      return "BRAPI";
+                      return "";
                     }
                   }
                   
-                  return "indisponível";
+                  return "";
                 })()}
                 
                 loading={dadosLoading || loadingHGBrasil || loadingYahoo}
@@ -3095,15 +3095,15 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 })()}
                 subtitle={(() => {
                   if (dy12Meses > 0) {
-                    return fonteDY || "BRAPI-Estratégia";
+                    return fonteDY || "";
                   }
                   if (dadosYahoo?.dividendYield && dadosYahoo.dividendYield > 0) {
                     return dadosYahoo.fonte || "International";
                   }
                   if (dadosHGBrasil?.dividendYield12m) {
-                    return "HG Brasil";
+                    return "";
                   }
-                  return "indisponível";
+                  return "";
                 })()}
                 loading={loadingDY || loadingHGBrasil || loadingYahoo}
               />
