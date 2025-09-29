@@ -1047,7 +1047,7 @@ const AgendaCorporativa = React.memo(({ ticker, isFII = false }) => {
           color: '#1e293b',
           margin: '0'
         }}>
-          📅 Agenda Corporativa
+        Agenda Corporativa
         </h3>
       </div>
 
@@ -1207,7 +1207,7 @@ const DadosPosicaoExpandidos = React.memo(({
           marginBottom: isMobile ? '16px' : '24px', 
           fontWeight: '600' 
         }}>
-          📊 Dados da Posição
+        Dados da Posição
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '8px' : '12px' }}>
           <div style={{ 
@@ -1272,7 +1272,7 @@ const DadosPosicaoExpandidos = React.memo(({
           marginBottom: isMobile ? '16px' : '24px', 
           fontWeight: '600' 
         }}>
-          🎯 Análise de Viés
+        Análise de Viés
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '8px' : '12px' }}>
           <div style={{ 
@@ -2152,7 +2152,7 @@ const GerenciadorRelatorios = React.memo(({ ticker }) => {
           color: '#1e293b',
           margin: '0 0 4px 0'
         }}>
-          📊 Relatórios da Empresa
+        Relatórios da Empresa
         </h3>
       </div>
 
