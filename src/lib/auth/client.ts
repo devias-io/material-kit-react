@@ -189,9 +189,26 @@ class AuthClient {
 
   async signOut(): Promise<{ error?: string }> {
     try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      const response = await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+
+      if (!response.ok) {
+        let errorMessage = 'Erro ao sair';
+
+        try {
+          const errorData = await response.json();
+          if (errorData?.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (parseError) {
+          console.error('Erro ao interpretar resposta de logout:', parseError);
+        }
+
+        console.error('Falha ao sair:', response.statusText);
+        return { error: errorMessage };
+      }
     } catch (error) {
       console.error('Erro ao sair:', error);
+      return { error: 'Erro ao sair' };
     }
     return { error: null };
   }
