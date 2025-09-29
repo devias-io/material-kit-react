@@ -228,7 +228,7 @@ export function MainNav(): React.JSX.Element {
                           <Typography variant="body2" color="text.primary" noWrap>
                             {option.nome}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary" noWrap>
+                          <Typography variant="caption" color="text.primary" noWrap>
                             {option.setor}
                           </Typography>
                         </Stack>
