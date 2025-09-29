@@ -3098,7 +3098,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                     return fonteDY || "";
                   }
                   if (dadosYahoo?.dividendYield && dadosYahoo.dividendYield > 0) {
-                    return dadosYahoo.fonte || "International";
+                    return dadosYahoo.fonte || "";
                   }
                   if (dadosHGBrasil?.dividendYield12m) {
                     return "";
