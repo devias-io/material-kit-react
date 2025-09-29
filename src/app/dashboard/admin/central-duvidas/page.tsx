@@ -1,70 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  Grid,
-  Alert,
-  CircularProgress,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Divider,
-  Badge,
-  Stack,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Tooltip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemButton,
-  ListItemIcon,
-  Tabs,
-  Tab
-} from '@mui/material';
-import {
-  ExpandMore,
-  Reply,
-  Close,
-  CheckCircle,
-  Schedule,
-  Person,
-  Refresh,
-  FilterList,
-  Assignment,
-  TrendingUp,
-  ContentCopy,
-  HelpOutline,
-  Add,
-  QuestionAnswer,
-  Edit,
-  Delete,
-  DragIndicator
-} from '@mui/icons-material';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useUser } from '@/hooks/use-user';
+import styles from './central-duvidas.module.css';
 
-// Tipos (mesmo do arquivo anterior)
 interface Question {
   id: string;
   title: string;
@@ -87,7 +26,7 @@ interface Answer {
   content: string;
   createdAt: string;
   isFaq?: boolean;
-  faqTitle?: string;
+  faqTitle?: string | null;
   faqOrder?: number;
   admin: {
     firstName: string;
@@ -137,26 +76,41 @@ interface ResponseTemplate {
   createdAt: string;
 }
 
-const statusLabels = {
-  'NOVA': 'Nova',
-  'RESPONDIDA': 'Respondida',
-  'FECHADA': 'Fechada'
+type StatusFilter = 'ALL' | 'NOVA' | 'RESPONDIDA' | 'FECHADA';
+type SortOption = 'RECENT' | 'OLDER';
+
+const statusLabels: Record<Question['status'], string> = {
+  NOVA: 'Nova',
+  RESPONDIDA: 'Respondida',
+  FECHADA: 'Fechada',
 };
 
-const planLabels = {
-  'VIP': 'Close Friends VIP',
-  'LITE': 'Close Friends LITE',
-  'LITE_V2': 'Close Friends LITE 2.0',
-  'RENDA_PASSIVA': 'Projeto Renda Passiva',
-  'FIIS': 'Projeto FIIs',
-  'AMERICA': 'Projeto América',
-  'ADMIN': 'Administrador'
+const planLabels: Record<string, string> = {
+  VIP: 'Close Friends VIP',
+  LITE: 'Close Friends LITE',
+  LITE_V2: 'Close Friends LITE 2.0',
+  RENDA_PASSIVA: 'Projeto Renda Passiva',
+  FIIS: 'Projeto FIIs',
+  AMERICA: 'Projeto América',
+  ADMIN: 'Administrador',
 };
+
+const sortOptions: { value: SortOption; label: string }[] = [
+  { value: 'RECENT', label: 'Mais recentes primeiro' },
+  { value: 'OLDER', label: 'Mais antigas primeiro' },
+];
+
+const statusTabs: { value: StatusFilter; label: string }[] = [
+  { value: 'ALL', label: 'Todas' },
+  { value: 'NOVA', label: 'Novas' },
+  { value: 'RESPONDIDA', label: 'Respondidas' },
+  { value: 'FECHADA', label: 'Fechadas' },
+];
 
 export default function AdminCentralDuvidas() {
   const { user } = useUser();
-  // Estados principais
-  const [currentTab, setCurrentTab] = useState(0);
+
+  const [currentTab, setCurrentTab] = useState<'QUESTIONS' | 'FAQ'>('QUESTIONS');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -166,20 +120,22 @@ export default function AdminCentralDuvidas() {
   const [currentPage, setCurrentPage] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 10;
-  
-  // Estados para respostas
+
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOption, setSortOption] = useState<SortOption>('RECENT');
+  const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
+
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [showResponseModal, setShowResponseModal] = useState(false);
   const [responseContent, setResponseContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  
-  // Estados para templates
+
   const [templates, setTemplates] = useState<ResponseTemplate[]>([]);
   const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [templateSearch, setTemplateSearch] = useState('');
-  
-  // Estados para FAQ
+
   const [showFaqModal, setShowFaqModal] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<Answer | null>(null);
   const [faqTitle, setFaqTitle] = useState('');
@@ -193,24 +149,21 @@ export default function AdminCentralDuvidas() {
 
   const [deleteFaqDialogOpen, setDeleteFaqDialogOpen] = useState(false);
   const [faqToDelete, setFaqToDelete] = useState<FAQ | null>(null);
-  
-  // Estados para criar FAQ
-  const [showCreateFaqModal, setShowCreateFaqModal] = useState(false);
-  const [createFaqData, setCreateFaqData] = useState({
-    title: '',
-    content: '',
-    faqOrder: 0
-  });
-  const [creatingFaq, setCreatingFaq] = useState(false);
-  
-  // Filtros
-  const [filters, setFilters] = useState({
-    status: 'NOVA'
-  });
 
-  // Carregar dados
+  const [showCreateFaqModal, setShowCreateFaqModal] = useState(false);
+  const [createFaqData, setCreateFaqData] = useState({ title: '', content: '', faqOrder: 0 });
+  const [creatingFaq, setCreatingFaq] = useState(false);
+
+  useEffect(() => {
+    loadData(1);
+  }, []);
+
+  useEffect(() => {
+    loadData(1);
+  }, [currentTab, statusFilter]);
+
   const loadData = async (page = currentPage) => {
-    if (currentTab === 0) {
+    if (currentTab === 'QUESTIONS') {
       await Promise.all([loadQuestions(page), loadStats()]);
     } else {
       await loadFAQs();
@@ -221,17 +174,18 @@ export default function AdminCentralDuvidas() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filters.status) params.append('status', filters.status);
-      // IMPORTANTE: Filtrar apenas perguntas reais (não FAQs virtuais)
       params.append('excludeVirtual', 'true');
       params.append('page', page.toString());
       params.append('limit', limit.toString());
+      if (statusFilter !== 'ALL') {
+        params.append('status', statusFilter);
+      }
 
       const response = await fetch(`/api/questions?${params.toString()}`, {
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.ok) {
@@ -255,8 +209,8 @@ export default function AdminCentralDuvidas() {
       const response = await fetch('/api/questions/stats', {
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.ok) {
@@ -265,25 +219,23 @@ export default function AdminCentralDuvidas() {
       }
     } catch (err) {
       console.error('Erro ao carregar estatísticas:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
   const loadFAQs = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-
-      const response = await fetch(`/api/faq`, {
+      const response = await fetch('/api/faq', {
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.ok) {
         const data = await response.json();
         setFaqs(data.faqs || []);
+        setError('');
       } else {
         setError('Erro ao carregar FAQs');
       }
@@ -294,7 +246,6 @@ export default function AdminCentralDuvidas() {
     }
   };
 
-  // Criar FAQ direta (modificada para não criar pergunta virtual)
   const handleCreateFAQ = async () => {
     if (!createFaqData.title.trim() || !createFaqData.content.trim()) {
       setError('Título e conteúdo são obrigatórios');
@@ -305,9 +256,7 @@ export default function AdminCentralDuvidas() {
     try {
       const token =
         typeof window !== 'undefined'
-          ? document.cookie.match(/auth-token=([^;]+)/)?.[1] ||
-            localStorage.getItem('auth-token') ||
-            ''
+          ? document.cookie.match(/auth-token=([^;]+)/)?.[1] || localStorage.getItem('auth-token') || ''
           : '';
 
       const response = await fetch('/api/faq/create', {
@@ -316,20 +265,16 @@ export default function AdminCentralDuvidas() {
         headers: {
           'Content-Type': 'application/json',
           ...(user?.email ? { 'X-User-Email': user.email } : {}),
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify(createFaqData)
+        body: JSON.stringify(createFaqData),
       });
 
       if (response.ok) {
         setSuccess('FAQ criada com sucesso!');
         setShowCreateFaqModal(false);
-        setCreateFaqData({
-          title: '',
-          content: '',
-          faqOrder: 0
-        });
-        loadFAQs(); // Recarregar apenas FAQs
+        setCreateFaqData({ title: '', content: '', faqOrder: 0 });
+        loadFAQs();
       } else {
         const data = await response.json();
         setError(data.error || 'Erro ao criar FAQ');
@@ -341,7 +286,6 @@ export default function AdminCentralDuvidas() {
     }
   };
 
-  // Todas as outras funções permanecem iguais...
   const loadTemplates = async () => {
     setLoadingTemplates(true);
     try {
@@ -351,8 +295,8 @@ export default function AdminCentralDuvidas() {
       const response = await fetch(`/api/response-templates?${params.toString()}`, {
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.ok) {
@@ -374,10 +318,10 @@ export default function AdminCentralDuvidas() {
         method: 'POST',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
-      
+
       setResponseContent(template.content);
       setShowTemplatesModal(false);
       setSuccess(`Template "${template.title}" aplicado!`);
@@ -401,13 +345,13 @@ export default function AdminCentralDuvidas() {
         method: 'PUT',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           isFaq: !selectedAnswer.isFaq,
           faqTitle: selectedAnswer.isFaq ? null : faqTitle,
-          faqOrder: selectedAnswer.isFaq ? 0 : faqOrder
-        })
+          faqOrder: selectedAnswer.isFaq ? 0 : faqOrder,
+        }),
       });
 
       if (response.ok) {
@@ -442,14 +386,14 @@ export default function AdminCentralDuvidas() {
         method: 'PUT',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           isFaq: true,
           faqTitle: editFaqTitle,
           faqOrder: editFaqOrder,
-          content: editFaqContent
-        })
+          content: editFaqContent,
+        }),
       });
 
       if (response.ok) {
@@ -477,7 +421,7 @@ export default function AdminCentralDuvidas() {
     try {
       const response = await fetch(`/api/answers/${faqToDelete.id}/faq`, {
         method: 'DELETE',
-        credentials: 'include'
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -494,22 +438,6 @@ export default function AdminCentralDuvidas() {
     }
   };
 
-  useEffect(() => {
-    setCurrentPage(1);
-    loadData(1);
-  }, [currentTab, filters]);
-
-  const handleOpenResponseModal = (question: Question) => {
-    setSelectedQuestion(question);
-    setShowResponseModal(true);
-    loadTemplates();
-  };
-
-  const filteredTemplates = templates.filter(template =>
-    template.title.toLowerCase().includes(templateSearch.toLowerCase()) ||
-    template.content.toLowerCase().includes(templateSearch.toLowerCase())
-  );
-
   const handleSubmitResponse = async () => {
     if (!selectedQuestion || !responseContent.trim()) {
       setError('Resposta é obrigatória');
@@ -522,11 +450,11 @@ export default function AdminCentralDuvidas() {
         method: 'POST',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: responseContent
-        })
+          content: responseContent,
+        }),
       });
 
       if (response.ok) {
@@ -546,19 +474,19 @@ export default function AdminCentralDuvidas() {
     }
   };
 
-  const handleStatusChange = async (questionId: string, newStatus: string) => {
+  const handleStatusChange = async (questionId: string, newStatus: Question['status']) => {
     try {
       const response = await fetch(`/api/questions/${questionId}`, {
         method: 'PUT',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: newStatus }),
       });
 
       if (response.ok) {
-        setSuccess(`Status alterado para ${statusLabels[newStatus as keyof typeof statusLabels]}`);
+        setSuccess(`Status alterado para ${statusLabels[newStatus]}`);
         loadData();
       }
     } catch (err) {
@@ -567,798 +495,730 @@ export default function AdminCentralDuvidas() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('pt-BR');
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
-  const getStatusColor = (status: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
+  const formatDateRelative = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+
+    if (diffInMinutes < 60) {
+      return `${Math.max(1, diffInMinutes)} min atrás`;
+    }
+
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      return `${diffInHours}h atrás`;
+    }
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays === 1) {
+      return 'Ontem';
+    }
+
+    return formatDate(dateString);
+  };
+
+  const getStatusBadgeClass = (status: Question['status']) => {
     switch (status) {
-      case 'NOVA': return 'warning';
-      case 'RESPONDIDA': return 'success';
-      case 'FECHADA': return 'default';
-      default: return 'default';
+      case 'NOVA':
+        return styles.statusNew;
+      case 'RESPONDIDA':
+        return styles.statusAnswered;
+      case 'FECHADA':
+        return styles.statusClosed;
+      default:
+        return '';
     }
   };
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress size={40} />
-        <Typography variant="h6" sx={{ ml: 2 }}>
-          Carregando...
-        </Typography>
-      </Box>
-    );
-  }
+  const statusCounts = useMemo(
+    () =>
+      questions.reduce(
+        (acc, question) => {
+          acc.total += 1;
+          acc[question.status] += 1;
+          return acc;
+        },
+        { total: 0, NOVA: 0, RESPONDIDA: 0, FECHADA: 0 } as Record<'total' | Question['status'], number>,
+      ),
+    [questions],
+  );
+
+  const filteredQuestions = useMemo(() => {
+    let data = [...questions];
+
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      data = data.filter((question) => {
+        const matchesTitle = question.title.toLowerCase().includes(term);
+        const matchesContent = question.content.toLowerCase().includes(term);
+        const matchesUser = `${question.user.firstName} ${question.user.lastName}`.toLowerCase().includes(term);
+        return matchesTitle || matchesContent || matchesUser;
+      });
+    }
+
+    return data.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+
+      if (sortOption === 'RECENT') {
+        return dateB - dateA;
+      }
+
+      return dateA - dateB;
+    });
+  }, [questions, searchTerm, sortOption]);
+
+  const filteredTemplates = useMemo(
+    () =>
+      templates.filter((template) => {
+        const query = templateSearch.toLowerCase();
+        return (
+          template.title.toLowerCase().includes(query) || template.content.toLowerCase().includes(query)
+        );
+      }),
+    [templates, templateSearch],
+  );
+
+  const totalPages = total > 0 ? Math.ceil(total / limit) : 1;
+
+  const handleRefresh = () => {
+    if (currentTab === 'QUESTIONS') {
+      loadQuestions(currentPage);
+      loadStats();
+    } else {
+      loadFAQs();
+    }
+  };
+
+  const isLoadingQuestions = loading && currentTab === 'QUESTIONS';
+  const isLoadingFaqs = loading && currentTab === 'FAQ';
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Central de Dúvidas - Admin
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Gerencie as dúvidas dos usuários e forneça respostas especializadas
-        </Typography>
-      </Box>
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <div>
+            <h1 className={styles.headerTitle}>Central de Dúvidas - Admin</h1>
+            <p className={styles.headerSubtitle}>
+              Gerencie as dúvidas dos membros, organize respostas da equipe e alimente a base de conhecimento.
+            </p>
+          </div>
+          <button type="button" className={styles.secondaryButton} onClick={handleRefresh}>
+            Atualizar dados
+          </button>
+        </header>
 
-      {/* Alertas */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
-          {error}
-        </Alert>
-      )}
+        <div className={styles.mainTabs}>
+          <button
+            type="button"
+            className={`${styles.mainTabButton} ${currentTab === 'QUESTIONS' ? styles.mainTabButtonActive : ''}`}
+            onClick={() => setCurrentTab('QUESTIONS')}
+          >
+            Atendimento
+          </button>
+          <button
+            type="button"
+            className={`${styles.mainTabButton} ${currentTab === 'FAQ' ? styles.mainTabButtonActive : ''}`}
+            onClick={() => setCurrentTab('FAQ')}
+          >
+            Base de conhecimento
+          </button>
+        </div>
 
-      {success && (
-        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>
-          {success}
-        </Alert>
-      )}
+        {error && (
+          <div className={`${styles.alert} ${styles.alertError}`}>
+            <span>{error}</span>
+            <button type="button" onClick={() => setError('')} aria-label="Fechar alerta">
+              ×
+            </button>
+          </div>
+        )}
 
-      {/* Tabs */}
-      <Card sx={{ mb: 3 }}>
-        <Tabs 
-          value={currentTab} 
-          onChange={(e, newValue) => setCurrentTab(newValue)}
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
-        >
-          <Tab 
-            icon={<QuestionAnswer />}
-            label="Perguntas dos Usuários" 
-            iconPosition="start"
-          />
-          <Tab 
-            icon={<HelpOutline />}
-            label="Gerenciar FAQs" 
-            iconPosition="start"
-          />
-        </Tabs>
-      </Card>
+        {success && (
+          <div className={`${styles.alert} ${styles.alertSuccess}`}>
+            <span>{success}</span>
+            <button type="button" onClick={() => setSuccess('')} aria-label="Fechar alerta">
+              ×
+            </button>
+          </div>
+        )}
 
-      {/* Conteúdo da Aba 1: Perguntas dos Usuários */}
-      {currentTab === 0 && (
-        <>
-          {/* Estatísticas */}
-          {stats && (
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid item xs={12} sm={6} md={3}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="primary.main">
-                      {stats.overview.totalQuestions}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total de Dúvidas
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="warning.main">
-                      {stats.overview.pendingQuestions}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Aguardando Resposta
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="error.main">
-                      {stats.overview.unreadQuestions}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Não Lidas
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="info.main">
-                      {stats.overview.averageResponseTimeHours.toFixed(1)}h
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Tempo Médio de Resposta
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          )}
+        {currentTab === 'QUESTIONS' && (
+          <>
+            <section className={styles.summaryGrid}>
+              <div className={styles.summaryCard}>
+                <span className={styles.summaryLabel}>Total</span>
+                <strong className={styles.summaryValue}>{stats?.overview.totalQuestions ?? statusCounts.total}</strong>
+              </div>
+              <div className={styles.summaryCard}>
+                <span className={styles.summaryLabel}>Pendentes</span>
+                <strong className={styles.summaryValue}>{stats?.overview.pendingQuestions ?? statusCounts.NOVA}</strong>
+              </div>
+              <div className={styles.summaryCard}>
+                <span className={styles.summaryLabel}>Respondidas</span>
+                <strong className={styles.summaryValue}>{stats?.overview.totalAnswers ?? statusCounts.RESPONDIDA}</strong>
+              </div>
+              <div className={styles.summaryCard}>
+                <span className={styles.summaryLabel}>Tempo médio de resposta</span>
+                <strong className={styles.summaryValue}>
+                  {stats?.overview.averageResponseTimeHours
+                    ? `${stats.overview.averageResponseTimeHours.toFixed(1)}h`
+                    : '—'}
+                </strong>
+              </div>
+            </section>
 
-          {/* Filtros */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <FilterList sx={{ mr: 1 }} />
-                <Typography variant="h6">Filtros</Typography>
-                <Box sx={{ ml: 'auto' }}>
-                  <IconButton onClick={loadData} size="small">
-                    <Refresh />
-                  </IconButton>
-                </Box>
-              </Box>
-              
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                      value={filters.status}
-                      onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                      label="Status"
+            <div className={styles.filtersCard}>
+              <div className={styles.filterHeader}>
+                <div className={styles.filterTabs}>
+                  {statusTabs.map((tab) => (
+                    <button
+                      key={tab.value}
+                      type="button"
+                      className={`${styles.tabButton} ${statusFilter === tab.value ? styles.tabButtonActive : ''}`}
+                      onClick={() => {
+                        setStatusFilter(tab.value);
+                        setExpandedQuestion(null);
+                      }}
                     >
-                      <MenuItem value="">Todos</MenuItem>
-                      <MenuItem value="NOVA">Nova</MenuItem>
-                      <MenuItem value="RESPONDIDA">Respondida</MenuItem>
-                      <MenuItem value="FECHADA">Fechada</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                
-              </Grid>
-            </CardContent>
-          </Card>
-
-          {/* Lista de perguntas */}
-          {questions.length === 0 ? (
-            <Card>
-              <CardContent sx={{ textAlign: 'center', py: 6 }}>
-                <Typography variant="h6" gutterBottom>
-                  Nenhuma dúvida encontrada
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Tente ajustar os filtros, navegar entre as páginas ou aguardar novas perguntas dos usuários
-                </Typography>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <Box>
-                {questions.map((question) => (
-                  <Card key={question.id} sx={{ mb: 2, border: question.readByAdmin ? 1 : 2, borderColor: question.readByAdmin ? 'divider' : 'primary.main' }}>
-                  <Accordion>
-                    <AccordionSummary expandIcon={<ExpandMore />}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', pr: 2 }}>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="h6" sx={{ mb: 1 }}>
-                            {question.title}
-                            {!question.readByAdmin && (
-                              <Badge badgeContent="NOVA" color="primary" sx={{ ml: 1 }} />
-                            )}
-                          </Typography>
-                          
-                          <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-                            <Chip
-                              label={statusLabels[question.status]}
-                              color={getStatusColor(question.status)}
-                              size="small"
-                              icon={question.status === 'NOVA' ? <Schedule /> : <CheckCircle />}
-                            />
-                          </Stack>
-
-                          <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Person sx={{ mr: 0.5, fontSize: 16 }} />
-                            {question.user.firstName} {question.user.lastName} ({planLabels[question.user.plan as keyof typeof planLabels] || question.user.plan})
-                          </Typography>
-                        </Box>
-                        
-                        <Typography variant="caption" color="text.secondary">
-                          {formatDate(question.createdAt)}
-                        </Typography>
-                      </Box>
-                    </AccordionSummary>
-                    
-                    <AccordionDetails>
-                      <Typography variant="body1" sx={{ mb: 3, whiteSpace: 'pre-wrap' }}>
-                        {question.content}
-                      </Typography>
-
-                      {question.answers.length > 0 && (
-                        <Box sx={{ mb: 3 }}>
-                          <Divider sx={{ mb: 2 }} />
-                          <Typography variant="h6" gutterBottom>
-                            Respostas ({question.answers.length})
-                          </Typography>
-                          
-                          {question.answers.map((answer) => (
-                            <Paper key={answer.id} sx={{ p: 2, mb: 2, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                <Typography variant="subtitle2">
-                                  {answer.admin.firstName} {answer.admin.lastName}
-                                </Typography>
-                                
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Typography variant="caption">
-                                    {formatDate(answer.createdAt)}
-                                  </Typography>
-                                  
-                                  <Tooltip title={answer.isFaq ? "Remover das FAQs" : "Adicionar às FAQs"}>
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => handleMarkAsFAQ(answer, question.title)}
-                                      sx={{ color: 'inherit' }}
-                                    >
-                                      <HelpOutline />
-                                    </IconButton>
-                                  </Tooltip>
-                                </Box>
-                              </Box>
-                              
-                              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                                {answer.content}
-                              </Typography>
-                              
-                              {answer.isFaq && (
-                                <Chip 
-                                  label="FAQ" 
-                                  size="small" 
-                                  color="secondary"
-                                  sx={{ mt: 1 }}
-                                />
-                              )}
-                            </Paper>
-                          ))}
-                        </Box>
-                      )}
-
-                      <Stack direction="row" spacing={2}>
-                        {question.status === 'NOVA' && (
-                          <Button
-                            variant="contained"
-                            startIcon={<Reply />}
-                            onClick={() => handleOpenResponseModal(question)}
-                          >
-                            Responder
-                          </Button>
-                        )}
-                        
-                        {question.status !== 'FECHADA' && (
-                          <Button
-                            variant="outlined"
-                            startIcon={<Close />}
-                            onClick={() => handleStatusChange(question.id, 'FECHADA')}
-                          >
-                            Fechar
-                          </Button>
-                        )}
-                      </Stack>
-                    </AccordionDetails>
-                  </Accordion>
-                </Card>
-              ))}
-              </Box>
-              {total > limit && (
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => loadQuestions(currentPage - 1)}
-                    disabled={currentPage === 1}
-                  >
-                    Anterior
-                  </Button>
-                  <Typography variant="body2" color="text.secondary">
-                    Página {currentPage} de {Math.ceil(total / limit)}
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    onClick={() => loadQuestions(currentPage + 1)}
-                    disabled={currentPage >= Math.ceil(total / limit)}
-                  >
-                    Próxima
-                  </Button>
-                </Stack>
-              )}
-            </>
-          )}
-        </>
-      )}
-
-      {/* Conteúdo da Aba 2: Gerenciar FAQs */}
-      {currentTab === 1 && (
-        <>
-          {/* Header da aba FAQs */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h5">
-              Base de Conhecimento
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setShowCreateFaqModal(true)}
-            >
-              Criar FAQ
-            </Button>
-          </Box>
-
-          {/* Filtros FAQs */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <FilterList sx={{ mr: 1 }} />
-                <Typography variant="h6">Filtros</Typography>
-                <Box sx={{ ml: 'auto' }}>
-                  <IconButton onClick={loadData} size="small">
-                    <Refresh />
-                  </IconButton>
-                </Box>
-              </Box>
-              
-              <Grid container spacing={2}></Grid>
-            </CardContent>
-          </Card>
-
-          {/* Lista de FAQs */}
-          {faqs.length === 0 ? (
-            <Card>
-              <CardContent sx={{ textAlign: 'center', py: 6 }}>
-                <HelpOutline sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  Nenhuma FAQ encontrada
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Crie suas primeiras FAQs para formar uma base de conhecimento
-                </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={<Add />}
-                  onClick={() => setShowCreateFaqModal(true)}
-                >
-                  Criar Primeira FAQ
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Ordem</TableCell>
-                    <TableCell>Título</TableCell>
-                    <TableCell>Categoria</TableCell>
-                    <TableCell>Criado por</TableCell>
-                    <TableCell>Data</TableCell>
-                    <TableCell align="center">Ações</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {faqs.map((faq) => (
-                    <TableRow key={faq.id}>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <DragIndicator sx={{ mr: 1, color: 'text.secondary' }} />
-                          {faq.faqOrder}
-                        </Box>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <Typography variant="subtitle2">
-                          {faq.faqTitle || faq.question.title}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {faq.content.length > 100 
-                            ? `${faq.content.substring(0, 100)}...`
-                            : faq.content
-                          }
-                        </Typography>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <Typography variant="body2">
-                          {faq.admin.firstName} {faq.admin.lastName}
-                        </Typography>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <Typography variant="caption">
-                          {formatDate(faq.createdAt)}
-                        </Typography>
-                      </TableCell>
-                      
-                      <TableCell align="center">
-                        <Stack direction="row" spacing={0.5} justifyContent="center">
-                          <Tooltip title="Editar">
-                            <IconButton size="small" onClick={() => handleEditFaq(faq)}>
-                              <Edit />
-                            </IconButton>
-                          </Tooltip>
-
-                          <Tooltip title="Excluir">
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleDeleteFaq(faq)}
-                            >
-                              <Delete />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
+                      {tab.label} ({tab.value === 'ALL' ? statusCounts.total : statusCounts[tab.value]})
+                    </button>
                   ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </>
+                </div>
+              </div>
+
+              <div className={styles.filterControls}>
+                <div className={styles.searchBox}>
+                  <input
+                    type="search"
+                    placeholder="Buscar por título, conteúdo ou membro"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                  />
+                </div>
+                <select
+                  className={styles.select}
+                  value={sortOption}
+                  onChange={(event) => setSortOption(event.target.value as SortOption)}
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <section className={styles.listSection}>
+              {isLoadingQuestions && questions.length === 0 ? (
+                <div className={styles.loadingWrapper}>
+                  <p>Carregando dúvidas...</p>
+                </div>
+              ) : filteredQuestions.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <h3>Nenhuma dúvida encontrada</h3>
+                  <p>Revise os filtros, altere a busca ou aguarde novas perguntas dos membros.</p>
+                </div>
+              ) : (
+                filteredQuestions.map((question) => (
+                  <article key={question.id} className={styles.questionCard}>
+                    <header className={styles.questionHeader}>
+                      <div className={styles.questionHeading}>
+                        <button
+                          type="button"
+                          className={styles.expandButton}
+                          onClick={() =>
+                            setExpandedQuestion((current) => (current === question.id ? null : question.id))
+                          }
+                          aria-expanded={expandedQuestion === question.id}
+                        >
+                          <span className={styles.expandIcon} aria-hidden="true" />
+                          <span className={styles.questionTitle}>{question.title}</span>
+                        </button>
+                        <span className={`${styles.statusBadge} ${getStatusBadgeClass(question.status)}`}>
+                          {statusLabels[question.status]}
+                        </span>
+                      </div>
+                      <div className={styles.questionMeta}>
+                        <span className={styles.questionMetaItem}>
+                          <strong>
+                            {question.user.firstName} {question.user.lastName}
+                          </strong>
+                          {planLabels[question.user.plan] && ` • ${planLabels[question.user.plan]}`}
+                        </span>
+                        <span className={styles.questionMetaItem}>{formatDateRelative(question.createdAt)}</span>
+                        <span className={styles.questionMetaItem}>Criada em {formatDate(question.createdAt)}</span>
+                        <span className={styles.questionMetaItem}>
+                          {question.answers.length === 1 ? '1 resposta' : `${question.answers.length} respostas`}
+                        </span>
+                        {!question.readByAdmin && (
+                          <span className={`${styles.statusBadge} ${styles.statusUnread}`}>
+                            Nova para equipe
+                          </span>
+                        )}
+                      </div>
+                    </header>
+
+                    {expandedQuestion === question.id && (
+                      <div>
+                        <div className={styles.questionContent}>{question.content}</div>
+
+                        <div className={styles.detailArea}>
+                          {question.answers.length > 0 && (
+                            <div>
+                              <h4>Respostas da equipe</h4>
+                              <div className={styles.listSection}>
+                                {question.answers.map((answer) => (
+                                  <div key={answer.id} className={styles.answerCard}>
+                                    <div className={styles.answerHeader}>
+                                      <div>
+                                        <strong>
+                                          {answer.admin.firstName} {answer.admin.lastName}
+                                        </strong>
+                                        <div>{formatDate(answer.createdAt)}</div>
+                                      </div>
+                                      <div className={styles.answerActions}>
+                                        {answer.isFaq && <span className={`${styles.tag} ${styles.tagNeutral}`}>FAQ</span>}
+                                        <button
+                                          type="button"
+                                          className={styles.secondaryButton}
+                                          onClick={() => handleMarkAsFAQ(answer, question.title)}
+                                        >
+                                          {answer.isFaq ? 'Remover das FAQs' : 'Adicionar às FAQs'}
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <div className={styles.answerContent}>{answer.content}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className={styles.cardFooter}>
+                            {question.status === 'NOVA' && (
+                              <button
+                                type="button"
+                                className={styles.primaryButton}
+                                onClick={() => {
+                                  setSelectedQuestion(question);
+                                  setResponseContent('');
+                                  setShowResponseModal(true);
+                                  loadTemplates();
+                                }}
+                              >
+                                Responder dúvida
+                              </button>
+                            )}
+                            {question.status !== 'FECHADA' && (
+                              <button
+                                type="button"
+                                className={styles.successButton}
+                                onClick={() => handleStatusChange(question.id, 'FECHADA')}
+                              >
+                                Marcar como resolvida
+                              </button>
+                            )}
+                            {question.status === 'FECHADA' && (
+                              <span className={styles.mutedText}>Pergunta encerrada</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                ))
+              )}
+            </section>
+
+            {total > limit && (
+              <div className={styles.pagination}>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => currentPage > 1 && loadQuestions(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </button>
+                <span>
+                  Página {currentPage} de {totalPages}
+                </span>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => currentPage < totalPages && loadQuestions(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                >
+                  Próxima
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {currentTab === 'FAQ' && (
+          <>
+            <div className={styles.header}>
+              <div>
+                <h2 className={styles.headerTitle}>Base de conhecimento</h2>
+                <p className={styles.headerSubtitle}>
+                  Aproveite respostas frequentes para acelerar o atendimento e garantir consistência na comunicação.
+                </p>
+              </div>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={() => setShowCreateFaqModal(true)}
+              >
+                Criar FAQ
+              </button>
+            </div>
+
+            {isLoadingFaqs && faqs.length === 0 ? (
+              <div className={styles.loadingWrapper}>
+                <p>Carregando base de conhecimento...</p>
+              </div>
+            ) : faqs.length === 0 ? (
+              <div className={styles.emptyState}>
+                <h3>Nenhum artigo cadastrado</h3>
+                <p>Converta respostas relevantes em FAQs para ajudar toda a comunidade.</p>
+              </div>
+            ) : (
+              <div className={styles.faqList}>
+                {faqs.map((faq) => (
+                  <div key={faq.id} className={styles.faqCard}>
+                    <div className={styles.faqHeader}>
+                      <h3 className={styles.faqTitle}>{faq.faqTitle || faq.question.title}</h3>
+                      <div className={styles.actionGroup}>
+                        <button
+                          type="button"
+                          className={styles.secondaryButton}
+                          onClick={() => handleEditFaq(faq)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.dangerButton}
+                          onClick={() => handleDeleteFaq(faq)}
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={styles.faqMeta}>
+                      <span className={`${styles.tag} ${styles.tagPrimary}`}>
+                        Pergunta original: {faq.question.title}
+                      </span>
+                      <span className={`${styles.tag} ${styles.tagNeutral}`}>
+                        Ordem: {faq.faqOrder}
+                      </span>
+                      <span>{formatDate(faq.createdAt)}</span>
+                    </div>
+
+                    <div className={styles.faqContent}>{faq.content}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {showResponseModal && selectedQuestion && (
+        <div className={styles.modalOverlay}>
+          <div className={`${styles.modalContent} ${styles.modalLarge}`}>
+            <div className={styles.modalHeader}>
+              <h2>Responder dúvida</h2>
+              <button type="button" onClick={() => setShowResponseModal(false)} aria-label="Fechar">
+                ×
+              </button>
+            </div>
+            <div className={`${styles.modalBody} ${styles.modalBodyScrollable}`}>
+              <div className={styles.fieldGroup}>
+                <label>Membro</label>
+                <p>
+                  <strong>
+                    {selectedQuestion.user.firstName} {selectedQuestion.user.lastName}
+                  </strong>{' '}
+                  — {selectedQuestion.user.email}
+                </p>
+              </div>
+              <div className={styles.fieldGroup}>
+                <label>Dúvida</label>
+                <p>{selectedQuestion.content}</p>
+              </div>
+              <div className={styles.fieldGroup}>
+                <label>Resposta</label>
+                <textarea
+                  value={responseContent}
+                  onChange={(event) => setResponseContent(event.target.value)}
+                  placeholder="Escreva sua resposta para o membro"
+                />
+              </div>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={() => setShowTemplatesModal(true)}
+              >
+                Inserir template
+              </button>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setShowResponseModal(false)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={handleSubmitResponse}
+                disabled={submitting}
+              >
+                {submitting ? 'Enviando...' : 'Enviar resposta'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Modais (permanecem os mesmos) */}
-      {/* Modal de Resposta */}
-      <Dialog 
-        open={showResponseModal} 
-        onClose={() => setShowResponseModal(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Responder Dúvida</DialogTitle>
-        <DialogContent>
-          {selectedQuestion && (
-            <>
-              <Paper sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
-                <Typography variant="h6" gutterBottom>
-                  {selectedQuestion.title}
-                </Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Por: {selectedQuestion.user.firstName} {selectedQuestion.user.lastName}
-                  </Typography>
-                <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                  {selectedQuestion.content}
-                </Typography>
-              </Paper>
-
-              <Box sx={{ mb: 2 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<Assignment />}
-                  onClick={() => setShowTemplatesModal(true)}
-                  size="small"
-                >
-                  Usar Template {templates.length > 0 && `(${templates.length} disponíveis)`}
-                </Button>
-              </Box>
-
-              <TextField
-                label="Sua resposta"
-                value={responseContent}
-                onChange={(e) => setResponseContent(e.target.value)}
-                multiline
-                rows={8}
-                fullWidth
-                placeholder="Digite sua resposta detalhada aqui ou use um template..."
-                variant="outlined"
-              />
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button 
-            onClick={() => {
-              setShowResponseModal(false);
-              setResponseContent('');
-              setSelectedQuestion(null);
-            }}
-          >
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleSubmitResponse}
-            variant="contained"
-            disabled={submitting || !responseContent.trim()}
-            startIcon={submitting ? <CircularProgress size={20} /> : <Reply />}
-          >
-            {submitting ? 'Enviando...' : 'Enviar Resposta'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Modal de Templates */}
-      <Dialog 
-        open={showTemplatesModal} 
-        onClose={() => setShowTemplatesModal(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          Selecionar Template
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Buscar templates"
-            value={templateSearch}
-            onChange={(e) => setTemplateSearch(e.target.value)}
-            fullWidth
-            placeholder="Digite para buscar por título ou conteúdo..."
-            sx={{ mb: 2 }}
-            size="small"
-          />
-
-          {loadingTemplates ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : filteredTemplates.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Assignment sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
-                {templates.length === 0 ? 'Nenhum template encontrado' : 'Nenhum template corresponde à busca'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {templates.length === 0 
-                  ? 'Crie templates para esta categoria ou use templates gerais'
-                  : 'Tente usar termos diferentes na busca'
-                }
-              </Typography>
-            </Box>
-          ) : (
-            <List sx={{ maxHeight: 400, overflow: 'auto' }}>
-              {filteredTemplates.map((template) => (
-                <ListItem key={template.id} disablePadding>
-                  <ListItemButton 
-                    onClick={() => handleUseTemplate(template)}
-                    sx={{ 
-                      border: 1, 
-                      borderColor: 'divider', 
-                      borderRadius: 1, 
-                      mb: 1,
-                      '&:hover': {
-                        borderColor: 'primary.main'
-                      }
-                    }}
-                  >
-                    <ListItemIcon>
-                      <ContentCopy />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <Typography variant="subtitle1">
-                            {template.title}
-                          </Typography>
-                          {template.usageCount > 0 && (
-                            <Chip
-                              icon={<TrendingUp />}
-                              label={`${template.usageCount} usos`}
-                              size="small"
-                              color="primary"
-                              variant="outlined"
-                            />
-                          )}
-                        </Box>
-                      }
-                      secondary={
-                        <Typography 
-                          variant="body2" 
-                          color="text.secondary"
-                          sx={{ 
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden'
-                          }}
-                        >
-                          {template.content}
-                        </Typography>
-                      }
-                    />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowTemplatesModal(false)}>
-            Fechar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Modal de FAQ */}
-      <Dialog 
-        open={showFaqModal} 
-        onClose={() => setShowFaqModal(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          {selectedAnswer?.isFaq ? 'Remover das FAQs' : 'Adicionar à Base de Conhecimento (FAQ)'}
-        </DialogTitle>
-        <DialogContent>
-          {!selectedAnswer?.isFaq ? (
-            <Box sx={{ pt: 1 }}>
-              <TextField
-                label="Título da FAQ"
-                value={faqTitle}
-                onChange={(e) => setFaqTitle(e.target.value)}
-                fullWidth
-                sx={{ mb: 2 }}
-                placeholder="Como será exibido na página de FAQ"
-              />
-              <TextField
-                label="Ordem de exibição"
-                type="number"
-                value={faqOrder}
-                onChange={(e) => setFaqOrder(Number(e.target.value))}
-                fullWidth
-                helperText="0 = primeiro, números maiores aparecem depois"
-              />
-            </Box>
-          ) : (
-            <Typography variant="body1">
-              Tem certeza que deseja remover esta resposta das FAQs?
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowFaqModal(false)}>
-            Cancelar
-          </Button>
-          <Button 
-            onClick={submitFAQ}
-            variant="contained"
-            color={selectedAnswer?.isFaq ? 'error' : 'primary'}
-            disabled={!selectedAnswer?.isFaq && !faqTitle.trim()}
-          >
-            {selectedAnswer?.isFaq ? 'Remover das FAQs' : 'Adicionar às FAQs'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Modal de Editar FAQ */}
-      <Dialog
-        open={editFaqModalOpen}
-        onClose={() => setEditFaqModalOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-      <DialogTitle>Editar FAQ</DialogTitle>
-      <DialogContent>
-        <Box sx={{ pt: 1 }}>
-          <TextField
-            label="Título da FAQ"
-            value={editFaqTitle}
-            onChange={(e) => setEditFaqTitle(e.target.value)}
-            fullWidth
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Ordem de exibição"
-            type="number"
-            value={editFaqOrder}
-            onChange={(e) => setEditFaqOrder(Number(e.target.value))}
-            fullWidth
-            helperText="0 = primeiro, números maiores aparecem depois"
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Conteúdo da FAQ"
-            value={editFaqContent}
-            onChange={(e) => setEditFaqContent(e.target.value)}
-            multiline
-            rows={8}
-            fullWidth
-          />
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setEditFaqModalOpen(false)}>Cancelar</Button>
-        <Button
-          onClick={handleUpdateFaq}
-          variant="contained"
-          disabled={!editFaqTitle.trim() || !editFaqContent.trim()}
-        >
-          Salvar
-        </Button>
-      </DialogActions>
-    </Dialog>
-
-      {/* Dialog de Confirmar Exclusão de FAQ */}
-      <Dialog
-        open={deleteFaqDialogOpen}
-        onClose={() => setDeleteFaqDialogOpen(false)}
-      >
-        <DialogTitle>Excluir FAQ</DialogTitle>
-        <DialogContent>
-          <Typography>Tem certeza que deseja excluir esta FAQ?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteFaqDialogOpen(false)}>Cancelar</Button>
-          <Button onClick={confirmDeleteFaq} variant="contained" color="error">
-            Excluir
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Modal de Criar FAQ */}
-      <Dialog
-        open={showCreateFaqModal}
-        onClose={() => setShowCreateFaqModal(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Criar Nova FAQ</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Título da FAQ"
-                  value={createFaqData.title}
-                  onChange={(e) => setCreateFaqData({ ...createFaqData, title: e.target.value })}
-                  fullWidth
-                  placeholder="Ex: Como calcular dividend yield?"
+      {showTemplatesModal && (
+        <div className={styles.modalOverlay}>
+          <div className={`${styles.modalContent} ${styles.modalLarge}`}>
+            <div className={styles.modalHeader}>
+              <h2>Selecionar template</h2>
+              <button type="button" onClick={() => setShowTemplatesModal(false)} aria-label="Fechar">
+                ×
+              </button>
+            </div>
+            <div className={`${styles.modalBody} ${styles.modalBodyScrollable}`}>
+              <div className={styles.fieldGroup}>
+                <label>Buscar templates</label>
+                <input
+                  type="search"
+                  placeholder="Digite para buscar por título ou conteúdo"
+                  value={templateSearch}
+                  onChange={(event) => setTemplateSearch(event.target.value)}
                 />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Ordem de exibição"
+              </div>
+              {loadingTemplates ? (
+                <div className={styles.loadingWrapper}>
+                  <p>Carregando templates...</p>
+                </div>
+              ) : filteredTemplates.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <h3>Nenhum template disponível</h3>
+                  <p>Crie modelos reutilizáveis para acelerar suas respostas.</p>
+                </div>
+              ) : (
+                <div className={styles.templateList}>
+                  {filteredTemplates.map((template) => (
+                    <button
+                      key={template.id}
+                      type="button"
+                      className={styles.templateItem}
+                      onClick={() => handleUseTemplate(template)}
+                    >
+                      <div className={styles.templateItemHeader}>
+                        <strong>{template.title}</strong>
+                        {template.usageCount > 0 && (
+                          <span className={styles.templateStats}>{template.usageCount} usos</span>
+                        )}
+                      </div>
+                      <p>{template.content}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setShowTemplatesModal(false)}>
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFaqModal && selectedAnswer && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2>{selectedAnswer.isFaq ? 'Remover das FAQs' : 'Adicionar à base de conhecimento'}</h2>
+              <button type="button" onClick={() => setShowFaqModal(false)} aria-label="Fechar">
+                ×
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {selectedAnswer.isFaq ? (
+                <p>Tem certeza de que deseja remover esta resposta da base de conhecimento?</p>
+              ) : (
+                <>
+                  <div className={styles.fieldGroup}>
+                    <label>Título da FAQ</label>
+                    <input
+                      type="text"
+                      value={faqTitle}
+                      onChange={(event) => setFaqTitle(event.target.value)}
+                      placeholder="Defina um título descritivo para a FAQ"
+                    />
+                  </div>
+                  <div className={styles.fieldGroup}>
+                    <label>Ordem de exibição</label>
+                    <input
+                      type="number"
+                      value={faqOrder}
+                      onChange={(event) => setFaqOrder(Number(event.target.value))}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setShowFaqModal(false)}>
+                Cancelar
+              </button>
+              <button type="button" className={styles.primaryButton} onClick={submitFAQ}>
+                {selectedAnswer.isFaq ? 'Remover' : 'Adicionar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCreateFaqModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2>Criar FAQ</h2>
+              <button type="button" onClick={() => setShowCreateFaqModal(false)} aria-label="Fechar">
+                ×
+              </button>
+            </div>
+            <div className={`${styles.modalBody} ${styles.modalBodyScrollable}`}>
+              <div className={styles.fieldGroup}>
+                <label>Título</label>
+                <input
+                  type="text"
+                  value={createFaqData.title}
+                  onChange={(event) => setCreateFaqData({ ...createFaqData, title: event.target.value })}
+                />
+              </div>
+              <div className={styles.fieldGroup}>
+                <label>Conteúdo</label>
+                <textarea
+                  value={createFaqData.content}
+                  onChange={(event) => setCreateFaqData({ ...createFaqData, content: event.target.value })}
+                />
+              </div>
+              <div className={styles.fieldGroup}>
+                <label>Ordem</label>
+                <input
                   type="number"
                   value={createFaqData.faqOrder}
-                  onChange={(e) => setCreateFaqData({ ...createFaqData, faqOrder: Number(e.target.value) })}
-                  fullWidth
-                  helperText="0 = primeiro"
+                  onChange={(event) =>
+                    setCreateFaqData({ ...createFaqData, faqOrder: Number(event.target.value) })
+                  }
                 />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <TextField
-                  label="Conteúdo da FAQ"
-                  value={createFaqData.content}
-                  onChange={(e) => setCreateFaqData({ ...createFaqData, content: e.target.value })}
-                  multiline
-                  rows={8}
-                  fullWidth
-                  placeholder="Digite o conteúdo completo da resposta..."
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setShowCreateFaqModal(false)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={handleCreateFAQ}
+                disabled={creatingFaq}
+              >
+                {creatingFaq ? 'Criando...' : 'Criar FAQ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editFaqModalOpen && faqToEdit && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2>Editar FAQ</h2>
+              <button type="button" onClick={() => setEditFaqModalOpen(false)} aria-label="Fechar">
+                ×
+              </button>
+            </div>
+            <div className={`${styles.modalBody} ${styles.modalBodyScrollable}`}>
+              <div className={styles.fieldGroup}>
+                <label>Título</label>
+                <input
+                  type="text"
+                  value={editFaqTitle}
+                  onChange={(event) => setEditFaqTitle(event.target.value)}
                 />
-              </Grid>
-            </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowCreateFaqModal(false)}>
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleCreateFAQ}
-            variant="contained"
-            disabled={creatingFaq || !createFaqData.title.trim() || !createFaqData.content.trim()}
-            startIcon={creatingFaq ? <CircularProgress size={20} /> : <Add />}
-          >
-            {creatingFaq ? 'Criando...' : 'Criar FAQ'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+              </div>
+              <div className={styles.fieldGroup}>
+                <label>Ordem</label>
+                <input
+                  type="number"
+                  value={editFaqOrder}
+                  onChange={(event) => setEditFaqOrder(Number(event.target.value))}
+                />
+              </div>
+              <div className={styles.fieldGroup}>
+                <label>Conteúdo</label>
+                <textarea
+                  value={editFaqContent}
+                  onChange={(event) => setEditFaqContent(event.target.value)}
+                />
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setEditFaqModalOpen(false)}>
+                Cancelar
+              </button>
+              <button type="button" className={styles.primaryButton} onClick={handleUpdateFaq}>
+                Salvar alterações
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteFaqDialogOpen && faqToDelete && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2>Remover FAQ</h2>
+            </div>
+            <div className={styles.modalBody}>
+              <p>
+                Tem certeza de que deseja remover a FAQ "
+                {faqToDelete.faqTitle || faqToDelete.question.title}"?
+              </p>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setDeleteFaqDialogOpen(false)}>
+                Cancelar
+              </button>
+              <button type="button" className={styles.dangerButton} onClick={confirmDeleteFaq}>
+                Remover
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
