@@ -696,6 +696,11 @@ const getDescricaoEmpresa = (ticker, setor) => {
   return COMPANY_DESCRIPTIONS[ticker] || `Empresa do setor ${setor}.`;
 };
 
+const CUSTOM_LOGO_URLS = {
+  XP: 'https://logo.clearbit.com/xpi.com.br',
+  UNH: 'https://logo.clearbit.com/unitedhealthgroup.com'
+};
+
 // ✅ COMPONENTE DE AVATAR OTIMIZADO
 const CompanyAvatar = React.memo(({ symbol, companyName, size = 120 }) => {
   const [imageUrl, setImageUrl] = React.useState(null);
@@ -703,29 +708,31 @@ const CompanyAvatar = React.memo(({ symbol, companyName, size = 120 }) => {
   const [loadingStrategy, setLoadingStrategy] = React.useState(0);
 
   const strategies = useMemo(() => {
-    const isFII = symbol.includes('11') || symbol.endsWith('11');
-    
+    const normalizedSymbol = (symbol ?? '').toUpperCase();
+    const isFII = normalizedSymbol.includes('11') || normalizedSymbol.endsWith('11');
+
     if (isFII) {
-      const localPath = `/assets/${symbol}.png`;
+      const localPath = `/assets/${normalizedSymbol}.png`;
       return [
         localPath,
-        `https://www.ivalor.com.br/media/emp/logos/${symbol.replace('11', '')}.png`,
-        `https://ui-avatars.com/api/?name=${symbol}&size=128&background=8b5cf6&color=ffffff&bold=true&format=png`
+        `https://www.ivalor.com.br/media/emp/logos/${normalizedSymbol.replace('11', '')}.png`,
+        `https://ui-avatars.com/api/?name=${normalizedSymbol}&size=128&background=8b5cf6&color=ffffff&bold=true&format=png`
       ];
     }
-    
-    const isBrazilian = symbol.match(/\d$/);
-    
+
+    const isBrazilian = normalizedSymbol.match(/\d$/);
+
     if (isBrazilian) {
-      const tickerBase = symbol.replace(/\d+$/, '');
+      const tickerBase = normalizedSymbol.replace(/\d+$/, '');
       return [
         `https://www.ivalor.com.br/media/emp/logos/${tickerBase}.png`,
         `https://logo.clearbit.com/${tickerBase.toLowerCase()}.com.br`,
         `https://logo.clearbit.com/${tickerBase.toLowerCase()}.com`,
-        `https://ui-avatars.com/api/?name=${symbol}&size=128&background=8b5cf6&color=ffffff&bold=true&format=png`
+        `https://ui-avatars.com/api/?name=${normalizedSymbol}&size=128&background=8b5cf6&color=ffffff&bold=true&format=png`
       ];
     } else {
       const knownLogos = {
+        ...CUSTOM_LOGO_URLS,
         'AAPL': 'https://logo.clearbit.com/apple.com',
         'GOOGL': 'https://logo.clearbit.com/google.com',
         'META': 'https://logo.clearbit.com/meta.com',
@@ -734,12 +741,12 @@ const CompanyAvatar = React.memo(({ symbol, companyName, size = 120 }) => {
         'TSLA': 'https://logo.clearbit.com/tesla.com',
         'MSFT': 'https://logo.clearbit.com/microsoft.com'
       };
-      
-      const primaryUrl = knownLogos[symbol] || `https://logo.clearbit.com/${symbol.toLowerCase()}.com`;
-      
+
+      const primaryUrl = knownLogos[normalizedSymbol] || `https://logo.clearbit.com/${normalizedSymbol.toLowerCase()}.com`;
+
       return [
         primaryUrl,
-        `https://ui-avatars.com/api/?name=${symbol}&size=128&background=8b5cf6&color=ffffff&bold=true&format=png`
+        `https://ui-avatars.com/api/?name=${normalizedSymbol}&size=128&background=8b5cf6&color=ffffff&bold=true&format=png`
       ];
     }
   }, [symbol]);
