@@ -10,7 +10,7 @@ import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
-import Chip from '@mui/material/Chip';
+import Typography from '@mui/material/Typography';
 import { Bell as BellIcon } from '@phosphor-icons/react/dist/ssr/Bell';
 import { List as ListIcon } from '@phosphor-icons/react/dist/ssr/List';
 import { MagnifyingGlass as MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr/MagnifyingGlass';
@@ -203,55 +203,35 @@ export function MainNav(): React.JSX.Element {
                     />
                   )}
                   renderOption={(props, option) => (
-                    <Box component="li" {...props} sx={{ p: 1.5 }}>
-                      <Stack direction="row" spacing={2} alignItems="center" sx={{ width: '100%' }}>
-                        {option.carteiraIcon && (
-                          <Box sx={{ fontSize: '16px', minWidth: '20px' }}>
-                            {option.carteiraIcon}
-                          </Box>
-                        )}
-                        
-                        <Box sx={{ flex: 1 }}>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Box sx={{ fontWeight: 600, fontSize: '14px', color: 'primary.main' }}>
-                              {option.ticker}
-                            </Box>
-                            {option.moeda && (
-                              <Chip 
-                                label={option.moeda} 
-                                size="small" 
-                                variant="outlined"
-                                sx={{ 
-                                  fontSize: '9px', 
-                                  height: '16px',
-                                  color: option.moeda === 'USD' ? 'green' : 'blue'
-                                }}
-                              />
-                            )}
-                          </Stack>
-                          
-                          <Box sx={{ fontSize: '12px', color: 'text.secondary', lineHeight: 1.2 }}>
+                    <Box
+                      component="li"
+                      {...props}
+                      sx={{
+                        px: 1.5,
+                        py: 1,
+                        borderRadius: 1,
+                        transition: 'background-color 0.2s ease',
+                        '&:hover': {
+                          bgcolor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: '100%' }}>
+                        <Typography
+                          variant="subtitle1"
+                          color="primary.main"
+                          sx={{ fontWeight: 600, minWidth: 56 }}
+                        >
+                          {option.ticker}
+                        </Typography>
+                        <Stack spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="body2" color="text.primary" noWrap>
                             {option.nome}
-                          </Box>
-                          
-                          {option.carteira && (
-                            <Box sx={{ fontSize: '10px', color: 'text.disabled', fontStyle: 'italic' }}>
-                              📂 {option.carteira}
-                            </Box>
-                          )}
-                        </Box>
-                        
-                        <Chip 
-                          label={option.setor} 
-                          size="small" 
-                          variant="outlined"
-                          sx={{ 
-                            fontSize: '10px', 
-                            height: '20px',
-                            backgroundColor: option.carteiraColor ? `${option.carteiraColor}10` : undefined,
-                            borderColor: option.carteiraColor || undefined
-                          }}
-                        />
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" noWrap>
+                            {option.setor}
+                          </Typography>
+                        </Stack>
                       </Stack>
                     </Box>
                   )}
