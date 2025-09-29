@@ -21,6 +21,8 @@ const setCachedData = (key: string, data: any) => {
   globalCache.set(key, { data, timestamp: Date.now() });
 };
 
+const WHITE_LOGO_TICKERS = ['XP', 'UNH'];
+
 // 🔥 DETECÇÃO DE DISPOSITIVO SIMPLIFICADA E OTIMIZADA
 const useDeviceDetection = () => {
   const [isMobile, setIsMobile] = React.useState(() => {
@@ -1026,52 +1028,48 @@ export default function ExteriorStocksPage() {
                         }}>
                           {ativo.posicaoExibicao}
                         </div>
-
- {/* Lista de tickers com logo branca - coloque no topo do componente */}
-const TICKERS_LOGO_BRANCA = [
-  'XP', 'UNH'
-];
-
-{/* Logo do Ativo */}
-<div style={{
-  width: '36px',
-  height: '36px',
-  borderRadius: '6px',
-  overflow: 'hidden',
-  backgroundColor: TICKERS_LOGO_BRANCA.includes(ativo.ticker) 
-    ? '#f1f5f9'  // Fundo cinza claro para logos brancas
-    : '#ffffff',  // Fundo branco para as demais
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  border: '1px solid #e2e8f0',
-  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-  padding: '4px'
-}}>
-  <img 
-    src={`https://financialmodelingprep.com/image-stock/${ativo.ticker}.png`}
-    alt={`Logo ${ativo.ticker}`}
-    style={{
-      width: '100%',
-      height: '100%',
-      objectFit: 'contain',
-      borderRadius: '2px'
-    }}
-    onError={(e) => {
-      const target = e.target as HTMLImageElement;
-      target.style.display = 'none';
-      const parent = target.parentElement;
-      if (parent) {
-        parent.style.backgroundColor = ativo.performance >= 0 ? '#dcfce7' : '#fee2e2';
-        parent.style.color = ativo.performance >= 0 ? '#065f46' : '#dc2626';
-        parent.style.fontWeight = '700';
-        parent.style.fontSize = '12px';
-        parent.style.letterSpacing = '0.5px';
-        parent.textContent = ativo.ticker.slice(0, 2).toUpperCase();
-      }
-    }}
-  />
-</div>
+                        {/* Logo do Ativo */}
+                        <div
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '6px',
+                            overflow: 'hidden',
+                            backgroundColor: WHITE_LOGO_TICKERS.includes((ativo.ticker ?? '').toUpperCase())
+                              ? '#f1f5f9'
+                              : '#ffffff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                            padding: '4px'
+                          }}
+                        >
+                          <img
+                            src={`https://financialmodelingprep.com/image-stock/${ativo.ticker}.png`}
+                            alt={`Logo ${ativo.ticker}`}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'contain',
+                              borderRadius: '2px'
+                            }}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent) {
+                                parent.style.backgroundColor = ativo.performance >= 0 ? '#dcfce7' : '#fee2e2';
+                                parent.style.color = ativo.performance >= 0 ? '#065f46' : '#dc2626';
+                                parent.style.fontWeight = '700';
+                                parent.style.fontSize = '12px';
+                                parent.style.letterSpacing = '0.5px';
+                                parent.textContent = ativo.ticker.slice(0, 2).toUpperCase();
+                              }
+                            }}
+                          />
+                        </div>
                         
                         {/* Nome e Setor */}
                         <div style={{ flex: '1' }}>
@@ -1249,20 +1247,24 @@ const TICKERS_LOGO_BRANCA = [
                           {/* Ativo */}
                           <td style={{ padding: '16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <div style={{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '8px',
-                                overflow: 'hidden',
-                                backgroundColor: '#ffffff',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                border: '1px solid #e2e8f0',
-                                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                                padding: '6px',
-                                flexShrink: 0
-                              }}>
+                              <div
+                                style={{
+                                  width: '48px',
+                                  height: '48px',
+                                  borderRadius: '8px',
+                                  overflow: 'hidden',
+                                  backgroundColor: WHITE_LOGO_TICKERS.includes((ativo.ticker ?? '').toUpperCase())
+                                    ? '#f1f5f9'
+                                    : '#ffffff',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  border: '1px solid #e2e8f0',
+                                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                                  padding: '6px',
+                                  flexShrink: 0
+                                }}
+                              >
                                 <img 
                                   src={`https://financialmodelingprep.com/image-stock/${ativo.ticker}.png`}
                                   alt={`Logo ${ativo.ticker}`}
