@@ -1383,6 +1383,8 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
   const itensPorPagina = 10;
 
   const { isMobile } = useResponsive();
+  const isInternacional = useMemo(() => !/\d$/.test(ticker ?? ''), [ticker]);
+  const moeda = useMemo(() => (isInternacional ? 'USD' : 'BRL'), [isInternacional]);
 
   const normalizarData = useCallback((valor) => {
     if (!valor) return null;
@@ -1454,7 +1456,7 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
           ...item,
           valor: valorNumerico,
           dataObj: dataNormalizada,
-          valorFormatado: item.valorFormatado || `R$ ${valorParaFormatacao.toFixed(2).replace('.', ',')}`,
+          valorFormatado: formatCurrency(valorParaFormatacao, moeda),
           tipo: item.tipo || (isFII ? 'Rendimento' : 'Dividendo')
         };
       })
@@ -1478,7 +1480,7 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
 
         return dataB.getTime() - dataA.getTime();
       });
-  }, [criarDataFallback, dataEntradaNormalizada, dataSaidaNormalizada, isFII, normalizarData]);
+  }, [criarDataFallback, dataEntradaNormalizada, dataSaidaNormalizada, isFII, moeda, normalizarData]);
 
   useEffect(() => {
     if (!inView || !ticker) return;
@@ -1647,12 +1649,12 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
             />
             <MetricCard
               title="Total"
-              value={`R$ ${totalProventos.toFixed(2).replace('.', ',')}`}
+              value={formatCurrency(totalProventos, moeda)}
               color="#22c55e"
             />
             <MetricCard
               title="Média"
-              value={`R$ ${mediaProvento.toFixed(2).replace('.', ',')}`}
+              value={formatCurrency(mediaProvento, moeda)}
               color="#eab308"
             />
             <MetricCard
