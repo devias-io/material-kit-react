@@ -3121,12 +3121,12 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 })()}
                 subtitle={(() => {
                   if (dadosYahoo?.pvp && dadosYahoo.pvp > 0 && dadosYahoo.pvp < 999) {
-                    return dadosYahoo.fonte || "International";
+                    return dadosYahoo.fonte || "";
                   }
                   if (dadosHGBrasil?.pvp) {
-                    return "HG Brasil";
+                    return "";
                   }
-                  return "indisponível";
+                  return "";
                 })()}
                 loading={loadingHGBrasil || loadingYahoo}
               />
