@@ -22,6 +22,10 @@ const setCachedData = (key: string, data: any) => {
 };
 
 const WHITE_LOGO_TICKERS = ['XP', 'UNH'];
+const CUSTOM_LOGO_URLS: Record<string, string> = {
+  XP: 'https://logo.clearbit.com/xpi.com.br',
+  UNH: 'https://logo.clearbit.com/unitedhealthgroup.com'
+};
 
 // 🔥 DETECÇÃO DE DISPOSITIVO SIMPLIFICADA E OTIMIZADA
 const useDeviceDetection = () => {
@@ -988,9 +992,11 @@ export default function ExteriorStocksPage() {
               <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {ativosAtualizados.map((ativo, index) => {
                   const temCotacaoReal = ativo.statusApi === 'success';
-                  
+                  const ticker = (ativo.ticker ?? '').toUpperCase();
+                  const logoSrc = CUSTOM_LOGO_URLS[ticker] ?? `https://financialmodelingprep.com/image-stock/${ticker}.png`;
+
                   return (
-                    <div 
+                    <div
                       key={ativo.id || index}
                       style={{
                         backgroundColor: '#f8fafc',
@@ -1047,8 +1053,8 @@ export default function ExteriorStocksPage() {
                           }}
                         >
                           <img
-                            src={`https://financialmodelingprep.com/image-stock/${ativo.ticker}.png`}
-                            alt={`Logo ${ativo.ticker}`}
+                            src={logoSrc}
+                            alt={`Logo ${ticker}`}
                             style={{
                               width: '100%',
                               height: '100%',
@@ -1065,7 +1071,7 @@ export default function ExteriorStocksPage() {
                                 parent.style.fontWeight = '700';
                                 parent.style.fontSize = '12px';
                                 parent.style.letterSpacing = '0.5px';
-                                parent.textContent = ativo.ticker.slice(0, 2).toUpperCase();
+                                parent.textContent = ticker.slice(0, 2);
                               }
                             }}
                           />
@@ -1206,9 +1212,11 @@ export default function ExteriorStocksPage() {
                   <tbody>
                     {ativosAtualizados.map((ativo, index) => {
                       const temCotacaoReal = ativo.statusApi === 'success';
-                      
+                      const ticker = (ativo.ticker ?? '').toUpperCase();
+                      const logoSrc = CUSTOM_LOGO_URLS[ticker] ?? `https://financialmodelingprep.com/image-stock/${ticker}.png`;
+
                       return (
-                        <tr 
+                        <tr
                           key={ativo.id || index} 
                           style={{ 
                             borderBottom: '1px solid #f1f5f9',
@@ -1265,9 +1273,9 @@ export default function ExteriorStocksPage() {
                                   flexShrink: 0
                                 }}
                               >
-                                <img 
-                                  src={`https://financialmodelingprep.com/image-stock/${ativo.ticker}.png`}
-                                  alt={`Logo ${ativo.ticker}`}
+                                <img
+                                  src={logoSrc}
+                                  alt={`Logo ${ticker}`}
                                   style={{
                                     width: '36px',
                                     height: '36px',
@@ -1285,7 +1293,7 @@ export default function ExteriorStocksPage() {
                                       parent.style.fontWeight = '700';
                                       parent.style.fontSize = '14px';
                                       parent.style.letterSpacing = '0.5px';
-                                      parent.textContent = ativo.ticker.slice(0, 2).toUpperCase();
+                                      parent.textContent = ticker.slice(0, 2);
                                     }
                                   }}
                                 />
