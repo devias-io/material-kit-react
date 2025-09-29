@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { auth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
@@ -15,27 +16,21 @@ const CARTEIRA_MODELS = {
   exteriorStocks: 'userExteriorStocks'
 } as const;
 
-async function getAuthenticatedUser(request: NextRequest) {
-  const userEmail = request.headers.get('x-user-email');
-  
-  if (!userEmail) return null;
-  
-  if (userEmail === 'admin@fatosdobolsa.com') {
-    const adminUser = await prisma.user.findUnique({
-      where: { email: userEmail },
-      select: { id: true, firstName: true, lastName: true, email: true, plan: true, status: true }
-    });
-    return adminUser;
-  }
-
+async function getAuthenticatedUser(_request: NextRequest) {
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: userEmail },
-      select: { id: true, firstName: true, lastName: true, email: true, plan: true, status: true }
-    });
+    console.log('🔐 Iniciando autenticação via sessão...');
+    const session = await auth();
+    const user = session?.user;
+
+    if (!user) {
+      console.log('❌ Usuário não autenticado');
+      return null;
+    }
+
+    console.log('✅ Usuário autenticado:', user.email);
     return user;
   } catch (error) {
-    console.error('❌ Erro ao buscar usuário:', error);
+    console.error('❌ Erro ao autenticar usuário:', error);
     return null;
   }
 }
@@ -62,10 +57,12 @@ export async function POST(request: NextRequest, { params }: { params: { carteir
 
     const model = (prisma as any)[modelName];
     
-    // 🔥 BUSCAR TODOS OS ATIVOS DO BANCO (SEM FILTRO DE USERID)
-    console.log('🔍 Buscando TODOS os ativos do banco...');
+    // 🔥 BUSCAR ATIVOS DO BANCO (FILTRADOS POR USUÁRIO QUANDO NECESSÁRIO)
+    console.log('🔍 Buscando ativos do banco com escopo do usuário...');
+    const isAdmin = user.plan === 'ADMIN' || user.email === 'admin@fatosdobolsa.com';
+
     const ativosReais = await model.findMany({
-      // where: { userId: user.id }, ← REMOVIDO
+      ...(isAdmin ? {} : { where: { userId: user.id } }),
       select: { id: true, ticker: true }
     });
     
@@ -95,11 +92,8 @@ export async function POST(request: NextRequest, { params }: { params: { carteir
         
         atualizacoes.push(
           model.update({
-            where: { 
-              id: idReal
-              // userId: user.id ← REMOVIDO
-            },
-            data: { 
+            where: { id: idReal },
+            data: {
               editadoEm: timestampOrdem
             }
           })
