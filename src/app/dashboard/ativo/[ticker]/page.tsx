@@ -1612,17 +1612,6 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
           {isFII ? 'Histórico de Rendimentos (FII)' : 'Histórico de Proventos'}
         </h3>
         
-        {fonte && (
-          <span style={{
-            backgroundColor: fonte === 'API' ? '#22c55e' : fonte === 'localStorage' ? '#f59e0b' : '#6b7280',
-            color: 'white',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            fontSize: '11px',
-            fontWeight: '600'
-          }}>
-            📊 {fonte}
-          </span>
         )}
       </div>
 
