@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { Switch, Route, Redirect } from 'react-router-dom';
 
-// Views
 import Dashboard from './views/Dashboard';
 import ProductList from './views/ProductList';
 import UserList from './views/UserList';
