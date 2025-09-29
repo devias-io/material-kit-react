@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDataStore } from '../../../../hooks/useDataStore';
+import { Download, ExternalLink } from 'lucide-react';
 
 // ✅ LAZY LOADING DE COMPONENTES PESADOS
 const AnalisesTrimesestrais = lazy(() => import('@/components/AnalisesTrimesestrais'));
@@ -1928,12 +1929,13 @@ const BDRAmericanoInfo = React.memo(({
 // Gerenciador de Relatórios com In-View Loading
 const GerenciadorRelatorios = React.memo(({ ticker }) => {
   const [containerRef, inView] = useInView();
-  const { 
-    estatisticas, 
-    loading, 
+  const {
+    estatisticas,
+    loading,
     error,
-    carregarEstatisticas 
+    carregarEstatisticas
   } = useRelatoriosEstatisticas();
+  const { isMobile } = useResponsive();
 
   const relatoriosDoTicker = useMemo(() => {
     if (!ticker || !estatisticas.relatorios) return [];
@@ -1957,6 +1959,32 @@ const GerenciadorRelatorios = React.memo(({ ticker }) => {
       carregarEstatisticas();
     }
   }, [inView, carregarEstatisticas]);
+
+  const actionButtonStyle = useMemo(() => ({
+    backgroundColor: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '12px',
+    padding: '10px 14px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#0f172a',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    transition: 'background-color 0.2s ease, transform 0.2s ease'
+  }), []);
+
+  const handleButtonHover = useCallback((event) => {
+    event.currentTarget.style.backgroundColor = '#e2e8f0';
+    event.currentTarget.style.transform = 'translateY(-1px)';
+  }, []);
+
+  const handleButtonLeave = useCallback((event) => {
+    event.currentTarget.style.backgroundColor = '#f8fafc';
+    event.currentTarget.style.transform = 'translateY(0)';
+  }, []);
 
   const visualizarRelatorio = useCallback((relatorio) => {
     if (relatorio.arquivoPdf && relatorio.tipoPdf === 'base64') {
@@ -2212,98 +2240,107 @@ const GerenciadorRelatorios = React.memo(({ ticker }) => {
       ) : (
         <div>
           {relatoriosDoTicker.map((relatorio, index) => (
-            <div key={relatorio.id || index} style={{ 
-              border: '1px solid #e2e8f0', 
-              borderRadius: '12px', 
-              marginBottom: '12px',
-              backgroundColor: 'white',
-              padding: '16px'
-            }}>
-              <div style={{ marginBottom: '12px' }}>
-                <h4 style={{ 
-                  margin: '0 0 4px 0', 
-                  fontSize: '16px', 
-                  fontWeight: '600',
-                  color: '#1e293b',
-                  lineHeight: '1.3'
-                }}>
-                  {relatorio.nome}
-                </h4>
-                <div style={{ 
-                  fontSize: '12px', 
-                  color: '#64748b',
-                  marginBottom: '4px'
-                }}>
-                  {relatorio.tipo} • {relatorio.dataReferencia}
-                </div>
-                {relatorio.tamanho && (
-                  <div style={{ 
-                    fontSize: '11px', 
-                    color: '#94a3b8'
-                  }}>
-                    📄 {relatorio.tamanho}
-                  </div>
-                )}
-              </div>
-              
-              <div style={{ 
-                display: 'flex', 
-                gap: '8px',
-                justifyContent: 'center'
-              }}>
-                {relatorio.arquivoPdf && relatorio.tipoPdf === 'base64' && (
-                  <button
-                    onClick={() => downloadPDF(relatorio)}
+            <div
+              key={relatorio.id || index}
+              style={{
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
+                marginBottom: '12px',
+                backgroundColor: 'white',
+                padding: '16px'
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  justifyContent: 'space-between',
+                  alignItems: isMobile ? 'flex-start' : 'center',
+                  gap: '16px'
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <h4
                     style={{
-                      flex: 1,
-                      backgroundColor: '#dcfce7',
-                      border: '1px solid #bbf7d0',
-                      borderRadius: '8px',
-                      padding: '10px 12px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
+                      margin: '0 0 4px 0',
+                      fontSize: '16px',
                       fontWeight: '600',
-                      color: '#166534',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '4px'
+                      color: '#1e293b',
+                      lineHeight: '1.3'
                     }}
                   >
-                    📥 PDF
-                  </button>
-                )}
-                
-                <button
-                  onClick={() => visualizarRelatorio(relatorio)}
+                    {relatorio.nome}
+                  </h4>
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: '#64748b',
+                      marginBottom: '4px'
+                    }}
+                  >
+                    {relatorio.tipo} • {relatorio.dataReferencia}
+                  </div>
+                  {relatorio.tamanho && (
+                    <div
+                      style={{
+                        fontSize: '11px',
+                        color: '#94a3b8'
+                      }}
+                    >
+                      📄 {relatorio.tamanho}
+                    </div>
+                  )}
+                </div>
+
+                <div
                   style={{
-                    flex: 1,
-                    backgroundColor: '#dbeafe',
-                    border: '1px solid #93c5fd',
-                    borderRadius: '8px',
-                    padding: '10px 12px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#1e40af',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px'
+                    flexDirection: isMobile ? 'column' : 'row',
+                    gap: '8px',
+                    justifyContent: isMobile ? 'flex-start' : 'flex-end',
+                    width: isMobile ? '100%' : 'auto'
                   }}
                 >
-                  👁 Ver
-                </button>
+                  {relatorio.arquivoPdf && relatorio.tipoPdf === 'base64' && (
+                    <button
+                      onClick={() => downloadPDF(relatorio)}
+                      onMouseEnter={handleButtonHover}
+                      onMouseLeave={handleButtonLeave}
+                      style={{
+                        ...actionButtonStyle,
+                        flex: isMobile ? 1 : undefined
+                      }}
+                    >
+                      <Download size={16} />
+                      Baixar PDF
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => visualizarRelatorio(relatorio)}
+                    onMouseEnter={handleButtonHover}
+                    onMouseLeave={handleButtonLeave}
+                    style={{
+                      ...actionButtonStyle,
+                      flex: isMobile ? 1 : undefined
+                    }}
+                  >
+                    <ExternalLink size={16} />
+                    Abrir relatório
+                  </button>
+                </div>
               </div>
 
-              <div style={{ 
-                fontSize: '10px', 
-                color: '#94a3b8',
-                textAlign: 'center',
-                marginTop: '8px'
-              }}>
-                Adicionado em: {relatorio.dataUpload ? 
-                  (typeof relatorio.dataUpload === 'string' ? 
+              <div
+                style={{
+                  fontSize: '10px',
+                  color: '#64748b',
+                  textAlign: 'center',
+                  marginTop: '6px'
+                }}
+              >
+                Adicionado em: {relatorio.dataUpload ?
+                  (typeof relatorio.dataUpload === 'string' ?
                     new Date(relatorio.dataUpload).toLocaleDateString('pt-BR') :
                     relatorio.dataUpload.toLocaleDateString('pt-BR')
                   ) : 'N/A'
