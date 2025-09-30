@@ -1,6 +1,6 @@
 /*
  * COMPONENTE ANÁLISES TRIMESTRAIS - MOBILE RESPONSIVO
- * 
+ *
  * Melhorias implementadas para mobile:
  * - Modal em tela cheia no mobile (bottom sheet)
  * - Layout em coluna para pontos favoráveis/atenção no mobile
@@ -11,6 +11,8 @@
  * - Hook useIsMobile para detectar mobile sem causar problemas de hidratação
  * - Smooth scrolling no modal
  */
+
+'use client';
 
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Eye, TrendingUp, TrendingDown, BarChart3, Target, AlertCircle, ExternalLink, Download, FileText } from 'lucide-react';
