@@ -202,34 +202,37 @@ export function MainNav(): React.JSX.Element {
                       }}
                     />
                   )}
-                  renderOption={(props, option) => (
-                    <Box
-                      component="li"
-                      {...props}
-                      sx={{
-                        px: 1.5,
-                        py: 1,
-                        borderRadius: 1,
-                        transition: 'background-color 0.2s ease',
-                        '&:hover': {
-                          bgcolor: 'action.hover',
-                        },
-                      }}
-                    >
-                      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: '100%' }}>
-                        <Typography
-                          variant="subtitle1"
-                          sx={{ fontWeight: 600, minWidth: 56 }}
-                        >
-                          {option.ticker}
-                        </Typography>
-                        <Stack spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="body2" color="text.primary" noWrap>
-                            {option.nome}
-                          </Typography>
-                        </Stack>
-                      </Stack>
-                    </Box>
+renderOption={(props, option) => (
+  <Box
+    component="li"
+    {...props}
+    sx={{
+      px: 1.5,
+      py: 1,
+      borderRadius: 1,
+      transition: 'background-color 0.2s ease',
+      '&:hover': {
+        bgcolor: 'action.hover',
+      },
+    }}
+  >
+    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: '100%' }}>
+      <Typography
+        variant="subtitle1"
+        sx={{ fontWeight: 600, minWidth: 70 }}
+      >
+        {option.ticker}
+      </Typography>
+      <Stack spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" color="text.secondary" noWrap>
+          {option.nome}
+        </Typography>
+        <Typography variant="caption" color="text.disabled" noWrap>
+          {option.carteira} • {option.setor}
+        </Typography>
+      </Stack>
+    </Stack>
+  </Box>
                   )}
                   noOptionsText={`Nenhum ativo encontrado entre ${ativos.length} disponíveis`}
                 />
