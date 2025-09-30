@@ -9,24 +9,44 @@ export async function PUT(
   try {
     const { id } = params;
     const body = await request.json();
-    
+
     console.log('✏️ Atualizando análise:', id);
-    
+
     // Verificar se a análise existe
     const analiseExistente = await prisma.analiseTrimestreData.findUnique({
       where: { id }
     });
-    
+
     if (!analiseExistente) {
       return NextResponse.json(
         { error: 'Análise não encontrada' },
         { status: 404 }
       );
     }
-    
+
     // Garantir que dataPublicacao seja uma data válida
     const dataPublicacao = body.dataPublicacao ? new Date(body.dataPublicacao) : analiseExistente.dataPublicacao;
-    
+
+    const otherMetrics = body.other_metrics ?? body.otherMetrics ?? body.metricas?.other_metrics ?? body.metricas?.otherMetrics;
+    let metricasUpdate: any;
+
+    if (body.metricas !== undefined) {
+      if (body.metricas && typeof body.metricas === 'object') {
+        metricasUpdate = { ...body.metricas };
+        if (otherMetrics !== undefined) {
+          metricasUpdate.other_metrics = otherMetrics;
+        }
+      } else {
+        metricasUpdate = body.metricas;
+      }
+    } else if (otherMetrics !== undefined) {
+      const metricasExistentes = analiseExistente.metricas && typeof analiseExistente.metricas === 'object'
+        ? { ...(analiseExistente.metricas as Record<string, unknown>) }
+        : {};
+      metricasExistentes.other_metrics = otherMetrics;
+      metricasUpdate = metricasExistentes;
+    }
+
     // Preparar dados para atualização
     const updateData = {
       ...(body.ticker && { ticker: body.ticker.toUpperCase() }),
@@ -38,7 +58,7 @@ export async function PUT(
       ...(body.titulo && { titulo: body.titulo }),
       ...(body.resumoExecutivo !== undefined && { resumoExecutivo: body.resumoExecutivo }),
       ...(body.analiseCompleta !== undefined && { analiseCompleta: body.analiseCompleta }),
-      ...(body.metricas && { metricas: body.metricas }),
+      ...(metricasUpdate !== undefined && { metricas: metricasUpdate }),
       ...(body.pontosFavoraveis !== undefined && { pontosFavoraveis: body.pontosFavoraveis }),
       ...(body.pontosAtencao !== undefined && { pontosAtencao: body.pontosAtencao }),
       ...(body.recomendacao && { recomendacao: body.recomendacao }),

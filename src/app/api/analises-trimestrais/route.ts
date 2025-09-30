@@ -70,6 +70,15 @@ export async function POST(request: NextRequest) {
     // Garantir que dataPublicacao seja uma data válida
     const dataPublicacao = body.dataPublicacao ? new Date(body.dataPublicacao) : new Date();
     
+    const otherMetrics = body.other_metrics ?? body.otherMetrics ?? body.metricas?.other_metrics ?? body.metricas?.otherMetrics;
+    const metricas = body.metricas && typeof body.metricas === 'object'
+      ? { ...body.metricas }
+      : {};
+
+    if (otherMetrics !== undefined) {
+      (metricas as any).other_metrics = otherMetrics;
+    }
+
     // Preparar dados para o Prisma
     const analiseData = {
       ticker: body.ticker.toUpperCase(),
@@ -81,7 +90,7 @@ export async function POST(request: NextRequest) {
       titulo: body.titulo,
       resumoExecutivo: body.resumoExecutivo || null,
       analiseCompleta: body.analiseCompleta || null,
-      metricas: body.metricas || {},
+      metricas: metricas,
       pontosFavoraveis: body.pontosFavoraveis || null,
       pontosAtencao: body.pontosAtencao || null,
       recomendacao: body.recomendacao || 'MANTER',

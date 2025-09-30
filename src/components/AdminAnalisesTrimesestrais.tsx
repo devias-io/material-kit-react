@@ -27,7 +27,7 @@ interface DadosExtraidosPDF {
   empresa?: string;
   trimestre?: string;
   dataReferencia?: string;
-  
+
   dadosFinanceiros?: {
     lucroLiquido?: { valor: number; variacaoAA?: number; variacaoTT?: number; };
     receita?: { valor: number; variacaoAA?: number; variacaoTT?: number; };
@@ -41,8 +41,8 @@ interface DadosExtraidosPDF {
       variacao?: string;
     }>;
   };
-  
-relatorioGerado?: {
+
+  relatorioGerado?: {
   titulo: string;
   destaques: string[];
   pontosAtencao: string[];
@@ -54,6 +54,23 @@ relatorioGerado?: {
   contextoMercado?: string;
   outlook?: string;
   conteudoCompleto?: string;
+}
+
+type ParseConfidence = 'high' | 'medium' | 'low';
+type FinancialMetricDeltaBasis = 'yoy' | 'qoq' | 'pp';
+
+interface FinancialMetricDynamicEntry {
+  id: string;
+  slug: string;
+  label: string;
+  value: number | null;
+  unit: string | null;
+  formattedValue?: string | null;
+  deltaValue?: number | null;
+  deltaUnit?: string | null;
+  deltaBasis?: FinancialMetricDeltaBasis | null;
+  parseConfidence: ParseConfidence;
+  evidence?: string | null;
 }
 
 interface AnaliseTrimestreData {
@@ -74,7 +91,9 @@ interface AnaliseTrimestreData {
     lucroLiquido?: MetricaTrimestreData;
     roe?: MetricaTrimestreData;
   };
-  
+
+  otherMetrics?: FinancialMetricDynamicEntry[];
+
   dadosExtraidos?: DadosExtraidosPDF;
   fonteDados?: 'manual' | 'pdf' | 'misto';
   nomeArquivoPDF?: string;
@@ -99,6 +118,61 @@ interface AnaliseTrimestreData {
 
 const API_BASE = '/api/analises-trimestrais';
 
+const extractOtherMetrics = (analise: any): FinancialMetricDynamicEntry[] | undefined => {
+  if (!analise) {
+    return undefined;
+  }
+
+  if (Array.isArray(analise.otherMetrics)) {
+    return analise.otherMetrics as FinancialMetricDynamicEntry[];
+  }
+
+  if (Array.isArray(analise.other_metrics)) {
+    return analise.other_metrics as FinancialMetricDynamicEntry[];
+  }
+
+  if (analise.metricas && typeof analise.metricas === 'object') {
+    const metricas = analise.metricas as Record<string, unknown>;
+    const candidate = (metricas as any).other_metrics ?? (metricas as any).otherMetrics;
+    if (Array.isArray(candidate)) {
+      return candidate as FinancialMetricDynamicEntry[];
+    }
+  }
+
+  return undefined;
+};
+
+const mapAnaliseFromApi = (analise: any): AnaliseTrimestreData => {
+  const otherMetrics = extractOtherMetrics(analise);
+  return {
+    ...analise,
+    metricas: analise.metricas ?? {},
+    otherMetrics: otherMetrics ?? (Array.isArray(analise.otherMetrics) ? analise.otherMetrics : [])
+  } as AnaliseTrimestreData;
+};
+
+const prepareAnalisePayload = (analise: Partial<AnaliseTrimestreData>) => {
+  const { otherMetrics, ...rest } = analise as any;
+  const payload: any = { ...rest };
+
+  if (payload.metricas && typeof payload.metricas === 'object') {
+    payload.metricas = { ...payload.metricas };
+  }
+
+  if (otherMetrics !== undefined) {
+    payload.other_metrics = otherMetrics;
+    if (payload.metricas && typeof payload.metricas === 'object') {
+      payload.metricas.other_metrics = otherMetrics;
+    } else {
+      payload.metricas = { other_metrics: otherMetrics };
+    }
+  } else if (payload.metricas && typeof payload.metricas === 'object' && payload.metricas.other_metrics !== undefined) {
+    payload.other_metrics = payload.metricas.other_metrics;
+  }
+
+  return payload;
+};
+
 const analiseAPI = {
   async listar(filtros?: { status?: string; ticker?: string; userId?: string }): Promise<AnaliseTrimestreData[]> {
     try {
@@ -115,7 +189,12 @@ const analiseAPI = {
         throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
       }
       
-      return await response.json();
+      const resultado = await response.json();
+      if (Array.isArray(resultado)) {
+        return resultado.map(mapAnaliseFromApi);
+      }
+
+      return [];
     } catch (error) {
       console.error('❌ Erro ao listar análises:', error);
       throw error;
@@ -130,18 +209,21 @@ const analiseAPI = {
         id: analise.id || `analise-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       };
 
+      const payload = prepareAnalisePayload(analiseComId);
+
       const response = await fetch(API_BASE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(analiseComId)
+        body: JSON.stringify(payload)
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
       }
-      
-      return await response.json();
+
+      const resultado = await response.json();
+      return mapAnaliseFromApi(resultado);
     } catch (error) {
       console.error('❌ Erro ao criar análise:', error);
       throw error;
@@ -150,18 +232,21 @@ const analiseAPI = {
 
   async atualizar(id: string, analise: Partial<AnaliseTrimestreData>): Promise<AnaliseTrimestreData> {
     try {
+      const payload = prepareAnalisePayload(analise);
+
       const response = await fetch(`${API_BASE}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(analise)
+        body: JSON.stringify(payload)
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
       }
-      
-      return await response.json();
+
+      const resultado = await response.json();
+      return mapAnaliseFromApi(resultado);
     } catch (error) {
       console.error('❌ Erro ao atualizar análise:', error);
       throw error;
@@ -549,7 +634,7 @@ const extrairData = (texto: string): string | null => {
 
 const extrairValoresFinanceiros = (texto: string): { [key: string]: number } => {
   console.log('🔍 Iniciando extração de valores financeiros...');
-  
+
   const valores: { [key: string]: number } = {};
   
   const metricas = {
@@ -603,8 +688,440 @@ const extrairValoresFinanceiros = (texto: string): { [key: string]: number } => 
       }
     }
   }
-  
+
   return valores;
+};
+
+const slugifyMetric = (text: string): string => {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
+const formatNumberPtBr = (value: number, fractionDigits = 2): string => {
+  const abs = Math.abs(value);
+  const maximumFractionDigits = abs < 1 ? Math.max(2, fractionDigits + 2) : fractionDigits;
+
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits
+  });
+};
+
+const formatValueWithUnit = (value: number, unit?: string | null): string => {
+  const formattedNumber = formatNumberPtBr(value);
+  if (!unit) {
+    return formattedNumber;
+  }
+
+  if (unit.startsWith('R$')) {
+    const parts = unit.split(' ').filter(Boolean);
+    if (parts.length > 1) {
+      const [currency, ...rest] = parts;
+      return `${currency} ${formattedNumber} ${rest.join(' ')}`.trim();
+    }
+    return `${unit} ${formattedNumber}`.trim();
+  }
+
+  return `${formattedNumber} ${unit}`.trim();
+};
+
+const combineConfidence = (...levels: Array<ParseConfidence | undefined>): ParseConfidence => {
+  if (levels.some(level => level === 'low')) {
+    return 'low';
+  }
+
+  if (levels.some(level => level === 'medium')) {
+    return 'medium';
+  }
+
+  return 'high';
+};
+
+const normalizeNumericString = (value: string): string => {
+  let cleaned = value.replace(/\s+/g, '');
+  const hasParentheses = cleaned.includes('(') && cleaned.includes(')');
+  cleaned = cleaned.replace(/[()]/g, '');
+
+  const hasComma = cleaned.includes(',');
+  const hasDot = cleaned.includes('.');
+
+  if (hasComma && hasDot) {
+    if (cleaned.lastIndexOf(',') > cleaned.lastIndexOf('.')) {
+      cleaned = cleaned.replace(/\./g, '').replace(/,/g, '.');
+    } else {
+      cleaned = cleaned.replace(/,/g, '');
+    }
+  } else if (hasComma) {
+    cleaned = cleaned.replace(/\./g, '').replace(/,/g, '.');
+  } else {
+    cleaned = cleaned.replace(/,/g, '');
+  }
+
+  if (hasParentheses && !cleaned.startsWith('-')) {
+    cleaned = `-${cleaned}`;
+  }
+
+  return cleaned;
+};
+
+const parseValueWithUnit = (
+  rawValue: number | string | null | undefined,
+  options?: { defaultUnit?: string }
+): {
+  value: number | null;
+  unit: string | null;
+  formattedValue: string | null;
+  parseConfidence: ParseConfidence;
+  evidence: string | null;
+} => {
+  if (rawValue === null || rawValue === undefined || rawValue === '') {
+    return {
+      value: null,
+      unit: options?.defaultUnit ?? null,
+      formattedValue: null,
+      parseConfidence: 'low',
+      evidence: null
+    };
+  }
+
+  if (typeof rawValue === 'number' && !Number.isNaN(rawValue)) {
+    const unit = options?.defaultUnit ?? null;
+    const formattedValue = formatValueWithUnit(rawValue, unit);
+    return {
+      value: rawValue,
+      unit,
+      formattedValue,
+      parseConfidence: 'high',
+      evidence: formattedValue
+    };
+  }
+
+  const text = String(rawValue).trim();
+  if (!text) {
+    return {
+      value: null,
+      unit: options?.defaultUnit ?? null,
+      formattedValue: null,
+      parseConfidence: 'low',
+      evidence: null
+    };
+  }
+
+  const lower = text.toLowerCase();
+  let unit = options?.defaultUnit ?? null;
+  let currencyPrefix = '';
+
+  if (lower.includes('r$')) {
+    currencyPrefix = 'R$';
+  }
+
+  if (/p\.?p\.?/i.test(lower)) {
+    unit = 'p.p.';
+  } else if (/%/.test(lower)) {
+    unit = '%';
+  } else if (/\b(bilh(?:ões|oes|ão|ao)?|bi)\b/.test(lower)) {
+    unit = currencyPrefix ? `${currencyPrefix} bi` : 'bi';
+  } else if (/\b(milh(?:ões|oes|ão|ao|o|oes)|mi)\b/.test(lower)) {
+    unit = currencyPrefix ? `${currencyPrefix} mi` : 'mi';
+  } else if (/\bmil\b/.test(lower)) {
+    unit = currencyPrefix ? `${currencyPrefix} mil` : 'mil';
+  } else if (currencyPrefix && !unit) {
+    unit = currencyPrefix;
+  }
+
+  const numericMatch = text.match(/-?[\d]+[\d.,]*/);
+  let numericValue: number | null = null;
+
+  if (numericMatch) {
+    const normalized = normalizeNumericString(numericMatch[0]);
+    const parsed = parseFloat(normalized);
+    if (!Number.isNaN(parsed)) {
+      numericValue = parsed;
+      if (!normalized.startsWith('-') && (/queda|negativo|redução/.test(lower) || /\(.*\)/.test(text))) {
+        numericValue = -Math.abs(parsed);
+      }
+    }
+  }
+
+  const parseConfidence: ParseConfidence = numericValue === null ? 'low' : 'medium';
+  const formattedValue = numericValue !== null ? formatValueWithUnit(numericValue, unit) : null;
+
+  return {
+    value: numericValue,
+    unit,
+    formattedValue,
+    parseConfidence,
+    evidence: text
+  };
+};
+
+const parseVariationString = (
+  rawVariation: number | string | null | undefined,
+  fallbackBasis?: FinancialMetricDeltaBasis
+): {
+  value: number | null;
+  unit: string | null;
+  basis: FinancialMetricDeltaBasis | null;
+  parseConfidence: ParseConfidence;
+  evidence: string | null;
+} => {
+  if (rawVariation === null || rawVariation === undefined || rawVariation === '') {
+    return {
+      value: null,
+      unit: null,
+      basis: fallbackBasis ?? null,
+      parseConfidence: 'low',
+      evidence: null
+    };
+  }
+
+  if (typeof rawVariation === 'number' && !Number.isNaN(rawVariation)) {
+    const basis = fallbackBasis ?? 'yoy';
+    const unit = basis === 'pp' ? 'p.p.' : '%';
+    return {
+      value: rawVariation,
+      unit,
+      basis,
+      parseConfidence: 'high',
+      evidence: `${basis.toUpperCase()}: ${formatNumberPtBr(rawVariation)} ${unit}`
+    };
+  }
+
+  const text = String(rawVariation).trim();
+  if (!text) {
+    return {
+      value: null,
+      unit: null,
+      basis: fallbackBasis ?? null,
+      parseConfidence: 'low',
+      evidence: null
+    };
+  }
+
+  const lower = text.toLowerCase();
+  let basis: FinancialMetricDeltaBasis | null = fallbackBasis ?? null;
+
+  if (lower.includes('qoq') || lower.includes('t/t') || lower.includes('trim')) {
+    basis = 'qoq';
+  } else if (lower.includes('yoy') || lower.includes('a/a') || lower.includes('ano')) {
+    basis = 'yoy';
+  } else if (lower.includes('p.p') || lower.includes('pp') || lower.includes('pontos')) {
+    basis = 'pp';
+  }
+
+  const numericMatch = text.match(/-?[\d]+[\d.,]*/);
+  let numericValue: number | null = null;
+
+  if (numericMatch) {
+    const normalized = normalizeNumericString(numericMatch[0]);
+    const parsed = parseFloat(normalized);
+    if (!Number.isNaN(parsed)) {
+      numericValue = parsed;
+      if (!normalized.startsWith('-') && (/queda|negativo/.test(lower) || /\(.*\)/.test(text))) {
+        numericValue = -Math.abs(parsed);
+      }
+    }
+  }
+
+  const unit = basis === 'pp' ? 'p.p.' : '%';
+  const parseConfidence: ParseConfidence = numericValue === null ? 'low' : 'medium';
+
+  return {
+    value: numericValue,
+    unit,
+    basis,
+    parseConfidence,
+    evidence: text
+  };
+};
+
+const inferDefaultUnitFromLabel = (label: string): string | undefined => {
+  const lower = label.toLowerCase();
+  if (lower.includes('%') || lower.includes('margem') || lower.includes('taxa') || lower.includes('roe') || lower.includes('roa')) {
+    return '%';
+  }
+
+  if (lower.includes('preço') || lower.includes('ticket') || lower.includes('receita') || lower.includes('lucro') || lower.includes('ebitda')) {
+    return 'R$ mi';
+  }
+
+  return undefined;
+};
+
+const buildDynamicMetricsFromPDF = (dadosPDF: DadosExtraidosPDF): FinancialMetricDynamicEntry[] => {
+  const entries: FinancialMetricDynamicEntry[] = [];
+  const slugs = new Set<string>();
+
+  const ensureUniqueSlug = (text: string, fallbackLabel?: string) => {
+    const baseSlug = slugifyMetric(text) || (fallbackLabel ? slugifyMetric(fallbackLabel) : '') || 'metrica';
+    let slug = baseSlug || 'metrica';
+    let counter = 2;
+
+    while (slugs.has(slug) || !slug) {
+      slug = `${baseSlug || 'metrica'}-${counter++}`;
+    }
+
+    slugs.add(slug);
+    return slug;
+  };
+
+  const addEntry = (config: {
+    label: string;
+    value: number | string | null | undefined;
+    defaultUnit?: string;
+    slug?: string;
+    deltaRaw?: number | string | null | undefined;
+    deltaBasis?: FinancialMetricDeltaBasis;
+    deltaUnit?: string;
+    evidencePrefix?: string;
+    fallbackEvidence?: string;
+  }) => {
+    const slug = ensureUniqueSlug(config.slug ?? config.label, config.label);
+    const parsedValue = parseValueWithUnit(config.value, { defaultUnit: config.defaultUnit });
+
+    let evidence = config.fallbackEvidence ?? parsedValue.evidence ?? (typeof config.value === 'string' ? config.value : parsedValue.formattedValue ?? null);
+    let parseConfidence = parsedValue.parseConfidence;
+    let deltaValue: number | null = null;
+    let deltaUnit: string | null = null;
+    let deltaBasis: FinancialMetricDeltaBasis | null = null;
+
+    if (config.deltaRaw !== undefined) {
+      const parsedDelta = parseVariationString(config.deltaRaw, config.deltaBasis);
+      if (parsedDelta.value !== null) {
+        deltaValue = parsedDelta.value;
+      }
+      deltaUnit = config.deltaUnit || parsedDelta.unit || (parsedDelta.basis === 'pp' ? 'p.p.' : '%');
+      deltaBasis = parsedDelta.basis ?? config.deltaBasis ?? null;
+
+      const prefix = config.evidencePrefix ? `${config.evidencePrefix}: ` : '';
+      if (parsedDelta.evidence) {
+        evidence = evidence ? `${evidence} | ${prefix}${parsedDelta.evidence}` : `${prefix}${parsedDelta.evidence}`;
+      }
+
+      parseConfidence = combineConfidence(parseConfidence, parsedDelta.parseConfidence);
+    }
+
+    const entry: FinancialMetricDynamicEntry = {
+      id: slug,
+      slug,
+      label: config.label,
+      value: parsedValue.value,
+      unit: parsedValue.unit,
+      formattedValue: parsedValue.formattedValue,
+      deltaValue,
+      deltaUnit,
+      deltaBasis,
+      parseConfidence,
+      evidence: evidence ?? null
+    };
+
+    entries.push(entry);
+    return entry;
+  };
+
+  const dadosFinanceiros = dadosPDF.dadosFinanceiros;
+  if (!dadosFinanceiros) {
+    return entries;
+  }
+
+  const metricasPrincipais: Array<{
+    chave: keyof NonNullable<DadosExtraidosPDF['dadosFinanceiros']>;
+    label: string;
+    defaultUnit?: string;
+    deltaUnit?: string;
+    deltaBasis?: FinancialMetricDeltaBasis;
+    margemChave?: string;
+    margemLabel?: string;
+    margemUnit?: string;
+    deltaQoQUnit?: string;
+  }> = [
+    { chave: 'receita', label: 'Receita Líquida', defaultUnit: 'R$ mi', deltaUnit: '%', deltaBasis: 'yoy', deltaQoQUnit: '%' },
+    { chave: 'ebitda', label: 'EBITDA', defaultUnit: 'R$ mi', deltaUnit: '%', deltaBasis: 'yoy', margemChave: 'margem', margemLabel: 'Margem EBITDA', margemUnit: '%', deltaQoQUnit: '%' },
+    { chave: 'lucroLiquido', label: 'Lucro Líquido', defaultUnit: 'R$ mi', deltaUnit: '%', deltaBasis: 'yoy', margemChave: 'margem', margemLabel: 'Margem Líquida', margemUnit: '%', deltaQoQUnit: '%' },
+    { chave: 'roe', label: 'ROE', defaultUnit: '%', deltaUnit: 'p.p.', deltaBasis: 'pp' },
+    { chave: 'roa', label: 'ROA', defaultUnit: '%', deltaUnit: 'p.p.', deltaBasis: 'pp' },
+    { chave: 'endividamento', label: 'Endividamento', defaultUnit: '%', deltaUnit: 'p.p.', deltaBasis: 'pp' }
+  ];
+
+  metricasPrincipais.forEach(config => {
+    const metrica = dadosFinanceiros[config.chave] as any;
+    if (!metrica) {
+      return;
+    }
+
+    const evidencias: string[] = [];
+    if (metrica.valor !== undefined && metrica.valor !== null) {
+      if (typeof metrica.valor === 'number') {
+        evidencias.push(`Valor: ${formatValueWithUnit(metrica.valor, config.defaultUnit)}`);
+      } else {
+        evidencias.push(`Valor: ${metrica.valor}`);
+      }
+    }
+
+    const entradaPrincipal = addEntry({
+      label: config.label,
+      value: metrica.valor,
+      defaultUnit: config.defaultUnit,
+      deltaRaw: metrica.variacaoAA !== undefined ? metrica.variacaoAA : undefined,
+      deltaBasis: config.deltaBasis,
+      deltaUnit: config.deltaUnit,
+      evidencePrefix: 'YoY',
+      fallbackEvidence: evidencias.length > 0 ? evidencias.join(' | ') : undefined
+    });
+
+    if (metrica?.variacaoTT !== undefined && metrica.variacaoTT !== null) {
+      addEntry({
+        label: `${config.label} - Variação QoQ`,
+        value: metrica.valor,
+        defaultUnit: config.defaultUnit,
+        slug: `${entradaPrincipal.slug}-qoq`,
+        deltaRaw: metrica.variacaoTT,
+        deltaBasis: 'qoq',
+        deltaUnit: config.deltaQoQUnit ?? '%',
+        evidencePrefix: 'QoQ',
+        fallbackEvidence: evidencias.length > 0 ? evidencias.join(' | ') : undefined
+      });
+    }
+
+    if (config.margemChave && metrica[config.margemChave] !== undefined && metrica[config.margemChave] !== null) {
+      const margemValor = metrica[config.margemChave];
+      addEntry({
+        label: config.margemLabel ?? `${config.label} - Margem`,
+        value: margemValor,
+        defaultUnit: config.margemUnit ?? '%',
+        fallbackEvidence: typeof margemValor === 'number'
+          ? `Margem: ${formatValueWithUnit(margemValor, config.margemUnit ?? '%')}`
+          : `Margem: ${margemValor}`
+      });
+    }
+  });
+
+  if (Array.isArray(dadosFinanceiros.outrasMetricas)) {
+    dadosFinanceiros.outrasMetricas.forEach((metrica, index) => {
+      const label = metrica.nome?.trim() || `Métrica Adicional ${index + 1}`;
+      const evidencias: string[] = [];
+      if (metrica.valor) {
+        evidencias.push(`Valor: ${metrica.valor}`);
+      }
+      if (metrica.variacao) {
+        evidencias.push(`Variação: ${metrica.variacao}`);
+      }
+
+      addEntry({
+        label,
+        value: metrica.valor ?? null,
+        defaultUnit: inferDefaultUnitFromLabel(label),
+        deltaRaw: metrica.variacao ?? undefined,
+        fallbackEvidence: evidencias.length > 0 ? evidencias.join(' | ') : undefined
+      });
+    });
+  }
+
+  return entries;
 };
 
 // ============================================================================
@@ -1028,6 +1545,7 @@ const CriarAnaliseForm = memo(({ onSave, analiseEditando }: CriarAnaliseFormProp
       titulo: '',
       analiseCompleta: '',
       metricas: {},
+      otherMetrics: [],
       pontosFavoraveis: '',
       pontosAtencao: '',
       recomendacao: 'MANTER',
@@ -1071,7 +1589,10 @@ const CriarAnaliseForm = memo(({ onSave, analiseEditando }: CriarAnaliseFormProp
 
   useEffect(() => {
     if (analiseEditando) {
-      setAnalise({ ...analiseEditando });
+      setAnalise({
+        ...analiseEditando,
+        otherMetrics: analiseEditando.otherMetrics ?? []
+      });
     }
   }, [analiseEditando]);
 
@@ -1093,7 +1614,9 @@ const CriarAnaliseForm = memo(({ onSave, analiseEditando }: CriarAnaliseFormProp
   // CORRIGIDO: Mapeamento correto dos campos do PDF para as métricas
   const handleImportarDadosPDF = useCallback((dadosPDF: DadosExtraidosPDF) => {
     console.log('📊 Importando relatório completo do PDF:', dadosPDF);
-    
+
+    const dynamicMetrics = buildDynamicMetricsFromPDF(dadosPDF);
+
     setAnalise(prev => ({
       ...prev,
       empresa: dadosPDF.empresa || prev.empresa,
@@ -1134,6 +1657,7 @@ nota: dadosPDF.relatorioGerado?.nota || prev.nota,
           variacaoYoY: dadosPDF.dadosFinanceiros.roe.variacaoAA // ✅ CORRIGIDO
         } : prev.metricas.roe
       },
+      otherMetrics: dynamicMetrics,
       dadosExtraidos: dadosPDF,
       fonteDados: 'pdf',
       dataProcessamentoPDF: new Date().toISOString()
@@ -1174,6 +1698,7 @@ nota: dadosPDF.relatorioGerado?.nota || prev.nota,
           titulo: '',
           analiseCompleta: '',
           metricas: {},
+          otherMetrics: [],
           pontosFavoraveis: '',
           pontosAtencao: '',
           recomendacao: 'MANTER',
