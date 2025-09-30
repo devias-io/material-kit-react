@@ -28,6 +28,11 @@ interface DadosExtraidosPDF {
   trimestre?: string;
   dataReferencia?: string;
 
+  metricas?: MetricExtractionItem[];
+  metricasExtraidas?: MetricExtractionItem[];
+  metricasMap?: Record<string, MetricExtractionItem>;
+  metricasNormalizadas?: NormalizedMetricExtraction[];
+
   dadosFinanceiros?: {
     lucroLiquido?: { valor: number; variacaoAA?: number; variacaoTT?: number; };
     receita?: { valor: number; variacaoAA?: number; variacaoTT?: number; };
@@ -57,7 +62,25 @@ interface DadosExtraidosPDF {
 }
 
 type ParseConfidence = 'high' | 'medium' | 'low';
-type FinancialMetricDeltaBasis = 'yoy' | 'qoq' | 'pp';
+type FinancialMetricDeltaBasis = 'yoy' | 'qoq' | 'pp' | 'abs';
+
+interface MetricExtractionItem {
+  raw_label: string;
+  normalized_label: string;
+  slug: string;
+  value: string | number | null;
+  unit: string | null;
+  delta_value: string | number | null;
+  delta_unit: string | null;
+  delta_basis: FinancialMetricDeltaBasis | null;
+  value_num: number | null;
+  parse_confidence: ParseConfidence;
+  evidence: string | null;
+}
+
+interface NormalizedMetricExtraction extends MetricExtractionItem {
+  original?: MetricExtractionItem;
+}
 
 interface FinancialMetricDynamicEntry {
   id: string;
@@ -741,6 +764,420 @@ const combineConfidence = (...levels: Array<ParseConfidence | undefined>): Parse
   return 'high';
 };
 
+const normalizeConfidenceLevel = (value: any): ParseConfidence => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (value >= 0.75) return 'high';
+    if (value >= 0.4) return 'medium';
+    return 'low';
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (['alto', 'alta', 'high', 'elevado', 'seguro'].includes(normalized)) return 'high';
+    if (['medio', 'médio', 'medium', 'moderado'].includes(normalized)) return 'medium';
+    if (['baixo', 'baixa', 'low', 'incerto'].includes(normalized)) return 'low';
+  }
+
+  return 'medium';
+};
+
+const normalizeText = (value: string | null | undefined): string => {
+  if (!value) return '';
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9%$]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const normalizeDeltaBasisValue = (value: any): FinancialMetricDeltaBasis | null => {
+  if (!value && value !== 0) return null;
+  const normalized = normalizeText(String(value));
+
+  if (!normalized) return null;
+  if (/(yoy|ano|a\/a)/.test(normalized)) return 'yoy';
+  if (/(qoq|t\/t|trim|sequencial)/.test(normalized)) return 'qoq';
+  if (/(pp|ponto)/.test(normalized)) return 'pp';
+  if (/(abs|absol)/.test(normalized)) return 'abs';
+  return null;
+};
+
+const normalizeUnitString = (unit: string | null | undefined): string | null => {
+  if (unit === null || unit === undefined) return null;
+  const trimmed = unit.toString().replace(/\s+/g, ' ').trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const ensureUniqueMetricSlug = (candidate: string, fallback: string, usedSlugs: Set<string>): string => {
+  const baseCandidate = slugifyMetric(candidate) || slugifyMetric(fallback) || 'metrica';
+  let slug = baseCandidate || 'metrica';
+  let counter = 2;
+
+  while (usedSlugs.has(slug) || !slug) {
+    slug = `${baseCandidate || 'metrica'}-${counter++}`;
+  }
+
+  usedSlugs.add(slug);
+  return slug;
+};
+
+type CanonicalMetricKey = 'receita' | 'ebitda' | 'lucroLiquido' | 'roe' | 'roa' | 'endividamento';
+
+interface MetricNormalizationRule {
+  canonicalSlug: string;
+  canonicalLabel: string;
+  synonyms: string[];
+  canonicalKey?: CanonicalMetricKey;
+  attachesMarginTo?: CanonicalMetricKey;
+  defaultUnit?: string;
+}
+
+const METRIC_NORMALIZATION_RULES: MetricNormalizationRule[] = [
+  {
+    canonicalSlug: 'receita-liquida',
+    canonicalLabel: 'Receita Líquida',
+    canonicalKey: 'receita',
+    defaultUnit: 'R$ mi',
+    synonyms: [
+      'receita líquida',
+      'receita liquida',
+      'receita operacional líquida',
+      'receita operacional liquida',
+      'receita consolidada',
+      'receita total',
+      'net revenue',
+      'revenue',
+      'sales revenue'
+    ]
+  },
+  {
+    canonicalSlug: 'ebitda-ajustado',
+    canonicalLabel: 'EBITDA Ajustado',
+    canonicalKey: 'ebitda',
+    defaultUnit: 'R$ mi',
+    synonyms: [
+      'ebitda ajustado',
+      'ebitda',
+      'ebitda recorrente',
+      'ebitda consolidado',
+      'ebitda total',
+      'ajusted ebitda'
+    ]
+  },
+  {
+    canonicalSlug: 'lucro-liquido',
+    canonicalLabel: 'Lucro Líquido',
+    canonicalKey: 'lucroLiquido',
+    defaultUnit: 'R$ mi',
+    synonyms: [
+      'lucro líquido',
+      'lucro liquido',
+      'lucro líquido ajustado',
+      'lucro liquido ajustado',
+      'lucro líquido consolidado',
+      'lucro atribuível',
+      'net income',
+      'net profit'
+    ]
+  },
+  {
+    canonicalSlug: 'roe',
+    canonicalLabel: 'ROE',
+    canonicalKey: 'roe',
+    defaultUnit: '%',
+    synonyms: [
+      'roe',
+      'return on equity',
+      'retorno sobre patrimônio líquido',
+      'retorno sobre patrimonio liquido'
+    ]
+  },
+  {
+    canonicalSlug: 'roa',
+    canonicalLabel: 'ROA',
+    canonicalKey: 'roa',
+    defaultUnit: '%',
+    synonyms: [
+      'roa',
+      'return on assets',
+      'retorno sobre ativos'
+    ]
+  },
+  {
+    canonicalSlug: 'endividamento-liquido',
+    canonicalLabel: 'Endividamento Líquido',
+    canonicalKey: 'endividamento',
+    defaultUnit: '%',
+    synonyms: [
+      'endividamento',
+      'alavancagem',
+      'alavancagem líquida',
+      'alavancagem liquida',
+      'net debt to ebitda',
+      'dívida líquida/ebitda',
+      'divida liquida/ebitda'
+    ]
+  },
+  {
+    canonicalSlug: 'margem-ebitda',
+    canonicalLabel: 'Margem EBITDA',
+    attachesMarginTo: 'ebitda',
+    defaultUnit: '%',
+    synonyms: [
+      'margem ebitda',
+      'ebitda margin',
+      'margem operacional ebitda'
+    ]
+  },
+  {
+    canonicalSlug: 'margem-liquida',
+    canonicalLabel: 'Margem Líquida',
+    attachesMarginTo: 'lucroLiquido',
+    defaultUnit: '%',
+    synonyms: [
+      'margem líquida',
+      'margem liquida',
+      'net margin',
+      'margem de lucro líquida',
+      'margem de lucro liquida'
+    ]
+  }
+];
+
+const findMetricRule = (metric: MetricExtractionItem): MetricNormalizationRule | undefined => {
+  const normalizedCandidates = [
+    normalizeText(metric.normalized_label),
+    normalizeText(metric.raw_label),
+    normalizeText(metric.slug)
+  ].filter(Boolean);
+
+  for (const rule of METRIC_NORMALIZATION_RULES) {
+    const normalizedSynonyms = rule.synonyms.map(normalizeText);
+
+    if (normalizedCandidates.some(candidate => normalizedSynonyms.some(syn => candidate.includes(syn) || syn.includes(candidate)))) {
+      return rule;
+    }
+  }
+
+  return undefined;
+};
+
+const convertLegacyFinancialsToMetricItems = (dadosFinanceiros: NonNullable<DadosExtraidosPDF['dadosFinanceiros']>): MetricExtractionItem[] => {
+  const items: MetricExtractionItem[] = [];
+
+  const pushMetric = (
+    rawLabel: string,
+    normalizedLabel: string,
+    slug: string,
+    value: number,
+    unit: string,
+    deltaAA?: number | null,
+    deltaTT?: number | null
+  ) => {
+    items.push({
+      raw_label: rawLabel,
+      normalized_label: normalizedLabel,
+      slug,
+      value: `${unit} ${formatNumberPtBr(value)}`.trim(),
+      unit,
+      delta_value: deltaAA ?? null,
+      delta_unit: deltaAA !== null && deltaAA !== undefined ? '%' : null,
+      delta_basis: deltaAA !== null && deltaAA !== undefined ? 'yoy' : null,
+      value_num: value,
+      parse_confidence: 'medium',
+      evidence: null
+    });
+
+    if (deltaTT !== undefined && deltaTT !== null) {
+      items.push({
+        raw_label: `${rawLabel} QoQ`,
+        normalized_label: `${normalizedLabel} QoQ`,
+        slug: `${slug}-qoq`,
+        value: `${unit} ${formatNumberPtBr(value)}`.trim(),
+        unit,
+        delta_value: deltaTT,
+        delta_unit: '%',
+        delta_basis: 'qoq',
+        value_num: value,
+        parse_confidence: 'medium',
+        evidence: null
+      });
+    }
+  };
+
+  if (dadosFinanceiros.receita?.valor !== undefined) {
+    pushMetric(
+      'Receita Líquida',
+      'Receita Líquida',
+      'receita-liquida',
+      dadosFinanceiros.receita.valor,
+      'R$ mi',
+      dadosFinanceiros.receita.variacaoAA ?? null,
+      dadosFinanceiros.receita.variacaoTT ?? null
+    );
+  }
+
+  if (dadosFinanceiros.ebitda?.valor !== undefined) {
+    pushMetric(
+      'EBITDA',
+      'EBITDA',
+      'ebitda',
+      dadosFinanceiros.ebitda.valor,
+      'R$ mi',
+      dadosFinanceiros.ebitda.variacaoAA ?? null,
+      dadosFinanceiros.ebitda.variacaoTT ?? null
+    );
+
+    if (dadosFinanceiros.ebitda.margem !== undefined) {
+      items.push({
+        raw_label: 'Margem EBITDA',
+        normalized_label: 'Margem EBITDA',
+        slug: 'margem-ebitda',
+        value: `${formatNumberPtBr(dadosFinanceiros.ebitda.margem)} %`,
+        unit: '%',
+        delta_value: null,
+        delta_unit: null,
+        delta_basis: null,
+        value_num: dadosFinanceiros.ebitda.margem,
+        parse_confidence: 'medium',
+        evidence: null
+      });
+    }
+  }
+
+  if (dadosFinanceiros.lucroLiquido?.valor !== undefined) {
+    pushMetric(
+      'Lucro Líquido',
+      'Lucro Líquido',
+      'lucro-liquido',
+      dadosFinanceiros.lucroLiquido.valor,
+      'R$ mi',
+      dadosFinanceiros.lucroLiquido.variacaoAA ?? null,
+      dadosFinanceiros.lucroLiquido.variacaoTT ?? null
+    );
+
+    if (dadosFinanceiros.lucroLiquido.margem !== undefined) {
+      items.push({
+        raw_label: 'Margem Líquida',
+        normalized_label: 'Margem Líquida',
+        slug: 'margem-liquida',
+        value: `${formatNumberPtBr(dadosFinanceiros.lucroLiquido.margem)} %`,
+        unit: '%',
+        delta_value: null,
+        delta_unit: null,
+        delta_basis: null,
+        value_num: dadosFinanceiros.lucroLiquido.margem,
+        parse_confidence: 'medium',
+        evidence: null
+      });
+    }
+  }
+
+  if (dadosFinanceiros.roe?.valor !== undefined) {
+    items.push({
+      raw_label: 'ROE',
+      normalized_label: 'ROE',
+      slug: 'roe',
+      value: `${formatNumberPtBr(dadosFinanceiros.roe.valor)} %`,
+      unit: '%',
+      delta_value: dadosFinanceiros.roe.variacaoAA ?? null,
+      delta_unit: dadosFinanceiros.roe.variacaoAA !== undefined ? 'p.p.' : null,
+      delta_basis: dadosFinanceiros.roe.variacaoAA !== undefined ? 'pp' : null,
+      value_num: dadosFinanceiros.roe.valor,
+      parse_confidence: 'medium',
+      evidence: null
+    });
+  }
+
+  return items;
+};
+
+const normalizeMetricExtractionItems = (dadosPDF: DadosExtraidosPDF): NormalizedMetricExtraction[] => {
+  const usedSlugs = new Set<string>();
+  const normalizedItems: NormalizedMetricExtraction[] = [];
+
+  const pushItem = (item: any) => {
+    if (!item || typeof item !== 'object') return;
+
+    const rawLabelSource = item.raw_label ?? item.nome ?? item.label ?? item.normalized_label ?? item.slug;
+    const rawLabel = typeof rawLabelSource === 'string' && rawLabelSource.trim()
+      ? rawLabelSource.trim()
+      : 'Métrica Identificada';
+
+    const normalizedLabelSource = item.normalized_label ?? item.label ?? rawLabel;
+    const normalizedLabel = typeof normalizedLabelSource === 'string' && normalizedLabelSource.trim()
+      ? normalizedLabelSource.trim()
+      : rawLabel;
+
+    const slugCandidate = typeof item.slug === 'string' && item.slug.trim()
+      ? item.slug.trim()
+      : normalizedLabel;
+
+    const slug = ensureUniqueMetricSlug(slugCandidate, normalizedLabel, usedSlugs);
+
+    let valueNum: number | null = null;
+    if (typeof item.value_num === 'number' && Number.isFinite(item.value_num)) {
+      valueNum = item.value_num;
+    } else if (typeof item.value_num === 'string') {
+      const normalized = normalizeNumericString(item.value_num);
+      const parsed = parseFloat(normalized);
+      valueNum = Number.isFinite(parsed) ? parsed : null;
+    } else if (typeof item.valueNum === 'number' && Number.isFinite(item.valueNum)) {
+      valueNum = item.valueNum;
+    } else if (typeof item.valor === 'number') {
+      valueNum = item.valor;
+    }
+
+    const unit = normalizeUnitString(item.unit ?? item.unidade ?? item.currency ?? null);
+    const deltaValue = item.delta_value ?? item.deltaValue ?? item.variacao ?? null;
+    const deltaUnit = normalizeUnitString(item.delta_unit ?? item.deltaUnit ?? null);
+    const deltaBasis = normalizeDeltaBasisValue(item.delta_basis ?? item.deltaBasis ?? null);
+
+    const normalized: NormalizedMetricExtraction = {
+      raw_label: rawLabel,
+      normalized_label: normalizedLabel,
+      slug,
+      value: item.value ?? item.valorFormatado ?? item.formattedValue ?? null,
+      unit: unit,
+      delta_value: deltaValue,
+      delta_unit: deltaUnit,
+      delta_basis: deltaBasis,
+      value_num: valueNum,
+      parse_confidence: normalizeConfidenceLevel(item.parse_confidence ?? item.parseConfidence ?? item.confidence ?? null),
+      evidence: item.evidence ? String(item.evidence) : typeof item.value === 'string' ? item.value : null,
+      original: item as MetricExtractionItem
+    };
+
+    normalizedItems.push(normalized);
+  };
+
+  const candidateArrays: Array<any[] | undefined> = [
+    dadosPDF.metricasNormalizadas as any,
+    dadosPDF.metricas as any,
+    dadosPDF.metricasExtraidas as any,
+    dadosPDF.metricasMap ? Object.values(dadosPDF.metricasMap) : undefined
+  ];
+
+  candidateArrays.forEach(list => {
+    if (Array.isArray(list)) {
+      list.forEach(pushItem);
+    }
+  });
+
+  if (normalizedItems.length === 0 && dadosPDF.dadosFinanceiros) {
+    convertLegacyFinancialsToMetricItems(dadosPDF.dadosFinanceiros).forEach(pushItem);
+  }
+
+  return normalizedItems;
+};
+
+const stripOriginalMetric = (item: NormalizedMetricExtraction): MetricExtractionItem => {
+  const { original, ...rest } = item;
+  return rest;
+};
+
 const normalizeNumericString = (value: string): string => {
   let cleaned = value.replace(/\s+/g, '');
   const hasParentheses = cleaned.includes('(') && cleaned.includes(')');
@@ -881,7 +1318,7 @@ const parseVariationString = (
 
   if (typeof rawVariation === 'number' && !Number.isNaN(rawVariation)) {
     const basis = fallbackBasis ?? 'yoy';
-    const unit = basis === 'pp' ? 'p.p.' : '%';
+    const unit = basis === 'pp' ? 'p.p.' : basis === 'abs' ? null : '%';
     return {
       value: rawVariation,
       unit,
@@ -911,6 +1348,8 @@ const parseVariationString = (
     basis = 'yoy';
   } else if (lower.includes('p.p') || lower.includes('pp') || lower.includes('pontos')) {
     basis = 'pp';
+  } else if (lower.includes('abs') || lower.includes('absol')) {
+    basis = 'abs';
   }
 
   const numericMatch = text.match(/-?[\d]+[\d.,]*/);
@@ -927,7 +1366,7 @@ const parseVariationString = (
     }
   }
 
-  const unit = basis === 'pp' ? 'p.p.' : '%';
+  const unit = basis === 'pp' ? 'p.p.' : basis === 'abs' ? null : '%';
   const parseConfidence: ParseConfidence = numericValue === null ? 'low' : 'medium';
 
   return {
@@ -952,176 +1391,318 @@ const inferDefaultUnitFromLabel = (label: string): string | undefined => {
   return undefined;
 };
 
-const buildDynamicMetricsFromPDF = (dadosPDF: DadosExtraidosPDF): FinancialMetricDynamicEntry[] => {
-  const entries: FinancialMetricDynamicEntry[] = [];
-  const slugs = new Set<string>();
-
-  const ensureUniqueSlug = (text: string, fallbackLabel?: string) => {
-    const baseSlug = slugifyMetric(text) || (fallbackLabel ? slugifyMetric(fallbackLabel) : '') || 'metrica';
-    let slug = baseSlug || 'metrica';
-    let counter = 2;
-
-    while (slugs.has(slug) || !slug) {
-      slug = `${baseSlug || 'metrica'}-${counter++}`;
-    }
-
-    slugs.add(slug);
-    return slug;
-  };
-
-  const addEntry = (config: {
-    label: string;
-    value: number | string | null | undefined;
-    defaultUnit?: string;
-    slug?: string;
-    deltaRaw?: number | string | null | undefined;
-    deltaBasis?: FinancialMetricDeltaBasis;
-    deltaUnit?: string;
-    evidencePrefix?: string;
-    fallbackEvidence?: string;
-  }) => {
-    const slug = ensureUniqueSlug(config.slug ?? config.label, config.label);
-    const parsedValue = parseValueWithUnit(config.value, { defaultUnit: config.defaultUnit });
-
-    let evidence = config.fallbackEvidence ?? parsedValue.evidence ?? (typeof config.value === 'string' ? config.value : parsedValue.formattedValue ?? null);
-    let parseConfidence = parsedValue.parseConfidence;
-    let deltaValue: number | null = null;
-    let deltaUnit: string | null = null;
-    let deltaBasis: FinancialMetricDeltaBasis | null = null;
-
-    if (config.deltaRaw !== undefined) {
-      const parsedDelta = parseVariationString(config.deltaRaw, config.deltaBasis);
-      if (parsedDelta.value !== null) {
-        deltaValue = parsedDelta.value;
-      }
-      deltaUnit = config.deltaUnit || parsedDelta.unit || (parsedDelta.basis === 'pp' ? 'p.p.' : '%');
-      deltaBasis = parsedDelta.basis ?? config.deltaBasis ?? null;
-
-      const prefix = config.evidencePrefix ? `${config.evidencePrefix}: ` : '';
-      if (parsedDelta.evidence) {
-        evidence = evidence ? `${evidence} | ${prefix}${parsedDelta.evidence}` : `${prefix}${parsedDelta.evidence}`;
-      }
-
-      parseConfidence = combineConfidence(parseConfidence, parsedDelta.parseConfidence);
-    }
-
-    const entry: FinancialMetricDynamicEntry = {
-      id: slug,
-      slug,
-      label: config.label,
-      value: parsedValue.value,
-      unit: parsedValue.unit,
-      formattedValue: parsedValue.formattedValue,
-      deltaValue,
-      deltaUnit,
-      deltaBasis,
-      parseConfidence,
-      evidence: evidence ?? null
+const resolveMetricValue = (
+  metric: NormalizedMetricExtraction,
+  rule?: MetricNormalizationRule
+): {
+  value: number | null;
+  unit: string | null;
+  formattedValue: string | null;
+  parseConfidence: ParseConfidence;
+  evidence: string | null;
+} => {
+  if (metric.value_num !== null && Number.isFinite(metric.value_num)) {
+    const unit = normalizeUnitString(metric.unit ?? rule?.defaultUnit ?? null);
+    const formattedValue = unit ? formatValueWithUnit(metric.value_num, unit) : formatNumberPtBr(metric.value_num);
+    return {
+      value: metric.value_num,
+      unit,
+      formattedValue,
+      parseConfidence: 'high',
+      evidence: metric.value ? String(metric.value) : formattedValue
     };
-
-    entries.push(entry);
-    return entry;
-  };
-
-  const dadosFinanceiros = dadosPDF.dadosFinanceiros;
-  if (!dadosFinanceiros) {
-    return entries;
   }
 
-  const metricasPrincipais: Array<{
-    chave: keyof NonNullable<DadosExtraidosPDF['dadosFinanceiros']>;
-    label: string;
-    defaultUnit?: string;
-    deltaUnit?: string;
-    deltaBasis?: FinancialMetricDeltaBasis;
-    margemChave?: string;
-    margemLabel?: string;
-    margemUnit?: string;
-    deltaQoQUnit?: string;
-  }> = [
-    { chave: 'receita', label: 'Receita Líquida', defaultUnit: 'R$ mi', deltaUnit: '%', deltaBasis: 'yoy', deltaQoQUnit: '%' },
-    { chave: 'ebitda', label: 'EBITDA', defaultUnit: 'R$ mi', deltaUnit: '%', deltaBasis: 'yoy', margemChave: 'margem', margemLabel: 'Margem EBITDA', margemUnit: '%', deltaQoQUnit: '%' },
-    { chave: 'lucroLiquido', label: 'Lucro Líquido', defaultUnit: 'R$ mi', deltaUnit: '%', deltaBasis: 'yoy', margemChave: 'margem', margemLabel: 'Margem Líquida', margemUnit: '%', deltaQoQUnit: '%' },
-    { chave: 'roe', label: 'ROE', defaultUnit: '%', deltaUnit: 'p.p.', deltaBasis: 'pp' },
-    { chave: 'roa', label: 'ROA', defaultUnit: '%', deltaUnit: 'p.p.', deltaBasis: 'pp' },
-    { chave: 'endividamento', label: 'Endividamento', defaultUnit: '%', deltaUnit: 'p.p.', deltaBasis: 'pp' }
-  ];
+  if (typeof metric.value === 'number' && Number.isFinite(metric.value)) {
+    const unit = normalizeUnitString(metric.unit ?? rule?.defaultUnit ?? null);
+    const formattedValue = unit ? formatValueWithUnit(metric.value, unit) : formatNumberPtBr(metric.value);
+    return {
+      value: metric.value,
+      unit,
+      formattedValue,
+      parseConfidence: 'high',
+      evidence: formattedValue
+    };
+  }
 
-  metricasPrincipais.forEach(config => {
-    const metrica = dadosFinanceiros[config.chave] as any;
-    if (!metrica) {
-      return;
+  const parsed = parseValueWithUnit(metric.value, { defaultUnit: rule?.defaultUnit });
+  return {
+    ...parsed,
+    evidence: parsed.evidence ?? (typeof metric.value === 'string' ? metric.value : null)
+  };
+};
+
+const resolveMetricDelta = (
+  metric: NormalizedMetricExtraction
+): {
+  value: number | null;
+  unit: string | null;
+  basis: FinancialMetricDeltaBasis | null;
+  parseConfidence: ParseConfidence;
+  evidence: string | null;
+} => {
+  const providedBasis = metric.delta_basis ?? null;
+  const fallbackBasis = providedBasis ?? undefined;
+  const rawDelta = metric.delta_value;
+
+  if (typeof rawDelta === 'number' && Number.isFinite(rawDelta)) {
+    const unit = metric.delta_unit ?? (providedBasis === 'pp' ? 'p.p.' : providedBasis === 'abs' ? null : '%');
+    return {
+      value: rawDelta,
+      unit,
+      basis: providedBasis ?? null,
+      parseConfidence: 'high',
+      evidence: typeof metric.delta_value === 'string' ? metric.delta_value : null
+    };
+  }
+
+  const parsed = parseVariationString(rawDelta, fallbackBasis);
+  const basis = parsed.basis ?? providedBasis ?? null;
+  const unit = metric.delta_unit ?? parsed.unit ?? (basis === 'pp' ? 'p.p.' : basis === 'abs' ? null : '%');
+
+  return {
+    value: parsed.value,
+    unit,
+    basis,
+    parseConfidence: parsed.parseConfidence,
+    evidence: parsed.evidence ?? (typeof rawDelta === 'string' ? rawDelta : null)
+  };
+};
+
+const buildMetricEvidence = (
+  metric: NormalizedMetricExtraction,
+  valueResolution: ReturnType<typeof resolveMetricValue>,
+  deltaResolution: ReturnType<typeof resolveMetricDelta>
+): string | null => {
+  const pieces = [
+    metric.evidence,
+    typeof metric.value === 'string' ? metric.value : null,
+    valueResolution.evidence,
+    deltaResolution.evidence
+  ].filter((value, index, array) => value && array.indexOf(value) === index) as string[];
+
+  return pieces.length > 0 ? pieces.join(' | ') : null;
+};
+
+const convertCurrencyToMillions = (value: number, unit: string | null): number => {
+  if (!Number.isFinite(value)) {
+    return value;
+  }
+
+  const normalizedUnit = unit ? unit.toLowerCase() : '';
+
+  if (normalizedUnit.includes('bi')) {
+    return value * 1000;
+  }
+
+  if (normalizedUnit.includes('milhões') || normalizedUnit.includes('milhao') || normalizedUnit.includes('mi')) {
+    return value;
+  }
+
+  if (normalizedUnit.includes('mil ') && !normalizedUnit.includes('milhão') && !normalizedUnit.includes('milhao')) {
+    return value / 1000;
+  }
+
+  if (normalizedUnit.includes('r$') || normalizedUnit.includes('$')) {
+    if (Math.abs(value) >= 1_000_000) {
+      return value / 1_000_000;
     }
+    if (Math.abs(value) >= 1_000) {
+      return value / 1_000;
+    }
+    return value;
+  }
 
-    const evidencias: string[] = [];
-    if (metrica.valor !== undefined && metrica.valor !== null) {
-      if (typeof metrica.valor === 'number') {
-        evidencias.push(`Valor: ${formatValueWithUnit(metrica.valor, config.defaultUnit)}`);
-      } else {
-        evidencias.push(`Valor: ${metrica.valor}`);
+  if (!normalizedUnit && Math.abs(value) >= 1_000_000) {
+    return value / 1_000_000;
+  }
+
+  return value;
+};
+
+const inferLegacyUnitForKey = (key: CanonicalMetricKey): string => {
+  if (key === 'receita' || key === 'ebitda' || key === 'lucroLiquido') {
+    return 'milhões';
+  }
+
+  if (key === 'roe' || key === 'roa' || key === 'endividamento') {
+    return '%';
+  }
+
+  return '';
+};
+
+const convertValueForCanonical = (
+  key: CanonicalMetricKey,
+  value: number | null,
+  unit: string | null
+): { valor: number | null; unidade: string | null } => {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return { valor: null, unidade: unit };
+  }
+
+  if (key === 'receita' || key === 'ebitda' || key === 'lucroLiquido') {
+    return {
+      valor: convertCurrencyToMillions(value, unit),
+      unidade: 'milhões'
+    };
+  }
+
+  if (key === 'endividamento') {
+    if (unit && unit.toLowerCase().includes('x')) {
+      return { valor: value, unidade: 'x' };
+    }
+    return { valor: value, unidade: '%' };
+  }
+
+  if (key === 'roe' || key === 'roa') {
+    return { valor: value, unidade: '%' };
+  }
+
+  return { valor: value, unidade: unit };
+};
+
+const buildMetricCollectionsFromPDF = (dadosPDF: DadosExtraidosPDF): {
+  dynamicEntries: FinancialMetricDynamicEntry[];
+  canonicalMetrics: Partial<Record<CanonicalMetricKey, MetricaTrimestreData>>;
+  normalizedMetrics: NormalizedMetricExtraction[];
+  metricMap: Record<string, NormalizedMetricExtraction>;
+} => {
+  const normalizedMetrics = normalizeMetricExtractionItems(dadosPDF);
+  const dynamicEntries: FinancialMetricDynamicEntry[] = [];
+  const metricMap: Record<string, NormalizedMetricExtraction> = {};
+  const usedDynamicSlugs = new Set<string>();
+  const canonicalAccumulator: Partial<Record<CanonicalMetricKey, (Partial<MetricaTrimestreData> & { unidade?: string })>> = {};
+  const pendingMargins: Partial<Record<CanonicalMetricKey, number>> = {};
+
+  const ensureAccumulator = (key: CanonicalMetricKey) => {
+    if (!canonicalAccumulator[key]) {
+      canonicalAccumulator[key] = {};
+    }
+    return canonicalAccumulator[key]!;
+  };
+
+  normalizedMetrics.forEach(metric => {
+    metricMap[metric.slug] = metric;
+    const rule = findMetricRule(metric);
+    const label = rule?.canonicalLabel ?? metric.normalized_label ?? metric.raw_label;
+    const slug = ensureUniqueMetricSlug(metric.slug, label, usedDynamicSlugs);
+    const valueResolution = resolveMetricValue(metric, rule);
+    const deltaResolution = resolveMetricDelta(metric);
+    const parseConfidence = combineConfidence(metric.parse_confidence, valueResolution.parseConfidence, deltaResolution.parseConfidence);
+    const evidence = buildMetricEvidence(metric, valueResolution, deltaResolution);
+
+    dynamicEntries.push({
+      id: slug,
+      slug,
+      label,
+      value: valueResolution.value,
+      unit: valueResolution.unit,
+      formattedValue: valueResolution.formattedValue,
+      deltaValue: deltaResolution.value,
+      deltaUnit: deltaResolution.unit,
+      deltaBasis: deltaResolution.basis,
+      parseConfidence,
+      evidence
+    });
+
+    if (rule?.canonicalKey) {
+      const { valor, unidade } = convertValueForCanonical(rule.canonicalKey, valueResolution.value, valueResolution.unit);
+      if (valor !== null && valor !== undefined) {
+        const accumulator = ensureAccumulator(rule.canonicalKey);
+        accumulator.valor = valor;
+        accumulator.unidade = unidade ?? accumulator.unidade ?? inferLegacyUnitForKey(rule.canonicalKey);
+      }
+
+      if (deltaResolution.value !== null && deltaResolution.value !== undefined) {
+        const accumulator = ensureAccumulator(rule.canonicalKey);
+        if (deltaResolution.basis === 'qoq') {
+          accumulator.variacao = deltaResolution.value;
+        } else {
+          accumulator.variacaoYoY = deltaResolution.value;
+        }
       }
     }
 
-    const entradaPrincipal = addEntry({
-      label: config.label,
-      value: metrica.valor,
-      defaultUnit: config.defaultUnit,
-      deltaRaw: metrica.variacaoAA !== undefined ? metrica.variacaoAA : undefined,
-      deltaBasis: config.deltaBasis,
-      deltaUnit: config.deltaUnit,
-      evidencePrefix: 'YoY',
-      fallbackEvidence: evidencias.length > 0 ? evidencias.join(' | ') : undefined
-    });
-
-    if (metrica?.variacaoTT !== undefined && metrica.variacaoTT !== null) {
-      addEntry({
-        label: `${config.label} - Variação QoQ`,
-        value: metrica.valor,
-        defaultUnit: config.defaultUnit,
-        slug: `${entradaPrincipal.slug}-qoq`,
-        deltaRaw: metrica.variacaoTT,
-        deltaBasis: 'qoq',
-        deltaUnit: config.deltaQoQUnit ?? '%',
-        evidencePrefix: 'QoQ',
-        fallbackEvidence: evidencias.length > 0 ? evidencias.join(' | ') : undefined
-      });
-    }
-
-    if (config.margemChave && metrica[config.margemChave] !== undefined && metrica[config.margemChave] !== null) {
-      const margemValor = metrica[config.margemChave];
-      addEntry({
-        label: config.margemLabel ?? `${config.label} - Margem`,
-        value: margemValor,
-        defaultUnit: config.margemUnit ?? '%',
-        fallbackEvidence: typeof margemValor === 'number'
-          ? `Margem: ${formatValueWithUnit(margemValor, config.margemUnit ?? '%')}`
-          : `Margem: ${margemValor}`
-      });
+    if (rule?.attachesMarginTo && valueResolution.value !== null && valueResolution.value !== undefined) {
+      pendingMargins[rule.attachesMarginTo] = valueResolution.value;
     }
   });
 
-  if (Array.isArray(dadosFinanceiros.outrasMetricas)) {
-    dadosFinanceiros.outrasMetricas.forEach((metrica, index) => {
-      const label = metrica.nome?.trim() || `Métrica Adicional ${index + 1}`;
-      const evidencias: string[] = [];
-      if (metrica.valor) {
-        evidencias.push(`Valor: ${metrica.valor}`);
-      }
-      if (metrica.variacao) {
-        evidencias.push(`Variação: ${metrica.variacao}`);
-      }
+  Object.entries(pendingMargins).forEach(([key, margin]) => {
+    if (margin === undefined || margin === null) return;
+    const canonicalKey = key as CanonicalMetricKey;
+    const accumulator = canonicalAccumulator[canonicalKey];
+    if (accumulator) {
+      accumulator.margem = margin;
+    }
+  });
 
-      addEntry({
-        label,
-        value: metrica.valor ?? null,
-        defaultUnit: inferDefaultUnitFromLabel(label),
-        deltaRaw: metrica.variacao ?? undefined,
-        fallbackEvidence: evidencias.length > 0 ? evidencias.join(' | ') : undefined
-      });
-    });
-  }
+  const canonicalMetrics: Partial<Record<CanonicalMetricKey, MetricaTrimestreData>> = {};
+  (Object.keys(canonicalAccumulator) as CanonicalMetricKey[]).forEach(key => {
+    const accumulator = canonicalAccumulator[key];
+    if (!accumulator) return;
+    if (accumulator.valor === undefined || accumulator.valor === null) return;
 
-  return entries;
+    canonicalMetrics[key] = {
+      valor: accumulator.valor,
+      unidade: accumulator.unidade ?? inferLegacyUnitForKey(key),
+      variacao: accumulator.variacao,
+      variacaoYoY: accumulator.variacaoYoY,
+      margem: accumulator.margem
+    };
+  });
+
+  return {
+    dynamicEntries,
+    canonicalMetrics,
+    normalizedMetrics,
+    metricMap
+  };
+};
+
+const buildLegacyFinancialsFromCanonical = (
+  canonical: Partial<Record<CanonicalMetricKey, MetricaTrimestreData>>,
+  original?: DadosExtraidosPDF['dadosFinanceiros']
+): DadosExtraidosPDF['dadosFinanceiros'] | undefined => {
+  const legacy: DadosExtraidosPDF['dadosFinanceiros'] = original ? { ...original } : {};
+
+  const applyMetric = (
+    key: CanonicalMetricKey,
+    target: keyof NonNullable<DadosExtraidosPDF['dadosFinanceiros']>
+  ) => {
+    const canonicalMetric = canonical[key];
+    if (!canonicalMetric) return;
+
+    const current = (legacy?.[target] as any) ?? {};
+
+    if (canonicalMetric.valor !== undefined) {
+      current.valor = canonicalMetric.valor;
+    }
+
+    if (canonicalMetric.variacao !== undefined) {
+      current.variacaoTT = canonicalMetric.variacao;
+    }
+
+    if (canonicalMetric.variacaoYoY !== undefined) {
+      current.variacaoAA = canonicalMetric.variacaoYoY;
+    }
+
+    if (canonicalMetric.margem !== undefined) {
+      current.margem = canonicalMetric.margem;
+    }
+
+    (legacy as any)[target] = current;
+  };
+
+  applyMetric('receita', 'receita');
+  applyMetric('ebitda', 'ebitda');
+  applyMetric('lucroLiquido', 'lucroLiquido');
+  applyMetric('roe', 'roe');
+  applyMetric('roa', 'roa');
+  applyMetric('endividamento', 'endividamento');
+
+  return Object.keys(legacy ?? {}).length > 0 ? legacy : original;
 };
 
 // ============================================================================
@@ -1218,35 +1799,44 @@ const usePDFProcessor = () => {
     const trimestreExtraido = extrairTrimestre(textoPDF);
     const dataExtraida = extrairData(textoPDF);
 
+    const dadosFinanceirosFallback = {
+      receita: {
+        valor: valoresExtraidos.receita || 1000,
+        variacaoAA: 5.2,
+        variacaoTT: 1.8
+      },
+      ebitda: {
+        valor: valoresExtraidos.ebitda || 300,
+        variacaoAA: 3.1,
+        variacaoTT: -1.2,
+        margem: valoresExtraidos.ebitda && valoresExtraidos.receita ?
+          ((valoresExtraidos.ebitda / valoresExtraidos.receita) * 100) : 30.0
+      },
+      lucroLiquido: {
+        valor: valoresExtraidos.lucroLiquido || 200,
+        variacaoAA: -2.1,
+        variacaoTT: 0.5
+      },
+      roe: {
+        valor: 15.5,
+        variacaoAA: 1.2
+      }
+    } satisfies NonNullable<DadosExtraidosPDF['dadosFinanceiros']>;
+
+    const metricasFallback = convertLegacyFinancialsToMetricItems(dadosFinanceirosFallback);
+    const metricasMapFallback = Object.fromEntries(metricasFallback.map(item => [item.slug, item]));
+
     return {
       empresa: empresa,
       trimestre: trimestreExtraido || "3T24",
       dataReferencia: dataExtraida || "30/09/2024",
-      
-      dadosFinanceiros: {
-        receita: { 
-          valor: valoresExtraidos.receita || 1000,
-          variacaoAA: 5.2,
-          variacaoTT: 1.8 
-        },
-        ebitda: { 
-          valor: valoresExtraidos.ebitda || 300,
-          variacaoAA: 3.1,
-          variacaoTT: -1.2,
-          margem: valoresExtraidos.ebitda && valoresExtraidos.receita ? 
-            ((valoresExtraidos.ebitda / valoresExtraidos.receita) * 100) : 30.0
-        },
-        lucroLiquido: { 
-          valor: valoresExtraidos.lucroLiquido || 200,
-          variacaoAA: -2.1,
-          variacaoTT: 0.5 
-        },
-        roe: {
-          valor: 15.5,
-          variacaoAA: 1.2
-        }
-      },
-      
+
+      dadosFinanceiros: dadosFinanceirosFallback,
+      metricas: metricasFallback,
+      metricasExtraidas: metricasFallback,
+      metricasNormalizadas: metricasFallback.map(item => ({ ...item } as NormalizedMetricExtraction)),
+      metricasMap: metricasMapFallback,
+
       relatorioGerado: {
         titulo: `${ticker} - ${trimestreExtraido || '3T24'}: Análise baseada em processamento local aprimorado`,
         destaques: [
@@ -1615,54 +2205,65 @@ const CriarAnaliseForm = memo(({ onSave, analiseEditando }: CriarAnaliseFormProp
   const handleImportarDadosPDF = useCallback((dadosPDF: DadosExtraidosPDF) => {
     console.log('📊 Importando relatório completo do PDF:', dadosPDF);
 
-    const dynamicMetrics = buildDynamicMetricsFromPDF(dadosPDF);
+    const { dynamicEntries, canonicalMetrics, normalizedMetrics, metricMap } = buildMetricCollectionsFromPDF(dadosPDF);
+    const legacyFinancials = buildLegacyFinancialsFromCanonical(canonicalMetrics, dadosPDF.dadosFinanceiros);
+    const plainMetrics = normalizedMetrics.map(stripOriginalMetric);
+    const plainMetricMap = Object.fromEntries(
+      Object.entries(metricMap).map(([slug, item]) => [slug, stripOriginalMetric(item)])
+    );
 
-    setAnalise(prev => ({
-      ...prev,
-      empresa: dadosPDF.empresa || prev.empresa,
-      trimestre: dadosPDF.trimestre || prev.trimestre,
-      titulo: dadosPDF.relatorioGerado?.titulo || prev.titulo,
-      analiseCompleta: dadosPDF.relatorioGerado ? 
-        gerarAnaliseCompleta(dadosPDF.relatorioGerado) : prev.analiseCompleta,
-      pontosFavoraveis: dadosPDF.relatorioGerado?.destaques ? 
-        dadosPDF.relatorioGerado.destaques.map(d => `• ${d}`).join('\n') : prev.pontosFavoraveis,
-      pontosAtencao: dadosPDF.relatorioGerado?.pontosAtencao ? 
-        dadosPDF.relatorioGerado.pontosAtencao.map(p => `• ${p}`).join('\n') : prev.pontosAtencao,
-      recomendacao: dadosPDF.relatorioGerado?.recomendacao || prev.recomendacao,
-nota: dadosPDF.relatorioGerado?.nota || prev.nota,
-      // CORRIGIDO: Mapeamento correto variacaoAA -> variacaoYoY
-      metricas: {
-        receita: dadosPDF.dadosFinanceiros?.receita ? {
-          valor: dadosPDF.dadosFinanceiros.receita.valor,
-          unidade: 'milhões',
-          variacao: dadosPDF.dadosFinanceiros.receita.variacaoTT,
-          variacaoYoY: dadosPDF.dadosFinanceiros.receita.variacaoAA // ✅ CORRIGIDO
-        } : prev.metricas.receita,
-        ebitda: dadosPDF.dadosFinanceiros?.ebitda ? {
-          valor: dadosPDF.dadosFinanceiros.ebitda.valor,
-          unidade: 'milhões',
-          variacao: dadosPDF.dadosFinanceiros.ebitda.variacaoTT,
-          variacaoYoY: dadosPDF.dadosFinanceiros.ebitda.variacaoAA, // ✅ CORRIGIDO
-          margem: dadosPDF.dadosFinanceiros.ebitda.margem
-        } : prev.metricas.ebitda,
-        lucroLiquido: dadosPDF.dadosFinanceiros?.lucroLiquido ? {
-          valor: dadosPDF.dadosFinanceiros.lucroLiquido.valor,
-          unidade: 'milhões',
-          variacao: dadosPDF.dadosFinanceiros.lucroLiquido.variacaoTT,
-          variacaoYoY: dadosPDF.dadosFinanceiros.lucroLiquido.variacaoAA // ✅ CORRIGIDO
-        } : prev.metricas.lucroLiquido,
-        roe: dadosPDF.dadosFinanceiros?.roe ? {
-          valor: dadosPDF.dadosFinanceiros.roe.valor,
-          unidade: '%',
-          variacaoYoY: dadosPDF.dadosFinanceiros.roe.variacaoAA // ✅ CORRIGIDO
-        } : prev.metricas.roe
-      },
-      otherMetrics: dynamicMetrics,
-      dadosExtraidos: dadosPDF,
-      fonteDados: 'pdf',
-      dataProcessamentoPDF: new Date().toISOString()
-    }));
-    
+    const dadosExtraidosAtualizados: DadosExtraidosPDF = {
+      ...dadosPDF,
+      dadosFinanceiros: legacyFinancials,
+      metricas: plainMetrics,
+      metricasExtraidas: plainMetrics,
+      metricasNormalizadas: normalizedMetrics,
+      metricasMap: plainMetricMap
+    };
+
+    setAnalise(prev => {
+      const metricasAtualizadas: AnaliseTrimestreData['metricas'] = { ...prev.metricas };
+
+      (['receita', 'ebitda', 'lucroLiquido', 'roe'] as const).forEach(key => {
+        const canonical = canonicalMetrics[key];
+        if (!canonical || canonical.valor === undefined || canonical.valor === null) {
+          return;
+        }
+
+        const unidade = canonical.unidade ?? inferLegacyUnitForKey(key);
+        metricasAtualizadas[key] = {
+          valor: canonical.valor,
+          unidade,
+          variacao: canonical.variacao ?? metricasAtualizadas[key]?.variacao,
+          variacaoYoY: canonical.variacaoYoY ?? metricasAtualizadas[key]?.variacaoYoY,
+          margem: canonical.margem ?? metricasAtualizadas[key]?.margem
+        } as MetricaTrimestreData;
+      });
+
+      return {
+        ...prev,
+        empresa: dadosPDF.empresa || prev.empresa,
+        trimestre: dadosPDF.trimestre || prev.trimestre,
+        titulo: dadosPDF.relatorioGerado?.titulo || prev.titulo,
+        analiseCompleta: dadosPDF.relatorioGerado
+          ? gerarAnaliseCompleta(dadosPDF.relatorioGerado)
+          : prev.analiseCompleta,
+        pontosFavoraveis: dadosPDF.relatorioGerado?.destaques
+          ? dadosPDF.relatorioGerado.destaques.map(d => `• ${d}`).join('\n')
+          : prev.pontosFavoraveis,
+        pontosAtencao: dadosPDF.relatorioGerado?.pontosAtencao
+          ? dadosPDF.relatorioGerado.pontosAtencao.map(p => `• ${p}`).join('\n')
+          : prev.pontosAtencao,
+        recomendacao: dadosPDF.relatorioGerado?.recomendacao || prev.recomendacao,
+        nota: dadosPDF.relatorioGerado?.nota || prev.nota,
+        metricas: metricasAtualizadas,
+        otherMetrics: dynamicEntries,
+        dadosExtraidos: dadosExtraidosAtualizados,
+        fonteDados: 'pdf',
+        dataProcessamentoPDF: new Date().toISOString()
+      };
+    });
+
     console.log('✅ Relatório completo importado e análise pré-preenchida');
   }, [gerarAnaliseCompleta]);
 
