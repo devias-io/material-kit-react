@@ -26,3 +26,6 @@ out
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+".yarn/install-state.gz" 
+".yarnrc.yml"   
+"yarn.lock" 
