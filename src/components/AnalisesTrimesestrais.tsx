@@ -1,6 +1,6 @@
 /*
  * COMPONENTE ANÁLISES TRIMESTRAIS - MOBILE RESPONSIVO
- * 
+ *
  * Melhorias implementadas para mobile:
  * - Modal em tela cheia no mobile (bottom sheet)
  * - Layout em coluna para pontos favoráveis/atenção no mobile
@@ -11,6 +11,8 @@
  * - Hook useIsMobile para detectar mobile sem causar problemas de hidratação
  * - Smooth scrolling no modal
  */
+
+'use client';
 
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Eye, TrendingUp, TrendingDown, BarChart3, Target, AlertCircle, ExternalLink, Download, FileText } from 'lucide-react';
@@ -42,6 +44,318 @@ const formatarValorMetrica = (metrica: MetricaTrimestreData | undefined): string
   }
 
   return formatValueWithUnit(metrica.valor, normalizedUnit);
+};
+
+const parseNumericValue = (value: unknown): number | null => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const sanitized = trimmed.replace(/[^0-9,.\-+]/g, '');
+    if (!sanitized) return null;
+    const hasComma = sanitized.includes(',');
+    const hasDot = sanitized.includes('.');
+    let normalized = sanitized;
+    if (hasComma && hasDot) {
+      normalized = normalized.replace(/\./g, '').replace(',', '.');
+    } else if (hasComma) {
+      normalized = normalized.replace(',', '.');
+    }
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const getNormalizedMetricExtractions = (analise: AnaliseTrimestreData): NormalizedMetricExtraction[] => {
+  const candidates: unknown[] = [
+    analise.metricasNormalizadas,
+    analise.metricas_normalizadas,
+    analise.metricas?.metricasNormalizadas,
+    analise.metricas?.metricas_normalizadas,
+    (analise as any)?.dadosExtraidos?.metricasNormalizadas,
+    (analise as any)?.dadosExtraidos?.metricas_normalizadas
+  ];
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate) && candidate.length > 0) {
+      return candidate as NormalizedMetricExtraction[];
+    }
+  }
+
+  return [];
+};
+
+interface NormalizedMetricLookup {
+  bySlug: Record<string, NormalizedMetricExtraction>;
+  byLabel: Record<string, NormalizedMetricExtraction>;
+}
+
+const buildNormalizedMetricLookup = (analise: AnaliseTrimestreData): NormalizedMetricLookup => {
+  const lookup: NormalizedMetricLookup = { bySlug: {}, byLabel: {} };
+  const normalizedMetrics = getNormalizedMetricExtractions(analise);
+
+  normalizedMetrics.forEach(metric => {
+    const slugKey = typeof metric.slug === 'string' && metric.slug.trim()
+      ? metric.slug.trim()
+      : undefined;
+    const normalizedLabelKey = typeof metric.normalized_label === 'string' && metric.normalized_label.trim()
+      ? metric.normalized_label.trim()
+      : undefined;
+
+    if (slugKey) {
+      lookup.bySlug[slugKey] = metric;
+    }
+
+    if (normalizedLabelKey) {
+      lookup.byLabel[normalizedLabelKey] = metric;
+    }
+  });
+
+  return lookup;
+};
+
+const extractDynamicMetricEntries = (analise: AnaliseTrimestreData): FinancialMetricDynamicEntry[] => {
+  const candidates: unknown[] = [
+    analise.otherMetrics,
+    analise.other_metrics,
+    analise.metricas?.otherMetrics,
+    analise.metricas?.other_metrics
+  ];
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate) && candidate.length > 0) {
+      return candidate as FinancialMetricDynamicEntry[];
+    }
+  }
+
+  const normalizedExtractions = getNormalizedMetricExtractions(analise);
+  if (normalizedExtractions.length > 0) {
+    return normalizedExtractions.map((metric, index) => {
+      const slugCandidate = typeof metric.slug === 'string' && metric.slug.trim()
+        ? metric.slug.trim()
+        : typeof metric.normalized_label === 'string' && metric.normalized_label.trim()
+          ? metric.normalized_label.trim()
+          : typeof metric.raw_label === 'string' && metric.raw_label.trim()
+            ? metric.raw_label.trim()
+            : `metric-${index}`;
+
+      const parsedValue = parseNumericValue(metric.value_num ?? metric.value);
+      const parsedDelta = parseNumericValue(metric.delta_value);
+      const formattedValue = typeof metric.value === 'string' && metric.value.trim()
+        ? metric.value.trim()
+        : typeof metric.formatted_value === 'string' && metric.formatted_value.trim()
+          ? metric.formatted_value.trim()
+          : undefined;
+      const rawLabel = typeof metric.raw_label === 'string' && metric.raw_label.trim()
+        ? metric.raw_label.trim()
+        : typeof metric.original?.raw_label === 'string' && metric.original.raw_label.trim()
+          ? metric.original.raw_label.trim()
+          : undefined;
+
+      return {
+        id: slugCandidate,
+        slug: slugCandidate,
+        label: typeof metric.normalized_label === 'string' && metric.normalized_label.trim()
+          ? metric.normalized_label.trim()
+          : undefined,
+        rawLabel,
+        value: parsedValue !== null
+          ? parsedValue
+          : typeof metric.value === 'number'
+            ? metric.value
+            : formattedValue ?? null,
+        formattedValue,
+        unit: typeof metric.unit === 'string' ? metric.unit : undefined,
+        deltaValue: parsedDelta !== null ? parsedDelta : metric.delta_value ?? null,
+        deltaUnit: typeof metric.delta_unit === 'string' ? metric.delta_unit : undefined,
+        deltaBasis: metric.delta_basis ?? null
+      } satisfies FinancialMetricDynamicEntry;
+    });
+  }
+
+  return [];
+};
+
+interface DeltaPresentation {
+  arrow: string;
+  color: string;
+  text: string;
+}
+
+interface DisplayMetricEntry {
+  key: string;
+  label: string;
+  valueText: string;
+  deltaInfo: DeltaPresentation | null;
+}
+
+const resolveMetricLabel = (entry: FinancialMetricDynamicEntry, lookup: NormalizedMetricLookup): string => {
+  const candidates = [
+    entry.label,
+    entry.canonicalLabel,
+    entry.slug ? lookup.bySlug[entry.slug]?.normalized_label : undefined,
+    entry.slug ? lookup.bySlug[entry.slug]?.raw_label : undefined,
+    entry.label ? lookup.byLabel[entry.label]?.normalized_label : undefined,
+    entry.label ? lookup.byLabel[entry.label]?.raw_label : undefined,
+    entry.rawLabel,
+    entry.slug
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+
+  return 'Métrica';
+};
+
+const formatDynamicMetricValue = (entry: FinancialMetricDynamicEntry): string => {
+  if (!entry) return 'N/A';
+  if (typeof entry.formattedValue === 'string' && entry.formattedValue.trim()) {
+    return entry.formattedValue.trim();
+  }
+
+  if (entry.value === null || entry.value === undefined) {
+    return 'N/A';
+  }
+
+  if (typeof entry.value === 'string') {
+    const trimmed = entry.value.trim();
+    return trimmed || 'N/A';
+  }
+
+  if (typeof entry.value !== 'number' || !Number.isFinite(entry.value)) {
+    return 'N/A';
+  }
+
+  const unit = typeof entry.unit === 'string' ? entry.unit.trim() : '';
+  if (unit === '%') {
+    return `${entry.value.toLocaleString('pt-BR', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    })}%`;
+  }
+
+  if (unit.toLowerCase() === 'pp' || unit.toLowerCase() === 'p.p.' || unit.toLowerCase() === 'p.p') {
+    return `${entry.value.toLocaleString('pt-BR', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    })} ${unit}`;
+  }
+
+  const decimals = unit.includes('%')
+    ? 1
+    : Math.abs(entry.value) < 10
+      ? 2
+      : 1;
+
+  const formattedNumber = entry.value.toLocaleString('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+
+  if (!unit) {
+    return formattedNumber;
+  }
+
+  if (unit.toLowerCase().includes('r$')) {
+    const normalizedUnit = unit.replace(/r\$/gi, 'R$').trim();
+    const parts = normalizedUnit.split(' ');
+    if (parts[0] === 'R$') {
+      const suffix = parts.slice(1).join(' ');
+      return `R$ ${formattedNumber}${suffix ? ` ${suffix}` : ''}`;
+    }
+    return `${normalizedUnit} ${formattedNumber}`.trim();
+  }
+
+  return `${formattedNumber} ${unit}`.trim();
+};
+
+const resolveDeltaPresentation = (entry: FinancialMetricDynamicEntry): DeltaPresentation | null => {
+  const numericDelta = parseNumericValue(entry.deltaValue);
+  if (numericDelta === null) return null;
+
+  const resolvedUnit = (() => {
+    if (typeof entry.deltaUnit === 'string' && entry.deltaUnit.trim()) {
+      return entry.deltaUnit.trim();
+    }
+    if (entry.deltaBasis === 'pp') {
+      return 'pp';
+    }
+    if (entry.deltaBasis === 'abs') {
+      return '';
+    }
+    if ((entry.deltaBasis === 'yoy' || entry.deltaBasis === 'qoq') && typeof entry.unit === 'string' && entry.unit.includes('%')) {
+      return '%';
+    }
+    return '';
+  })();
+
+  const decimals = Math.abs(numericDelta) < 10 ? 1 : 0;
+  const formattedMagnitude = Math.abs(numericDelta).toLocaleString('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+  const prefix = numericDelta > 0 ? '+' : numericDelta < 0 ? '-' : '';
+  const unitSuffix = resolvedUnit ? (resolvedUnit === '%' ? resolvedUnit : ` ${resolvedUnit}`) : '';
+  const basisLabel = (() => {
+    switch (entry.deltaBasis) {
+      case 'yoy':
+        return 'YoY';
+      case 'qoq':
+        return 'QoQ';
+      case 'abs':
+        return 'Abs';
+      default:
+        return '';
+    }
+  })();
+
+  const text = `${prefix}${formattedMagnitude}${unitSuffix}${basisLabel ? ` ${basisLabel}` : ''}`.trim();
+  const arrow = numericDelta > 0 ? '↗' : numericDelta < 0 ? '↘' : '→';
+  const color = numericDelta > 0 ? '#059669' : numericDelta < 0 ? '#dc2626' : '#64748b';
+
+  return { arrow, color, text };
+};
+
+const buildMetricsForDisplay = (analise: AnaliseTrimestreData): DisplayMetricEntry[] => {
+  const dynamicEntries = extractDynamicMetricEntries(analise);
+  if (!dynamicEntries || dynamicEntries.length === 0) {
+    return [];
+  }
+
+  const lookup = buildNormalizedMetricLookup(analise);
+
+  return dynamicEntries
+    .map((entry, index) => {
+      const label = resolveMetricLabel(entry, lookup);
+      const valueText = formatDynamicMetricValue(entry);
+      const deltaInfo = resolveDeltaPresentation(entry);
+      const hasValue = valueText !== 'N/A' || deltaInfo !== null;
+
+      if (!hasValue) {
+        return null;
+      }
+
+      const key = typeof entry.id === 'string' && entry.id.trim()
+        ? entry.id.trim()
+        : typeof entry.slug === 'string' && entry.slug.trim()
+          ? entry.slug.trim()
+          : `${label}-${index}`;
+
+      return {
+        key,
+        label,
+        valueText,
+        deltaInfo
+      } satisfies DisplayMetricEntry;
+    })
+    .filter((metric): metric is DisplayMetricEntry => metric !== null);
 };
 
 // Hook para detectar mobile - evita problemas de hidratação
@@ -705,7 +1019,15 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
             const isRecente = index === 0;
             // CORRIGIDO: Garantir ID único
             const analiseKey = analise.id || `analise-${ticker}-${index}-${Date.now()}`;
-            
+            const displayMetrics = buildMetricsForDisplay(analise);
+            const hasNormalizedMetrics = displayMetrics.length > 0;
+            const legacyMetricas = (analise.metricas ?? {}) as AnaliseTrimestreData['metricas'];
+            const hasLegacyMetrics = Boolean(
+              (legacyMetricas?.receita && legacyMetricas.receita.valor !== undefined) ||
+              (legacyMetricas?.ebitda && legacyMetricas.ebitda.valor !== undefined) ||
+              (legacyMetricas?.roe && legacyMetricas.roe.valor !== undefined)
+            );
+
             return (
               <div key={analiseKey} style={{
                 border: '1px solid #e2e8f0',
@@ -840,54 +1162,96 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
                 </div>
 
                 {/* Métricas Resumidas - MOBILE FRIENDLY */}
-                {Object.keys(analise.metricas).length > 0 && (
-                  <div style={{ 
-                    display: 'flex', 
-                    flexDirection: isMobile ? 'column' : 'row',
-                    gap: isMobile ? '8px' : '12px', 
-                    marginTop: '16px',
-                    paddingTop: '16px',
-                    borderTop: '1px solid #e2e8f0'
-                  }}>
-                    {analise.metricas.receita && analise.metricas.receita.valor !== undefined && (
-                      <div style={{ fontSize: isMobile ? '11px' : '12px' }}>
-                        <span style={{ color: '#64748b' }}>Receita: </span>
-                        <span style={{ fontWeight: '600', color: '#059669' }}>
-                          {formatarValorMetrica(analise.metricas.receita)}
-                        </span>
-                        {/* CORRIGIDO: Usar variacaoYoY */}
-                        {analise.metricas.receita.variacaoYoY !== undefined && typeof analise.metricas.receita.variacaoYoY === 'number' && (
-                          <span style={{ color: analise.metricas.receita.variacaoYoY >= 0 ? '#059669' : '#dc2626', marginLeft: '4px' }}>
-                            ({analise.metricas.receita.variacaoYoY >= 0 ? '+' : ''}{analise.metricas.receita.variacaoYoY.toFixed(1)}%)
+                {hasNormalizedMetrics ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: isMobile ? 'column' : 'row',
+                      gap: isMobile ? '8px' : '12px',
+                      marginTop: '16px',
+                      paddingTop: '16px',
+                      borderTop: '1px solid #e2e8f0'
+                    }}
+                  >
+                    {displayMetrics.map(metric => (
+                      <div
+                        key={metric.key}
+                        style={{
+                          fontSize: isMobile ? '11px' : '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          flexWrap: 'wrap'
+                        }}
+                      >
+                        <span style={{ color: '#64748b' }}>{metric.label}:</span>
+                        <span style={{ fontWeight: '600', color: '#0f172a' }}>{metric.valueText}</span>
+                        {metric.deltaInfo && (
+                          <span
+                            style={{
+                              color: metric.deltaInfo.color,
+                              marginLeft: '4px',
+                              fontWeight: '600',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            {metric.deltaInfo.arrow} {metric.deltaInfo.text}
                           </span>
                         )}
                       </div>
-                    )}
-                    
-                    {analise.metricas.ebitda && analise.metricas.ebitda.valor !== undefined && (
+                    ))}
+                  </div>
+                ) : hasLegacyMetrics ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: isMobile ? 'column' : 'row',
+                      gap: isMobile ? '8px' : '12px',
+                      marginTop: '16px',
+                      paddingTop: '16px',
+                      borderTop: '1px solid #e2e8f0'
+                    }}
+                  >
+                    {legacyMetricas.receita && legacyMetricas.receita.valor !== undefined && (
                       <div style={{ fontSize: isMobile ? '11px' : '12px' }}>
-                        <span style={{ color: '#64748b' }}>EBITDA: </span>
-                        <span style={{ fontWeight: '600', color: '#0ea5e9' }}>
-                          {formatarValorMetrica(analise.metricas.ebitda)}
+                        <span style={{ color: '#64748b' }}>Receita: </span>
+                        <span style={{ fontWeight: '600', color: '#059669' }}>
+                          {formatarValorMetrica(legacyMetricas.receita)}
                         </span>
-                        {analise.metricas.ebitda.margem !== undefined && typeof analise.metricas.ebitda.margem === 'number' && (
-                          <span style={{ color: '#0ea5e9', marginLeft: '4px' }}>
-                            ({analise.metricas.ebitda.margem.toFixed(1)}%)
+                        {legacyMetricas.receita.variacaoYoY !== undefined && typeof legacyMetricas.receita.variacaoYoY === 'number' && (
+                          <span style={{ color: legacyMetricas.receita.variacaoYoY >= 0 ? '#059669' : '#dc2626', marginLeft: '4px' }}>
+                            ({legacyMetricas.receita.variacaoYoY >= 0 ? '+' : ''}{legacyMetricas.receita.variacaoYoY.toFixed(1)}%)
                           </span>
                         )}
                       </div>
                     )}
 
-                    {analise.metricas.roe && analise.metricas.roe.valor !== undefined && (
+                    {legacyMetricas.ebitda && legacyMetricas.ebitda.valor !== undefined && (
+                      <div style={{ fontSize: isMobile ? '11px' : '12px' }}>
+                        <span style={{ color: '#64748b' }}>EBITDA: </span>
+                        <span style={{ fontWeight: '600', color: '#0ea5e9' }}>
+                          {formatarValorMetrica(legacyMetricas.ebitda)}
+                        </span>
+                        {legacyMetricas.ebitda.margem !== undefined && typeof legacyMetricas.ebitda.margem === 'number' && (
+                          <span style={{ color: '#0ea5e9', marginLeft: '4px' }}>
+                            ({legacyMetricas.ebitda.margem.toFixed(1)}%)
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {legacyMetricas.roe && legacyMetricas.roe.valor !== undefined && (
                       <div style={{ fontSize: isMobile ? '11px' : '12px' }}>
                         <span style={{ color: '#64748b' }}>ROE: </span>
                         <span style={{ fontWeight: '600', color: '#dc2626' }}>
-                          {typeof analise.metricas.roe.valor === 'number' ? analise.metricas.roe.valor.toFixed(1) : analise.metricas.roe.valor}%
+                          {typeof legacyMetricas.roe.valor === 'number' ? legacyMetricas.roe.valor.toFixed(1) : legacyMetricas.roe.valor}%
                         </span>
                       </div>
                     )}
                   </div>
-                )}
+                ) : null}
 
                 <div
                   style={{

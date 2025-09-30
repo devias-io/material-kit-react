@@ -67,6 +67,44 @@ const mapAnaliseFromApi = (analise: any): AnaliseTrimestreData => {
   } as AnaliseTrimestreData;
 };
 
+const createEmptyDynamicMetric = (): FinancialMetricDynamicEntry => {
+  const id = `dynamic-metric-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return {
+    id,
+    slug: id,
+    label: '',
+    value: null,
+    unit: null,
+    formattedValue: null,
+    deltaValue: null,
+    deltaUnit: null,
+    deltaBasis: null,
+    parseConfidence: 'low'
+  };
+};
+
+const parseNumericFromUnknown = (value: string | number | null | undefined): number | null => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isNaN(value) ? null : value;
+  }
+
+  const normalized = value
+    .toString()
+    .replace(/[^0-9.,-]/g, '')
+    .replace(',', '.');
+
+  if (!normalized) {
+    return null;
+  }
+
+  const parsed = parseFloat(normalized);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
 const prepareAnalisePayload = (analise: Partial<AnaliseTrimestreData>) => {
   const { otherMetrics, ...rest } = analise as any;
   const payload: any = { ...rest };
@@ -1104,6 +1142,137 @@ const CriarAnaliseForm = memo(({ onSave, analiseEditando }: CriarAnaliseFormProp
     });
   }, []);
 
+  const metricSuggestions = useMemo(() => {
+    const normalizedList = analise.dadosExtraidos?.metricasNormalizadas ?? [];
+
+    const bySlug = new Map<string, NormalizedMetricExtraction>();
+    const byLabel = new Map<string, NormalizedMetricExtraction>();
+
+    normalizedList.forEach(metric => {
+      if (metric.slug) {
+        bySlug.set(metric.slug, metric);
+      }
+
+      const labelKey = (metric.normalized_label || metric.raw_label || '').trim().toLowerCase();
+      if (labelKey) {
+        byLabel.set(labelKey, metric);
+      }
+    });
+
+    return { bySlug, byLabel };
+  }, [analise.dadosExtraidos?.metricasNormalizadas]);
+
+  const findSuggestionForEntry = useCallback((entry: FinancialMetricDynamicEntry) => {
+    const { bySlug, byLabel } = metricSuggestions;
+    const slugSuggestion = entry.slug ? bySlug.get(entry.slug) : undefined;
+    if (slugSuggestion) {
+      return slugSuggestion;
+    }
+
+    const labelKey = entry.label?.trim().toLowerCase();
+    if (!labelKey) {
+      return undefined;
+    }
+
+    return byLabel.get(labelKey);
+  }, [metricSuggestions]);
+
+  const updateOtherMetric = useCallback(<K extends keyof FinancialMetricDynamicEntry>(
+    index: number,
+    field: K,
+    value: FinancialMetricDynamicEntry[K]
+  ) => {
+    setAnalise(prev => {
+      const currentMetrics = [...(prev.otherMetrics ?? [])];
+      if (!currentMetrics[index]) {
+        return prev;
+      }
+
+      const updatedEntry: FinancialMetricDynamicEntry = {
+        ...currentMetrics[index],
+        [field]: value
+      };
+
+      if (field === 'value' || field === 'unit') {
+        updatedEntry.formattedValue = null;
+      }
+
+      currentMetrics[index] = updatedEntry;
+      return { ...prev, otherMetrics: currentMetrics };
+    });
+  }, []);
+
+  const addOtherMetric = useCallback(() => {
+    setAnalise(prev => ({
+      ...prev,
+      otherMetrics: [...(prev.otherMetrics ?? []), createEmptyDynamicMetric()]
+    }));
+  }, []);
+
+  const removeOtherMetric = useCallback((index: number) => {
+    setAnalise(prev => {
+      const currentMetrics = [...(prev.otherMetrics ?? [])];
+      if (!currentMetrics[index]) {
+        return prev;
+      }
+
+      currentMetrics.splice(index, 1);
+      return { ...prev, otherMetrics: currentMetrics };
+    });
+  }, []);
+
+  const moveOtherMetric = useCallback((index: number, direction: -1 | 1) => {
+    setAnalise(prev => {
+      const currentMetrics = [...(prev.otherMetrics ?? [])];
+      const newIndex = index + direction;
+
+      if (newIndex < 0 || newIndex >= currentMetrics.length) {
+        return prev;
+      }
+
+      const [item] = currentMetrics.splice(index, 1);
+      currentMetrics.splice(newIndex, 0, item);
+
+      return { ...prev, otherMetrics: currentMetrics };
+    });
+  }, []);
+
+  const applySuggestionToOtherMetric = useCallback((index: number, suggestion: NormalizedMetricExtraction) => {
+    if (!suggestion) {
+      return;
+    }
+
+    setAnalise(prev => {
+      const currentMetrics = [...(prev.otherMetrics ?? [])];
+      const entry = currentMetrics[index];
+      if (!entry) {
+        return prev;
+      }
+
+      const numericValue = suggestion.value_num !== null && suggestion.value_num !== undefined
+        ? parseNumericFromUnknown(suggestion.value_num)
+        : parseNumericFromUnknown(suggestion.value);
+
+      const deltaNumeric = parseNumericFromUnknown(suggestion.delta_value);
+
+      currentMetrics[index] = {
+        ...entry,
+        slug: suggestion.slug || entry.slug,
+        label: suggestion.normalized_label || suggestion.raw_label || entry.label,
+        unit: suggestion.unit ?? entry.unit ?? null,
+        value: numericValue,
+        formattedValue: typeof suggestion.value === 'string' ? suggestion.value : entry.formattedValue ?? null,
+        deltaValue: deltaNumeric,
+        deltaUnit: suggestion.delta_unit ?? entry.deltaUnit ?? null,
+        deltaBasis: suggestion.delta_basis ?? entry.deltaBasis ?? null,
+        parseConfidence: suggestion.parse_confidence ?? entry.parseConfidence,
+        evidence: suggestion.evidence ?? entry.evidence
+      };
+
+      return { ...prev, otherMetrics: currentMetrics };
+    });
+  }, []);
+
   // CORRIGIDO: Mapeamento correto dos campos do PDF para as métricas
   const handleImportarDadosPDF = useCallback((dadosPDF: DadosExtraidosPDF) => {
     console.log('📊 Importando relatório completo do PDF:', dadosPDF);
@@ -1643,6 +1812,303 @@ const CriarAnaliseForm = memo(({ onSave, analiseEditando }: CriarAnaliseFormProp
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Outras Métricas Dinâmicas */}
+        <div style={{
+          background: 'linear-gradient(135deg, #fef9c3 0%, #fef08a 100%)',
+          padding: '20px',
+          borderRadius: '12px',
+          border: '1px solid #facc15'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px', flexWrap: 'wrap' }}>
+            <div>
+              <h5 style={{ fontSize: '16px', fontWeight: '600', color: '#92400e', margin: 0 }}>
+                📈 Outras Métricas Relevantes
+              </h5>
+              <p style={{ fontSize: '12px', color: '#b45309', margin: '4px 0 0 0' }}>
+                Registre métricas adicionais extraídas do PDF ou adicionadas manualmente. É possível ajustar a ordem, valores e metadados de variação.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={addOtherMetric}
+              style={{
+                backgroundColor: '#d97706',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                fontSize: '13px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 6px rgba(217, 119, 6, 0.3)'
+              }}
+            >
+              <Plus size={16} /> Adicionar métrica
+            </button>
+          </div>
+
+          {(analise.otherMetrics ?? []).length === 0 ? (
+            <div style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.7)',
+              border: '1px dashed #facc15',
+              borderRadius: '8px',
+              padding: '16px',
+              fontSize: '13px',
+              color: '#b45309'
+            }}>
+              Nenhuma métrica extra cadastrada. Utilize o botão "Adicionar métrica" ou importe um PDF para preencher automaticamente.
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: '16px' }}>
+              {(analise.otherMetrics ?? []).map((metric, index) => {
+                const suggestion = findSuggestionForEntry(metric);
+                const suggestionValue = suggestion?.value_num ?? suggestion?.value ?? null;
+                const suggestionDelta = suggestion?.delta_value ?? null;
+
+                return (
+                  <div
+                    key={metric.id}
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                      border: '1px solid rgba(250, 204, 21, 0.6)',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      boxShadow: '0 4px 10px rgba(250, 204, 21, 0.15)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                      <div style={{ fontWeight: 600, color: '#92400e', fontSize: '14px' }}>
+                        {metric.label || 'Nova métrica'}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={() => moveOtherMetric(index, -1)}
+                          disabled={index === 0}
+                          style={{
+                            backgroundColor: '#fcd34d',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '6px',
+                            cursor: index === 0 ? 'not-allowed' : 'pointer',
+                            opacity: index === 0 ? 0.5 : 1
+                          }}
+                        >
+                          <ChevronUp size={16} color="#92400e" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => moveOtherMetric(index, 1)}
+                          disabled={index === (analise.otherMetrics ?? []).length - 1}
+                          style={{
+                            backgroundColor: '#fcd34d',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '6px',
+                            cursor: index === (analise.otherMetrics ?? []).length - 1 ? 'not-allowed' : 'pointer',
+                            opacity: index === (analise.otherMetrics ?? []).length - 1 ? 0.5 : 1
+                          }}
+                        >
+                          <ChevronDown size={16} color="#92400e" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => removeOtherMetric(index)}
+                          style={{
+                            backgroundColor: '#f87171',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '6px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <Trash2 size={16} color="white" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#92400e', marginBottom: '4px' }}>
+                          Rótulo
+                        </label>
+                        <input
+                          type="text"
+                          value={metric.label}
+                          onChange={(e) => updateOtherMetric(index, 'label', e.target.value)}
+                          placeholder="Ex.: Margem EBITDA"
+                          style={{
+                            width: '100%',
+                            border: '1px solid #fcd34d',
+                            borderRadius: '6px',
+                            padding: '8px',
+                            fontSize: '13px'
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#92400e', marginBottom: '4px' }}>
+                          Unidade
+                        </label>
+                        <input
+                          type="text"
+                          value={metric.unit ?? ''}
+                          onChange={(e) => updateOtherMetric(index, 'unit', e.target.value || null)}
+                          placeholder="%, x, milhões..."
+                          style={{
+                            width: '100%',
+                            border: '1px solid #fcd34d',
+                            borderRadius: '6px',
+                            padding: '8px',
+                            fontSize: '13px'
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#92400e', marginBottom: '4px' }}>
+                          Valor
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={metric.value ?? ''}
+                          onChange={(e) => updateOtherMetric(index, 'value', e.target.value === '' ? null : parseFloat(e.target.value))}
+                          placeholder="0.0"
+                          style={{
+                            width: '100%',
+                            border: '1px solid #fcd34d',
+                            borderRadius: '6px',
+                            padding: '8px',
+                            fontSize: '13px'
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#92400e', marginBottom: '4px' }}>
+                          Variação
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={metric.deltaValue ?? ''}
+                          onChange={(e) => updateOtherMetric(index, 'deltaValue', e.target.value === '' ? null : parseFloat(e.target.value))}
+                          placeholder="0.0"
+                          style={{
+                            width: '100%',
+                            border: '1px solid #fcd34d',
+                            borderRadius: '6px',
+                            padding: '8px',
+                            fontSize: '13px'
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#92400e', marginBottom: '4px' }}>
+                          Unidade da Variação
+                        </label>
+                        <input
+                          type="text"
+                          value={metric.deltaUnit ?? ''}
+                          onChange={(e) => updateOtherMetric(index, 'deltaUnit', e.target.value || null)}
+                          placeholder="%, p.p., x..."
+                          style={{
+                            width: '100%',
+                            border: '1px solid #fcd34d',
+                            borderRadius: '6px',
+                            padding: '8px',
+                            fontSize: '13px'
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#92400e', marginBottom: '4px' }}>
+                          Base da Variação
+                        </label>
+                        <select
+                          value={metric.deltaBasis ?? ''}
+                          onChange={(e) => updateOtherMetric(index, 'deltaBasis', e.target.value ? e.target.value as FinancialMetricDeltaBasis : null)}
+                          style={{
+                            width: '100%',
+                            border: '1px solid #fcd34d',
+                            borderRadius: '6px',
+                            padding: '8px',
+                            fontSize: '13px',
+                            backgroundColor: 'white'
+                          }}
+                        >
+                          <option value="">--</option>
+                          <option value="yoy">Ano vs Ano (YoY)</option>
+                          <option value="qoq">Trimestre vs Trimestre (QoQ)</option>
+                          <option value="pp">Pontos percentuais (p.p.)</option>
+                          <option value="abs">Variação absoluta</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: '12px', display: 'grid', gap: '8px' }}>
+                      <div style={{ fontSize: '11px', color: '#b45309' }}>
+                        Confiança na leitura automática: <strong>{metric.parseConfidence.toUpperCase()}</strong>
+                      </div>
+
+                      {suggestion && (
+                        <div style={{
+                          backgroundColor: 'rgba(250, 204, 21, 0.15)',
+                          borderRadius: '8px',
+                          border: '1px dashed rgba(217, 119, 6, 0.6)',
+                          padding: '10px',
+                          display: 'grid',
+                          gap: '6px',
+                          fontSize: '12px',
+                          color: '#92400e'
+                        }}>
+                          <div style={{ fontWeight: 600 }}>Sugestão do PDF</div>
+                          <div>
+                            <strong>Valor extraído:</strong>{' '}
+                            {suggestionValue !== null && suggestionValue !== undefined ? suggestionValue : '—'}{suggestion?.unit ? ` ${suggestion.unit}` : ''}
+                          </div>
+                          <div>
+                            <strong>Variação sugerida:</strong>{' '}
+                            {suggestionDelta !== null && suggestionDelta !== undefined ? suggestionDelta : '—'}{suggestion?.delta_unit ? ` ${suggestion.delta_unit}` : ''}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => applySuggestionToOtherMetric(index, suggestion)}
+                            style={{
+                              justifySelf: 'start',
+                              backgroundColor: '#d97706',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '6px 10px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Aplicar sugestão
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Recomendação */}
