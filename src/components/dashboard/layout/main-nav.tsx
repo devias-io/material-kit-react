@@ -219,7 +219,6 @@ export function MainNav(): React.JSX.Element {
                       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: '100%' }}>
                         <Typography
                           variant="subtitle1"
-                          color="primary.main"
                           sx={{ fontWeight: 600, minWidth: 56 }}
                         >
                           {option.ticker}
@@ -227,9 +226,6 @@ export function MainNav(): React.JSX.Element {
                         <Stack spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
                           <Typography variant="body2" color="text.primary" noWrap>
                             {option.nome}
-                          </Typography>
-                          <Typography variant="caption" color="text.primary" noWrap>
-                            {option.setor}
                           </Typography>
                         </Stack>
                       </Stack>
