@@ -14,65 +14,34 @@
 
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Eye, TrendingUp, TrendingDown, BarChart3, Target, AlertCircle, ExternalLink, Download, FileText } from 'lucide-react';
-
-// Interfaces corrigidas para compatibilidade
-interface MetricaTrimestreData {
-  valor: number;
-  unidade: string;
-  variacao?: number;      // Variação trimestre vs trimestre anterior
-  variacaoYoY?: number;   // Variação ano vs ano (principal campo usado)
-  margem?: number;
-}
-
-interface AnaliseTrimestreData {
-  id?: string;
-  ticker: string;
-  empresa: string;
-  trimestre: string;
-  dataPublicacao: string;
-  autor: string;
-  categoria: 'resultado_trimestral' | 'analise_setorial' | 'tese_investimento';
-  
-  // Conteúdo principal
-  titulo: string;
-  analiseCompleta: string;
-  
-  // Métricas do trimestre
-  metricas: {
-    receita?: MetricaTrimestreData;
-    ebitda?: MetricaTrimestreData;
-    lucroLiquido?: MetricaTrimestreData;
-    roe?: MetricaTrimestreData;
-  };
-  
-  // Análise
-  pontosFavoraveis: string;
-  pontosAtencao: string;
-  
-  // Recomendação
-  recomendacao: 'COMPRA' | 'VENDA' | 'MANTER';
-nota?: number;
-
-  
-  // Links externos
-  linkResultado?: string;
-  linkConferencia?: string;
-  
-  status: 'draft' | 'published';
-}
+import { AnaliseTrimestreData, MetricaTrimestreData } from '@/types/quarterly-metrics';
+import { formatNumberPtBr, formatValueWithUnit, normalizeUnitString } from '@/utils/quarterly-metrics';
 
 // Função para formatar valores - corrigida
 const formatarValorMetrica = (metrica: MetricaTrimestreData | undefined): string => {
-  if (!metrica || !metrica.valor) return 'N/A';
-  
-  const valor = metrica.valor;
-  const unidade = metrica.unidade === 'bilhões' ? 'bi' : 'mi';
-  
-  if (valor >= 1000 && unidade === 'mi') {
-    return `R$ ${(valor / 1000).toFixed(1)} bi`;
+  if (!metrica || metrica.valor === undefined || metrica.valor === null) return 'N/A';
+
+  const normalizedUnit = normalizeUnitString(metrica.unidade) ?? '';
+  if (!normalizedUnit) {
+    return formatNumberPtBr(metrica.valor);
   }
-  
-  return `R$ ${valor.toFixed(1)} ${unidade}`;
+
+  const lower = normalizedUnit.toLowerCase();
+
+  if (lower.includes('bilh')) {
+    return formatValueWithUnit(metrica.valor, 'R$ bi');
+  }
+
+  if (lower.includes('milh')) {
+    return formatValueWithUnit(metrica.valor, 'R$ mi');
+  }
+
+  if (lower.includes('r$')) {
+    const unit = normalizedUnit.startsWith('R$') ? normalizedUnit : `R$ ${normalizedUnit.replace(/^r\$\s*/i, '')}`;
+    return formatValueWithUnit(metrica.valor, unit);
+  }
+
+  return formatValueWithUnit(metrica.valor, normalizedUnit);
 };
 
 // Hook para detectar mobile - evita problemas de hidratação
