@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { DadosExtraidosPDF, MetricExtractionItem } from '@/types/quarterly-metrics';
+import {
+  buildMetricCollectionsFromPDF,
+  normalizeConfidenceLevel,
+  normalizeDeltaBasisValue,
+  normalizeNumericString,
+  normalizeUnitString,
+  slugifyMetric,
+  stripOriginalMetric
+} from '@/utils/quarterly-metrics';
 
 // Configurar OpenAI
 const openai = new OpenAI({
@@ -150,85 +160,98 @@ export async function POST(request: NextRequest) {
         ? analiseJSON.metricasExtraidas
         : [];
 
-    const metricasList = metricasListRaw
-      .filter((item: any) => item && typeof item === 'object')
-      .map((item: any, index: number) => {
-        const rawLabel = typeof item.raw_label === 'string' && item.raw_label.trim()
-          ? item.raw_label.trim()
-          : typeof item.label === 'string' && item.label.trim()
-            ? item.label.trim()
-            : `Métrica ${index + 1}`;
+    const sanitizeMetric = (item: any, index: number): MetricExtractionItem => {
+      const rawLabelSource = typeof item.raw_label === 'string' && item.raw_label.trim()
+        ? item.raw_label.trim()
+        : typeof item.label === 'string' && item.label.trim()
+          ? item.label.trim()
+          : `Métrica ${index + 1}`;
 
-        const normalizedLabel = typeof item.normalized_label === 'string' && item.normalized_label.trim()
+        const normalizedLabelSource = typeof item.normalized_label === 'string' && item.normalized_label.trim()
           ? item.normalized_label.trim()
-          : rawLabel;
+          : rawLabelSource;
 
-        const baseSlug = typeof item.slug === 'string' && item.slug.trim()
+        const slugCandidate = typeof item.slug === 'string' && item.slug.trim()
           ? item.slug.trim()
-          : normalizedLabel
-              .normalize('NFD')
-              .replace(/[\u0300-\u036f]/g, '')
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/^-+|-+$/g, '') || `metrica-${index + 1}`;
+          : slugifyMetric(normalizedLabelSource) || slugifyMetric(rawLabelSource) || `metrica-${index + 1}`;
 
-        const parseConfidenceRaw = typeof item.parse_confidence === 'string'
-          ? item.parse_confidence
-          : typeof item.parseConfidence === 'string'
-            ? item.parseConfidence
-            : undefined;
-
-        const normalizedConfidence = (parseConfidenceRaw ?? 'medium').toString().trim().toLowerCase();
-        const parseConfidence = ['high', 'medium', 'low'].includes(normalizedConfidence)
-          ? normalizedConfidence
-          : 'medium';
-
-        let valueNum = typeof item.value_num === 'number'
-          ? item.value_num
-          : typeof item.valueNum === 'number'
-            ? item.valueNum
-            : null;
-
-        if (valueNum === null && typeof item.value_num === 'string') {
-          const parsed = Number(item.value_num.toString().replace(/[^0-9,.-]/g, '').replace(/,(?=\d{3}(\D|$))/g, '').replace(/,/g, '.'));
+        let valueNum: number | null = null;
+        if (typeof item.value_num === 'number' && Number.isFinite(item.value_num)) {
+          valueNum = item.value_num;
+        } else if (typeof item.valueNum === 'number' && Number.isFinite(item.valueNum)) {
+          valueNum = item.valueNum;
+        } else if (typeof item.value_num === 'string') {
+          const parsed = parseFloat(normalizeNumericString(item.value_num));
           valueNum = Number.isFinite(parsed) ? parsed : null;
         }
 
+        const unit = normalizeUnitString(item.unit ?? item.unidade ?? null);
+        const deltaUnit = normalizeUnitString(item.delta_unit ?? item.deltaUnit ?? null);
+        const deltaBasis = normalizeDeltaBasisValue(item.delta_basis ?? item.deltaBasis ?? null);
+
         return {
-          raw_label: rawLabel,
-          normalized_label: normalizedLabel,
-          slug: baseSlug,
-          value: item.value ?? item.formattedValue ?? null,
-          unit: item.unit ?? null,
+          raw_label: rawLabelSource,
+          normalized_label: normalizedLabelSource,
+          slug: slugCandidate,
+          value: item.value ?? item.valorFormatado ?? item.formattedValue ?? null,
+          unit: unit,
           delta_value: item.delta_value ?? item.deltaValue ?? null,
-          delta_unit: item.delta_unit ?? item.deltaUnit ?? null,
-          delta_basis: item.delta_basis ?? item.deltaBasis ?? null,
+          delta_unit: deltaUnit,
+          delta_basis: deltaBasis,
           value_num: valueNum,
-          parse_confidence: parseConfidence,
-          evidence: item.evidence ?? null
+          parse_confidence: normalizeConfidenceLevel(item.parse_confidence ?? item.parseConfidence ?? null),
+          evidence: item.evidence ?? (typeof item.value === 'string' ? item.value : null)
         };
+    };
+
+    const metricasList: MetricExtractionItem[] = metricasListRaw
+      .filter((item: any) => item && typeof item === 'object')
+      .map((item: any, index: number) => sanitizeMetric(item, index));
+
+    const metricasMapEntries: Array<[string, MetricExtractionItem]> = [];
+    if (analiseJSON.metricas_map && typeof analiseJSON.metricas_map === 'object') {
+      Object.entries(analiseJSON.metricas_map).forEach(([slug, value], mapIndex) => {
+        if (value && typeof value === 'object') {
+          metricasMapEntries.push([
+            slug,
+            sanitizeMetric({ slug, ...value }, metricasList.length + mapIndex)
+          ]);
+        }
       });
+    }
 
-    const metricasMap = (analiseJSON.metricas_map && typeof analiseJSON.metricas_map === 'object')
-      ? analiseJSON.metricas_map
-      : metricasList.reduce((acc: Record<string, any>, item: any) => {
-          if (item?.slug) {
-            acc[item.slug] = item;
-          }
-          return acc;
-        }, {} as Record<string, any>);
+    metricasList.forEach(item => {
+      metricasMapEntries.push([item.slug, item]);
+    });
 
-    const resultado = {
+    const metricasMap: Record<string, MetricExtractionItem> = Object.fromEntries(metricasMapEntries);
+
+    const dadosExtraidos: DadosExtraidosPDF = {
       empresa: analiseJSON.empresa,
       ticker: analiseJSON.ticker,
       trimestre: analiseJSON.trimestre,
       dataReferencia: analiseJSON.dataReferencia,
       dadosFinanceiros: analiseJSON.dadosFinanceiros,
       metricas: metricasList,
-      metricasMap,
+      metricasExtraidas: metricasList,
+      metricasMap
+    };
+
+    const collections = buildMetricCollectionsFromPDF(dadosExtraidos);
+
+    const normalizedMetricMap = Object.fromEntries(
+      Object.entries(collections.metricMap).map(([slug, metric]) => [slug, stripOriginalMetric(metric)])
+    );
+
+    const resultado = {
+      ...dadosExtraidos,
+      metricasNormalizadas: collections.normalizedMetrics,
+      metricasMap: normalizedMetricMap,
       relatorioGerado: analiseJSON.relatorioGerado,
       contextoMercado: `Análise gerada via OpenAI GPT-4o em ${new Date().toLocaleString('pt-BR')}`,
-      outlook: "Baseado em dados do relatório trimestral processado",
+      outlook: 'Baseado em dados do relatório trimestral processado',
+      canonicalMetrics: collections.canonicalMetrics,
+      otherMetrics: collections.dynamicEntries,
       success: true
     };
 

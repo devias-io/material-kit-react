@@ -16,109 +16,34 @@
 
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Eye, TrendingUp, TrendingDown, BarChart3, Target, AlertCircle, ExternalLink, Download, FileText } from 'lucide-react';
-
-// Interfaces corrigidas para compatibilidade
-interface MetricaTrimestreData {
-  valor: number;
-  unidade: string;
-  variacao?: number;      // Variação trimestre vs trimestre anterior
-  variacaoYoY?: number;   // Variação ano vs ano (principal campo usado)
-  margem?: number;
-}
-
-type FinancialMetricDeltaBasis = 'yoy' | 'qoq' | 'pp' | 'abs';
-
-interface FinancialMetricDynamicEntry {
-  id?: string;
-  slug?: string;
-  label?: string | null;
-  canonicalLabel?: string | null;
-  rawLabel?: string | null;
-  value?: number | string | null;
-  formattedValue?: string | null;
-  unit?: string | null;
-  deltaValue?: number | string | null;
-  deltaUnit?: string | null;
-  deltaBasis?: FinancialMetricDeltaBasis | null;
-  parseConfidence?: string | null;
-  evidence?: string | null;
-}
-
-interface NormalizedMetricExtraction {
-  slug?: string | null;
-  normalized_label?: string | null;
-  raw_label?: string | null;
-  value?: number | string | null;
-  value_num?: number | null;
-  unit?: string | null;
-  delta_value?: number | string | null;
-  delta_unit?: string | null;
-  delta_basis?: FinancialMetricDeltaBasis | null;
-  formatted_value?: string | null;
-  original?: {
-    raw_label?: string | null;
-  } | null;
-  [key: string]: unknown;
-}
-
-interface AnaliseTrimestreData {
-  id?: string;
-  ticker: string;
-  empresa: string;
-  trimestre: string;
-  dataPublicacao: string;
-  autor: string;
-  categoria: 'resultado_trimestral' | 'analise_setorial' | 'tese_investimento';
-  
-  // Conteúdo principal
-  titulo: string;
-  analiseCompleta: string;
-  
-  // Métricas do trimestre
-  metricas: {
-    receita?: MetricaTrimestreData;
-    ebitda?: MetricaTrimestreData;
-    lucroLiquido?: MetricaTrimestreData;
-    roe?: MetricaTrimestreData;
-    other_metrics?: FinancialMetricDynamicEntry[];
-    otherMetrics?: FinancialMetricDynamicEntry[];
-    metricasNormalizadas?: NormalizedMetricExtraction[];
-    metricas_normalizadas?: NormalizedMetricExtraction[];
-    [key: string]: any;
-  };
-  
-  // Análise
-  pontosFavoraveis: string;
-  pontosAtencao: string;
-  
-  // Recomendação
-  recomendacao: 'COMPRA' | 'VENDA' | 'MANTER';
-nota?: number;
-
-  
-  // Links externos
-  linkResultado?: string;
-  linkConferencia?: string;
-
-  status: 'draft' | 'published';
-  otherMetrics?: FinancialMetricDynamicEntry[];
-  other_metrics?: FinancialMetricDynamicEntry[];
-  metricasNormalizadas?: NormalizedMetricExtraction[];
-  metricas_normalizadas?: NormalizedMetricExtraction[];
-}
+import { AnaliseTrimestreData, MetricaTrimestreData } from '@/types/quarterly-metrics';
+import { formatNumberPtBr, formatValueWithUnit, normalizeUnitString } from '@/utils/quarterly-metrics';
 
 // Função para formatar valores - corrigida
 const formatarValorMetrica = (metrica: MetricaTrimestreData | undefined): string => {
-  if (!metrica || !metrica.valor) return 'N/A';
+  if (!metrica || metrica.valor === undefined || metrica.valor === null) return 'N/A';
 
-  const valor = metrica.valor;
-  const unidade = metrica.unidade === 'bilhões' ? 'bi' : 'mi';
-
-  if (valor >= 1000 && unidade === 'mi') {
-    return `R$ ${(valor / 1000).toFixed(1)} bi`;
+  const normalizedUnit = normalizeUnitString(metrica.unidade) ?? '';
+  if (!normalizedUnit) {
+    return formatNumberPtBr(metrica.valor);
   }
 
-  return `R$ ${valor.toFixed(1)} ${unidade}`;
+  const lower = normalizedUnit.toLowerCase();
+
+  if (lower.includes('bilh')) {
+    return formatValueWithUnit(metrica.valor, 'R$ bi');
+  }
+
+  if (lower.includes('milh')) {
+    return formatValueWithUnit(metrica.valor, 'R$ mi');
+  }
+
+  if (lower.includes('r$')) {
+    const unit = normalizedUnit.startsWith('R$') ? normalizedUnit : `R$ ${normalizedUnit.replace(/^r\$\s*/i, '')}`;
+    return formatValueWithUnit(metrica.valor, unit);
+  }
+
+  return formatValueWithUnit(metrica.valor, normalizedUnit);
 };
 
 const parseNumericValue = (value: unknown): number | null => {

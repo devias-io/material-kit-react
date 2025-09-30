@@ -14,6 +14,7 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Calendar, DollarSign, TrendingUp, Globe, Building, Zap, AlertCircle, CheckCircle, BarChart3, Lock, PieChart, LineChart, Coins, Target, ExternalLink, Eye, FileText } from 'lucide-react';
 
+import { AnaliseTrimestreData } from '@/types/quarterly-metrics';
 // Interface unificada para items
 interface ItemRelatorio {
   ticker: string;
@@ -78,32 +79,6 @@ interface RelatorioData {
   
   // Campo legado
   exterior?: ItemRelatorio[];
-}
-
-// 🆕 Interface para análise trimestral (compatível com o componente existente)
-interface AnaliseTrimestreData {
-  id?: string;
-  ticker: string;
-  empresa: string;
-  trimestre: string;
-  dataPublicacao: string;
-  autor: string;
-  categoria: 'resultado_trimestral' | 'analise_setorial' | 'tese_investimento';
-  titulo: string;
-  analiseCompleta: string;
-  metricas: {
-    receita?: { valor: number; unidade: string; variacaoYoY?: number; margem?: number };
-    ebitda?: { valor: number; unidade: string; variacaoYoY?: number; margem?: number };
-    lucroLiquido?: { valor: number; unidade: string; variacaoYoY?: number };
-    roe?: { valor: number; unidade: string; variacaoYoY?: number };
-  };
-  pontosFavoraveis: string;
-  pontosAtencao: string;
-  recomendacao: 'COMPRA' | 'VENDA' | 'MANTER';
-nota?: number;
-  linkResultado?: string;
-  linkConferencia?: string;
-  status: 'draft' | 'published';
 }
 
 // Import do hook de autenticação
