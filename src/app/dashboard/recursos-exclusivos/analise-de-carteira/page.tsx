@@ -78,7 +78,14 @@ function AnaliseCarteiraClientePage() {
   const [isMobile, setIsMobile] = useState(false);
   
   // Estados para validação
-  const [portfolioData, setPortfolioData] = useState({});
+  const [portfolioData, setPortfolioData] = useState({
+    groups: {},
+    totals: {
+      totalCarteira: 0,
+      totalAtivos: 0
+    }
+  });
+  const [rawPortfolioRows, setRawPortfolioRows] = useState([]);
   const [errors, setErrors] = useState([]);
   const [editingCell, setEditingCell] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -113,14 +120,278 @@ function AnaliseCarteiraClientePage() {
     verificarSeJaEnviou();
   }, []);
 
-  // Estrutura simplificada - apenas campos essenciais
-  const expectedSheets = {
-    'Ações': ['ATIVO', 'QUANTIDADE', 'PREÇO MÉDIO'],
-    'FIIs': ['ATIVO', 'QUANTIDADE', 'PREÇO MÉDIO'], 
-    'Exterior': ['ATIVO', 'QUANTIDADE', 'PREÇO MÉDIO'],
-    'Renda Fixa': ['PRODUTO', 'VALOR INVESTIDO', 'VENCIMENTO'],
-    'Cripto': ['CRIPTOMOEDA', 'QUANTIDADE', 'PREÇO MÉDIO'],
-    'Reserva': ['ONDE ESTÁ', 'VALOR']
+  const BASE_HEADERS = ['ATIVO', 'CATEGORIA', 'QTDE', 'PREÇO MÉDIO', 'VALOR INVESTIDO', '% DA CARTEIRA'];
+
+  const expectedHeaders = [
+    {
+      key: 'ativo',
+      labels: ['ATIVO', 'TICKER', 'CÓDIGO', 'CODIGO']
+    },
+    {
+      key: 'categoria',
+      labels: ['CATEGORIA', 'CLASSE', 'TIPO']
+    },
+    {
+      key: 'quantidade',
+      labels: ['QTDE', 'QUANTIDADE', 'QTD']
+    },
+    {
+      key: 'precoMedio',
+      labels: ['PREÇO MÉDIO', 'PRECO MEDIO', 'PREÇO MEDIO', 'PRECO MÉDIO']
+    }
+  ];
+
+  const ignoredSheetNames = ['planilha1', 'sheet1'];
+
+  const groupDisplayNames = {
+    acoes: 'Ações',
+    fiis: 'FIIs',
+    rendaFixa: 'Renda Fixa',
+    cripto: 'Criptomoedas',
+    exterior: 'Exterior',
+    fundos: 'Fundos',
+    outros: 'Outros'
+  };
+
+  const categoryGroupMap = {
+    acoes: 'acoes',
+    acao: 'acoes',
+    'renda variavel': 'acoes',
+    fiis: 'fiis',
+    fii: 'fiis',
+    'fundo imobiliario': 'fiis',
+    'fundos imobiliarios': 'fiis',
+    'tesouro direto': 'rendaFixa',
+    'tesouro selic': 'rendaFixa',
+    'tesouro ipca': 'rendaFixa',
+    'renda fixa': 'rendaFixa',
+    cdb: 'rendaFixa',
+    lci: 'rendaFixa',
+    lca: 'rendaFixa',
+    cri: 'rendaFixa',
+    cra: 'rendaFixa',
+    poupanca: 'rendaFixa',
+    'cripto': 'cripto',
+    'criptomoeda': 'cripto',
+    'criptomoedas': 'cripto',
+    bitcoin: 'cripto',
+    ethereum: 'cripto',
+    stock: 'exterior',
+    stocks: 'exterior',
+    reits: 'exterior',
+    reit: 'exterior',
+    adr: 'exterior',
+    bdr: 'exterior',
+    'acoes internacionais': 'exterior',
+    exterior: 'exterior',
+    'fundos': 'fundos',
+    'fundo de investimento': 'fundos',
+    'fundos de investimento': 'fundos',
+    'fundos multimercado': 'fundos',
+    etf: 'fundos'
+  };
+
+  const normalizeText = (text) => {
+    if (text === null || text === undefined) return '';
+    return text
+      .toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9\s]/g, ' ')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  const mapCategoryToGroup = (category) => {
+    const normalized = normalizeText(category);
+    if (!normalized) return 'outros';
+    if (categoryGroupMap[normalized]) return categoryGroupMap[normalized];
+
+    const normalizedNoSpace = normalized.replace(/\s/g, '');
+    if (categoryGroupMap[normalizedNoSpace]) return categoryGroupMap[normalizedNoSpace];
+
+    const match = Object.keys(categoryGroupMap).find(key => normalized.includes(key) || normalizedNoSpace.includes(key));
+    return match ? categoryGroupMap[match] : 'outros';
+  };
+
+  const parseNumber = (value) => {
+    if (value === null || value === undefined) return NaN;
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value : NaN;
+    }
+
+    const stringValue = String(value).trim();
+    if (!stringValue) return NaN;
+
+    const sanitized = stringValue.replace(/[^0-9,.-]/g, '');
+    if (!sanitized) return NaN;
+
+    const usesCommaAsDecimal = sanitized.includes(',');
+    const normalized = usesCommaAsDecimal
+      ? sanitized.replace(/\./g, '').replace(',', '.')
+      : sanitized;
+
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : NaN;
+  };
+
+  const formatCurrency = (value, currency = 'BRL') => {
+    if (!Number.isFinite(value)) return '';
+    try {
+      return new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'pt-BR', {
+        style: 'currency',
+        currency
+      }).format(value);
+    } catch (error) {
+      return value.toFixed(2);
+    }
+  };
+
+  const createGroup = (groupKey) => ({
+    key: groupKey,
+    displayName: groupDisplayNames[groupKey] || groupKey,
+    headers: BASE_HEADERS,
+    data: [],
+    totalInvestido: 0,
+    percentualCarteira: 0
+  });
+
+  const buildPortfolioStructure = (rows) => {
+    const groups = {};
+    const errorsColetados = [];
+    let valorTotalCarteira = 0;
+    let totalAtivosValidos = 0;
+
+    const obterGrupo = (groupKey) => {
+      if (!groups[groupKey]) {
+        groups[groupKey] = createGroup(groupKey);
+      }
+      return groups[groupKey];
+    };
+
+    const toTrimmedString = (value) => {
+      if (value === null || value === undefined) return '';
+      return String(value).trim();
+    };
+
+    rows.forEach((row, index) => {
+      const ativo = toTrimmedString(row.ativo);
+      const categoria = toTrimmedString(row.categoria);
+      const qtdeRaw = row.qtde ?? row.quantidade ?? '';
+      const precoMedioRaw = row.precoMedio ?? row.preco ?? '';
+      const qtdeTexto = toTrimmedString(qtdeRaw);
+      const precoTexto = toTrimmedString(precoMedioRaw);
+      const isEmptyRow = !ativo && !categoria && !qtdeTexto && !precoTexto;
+
+      if (isEmptyRow && !row.isDraft) {
+        return;
+      }
+
+      const groupKey = mapCategoryToGroup(categoria);
+      const grupo = obterGrupo(groupKey);
+
+      const quantidade = parseNumber(qtdeRaw);
+      const precoMedio = parseNumber(precoMedioRaw);
+      const linhaReferencia = row.sourceRowNumber || index + 1;
+
+      const deveValidar = !row.isDraft;
+
+      if (deveValidar) {
+        if (!ativo) {
+          errorsColetados.push(`Linha ${linhaReferencia}: Campo ATIVO não pode estar vazio.`);
+        }
+        if (!categoria) {
+          errorsColetados.push(`Linha ${linhaReferencia}: Campo CATEGORIA não pode estar vazio.`);
+        }
+        if (Number.isNaN(quantidade)) {
+          errorsColetados.push(`Linha ${linhaReferencia}: Valor de QTDE inválido (${qtdeRaw || 'vazio'}).`);
+        }
+        if (Number.isNaN(precoMedio)) {
+          errorsColetados.push(`Linha ${linhaReferencia}: Valor de PREÇO MÉDIO inválido (${precoMedioRaw || 'vazio'}).`);
+        }
+      }
+
+      const moeda = groupKey === 'exterior' ? 'USD' : 'BRL';
+      const valorInvestido = !Number.isNaN(quantidade) && !Number.isNaN(precoMedio)
+        ? quantidade * precoMedio
+        : 0;
+
+      if (valorInvestido > 0) {
+        grupo.totalInvestido += valorInvestido;
+        valorTotalCarteira += valorInvestido;
+        totalAtivosValidos += 1;
+      }
+
+      grupo.data.push({
+        id: row.id,
+        values: [
+          ativo,
+          categoria,
+          qtdeRaw ?? '',
+          precoMedioRaw ?? '',
+          valorInvestido > 0 ? formatCurrency(valorInvestido, moeda) : '',
+          ''
+        ],
+        isValid: deveValidar
+          ? Boolean(ativo && categoria && !Number.isNaN(quantidade) && !Number.isNaN(precoMedio))
+          : false,
+        resumo: {
+          valorInvestido,
+          quantidade: Number.isNaN(quantidade) ? null : quantidade,
+          precoMedio: Number.isNaN(precoMedio) ? null : precoMedio,
+          percentualCarteira: '0.00',
+          moeda
+        },
+        sourceRowNumber: row.sourceRowNumber
+      });
+    });
+
+    Object.values(groups).forEach((grupo) => {
+      const percentualGrupo = valorTotalCarteira > 0
+        ? (grupo.totalInvestido / valorTotalCarteira) * 100
+        : 0;
+      grupo.percentualCarteira = percentualGrupo;
+
+      grupo.data = grupo.data.map((linha) => {
+        const percentualLinha = linha.resumo.valorInvestido > 0 && valorTotalCarteira > 0
+          ? (linha.resumo.valorInvestido / valorTotalCarteira) * 100
+          : 0;
+
+        return {
+          ...linha,
+          values: [
+            linha.values[0],
+            linha.values[1],
+            linha.values[2],
+            linha.values[3],
+            linha.resumo.valorInvestido > 0
+              ? formatCurrency(linha.resumo.valorInvestido, linha.resumo.moeda)
+              : linha.values[4],
+            linha.resumo.valorInvestido > 0 ? `${percentualLinha.toFixed(2)}%` : ''
+          ],
+          resumo: {
+            ...linha.resumo,
+            percentualCarteira: percentualLinha.toFixed(2)
+          }
+        };
+      });
+    });
+
+    return {
+      groups,
+      totals: {
+        totalCarteira: valorTotalCarteira,
+        totalAtivos: totalAtivosValidos
+      },
+      errors: errorsColetados
+    };
+  };
+
+  const updatePortfolioFromRows = (rows) => {
+    const { groups, totals, errors: validationErrors } = buildPortfolioStructure(rows);
+    setPortfolioData({ groups, totals });
+    setErrors(validationErrors);
   };
 
   // Baixar modelo Excel via endpoint
@@ -148,307 +419,110 @@ function AnaliseCarteiraClientePage() {
   const processExcelFile = async (file) => {
     setIsProcessing(true);
     setErrors([]);
-    
+
     try {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data, { type: 'array' });
-      const processedData = {};
-      const validationErrors = [];
 
-      // Processar cada aba esperada
-      Object.keys(expectedSheets).forEach(sheetName => {
-        const possibleNames = [
-          sheetName,
-          sheetName.toLowerCase(),
-          sheetName.toUpperCase(),
-          sheetName.replace(/s$/, ''),
-        ];
+      const prioritizedSheetNames = (() => {
+        const filtered = workbook.SheetNames.filter((name) => !ignoredSheetNames.includes(name.trim().toLowerCase()));
+        return filtered.length > 0 ? filtered : workbook.SheetNames;
+      })();
 
-        const foundSheet = workbook.SheetNames.find(name => 
-          possibleNames.some(possible => 
-            name.toLowerCase().includes(possible.toLowerCase())
-          )
-        );
+      let selectedSheetName = null;
+      let headerRowIndex = -1;
+      let headerColumnMap = {};
 
-        if (foundSheet) {
-          const worksheet = workbook.Sheets[foundSheet];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-          
-          // Encontrar linha de cabeçalho de forma mais inteligente
-          let headerRowIndex = -1;
-          for (let i = 0; i < Math.min(jsonData.length, 10); i++) {
-            if (jsonData[i] && jsonData[i].some(cell => {
-              if (!cell || typeof cell !== 'string') return false;
-              const cellUpper = cell.toUpperCase();
-              return (
-                cellUpper.includes('ATIVO') || 
-                cellUpper.includes('CÓDIGO') ||
-                cellUpper.includes('PRODUTO') ||
-                cellUpper.includes('CRIPTO') ||
-                cellUpper.includes('ONDE ESTÁ')
-              ) && (
-                // Se tem "ATIVO" deve ter também "QUANTIDADE" na mesma linha
-                jsonData[i].some(c => c && typeof c === 'string' && c.toUpperCase().includes('QUANTIDADE')) ||
-                // Ou se tem "PRODUTO" deve ter "VALOR" 
-                jsonData[i].some(c => c && typeof c === 'string' && c.toUpperCase().includes('VALOR')) ||
-                // Ou se tem "ONDE ESTÁ" deve ter "VALOR"
-                jsonData[i].some(c => c && typeof c === 'string' && c.toUpperCase().includes('VALOR'))
-              );
-            })) {
-              headerRowIndex = i;
-              break;
-            }
-          }
+      for (const sheetName of prioritizedSheetNames) {
+        const worksheet = workbook.Sheets[sheetName];
+        if (!worksheet) continue;
 
-          if (headerRowIndex !== -1) {
-            const headers = jsonData[headerRowIndex];
-            const dataRows = jsonData.slice(headerRowIndex + 1).filter(row => 
-              row && row.some(cell => cell !== undefined && cell !== '' && cell !== null)
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false });
+
+        for (let rowIndex = 0; rowIndex < jsonData.length; rowIndex++) {
+          const row = jsonData[rowIndex];
+          if (!row || row.length === 0) continue;
+
+          const normalizedCells = row.map((cell) => normalizeText(cell));
+          const headerMapCandidate = {};
+
+          expectedHeaders.forEach((header) => {
+            const foundIndex = normalizedCells.findIndex((cell) =>
+              header.labels.some((label) => {
+                const normalizedLabel = normalizeText(label);
+                return normalizedLabel && cell.includes(normalizedLabel);
+              })
             );
 
-            processedData[sheetName] = {
-              originalSheetName: foundSheet,
-              headers: headers,
-              data: dataRows.map((row, index) => ({
-                id: `${sheetName}_${index}`,
-                values: row.map(cell => cell === undefined || cell === null ? '' : cell),
-                isValid: true
-              }))
-            };
+            if (foundIndex !== -1) {
+              headerMapCandidate[header.key] = foundIndex;
+            }
+          });
 
-            // Validação mais inteligente - só erros reais
-            dataRows.forEach((row, index) => {
-              const temDadosImportantes = row.some((cell, cellIndex) => {
-                if (cellIndex < 3) {
-                  return cell !== undefined && cell !== '' && cell !== null && String(cell).trim() !== '';
-                }
-                return false;
-              });
-              
-              if (!temDadosImportantes) return;
-              
-              // Pular linhas que parecem ser cabeçalhos
-              const primeiraColuna = String(row[0] || '').toUpperCase();
-              if (primeiraColuna.includes('ATIVO') || 
-                  primeiraColuna.includes('PRODUTO') || 
-                  primeiraColuna.includes('CRIPTO') ||
-                  primeiraColuna.includes('ONDE') ||
-                  primeiraColuna.includes('CÓDIGO')) {
-                return; // Pular linha de cabeçalho
-              }
-              
-              // Validar apenas tipos de dados incorretos
-              if (['Ações', 'FIIs', 'Exterior'].includes(sheetName)) {
-                const quantidade = row[1];
-                const precoMedio = row[2];
-                
-                // Validar quantidade se não for vazia e não for cabeçalho
-                if (quantidade && quantidade !== '' && String(quantidade).trim() !== '') {
-                  const quantidadeStr = String(quantidade).toUpperCase();
-                  if (!quantidadeStr.includes('QUANTIDADE')) {
-                    // Aceitar vírgula ou ponto como separador decimal
-                    const quantidadeNormalizada = String(quantidade).replace(',', '.');
-                    if (isNaN(Number(quantidadeNormalizada))) {
-                      validationErrors.push(`${sheetName} - Linha ${index + 1}: "${quantidade}" não é um número válido para quantidade`);
-                    }
-                  }
-                }
-                
-                // Validar preço se não for vazio e não for cabeçalho
-                if (precoMedio && precoMedio !== '' && String(precoMedio).trim() !== '') {
-                  const precoStr = String(precoMedio).toUpperCase();
-                  if (!precoStr.includes('PREÇO') && !precoStr.includes('PRECO')) {
-                    // Aceitar vírgula ou ponto como separador decimal
-                    const precoNormalizado = String(precoMedio).replace(',', '.');
-                    if (isNaN(Number(precoNormalizado))) {
-                      validationErrors.push(`${sheetName} - Linha ${index + 1}: "${precoMedio}" não é um número válido para preço`);
-                    }
-                  }
-                }
-              }
-              
-              if (sheetName === 'Cripto') {
-                const quantidade = row[1];
-                const preco = row[2];
-                
-                if (quantidade && quantidade !== '' && String(quantidade).trim() !== '') {
-                  const quantidadeStr = String(quantidade).toUpperCase();
-                  if (!quantidadeStr.includes('QUANTIDADE')) {
-                    const quantidadeNormalizada = String(quantidade).replace(',', '.');
-                    if (isNaN(Number(quantidadeNormalizada))) {
-                      validationErrors.push(`${sheetName} - Linha ${index + 1}: "${quantidade}" não é um número válido para quantidade`);
-                    }
-                  }
-                }
-                
-                if (preco && preco !== '' && String(preco).trim() !== '') {
-                  const precoStr = String(preco).toUpperCase();
-                  if (!precoStr.includes('PREÇO') && !precoStr.includes('PRECO')) {
-                    const precoNormalizado = String(preco).replace(',', '.');
-                    if (isNaN(Number(precoNormalizado))) {
-                      validationErrors.push(`${sheetName} - Linha ${index + 1}: "${preco}" não é um número válido para preço`);
-                    }
-                  }
-                }
-              }
-              
-              if (sheetName === 'Renda Fixa') {
-                const valor = row[2];
-                if (valor && valor !== '' && String(valor).trim() !== '') {
-                  const valorStr = String(valor).toUpperCase();
-                  if (!valorStr.includes('VALOR')) {
-                    const valorNormalizado = String(valor).replace(',', '.');
-                    if (isNaN(Number(valorNormalizado))) {
-                      validationErrors.push(`${sheetName} - Linha ${index + 1}: "${valor}" não é um número válido para valor`);
-                    }
-                  }
-                }
-              }
-            });
+          if (Object.keys(headerMapCandidate).length === expectedHeaders.length) {
+            selectedSheetName = sheetName;
+            headerRowIndex = rowIndex;
+            headerColumnMap = headerMapCandidate;
+            break;
           }
         }
-      });
 
-      // Processar dados e calcular valores básicos após validação
-      const dadosComCalculos = {};
-      let valorTotalCarteira = 0;
+        if (selectedSheetName) {
+          break;
+        }
+      }
 
-      // Primeiro, calcular valor total para percentuais
-      Object.entries(processedData).forEach(([sheetName, sheetData]) => {
-        sheetData.data.forEach(row => {
-          if (['Ações', 'FIIs', 'Exterior'].includes(sheetName)) {
-            const quantidade = parseFloat(String(row.values[1] || '').replace(',', '.')) || 0;
-            const precoMedio = parseFloat(String(row.values[2] || '').replace(',', '.')) || 0;
-            if (quantidade > 0 && precoMedio > 0) {
-              valorTotalCarteira += quantidade * precoMedio;
-            }
-          } else if (sheetName === 'Renda Fixa') {
-            const valorInvestido = parseFloat(String(row.values[2] || '').replace(',', '.')) || 0;
-            if (valorInvestido > 0) {
-              valorTotalCarteira += valorInvestido;
-            }
-          } else if (sheetName === 'Cripto') {
-            const quantidade = parseFloat(String(row.values[1] || '').replace(',', '.')) || 0;
-            const precoMedio = parseFloat(String(row.values[2] || '').replace(',', '.')) || 0;
-            if (quantidade > 0 && precoMedio > 0) {
-              valorTotalCarteira += quantidade * precoMedio;
-            }
+      if (!selectedSheetName || headerRowIndex === -1) {
+        setErrors(['Não foi possível localizar uma aba com os cabeçalhos ATIVO, CATEGORIA, QTDE e PREÇO MÉDIO.']);
+        setPortfolioData({
+          groups: {},
+          totals: {
+            totalCarteira: 0,
+            totalAtivos: 0
           }
+        });
+        setRawPortfolioRows([]);
+        setEtapaAtual(1);
+        return;
+      }
+
+      const worksheetSelecionada = workbook.Sheets[selectedSheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheetSelecionada, { header: 1, blankrows: false });
+      const linhasDados = jsonData.slice(headerRowIndex + 1);
+
+      const linhasProcessadas = [];
+
+      linhasDados.forEach((row, rowIndex) => {
+        if (!row) return;
+
+        const ativo = headerColumnMap.ativo !== undefined ? row[headerColumnMap.ativo] : '';
+        const categoria = headerColumnMap.categoria !== undefined ? row[headerColumnMap.categoria] : '';
+        const qtde = headerColumnMap.quantidade !== undefined ? row[headerColumnMap.quantidade] : '';
+        const precoMedio = headerColumnMap.precoMedio !== undefined ? row[headerColumnMap.precoMedio] : '';
+
+        const hasContent = [ativo, categoria, qtde, precoMedio].some((valor) => {
+          if (valor === null || valor === undefined) return false;
+          return String(valor).trim() !== '';
+        });
+
+        if (!hasContent) {
+          return;
+        }
+
+        linhasProcessadas.push({
+          id: `linha_${headerRowIndex + rowIndex + 2}_${rowIndex}`,
+          ativo,
+          categoria,
+          qtde,
+          precoMedio,
+          sourceRowNumber: headerRowIndex + rowIndex + 2
         });
       });
 
-      // Agora processar com cálculos
-      Object.entries(processedData).forEach(([sheetName, sheetData]) => {
-        const dadosCalculados = sheetData.data.map(row => {
-          const novoRow = { ...row };
-          
-          if (['Ações', 'FIIs', 'Exterior'].includes(sheetName)) {
-            const ativo = row.values[0];
-            const quantidadeRaw = row.values[1];
-            const precoMedioRaw = row.values[2];
-            
-            // Normalizar números (aceitar vírgula e ponto)
-            const quantidade = parseFloat(String(quantidadeRaw).replace(',', '.')) || 0;
-            const precoMedio = parseFloat(String(precoMedioRaw).replace(',', '.')) || 0;
-            
-            if (ativo && quantidade > 0 && precoMedio > 0) {
-              const valorInvestido = quantidade * precoMedio;
-              const valorAtual = valorInvestido;
-              const percentualCarteira = valorTotalCarteira > 0 ? (valorAtual / valorTotalCarteira * 100) : 0;
-              
-              // Formatação com moeda
-              const moeda = sheetName === 'Exterior' ? 'USD' : 'BRL';
-              const cotacaoFormatada = sheetName === 'Exterior' 
-                ? `US$ ${precoMedio.toFixed(2)}` 
-                : `R$ ${precoMedio.toFixed(2)}`;
-              const valorInvestidoFormatado = sheetName === 'Exterior' 
-                ? `US$ ${valorInvestido.toFixed(2)}` 
-                : `R$ ${valorInvestido.toFixed(2)}`;
-              const valorAtualFormatado = sheetName === 'Exterior' 
-                ? `US$ ${valorAtual.toFixed(2)}` 
-                : `R$ ${valorAtual.toFixed(2)}`;
-              
-              const valoresCompletos = [...row.values];
-              valoresCompletos[3] = cotacaoFormatada;
-              valoresCompletos[4] = valorInvestidoFormatado;
-              valoresCompletos[5] = valorAtualFormatado;
-              valoresCompletos[6] = '0%';
-              valoresCompletos[7] = `${percentualCarteira.toFixed(2)}%`;
-              
-              novoRow.values = valoresCompletos;
-              novoRow.calculado = true;
-              novoRow.resumo = {
-                valorInvestido,
-                valorAtual,
-                percentualCarteira: percentualCarteira.toFixed(2),
-                moeda
-              };
-            }
-          } else if (sheetName === 'Renda Fixa') {
-            const produto = row.values[0];
-            const valorInvestidoRaw = row.values[2];
-            const valorInvestido = parseFloat(String(valorInvestidoRaw).replace(',', '.')) || 0;
-            
-            if (produto && valorInvestido > 0) {
-              const valorAtual = valorInvestido;
-              const percentualCarteira = valorTotalCarteira > 0 ? (valorAtual / valorTotalCarteira * 100) : 0;
-              
-              const valoresCompletos = [...row.values];
-              valoresCompletos[3] = `R$ ${valorAtual.toFixed(2)}`;
-              valoresCompletos[5] = '0%';
-              valoresCompletos[6] = `${percentualCarteira.toFixed(2)}%`;
-              
-              novoRow.values = valoresCompletos;
-              novoRow.calculado = true;
-              novoRow.resumo = {
-                valorInvestido,
-                valorAtual,
-                percentualCarteira: percentualCarteira.toFixed(2),
-                moeda: 'BRL'
-              };
-            }
-          } else if (sheetName === 'Cripto') {
-            const cripto = row.values[0];
-            const quantidadeRaw = row.values[1];
-            const precoMedioRaw = row.values[2];
-            
-            const quantidade = parseFloat(String(quantidadeRaw).replace(',', '.')) || 0;
-            const precoMedio = parseFloat(String(precoMedioRaw).replace(',', '.')) || 0;
-            
-            if (cripto && quantidade > 0 && precoMedio > 0) {
-              const valorAtual = quantidade * precoMedio;
-              const percentualCarteira = valorTotalCarteira > 0 ? (valorAtual / valorTotalCarteira * 100) : 0;
-              
-              const valoresCompletos = [...row.values];
-              valoresCompletos[3] = `R$ ${precoMedio.toFixed(2)}`;
-              valoresCompletos[4] = `R$ ${valorAtual.toFixed(2)}`;
-              valoresCompletos[6] = '0%';
-              valoresCompletos[7] = `${percentualCarteira.toFixed(2)}%`;
-              
-              novoRow.values = valoresCompletos;
-              novoRow.calculado = true;
-              novoRow.resumo = {
-                valorInvestido: valorAtual,
-                valorAtual,
-                percentualCarteira: percentualCarteira.toFixed(2),
-                moeda: 'BRL'
-              };
-            }
-          }
-          
-          return novoRow;
-        });
-
-        dadosComCalculos[sheetName] = {
-          ...sheetData,
-          data: dadosCalculados
-        };
-      });
-
-      setPortfolioData(dadosComCalculos);
-      setErrors(validationErrors);
+      updatePortfolioFromRows(linhasProcessadas);
+      setRawPortfolioRows(linhasProcessadas);
       setEtapaAtual(2.5);
-      
+
     } catch (error) {
       setErrors(['Erro ao processar arquivo: ' + error.message]);
     } finally {
@@ -456,48 +530,67 @@ function AnaliseCarteiraClientePage() {
     }
   };
 
-  // Editar célula
-  const editCell = (sheetName, rowId, colIndex, newValue) => {
-    setPortfolioData(prev => ({
-      ...prev,
-      [sheetName]: {
-        ...prev[sheetName],
-        data: prev[sheetName].data.map(row =>
-          row.id === rowId
-            ? { ...row, values: row.values.map((val, idx) => idx === colIndex ? newValue : val) }
-            : row
-        )
-      }
-    }));
+  const editCell = (_groupKey, rowId, colIndex, newValue) => {
+    if (colIndex >= 4) {
+      return;
+    }
+
+    setRawPortfolioRows((prevRows) => {
+      const updatedRows = prevRows.map((row) => {
+        if (row.id !== rowId) return row;
+
+        const updatedRow = { ...row };
+
+        if (colIndex === 0) updatedRow.ativo = newValue;
+        if (colIndex === 1) updatedRow.categoria = newValue;
+        if (colIndex === 2) updatedRow.qtde = newValue;
+        if (colIndex === 3) updatedRow.precoMedio = newValue;
+
+        if (updatedRow.isDraft) {
+          const hasAllRequired = [updatedRow.ativo, updatedRow.categoria, updatedRow.qtde, updatedRow.precoMedio].every((valor) => {
+            if (valor === null || valor === undefined) return false;
+            return String(valor).trim() !== '';
+          });
+
+          if (hasAllRequired) {
+            updatedRow.isDraft = false;
+          }
+        }
+
+        return updatedRow;
+      });
+
+      updatePortfolioFromRows(updatedRows);
+      return updatedRows;
+    });
   };
 
-  // Remover linha
-  const removeRow = (sheetName, rowId) => {
-    setPortfolioData(prev => ({
-      ...prev,
-      [sheetName]: {
-        ...prev[sheetName],
-        data: prev[sheetName].data.filter(row => row.id !== rowId)
+  const removeRow = (_groupKey, rowId) => {
+    setRawPortfolioRows((prevRows) => {
+      const updatedRows = prevRows.filter((row) => row.id !== rowId);
+      updatePortfolioFromRows(updatedRows);
+      if (editingCell && editingCell.startsWith(`${rowId}_`)) {
+        setEditingCell(null);
       }
-    }));
+      return updatedRows;
+    });
   };
 
-  // Adicionar linha
-  const addRow = (sheetName) => {
-    const newId = `${sheetName}_${Date.now()}`;
-    const emptyRow = new Array(expectedSheets[sheetName].length).fill('');
-    
-    setPortfolioData(prev => ({
-      ...prev,
-      [sheetName]: {
-        ...prev[sheetName],
-        data: [...(prev[sheetName]?.data || []), {
-          id: newId,
-          values: emptyRow,
-          isValid: false
-        }]
-      }
-    }));
+  const addRow = (groupKey) => {
+    const newRow = {
+      id: `${groupKey}_${Date.now()}`,
+      ativo: '',
+      categoria: groupDisplayNames[groupKey] || '',
+      qtde: '',
+      precoMedio: '',
+      isDraft: true
+    };
+
+    setRawPortfolioRows((prevRows) => {
+      const updatedRows = [...prevRows, newRow];
+      updatePortfolioFromRows(updatedRows);
+      return updatedRows;
+    });
   };
 
   const handleFileUpload = (file) => {
@@ -637,7 +730,8 @@ function AnaliseCarteiraClientePage() {
       const formData = new FormData();
       
       const dadosValidados = {
-        portfolioData: portfolioData,
+        portfolioData,
+        portfolioRows: rawPortfolioRows,
         questionario: respostas,
         fileName: uploadedFile.name,
         fileSize: uploadedFile.size,
@@ -660,11 +754,16 @@ function AnaliseCarteiraClientePage() {
         setJaEnviouCarteira(true);
         setEtapaAtual(3);
         
+        const totalGrupos = Object.keys(portfolioData.groups || {}).length;
+        const totalAtivos = portfolioData.totals?.totalAtivos || 0;
+        const valorTotalCarteira = portfolioData.totals?.totalCarteira || 0;
+
         alert(`Carteira enviada com sucesso!
-        
+
 Dados validados processados:
-• Abas processadas: ${Object.keys(portfolioData).length}
-• Total de ativos: ${Object.values(portfolioData).reduce((total, sheet) => total + (sheet.data?.length || 0), 0)}
+• Grupos identificados: ${totalGrupos}
+• Total de ativos válidos: ${totalAtivos}
+• Valor total da carteira: R$ ${valorTotalCarteira.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
 • Arquivo: ${uploadedFile.name}
 • Status: Dados validados e limpos
 
@@ -677,7 +776,14 @@ Nossa equipe entrará em contato em breve com a análise completa.`);
           reservaOportunidade: '', rendaMensal: '', valorAporte: '', nivelConhecimento: ''
         });
         setUploadedFile(null);
-        setPortfolioData({});
+        setPortfolioData({
+          groups: {},
+          totals: {
+            totalCarteira: 0,
+            totalAtivos: 0
+          }
+        });
+        setRawPortfolioRows([]);
         setErrors([]);
       } else {
         alert(`Erro: ${result.error || 'Erro desconhecido'}`);
@@ -1236,7 +1342,14 @@ Nossa equipe entrará em contato em breve com a análise completa.`);
                     <button
                       onClick={() => {
                         setUploadedFile(null);
-                        setPortfolioData({});
+        setPortfolioData({
+          groups: {},
+          totals: {
+            totalCarteira: 0,
+            totalAtivos: 0
+          }
+        });
+        setRawPortfolioRows([]);
                         setErrors([]);
                         setEtapaAtual(2);
                       }}
@@ -1373,9 +1486,9 @@ Nossa equipe entrará em contato em breve com a análise completa.`);
                     borderRadius: '8px',
                     textAlign: 'center'
                   }}>
-                    <p style={{ fontSize: '14px', color: '#2563eb', fontWeight: '600', margin: '0 0 4px 0' }}>Abas Processadas</p>
+                    <p style={{ fontSize: '14px', color: '#2563eb', fontWeight: '600', margin: '0 0 4px 0' }}>Grupos Processados</p>
                     <p style={{ fontSize: '32px', fontWeight: '800', color: '#1e40af', margin: 0 }}>
-                      {Object.keys(portfolioData).length}
+                      {Object.keys(portfolioData.groups || {}).length}
                     </p>
                   </div>
                   <div style={{
@@ -1386,7 +1499,7 @@ Nossa equipe entrará em contato em breve com a análise completa.`);
                   }}>
                     <p style={{ fontSize: '14px', color: '#16a34a', fontWeight: '600', margin: '0 0 4px 0' }}>Total de Ativos</p>
                     <p style={{ fontSize: '32px', fontWeight: '800', color: '#15803d', margin: 0 }}>
-                      {Object.values(portfolioData).reduce((total, sheet) => total + (sheet.data?.filter(row => row.resumo).length || 0), 0)}
+                      {portfolioData.totals?.totalAtivos || 0}
                     </p>
                   </div>
                   <div style={{
@@ -1408,11 +1521,7 @@ Nossa equipe entrará em contato em breve com a análise completa.`);
                   }}>
                     <p style={{ fontSize: '14px', color: '#ca8a04', fontWeight: '600', margin: '0 0 4px 0' }}>Valor Total</p>
                     <p style={{ fontSize: '20px', fontWeight: '800', color: '#a16207', margin: 0 }}>
-                      R$ {Object.values(portfolioData).reduce((total, sheet) => {
-                        return total + (sheet.data?.reduce((sheetTotal, row) => {
-                          return sheetTotal + (row.resumo?.valorAtual || 0);
-                        }, 0) || 0);
-                      }, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {(portfolioData.totals?.totalCarteira || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                 </div>
@@ -1439,8 +1548,8 @@ Nossa equipe entrará em contato em breve com a análise completa.`);
               </div>
 
               {/* Tabelas editáveis */}
-              {showPreview && Object.entries(portfolioData).map(([sheetName, sheetData]) => (
-                <div key={sheetName} style={{
+              {showPreview && Object.entries(portfolioData.groups || {}).map(([groupKey, groupData]) => (
+                <div key={groupKey} style={{
                   backgroundColor: '#ffffff',
                   borderRadius: isMobile ? '12px' : '16px',
                   border: '1px solid #e2e8f0',
@@ -1448,10 +1557,10 @@ Nossa equipe entrará em contato em breve com a análise completa.`);
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b', margin: 0 }}>
-                      📊 {sheetName}
+                      📊 {groupData.displayName || groupKey}
                     </h3>
                     <button
-                      onClick={() => addRow(sheetName)}
+                      onClick={() => addRow(groupKey)}
                       style={{
                         padding: '6px 12px',
                         fontSize: '14px',
@@ -1470,7 +1579,7 @@ Nossa equipe entrará em contato em breve com a análise completa.`);
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <thead>
                         <tr style={{ backgroundColor: '#f9fafb' }}>
-                          {sheetData.headers?.map((header, index) => (
+                          {groupData.headers?.map((header, index) => (
                             <th key={index} style={{
                               padding: '12px 8px',
                               textAlign: 'left',
@@ -1495,17 +1604,20 @@ Nossa equipe entrará em contato em breve com a análise completa.`);
                         </tr>
                       </thead>
                       <tbody>
-                        {sheetData.data?.map((row) => (
+                        {groupData.data?.map((row) => (
                           <tr key={row.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                            {row.values.map((value, colIndex) => (
-                              <td key={colIndex} style={{ padding: '8px', fontSize: '14px' }}>
-                                {editingCell === `${row.id}_${colIndex}` ? (
+                            {row.values.map((value, colIndex) => {
+                              const isEditable = colIndex < 4;
+                              const cellKey = `${row.id}_${colIndex}`;
+                              return (
+                                <td key={colIndex} style={{ padding: '8px', fontSize: '14px' }}>
+                                {isEditable && editingCell === cellKey ? (
                                   <input
                                     type="text"
                                     value={value || ''}
-                                    onChange={(e) => editCell(sheetName, row.id, colIndex, e.target.value)}
+                                    onChange={(e) => editCell(groupKey, row.id, colIndex, e.target.value)}
                                     onBlur={() => setEditingCell(null)}
-                                    onKeyPress={(e) => e.key === 'Enter' && setEditingCell(null)}
+                                    onKeyDown={(e) => e.key === 'Enter' && setEditingCell(null)}
                                     style={{
                                       width: '100%',
                                       padding: '4px 8px',
@@ -1518,9 +1630,13 @@ Nossa equipe entrará em contato em breve com a análise completa.`);
                                   />
                                 ) : (
                                   <div
-                                    onClick={() => setEditingCell(`${row.id}_${colIndex}`)}
+                                    onClick={() => {
+                                      if (isEditable) {
+                                        setEditingCell(cellKey);
+                                      }
+                                    }}
                                     style={{
-                                      cursor: 'pointer',
+                                      cursor: isEditable ? 'pointer' : 'default',
                                       padding: '4px 8px',
                                       borderRadius: '4px',
                                       minHeight: '20px'
@@ -1529,11 +1645,12 @@ Nossa equipe entrará em contato em breve com a análise completa.`);
                                     {value || '-'}
                                   </div>
                                 )}
-                              </td>
-                            ))}
+                                </td>
+                              );
+                            })}
                             <td style={{ padding: '8px', textAlign: 'center' }}>
                               <button
-                                onClick={() => removeRow(sheetName, row.id)}
+                                onClick={() => removeRow(groupKey, row.id)}
                                 style={{
                                   color: '#dc2626',
                                   backgroundColor: 'transparent',
@@ -1566,7 +1683,14 @@ Nossa equipe entrará em contato em breve com a análise completa.`);
                 <button
                   onClick={() => {
                     setEtapaAtual(2);
-                    setPortfolioData({});
+                    setPortfolioData({
+                      groups: {},
+                      totals: {
+                        totalCarteira: 0,
+                        totalAtivos: 0
+                      }
+                    });
+                    setRawPortfolioRows([]);
                     setErrors([]);
                   }}
                   style={{
@@ -1651,7 +1775,14 @@ Nossa equipe entrará em contato em breve com a análise completa.`);
                     reservaOportunidade: '', rendaMensal: '', valorAporte: '', nivelConhecimento: ''
                   });
                   setUploadedFile(null);
-                  setPortfolioData({});
+                  setPortfolioData({
+                    groups: {},
+                    totals: {
+                      totalCarteira: 0,
+                      totalAtivos: 0
+                    }
+                  });
+                  setRawPortfolioRows([]);
                   setErrors([]);
                 }}
                 style={{
