@@ -211,8 +211,13 @@ function extrairLinhasGenericas(portfolioData: any): { linhas: any[]; metadata: 
 
   if (typeof portfolioData === 'object') {
     const linhas: any[] = [];
+    const abasOriginais: string[] = [];
 
-    Object.entries(portfolioData).forEach(([sheetName, sheetValue]) => {
+    const processarSheet = (sheetName: string, sheetValue: unknown) => {
+      if (!abasOriginais.includes(sheetName)) {
+        abasOriginais.push(sheetName);
+      }
+
       const dadosSheet = obterValorPorChaveFlex<any[]>(sheetValue, 'data');
       if (Array.isArray(dadosSheet)) {
         dadosSheet.forEach(row => {
@@ -221,9 +226,21 @@ function extrairLinhasGenericas(portfolioData: any): { linhas: any[]; metadata: 
           }
         });
       }
+    };
+
+    if (portfolioData?.groups && typeof portfolioData.groups === 'object') {
+      Object.entries(portfolioData.groups).forEach(([sheetName, sheetValue]) => {
+        processarSheet(sheetName, sheetValue);
+      });
+
+      return { linhas, metadata: { formato: 'abas', abasOriginais } };
+    }
+
+    Object.entries(portfolioData).forEach(([sheetName, sheetValue]) => {
+      processarSheet(sheetName, sheetValue);
     });
 
-    return { linhas, metadata: { formato: 'abas', abasOriginais: Object.keys(portfolioData) } };
+    return { linhas, metadata: { formato: 'abas', abasOriginais } };
   }
 
   return { linhas: [], metadata: { formato: 'desconhecido' } };
