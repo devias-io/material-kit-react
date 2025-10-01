@@ -110,238 +110,365 @@ export async function POST(request: NextRequest) {
     console.log('✅ STEP 7: Excel processado. Abas:', workbook.SheetNames);
 
     // STEP 8: EXTRAIR DADOS DO EXCEL CORRETAMENTE
-    console.log('🔄 STEP 8: Extraindo dados das abas...');
-    
+    console.log('🔄 STEP 8: Localizando aba principal...');
+
+    const requiredHeaders = ['ativo', 'categoria', 'quantidade', 'precoMedio'];
+
+    const normalizeText = (value: unknown) => {
+      if (value === undefined || value === null) return '';
+      return String(value)
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .toLowerCase();
+    };
+
+    const headerAlias: Record<string, string> = {
+      ativo: 'ativo',
+      ticker: 'ativo',
+      codigo: 'ativo',
+      codigoticker: 'ativo',
+      papel: 'ativo',
+      categoria: 'categoria',
+      classificacao: 'categoria',
+      classe: 'categoria',
+      segmento: 'categoria',
+      setor: 'categoria',
+      qtde: 'quantidade',
+      quantidade: 'quantidade',
+      qtd: 'quantidade',
+      posicao: 'quantidade',
+      preco: 'precoMedio',
+      precomedio: 'precoMedio',
+      precomedioaplicado: 'precoMedio',
+      pm: 'precoMedio',
+      precoteto: 'precoMedio',
+      precopago: 'precoMedio',
+      precocompra: 'precoMedio',
+      cotacao: 'precoAtual',
+      cotacaoatual: 'precoAtual',
+      precoatual: 'precoAtual',
+      precounitario: 'precoAtual',
+      valorinvestido: 'valorInvestido',
+      valoraplicado: 'valorInvestido',
+      valortotal: 'valorInvestido',
+      custo: 'valorInvestido',
+      valoratual: 'valorAtual',
+      valormercado: 'valorAtual',
+      nome: 'nome',
+      descricao: 'nome',
+      empresa: 'nome',
+      ativoexterior: 'ativo',
+      simbolo: 'ativo'
+    };
+
+    const localizarAbaPrincipal = () => {
+      for (const sheetName of workbook.SheetNames) {
+        const worksheet = workbook.Sheets[sheetName];
+        const linhas = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: true, defval: null });
+
+        for (let i = 0; i < linhas.length; i++) {
+          const linha = linhas[i];
+          if (!linha || linha.length === 0) continue;
+
+          const headersEncontrados = new Set<string>();
+          linha.forEach(celula => {
+            const normalizado = normalizeText(celula);
+            if (normalizado && headerAlias[normalizado]) {
+              headersEncontrados.add(headerAlias[normalizado]);
+            }
+          });
+
+          const contemCabecalhos = requiredHeaders.every(header => headersEncontrados.has(header));
+
+          if (contemCabecalhos) {
+            return { sheetName, headerRowIndex: i, linhas };
+          }
+        }
+      }
+
+      return null;
+    };
+
+    const resultadoLocalizacao = localizarAbaPrincipal();
+
+    if (!resultadoLocalizacao) {
+      console.error('❌ STEP 8: Nenhuma aba com cabeçalhos válidos encontrada.');
+      return NextResponse.json({
+        error: 'Não foi possível identificar a aba principal da planilha.',
+        details: 'Certifique-se de que a planilha contenha colunas ATIVO, CATEGORIA, QTDE e PREÇO MÉDIO.'
+      }, { status: 400 });
+    }
+
+    const { sheetName: abaPrincipal, headerRowIndex, linhas: linhasPlanilha } = resultadoLocalizacao;
+    console.log(`✅ STEP 8: Aba principal encontrada: ${abaPrincipal} (linha de cabeçalho ${headerRowIndex + 1})`);
+
+    const headerRow = linhasPlanilha[headerRowIndex];
+    const headerIndexMap: Record<string, number> = {};
+    headerRow.forEach((celula, index) => {
+      const chaveNormalizada = normalizeText(celula);
+      if (!chaveNormalizada) return;
+      const chavePadrao = headerAlias[chaveNormalizada];
+      if (chavePadrao && headerIndexMap[chavePadrao] === undefined) {
+        headerIndexMap[chavePadrao] = index;
+      }
+    });
+
+    const possuiCabecalhosObrigatorios = requiredHeaders.every(header => headerIndexMap[header] !== undefined);
+
+    if (!possuiCabecalhosObrigatorios) {
+      console.error('❌ STEP 8: Cabeçalhos obrigatórios ausentes na aba principal.');
+      return NextResponse.json({
+        error: 'Cabeçalhos obrigatórios ausentes na planilha.',
+        details: 'As colunas ATIVO, CATEGORIA, QTDE e PREÇO MÉDIO são obrigatórias.'
+      }, { status: 400 });
+    }
+
+    const extrairValorNumerico = (valor: unknown): number | null => {
+      if (valor === undefined || valor === null) return null;
+      if (typeof valor === 'number' && !Number.isNaN(valor)) return valor;
+
+      const valorStr = String(valor)
+        .replace(/\./g, '')
+        .replace(/,/g, '.')
+        .replace(/[^0-9.-]/g, '')
+        .trim();
+
+      if (!valorStr) return null;
+
+      const numero = parseFloat(valorStr);
+      return Number.isFinite(numero) ? numero : null;
+    };
+
+    const obterValor = (linha: any[], chave: string): any => {
+      const indice = headerIndexMap[chave];
+      if (indice === undefined) return null;
+      return linha[indice];
+    };
+
     const dadosCarteira = {
-      abas: workbook.SheetNames,
+      abas: [],
       acoes: [],
       fiis: [],
       rendaFixa: [],
       exterior: [],
       cripto: [],
       reserva: [],
+      outros: [],
       processedAt: new Date().toISOString()
     };
 
-    let valorTotal = 0;
-    let quantidadeAtivos = 0;
+    const categoriasEncontradas = new Set<string>();
 
-    // Processar cada aba do Excel
-    for (const sheetName of workbook.SheetNames) {
-      try {
-        const worksheet = workbook.Sheets[sheetName];
-        const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        
-        console.log(`📊 Processando aba: ${sheetName} (${data.length} linhas)`);
-        
-        // Processar AÇÕES
-        if (sheetName.toLowerCase().includes('ações') || sheetName.toLowerCase().includes('acoes')) {
-          for (let i = 6; i < Math.min(data.length, 25); i++) {
-            const row = data[i];
-            if (row && row[0] && row[2] && row[3]) { // Código, Quantidade, Preço
-              const codigo = String(row[0]).trim().toUpperCase();
-              const nome = row[1] ? String(row[1]).trim() : '';
-              const quantidade = parseFloat(row[2]) || 0;
-              const precoMedio = parseFloat(row[3]) || 0;
-              const cotacaoAtual = parseFloat(row[4]) || precoMedio;
-              const valorInvestido = quantidade * precoMedio;
-              const valorAtual = quantidade * cotacaoAtual;
-              
-              if (quantidade > 0 && precoMedio > 0) {
-                dadosCarteira.acoes.push({
-                  codigo,
-                  nome,
-                  tipo: 'ACAO',
-                  quantidade,
-                  precoMedio,
-                  cotacaoAtual,
-                  valorInvestido,
-                  valorAtual,
-                  rentabilidade: valorInvestido > 0 ? ((valorAtual - valorInvestido) / valorInvestido) * 100 : 0
-                });
-                valorTotal += valorAtual;
-                quantidadeAtivos++;
-              }
-            }
-          }
-        }
-        
-        // Processar FIIs
-        if (sheetName.toLowerCase().includes('fii')) {
-          for (let i = 6; i < Math.min(data.length, 25); i++) {
-            const row = data[i];
-            if (row && row[0] && row[2] && row[3]) {
-              const codigo = String(row[0]).trim().toUpperCase();
-              const nome = row[1] ? String(row[1]).trim() : '';
-              const quantidade = parseFloat(row[2]) || 0;
-              const precoMedio = parseFloat(row[3]) || 0;
-              const cotacaoAtual = parseFloat(row[4]) || precoMedio;
-              const valorInvestido = quantidade * precoMedio;
-              const valorAtual = quantidade * cotacaoAtual;
-              
-              if (quantidade > 0 && precoMedio > 0) {
-                dadosCarteira.fiis.push({
-                  codigo,
-                  nome,
-                  tipo: 'FII',
-                  quantidade,
-                  precoMedio,
-                  cotacaoAtual,
-                  valorInvestido,
-                  valorAtual,
-                  rentabilidade: valorInvestido > 0 ? ((valorAtual - valorInvestido) / valorInvestido) * 100 : 0
-                });
-                valorTotal += valorAtual;
-                quantidadeAtivos++;
-              }
-            }
-          }
-        }
-        
-        // Processar RENDA FIXA
-        if (sheetName.toLowerCase().includes('renda') || sheetName.toLowerCase().includes('fixa')) {
-          for (let i = 6; i < Math.min(data.length, 20); i++) {
-            const row = data[i];
-            if (row && row[0] && row[2]) {
-              const produto = String(row[0]).trim();
-              const banco = row[1] ? String(row[1]).trim() : '';
-              const valorInvestido = parseFloat(row[2]) || 0;
-              const valorAtual = parseFloat(row[3]) || valorInvestido;
-              const vencimento = row[4] ? String(row[4]).trim() : '';
-              
-              if (valorInvestido > 0) {
-                dadosCarteira.rendaFixa.push({
-                  produto,
-                  banco,
-                  tipo: 'RENDA_FIXA',
-                  valorInvestido,
-                  valorAtual,
-                  vencimento,
-                  rentabilidade: valorInvestido > 0 ? ((valorAtual - valorInvestido) / valorInvestido) * 100 : 0
-                });
-                valorTotal += valorAtual;
-                quantidadeAtivos++;
-              }
-            }
-          }
-        }
-        
-        // Processar EXTERIOR
-        if (sheetName.toLowerCase().includes('exterior')) {
-          for (let i = 6; i < Math.min(data.length, 19); i++) {
-            const row = data[i];
-            if (row && row[0] && row[2] && row[3]) {
-              const codigo = String(row[0]).trim().toUpperCase();
-              const nome = row[1] ? String(row[1]).trim() : '';
-              const quantidade = parseFloat(row[2]) || 0;
-              const precoMedioUSD = parseFloat(row[3]) || 0;
-              const cotacaoUSD = parseFloat(row[4]) || precoMedioUSD;
-              const taxaCambio = 5.5; // Taxa fixa no modelo
-              const valorInvestido = quantidade * precoMedioUSD * taxaCambio;
-              const valorAtual = quantidade * cotacaoUSD * taxaCambio;
-              
-              if (quantidade > 0 && precoMedioUSD > 0) {
-                dadosCarteira.exterior.push({
-                  codigo,
-                  nome,
-                  tipo: 'EXTERIOR',
-                  quantidade,
-                  precoMedioUSD,
-                  cotacaoUSD,
-                  taxaCambio,
-                  valorInvestido,
-                  valorAtual,
-                  rentabilidade: valorInvestido > 0 ? ((valorAtual - valorInvestido) / valorInvestido) * 100 : 0
-                });
-                valorTotal += valorAtual;
-                quantidadeAtivos++;
-              }
-            }
-          }
-        }
-        
-        // Processar CRIPTO
-        if (sheetName.toLowerCase().includes('cripto')) {
-          for (let i = 6; i < Math.min(data.length, 16); i++) {
-            const row = data[i];
-            if (row && row[0] && row[1] && row[2]) {
-              const criptomoeda = String(row[0]).trim();
-              const quantidade = parseFloat(row[1]) || 0;
-              const precoMedio = parseFloat(row[2]) || 0;
-              const valorAtual = parseFloat(row[3]) || (quantidade * precoMedio);
-              const exchange = row[4] ? String(row[4]).trim() : '';
-              
-              if (quantidade > 0 && precoMedio > 0) {
-                dadosCarteira.cripto.push({
-                  criptomoeda,
-                  tipo: 'CRIPTO',
-                  quantidade,
-                  precoMedio,
-                  valorAtual,
-                  exchange,
-                  rentabilidade: (quantidade * precoMedio) > 0 ? ((valorAtual - (quantidade * precoMedio)) / (quantidade * precoMedio)) * 100 : 0
-                });
-                valorTotal += valorAtual;
-                quantidadeAtivos++;
-              }
-            }
-          }
-        }
-        
-        // Processar RESERVA
-        if (sheetName.toLowerCase().includes('reserva')) {
-          for (let i = 6; i < Math.min(data.length, 16); i++) {
-            const row = data[i];
-            if (row && row[0] && row[2]) {
-              const onde = String(row[0]).trim();
-              const banco = row[1] ? String(row[1]).trim() : '';
-              const valor = parseFloat(row[2]) || 0;
-              const observacoes = row[3] ? String(row[3]).trim() : '';
-              
-              if (valor > 0) {
-                dadosCarteira.reserva.push({
-                  onde,
-                  banco,
-                  tipo: 'RESERVA',
-                  valor,
-                  observacoes
-                });
-                // Reserva não conta no valor total da carteira de investimentos
-              }
-            }
-          }
-        }
-        
-      } catch (error) {
-        console.error(`❌ Erro ao processar aba ${sheetName}:`, error);
+    const normalizarCategoria = (categoria: string | null | undefined) => {
+      if (!categoria) {
+        return { chave: 'outros', nome: 'Outros' as const };
+      }
+
+      const valorNormalizado = normalizeText(categoria);
+
+      const eh = (valor: string) => valorNormalizado === valor;
+      const contem = (trecho: string) => valorNormalizado.includes(trecho);
+
+      if (
+        eh('acao') ||
+        eh('acoes') ||
+        contem('acaobrasil') ||
+        contem('rendavariavel') ||
+        eh('stock') ||
+        eh('stocks') ||
+        eh('equity')
+      ) {
+        return { chave: 'acoes' as const, nome: 'Ações' };
+      }
+
+      if (contem('fii') || contem('fundodeinvestimentoimobiliario') || contem('fundoimobiliario') || contem('fiagro')) {
+        return { chave: 'fiis' as const, nome: 'FIIs' };
+      }
+
+      if (
+        contem('tesouro') ||
+        contem('rendafixa') ||
+        contem('cdb') ||
+        contem('lci') ||
+        contem('lca') ||
+        contem('debenture') ||
+        contem('cri') ||
+        contem('cra') ||
+        contem('prefixado') ||
+        contem('posfixado') ||
+        contem('ipca')
+      ) {
+        return { chave: 'rendaFixa' as const, nome: 'Renda Fixa' };
+      }
+
+      if (
+        contem('reit') ||
+        contem('bdr') ||
+        contem('adr') ||
+        contem('exterior') ||
+        contem('internacional') ||
+        contem('global') ||
+        contem('usa') ||
+        contem('nasdaq') ||
+        contem('nyse') ||
+        contem('stockexchange') ||
+        contem('etf')
+      ) {
+        return { chave: 'exterior' as const, nome: 'Exterior' };
+      }
+
+      if (contem('cripto') || contem('bitcoin') || contem('ethereum') || contem('defi')) {
+        return { chave: 'cripto' as const, nome: 'Cripto' };
+      }
+
+      if (contem('reserva') || contem('poupanca') || contem('emergencia')) {
+        return { chave: 'reserva' as const, nome: 'Reserva' };
+      }
+
+      if (contem('outro')) {
+        return { chave: 'outros' as const, nome: 'Outros' };
+      }
+
+      console.warn(`⚠️ Categoria não reconhecida: ${categoria}. Será classificada como Outros.`);
+      return { chave: 'outros' as const, nome: 'Outros' };
+    };
+
+    const linhasDados = linhasPlanilha.slice(headerRowIndex + 1);
+
+    for (const linha of linhasDados) {
+      if (!linha) continue;
+
+      const ativo = obterValor(linha, 'ativo');
+      const categoriaRaw = obterValor(linha, 'categoria');
+      const precoMedio = extrairValorNumerico(obterValor(linha, 'precoMedio'));
+
+      if (!ativo || !categoriaRaw) continue;
+      if (!precoMedio || precoMedio <= 0) continue;
+
+      const valorInvestidoInformado = extrairValorNumerico(obterValor(linha, 'valorInvestido'));
+      let quantidade = extrairValorNumerico(obterValor(linha, 'quantidade'));
+
+      if ((!quantidade || quantidade <= 0) && valorInvestidoInformado && valorInvestidoInformado > 0) {
+        quantidade = valorInvestidoInformado / precoMedio;
+      }
+
+      if (!quantidade || quantidade <= 0) continue;
+
+      const precoAtual = extrairValorNumerico(obterValor(linha, 'precoAtual'));
+      const valorAtualInformado = extrairValorNumerico(obterValor(linha, 'valorAtual'));
+      const nome = obterValor(linha, 'nome') ? String(obterValor(linha, 'nome')).trim() : '';
+
+      const ativoStr = String(ativo).trim();
+      const valorInvestido = valorInvestidoInformado ?? quantidade * precoMedio;
+      const valorAtual = valorAtualInformado ?? (precoAtual ? quantidade * precoAtual : valorInvestido);
+      const rentabilidade = valorInvestido > 0 ? ((valorAtual - valorInvestido) / valorInvestido) * 100 : 0;
+
+      const categoriaNormalizada = normalizarCategoria(String(categoriaRaw));
+      categoriasEncontradas.add(categoriaNormalizada.nome);
+
+      const itemBase = {
+        codigo: ativoStr.toUpperCase(),
+        codigoOriginal: ativoStr,
+        nome,
+        quantidade,
+        precoMedio,
+        cotacaoAtual: precoAtual ?? precoMedio,
+        valorInvestido,
+        valorAtual,
+        rentabilidade,
+        pesoCarteira: 0,
+        categoriaOriginal: String(categoriaRaw).trim()
+      };
+
+      if (categoriaNormalizada.chave === 'acoes') {
+        dadosCarteira.acoes.push({
+          ...itemBase,
+          tipo: 'ACAO'
+        });
+      } else if (categoriaNormalizada.chave === 'fiis') {
+        dadosCarteira.fiis.push({
+          ...itemBase,
+          tipo: 'FII'
+        });
+      } else if (categoriaNormalizada.chave === 'rendaFixa') {
+        dadosCarteira.rendaFixa.push({
+          ...itemBase,
+          produto: itemBase.codigo,
+          banco: itemBase.nome,
+          tipo: 'RENDA_FIXA'
+        });
+      } else if (categoriaNormalizada.chave === 'exterior') {
+        dadosCarteira.exterior.push({
+          ...itemBase,
+          tipo: 'EXTERIOR'
+        });
+      } else if (categoriaNormalizada.chave === 'cripto') {
+        dadosCarteira.cripto.push({
+          ...itemBase,
+          criptomoeda: itemBase.codigo,
+          exchange: itemBase.nome,
+          tipo: 'CRIPTO'
+        });
+      } else if (categoriaNormalizada.chave === 'reserva') {
+        dadosCarteira.reserva.push({
+          ...itemBase,
+          onde: itemBase.codigoOriginal,
+          banco: itemBase.nome,
+          valor: itemBase.valorAtual,
+          tipo: 'RESERVA'
+        });
+      } else {
+        dadosCarteira.outros.push({
+          ...itemBase,
+          tipo: 'OUTROS'
+        });
       }
     }
 
-    // Calcular percentuais
-    dadosCarteira.acoes = dadosCarteira.acoes.map(ativo => ({
-      ...ativo,
-      pesoCarteira: valorTotal > 0 ? (ativo.valorAtual / valorTotal) * 100 : 0
-    }));
+    const abasSet = new Set<string>();
+    abasSet.add(abaPrincipal);
+    Array.from(categoriasEncontradas)
+      .filter(Boolean)
+      .forEach(categoria => abasSet.add(categoria));
 
-    dadosCarteira.fiis = dadosCarteira.fiis.map(ativo => ({
-      ...ativo,
-      pesoCarteira: valorTotal > 0 ? (ativo.valorAtual / valorTotal) * 100 : 0
-    }));
+    dadosCarteira.abas = Array.from(abasSet);
 
-    dadosCarteira.exterior = dadosCarteira.exterior.map(ativo => ({
-      ...ativo,
-      pesoCarteira: valorTotal > 0 ? (ativo.valorAtual / valorTotal) * 100 : 0
-    }));
+    const ativosParaPeso = [
+      ...dadosCarteira.acoes,
+      ...dadosCarteira.fiis,
+      ...dadosCarteira.rendaFixa,
+      ...dadosCarteira.exterior,
+      ...dadosCarteira.cripto,
+      ...dadosCarteira.outros
+    ];
 
-    dadosCarteira.rendaFixa = dadosCarteira.rendaFixa.map(item => ({
-      ...item,
-      pesoCarteira: valorTotal > 0 ? (item.valorAtual / valorTotal) * 100 : 0
-    }));
+    const valorTotal = ativosParaPeso.reduce((total, item) => total + (item.valorAtual || 0), 0);
+    const quantidadeAtivos = ativosParaPeso.length;
 
-    dadosCarteira.cripto = dadosCarteira.cripto.map(item => ({
-      ...item,
-      pesoCarteira: valorTotal > 0 ? (item.valorAtual / valorTotal) * 100 : 0
-    }));
+    if (quantidadeAtivos === 0) {
+      console.error('❌ STEP 8: Nenhum ativo válido foi identificado na aba principal.');
+      return NextResponse.json({
+        error: 'Nenhum ativo válido encontrado na planilha.',
+        details: 'Verifique se as colunas possuem valores numéricos para quantidade e preço médio.'
+      }, { status: 400 });
+    }
+
+    const calcularPeso = (valor: number) => (valorTotal > 0 ? (valor / valorTotal) * 100 : 0);
+
+    const aplicarPeso = (lista: any[]) =>
+      lista.map(item => ({
+        ...item,
+        pesoCarteira: calcularPeso(item.valorAtual || 0)
+      }));
+
+    dadosCarteira.acoes = aplicarPeso(dadosCarteira.acoes);
+    dadosCarteira.fiis = aplicarPeso(dadosCarteira.fiis);
+    dadosCarteira.rendaFixa = aplicarPeso(dadosCarteira.rendaFixa);
+    dadosCarteira.exterior = aplicarPeso(dadosCarteira.exterior);
+    dadosCarteira.cripto = aplicarPeso(dadosCarteira.cripto);
+    dadosCarteira.outros = aplicarPeso(dadosCarteira.outros);
 
     console.log(`✅ STEP 8: Dados extraídos com sucesso!`);
     console.log(`📊 Resumo: ${quantidadeAtivos} ativos, R$ ${valorTotal.toFixed(2)}`);
@@ -350,9 +477,9 @@ export async function POST(request: NextRequest) {
     console.log(`💰 Renda Fixa: ${dadosCarteira.rendaFixa.length}`);
     console.log(`🌎 Exterior: ${dadosCarteira.exterior.length}`);
     console.log(`₿ Cripto: ${dadosCarteira.cripto.length}`);
+    console.log(`📦 Outros: ${dadosCarteira.outros.length}`);
     console.log(`🏦 Reserva: ${dadosCarteira.reserva.length}`);
 
-    // Valores finais calculados
     const valorFinal = valorTotal;
     const quantidadeFinal = quantidadeAtivos;
 
