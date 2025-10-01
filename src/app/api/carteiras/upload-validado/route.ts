@@ -129,6 +129,18 @@ function extrairPrimeiroTexto(fonte: any, chaves: string[]): string | undefined 
   return undefined;
 }
 
+function extrairMoedaDoTexto(valor: unknown): string | undefined {
+  const texto = extrairTexto(valor);
+
+  if (!texto) {
+    return undefined;
+  }
+
+  const moeda = texto.replace(/[0-9\s.,-]/g, '').trim();
+
+  return moeda || undefined;
+}
+
 function identificarCategoria(possivelCategoria?: string | null, fallback?: string | null): CategoriaChave | null {
   const candidatos = [possivelCategoria, fallback].filter(Boolean) as string[];
 
@@ -208,7 +220,7 @@ function extrairLinhasGenericas(portfolioData: any): { linhas: any[]; metadata: 
   return { linhas: [], metadata: { formato: 'desconhecido' } };
 }
 
-function normalizarLinha(row: any): LinhaNormalizada | null {
+export function normalizarLinha(row: any): LinhaNormalizada | null {
   if (!row || typeof row !== 'object') {
     return null;
   }
@@ -236,17 +248,58 @@ function normalizarLinha(row: any): LinhaNormalizada | null {
         extrairTexto(valores[0]) || extrairPrimeiroTexto(row, ['codigo', 'ticker', 'ativo', 'sigla', 'bdr']);
       const nome =
         extrairTexto(valores[1]) || extrairPrimeiroTexto(row, ['nome', 'descricao', 'description', 'company']);
-      const quantidade = parseNumeroFlex(valores[2] ?? extrairPrimeiroTexto(row, ['quantidade', 'qtde', 'qtd']));
-      const precoMedio = parseNumeroFlex(valores[3] ?? extrairPrimeiroTexto(row, ['precoMedio', 'pm', 'preco_medio']));
-      const cotacaoAtual = parseNumeroFlex(
-        valores[4] ?? extrairPrimeiroTexto(row, ['cotacaoAtual', 'cotacao', 'precoAtual'])
-      );
-      const valorInvestido = parseNumeroFlex(
-        valores[5] ?? extrairPrimeiroTexto(row, ['valorInvestido', 'totalInvestido'])
-      );
-      const valorAtual = parseNumeroFlex(
-        valores[6] ?? valores[5] ?? extrairPrimeiroTexto(row, ['valorAtual', 'totalAtual'])
-      );
+      const resumo = obterValorPorChaveFlex<any>(row, 'resumo');
+      const obterNumeroDoResumo = (chaves: string[]): number | undefined => {
+        if (!resumo || typeof resumo !== 'object') {
+          return undefined;
+        }
+
+        for (const chave of chaves) {
+          const valorResumo = obterValorPorChaveFlex(resumo, chave);
+          if (valorResumo !== undefined && valorResumo !== null) {
+            return parseNumeroFlex(valorResumo);
+          }
+        }
+
+        return undefined;
+      };
+
+      const quantidadeResumo = obterNumeroDoResumo(['quantidade', 'qtde', 'qtd', 'cotas']);
+      const precoMedioResumo = obterNumeroDoResumo(['precoMedio', 'preco_medio', 'pm']);
+      const valorInvestidoResumo = obterNumeroDoResumo(['valorInvestido', 'totalInvestido']);
+      const valorAtualResumo = obterNumeroDoResumo(['valorAtual', 'totalAtual']);
+      const cotacaoResumo = obterNumeroDoResumo(['cotacaoAtual', 'cotacao', 'precoAtual', 'valorAtualUnitario']);
+
+      const quantidade =
+        quantidadeResumo ?? parseNumeroFlex(valores[2] ?? extrairPrimeiroTexto(row, ['quantidade', 'qtde', 'qtd']));
+      const precoMedio =
+        precoMedioResumo ?? parseNumeroFlex(valores[3] ?? extrairPrimeiroTexto(row, ['precoMedio', 'pm', 'preco_medio']));
+      let cotacaoAtual =
+        cotacaoResumo ?? parseNumeroFlex(extrairPrimeiroTexto(row, ['cotacaoAtual', 'cotacao', 'precoAtual']));
+      let valorInvestido =
+        valorInvestidoResumo ?? parseNumeroFlex(extrairPrimeiroTexto(row, ['valorInvestido', 'totalInvestido']) ?? valores[4]);
+      let valorAtual =
+        valorAtualResumo ?? parseNumeroFlex(extrairPrimeiroTexto(row, ['valorAtual', 'totalAtual']));
+
+      if (cotacaoAtual <= 0) {
+        cotacaoAtual = precoMedio > 0
+          ? precoMedio
+          : (valorAtual > 0 && quantidade > 0 ? valorAtual / quantidade : 0);
+      }
+
+      if (valorInvestido <= 0 && quantidade > 0 && precoMedio > 0) {
+        valorInvestido = quantidade * precoMedio;
+      }
+
+      if (valorAtual <= 0 && quantidade > 0) {
+        const baseCotacao = cotacaoAtual > 0 ? cotacaoAtual : precoMedio;
+        valorAtual = baseCotacao > 0 ? quantidade * baseCotacao : valorInvestido;
+      }
+
+      const moeda =
+        extrairPrimeiroTexto(resumo, ['moeda', 'currency']) ??
+        extrairMoedaDoTexto(valores[4]) ??
+        extrairPrimeiroTexto(row, ['moeda', 'currency']);
 
       return {
         categoria,
@@ -259,7 +312,8 @@ function normalizarLinha(row: any): LinhaNormalizada | null {
         cotacaoAtual,
         valorInvestido,
         valorAtual,
-        origem: sheetName
+        origem: sheetName,
+        moeda
       };
     }
 
