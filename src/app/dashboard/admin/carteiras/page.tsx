@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import EnhancedAdminFeedback from '@/components/EnhancedAdminFeedback';
 import { API_CONFIG, buildBatchApiUrl } from '@/config/apiConfig';
 
@@ -1505,25 +1506,45 @@ export default function AdminCarteirasPage() {
               Sistema inteligente de análise de carteiras com avaliação automática
             </p>
           </div>
-          
-          <button
-            onClick={carregarCarteiras}
-            style={{
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              padding: '12px 20px',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            Atualizar
-          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Link
+              href="/dashboard/admin/gerenciar-ativos"
+              style={{
+                backgroundColor: '#14b8a6',
+                color: 'white',
+                padding: '12px 20px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              Gerenciar Ativos
+            </Link>
+
+            <button
+              onClick={carregarCarteiras}
+              style={{
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                padding: '12px 20px',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              Atualizar
+            </button>
+          </div>
         </div>
       </div>
 
