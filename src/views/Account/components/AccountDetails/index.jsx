@@ -40,7 +40,7 @@ class Account extends Component {
   state = {
     firstName: 'John',
     lastName: 'Doe',
-    email: 'contact@devias.io',
+    email: 'contato@fatosdabolsa.com.br',
     phone: '',
     state: 'Alabama',
     country: 'USA'
