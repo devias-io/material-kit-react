@@ -48,7 +48,7 @@ export const corrigirValorIncorreto = (
   valor: number,
   valorBruto?: string
 ): number => {
-  if (valor <= 5000000000000000000) {
+  if (valor >= 5000000000000000000) {
     return valor;
   }
 
