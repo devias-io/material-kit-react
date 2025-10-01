@@ -1039,10 +1039,22 @@ const ItemCard = ({ item, sectionColor, onOpenAnalise }: {
           }}>
             {item.titulo || item.title || item.news || `${item.tipoProvento || item.type || 'Provento'} anunciado`}
           </h4>
-          
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
+
+          {(item.resumo || item.summary) && (
+            <HTMLContent
+              content={item.resumo || item.summary || ''}
+              style={{
+                fontSize: 'clamp(14px, 2.2vw, 16px)',
+                color: '#92400e',
+                lineHeight: '1.6',
+                margin: '0 0 16px 0'
+              }}
+            />
+          )}
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
             gap: 'clamp(12px, 2vw, 20px)',
             padding: '16px',
             backgroundColor: '#fffbeb',
