@@ -1,9 +1,9 @@
 {
-  "name": "material-kit-react",
+  "name": "fatos-da-bolsa-hub",
   "version": "4.0.0",
-  "author": "Devias",
+  "author": "Fatos da Bolsa",
   "licence": "MIT",
-  "homepage": "https://devias.io",
+  "homepage": "https://fatosdabolsa.com.br",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",

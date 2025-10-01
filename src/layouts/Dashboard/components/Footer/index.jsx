@@ -35,11 +35,10 @@ class Footer extends Component {
           className={classes.company}
           variant="body1"
         >
-          &copy; Devias Io. 2019
+          &copy; Fatos da Bolsa. {new Date().getFullYear()}
         </Typography>
         <Typography variant="caption">
-          Created with love for the environment. By designers and developers who
-          love to work together in offices!
+          Plataforma desenvolvida para apoiar analistas e investidores na tomada de decisões informadas.
         </Typography>
       </div>
     );

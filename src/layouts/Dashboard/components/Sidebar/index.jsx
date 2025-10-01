@@ -203,7 +203,7 @@ class Sidebar extends Component {
           <ListItem
             className={classes.listItem}
             component="a"
-            href="https://devias.io/contact-us"
+            href="https://fatosdabolsa.com.br/suporte"
             target="_blank"
           >
             <ListItemIcon className={classes.listItemIcon}>

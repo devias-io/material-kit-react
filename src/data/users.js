@@ -9,7 +9,7 @@ export default [
       street: '2849 Fulton Street',
       zipCode: '26101'
     },
-    email: 'ekaterina.tankova@devias.io',
+    email: 'ekaterina.tankova@fatosdabolsa.com.br',
     phone: '304-428-3097',
     avatarUrl: '/images/avatars/avatar_3.png',
     createdAt: 1555016400000,
@@ -28,7 +28,7 @@ export default [
       street: '1865  Pleasant Hill Road',
       zipCode: '50611'
     },
-    email: 'cao.yu@devias.io',
+    email: 'cao.yu@fatosdabolsa.com.br',
     avatarUrl: '/images/avatars/avatar_4.png',
     phone: '712-351-5711',
     createdAt: 1555016400000,
@@ -47,7 +47,7 @@ export default [
       street: '4894  Lakeland Park Drive',
       zipCode: '30303'
     },
-    email: 'alexa.richardson@devias.io',
+    email: 'alexa.richardson@fatosdabolsa.com.br',
     phone: '770-635-2682',
     avatarUrl: '/images/avatars/avatar_2.png',
     createdAt: 1555016400000,
@@ -66,7 +66,7 @@ export default [
       street: '4158  Hedge Street',
       zipCode: '44622'
     },
-    email: 'anje.keizer@devias.io',
+    email: 'anje.keizer@fatosdabolsa.com.br',
     avatarUrl: '/images/avatars/avatar_5.png',
     phone: '908-691-3242',
     createdAt: 1554930000000,
@@ -85,7 +85,7 @@ export default [
       street: '75247',
       zipCode: '715 Poco Mas Drive'
     },
-    email: 'clarke.gillebert@devias.io',
+    email: 'clarke.gillebert@fatosdabolsa.com.br',
     phone: '972-333-4106',
     avatarUrl: '/images/avatars/avatar_6.png',
 
@@ -105,7 +105,7 @@ export default [
       street: '317 Angus Road',
       zipCode: '93308'
     },
-    email: 'adam.denisov@devias.io',
+    email: 'adam.denisov@fatosdabolsa.com.br',
     phone: '858-602-3409',
     avatarUrl: '/images/avatars/avatar_1.png',
     bio: 'Developer',
@@ -125,7 +125,7 @@ export default [
       street: '2188  Armbrester Drive',
       zipCode: '90278'
     },
-    email: 'ava.gregoraci@devias.io',
+    email: 'ava.gregoraci@fatosdabolsa.com.br',
     avatarUrl: '/images/avatars/avatar_7.png',
     phone: '415-907-2647',
     createdAt: 1554325200000,
@@ -144,7 +144,7 @@ export default [
       street: '1798  Hickory Ridge Drive',
       zipCode: '89101'
     },
-    email: 'emilee.simchenko@devias.io',
+    email: 'emilee.simchenko@fatosdabolsa.com.br',
     phone: '702-661-1654',
     avatarUrl: '/images/avatars/avatar_8.png',
     createdAt: 1523048400000,
@@ -163,7 +163,7 @@ export default [
       street: '3934  Wildrose Lane',
       zipCode: '48224'
     },
-    email: 'kwak.seong.min@devias.io',
+    email: 'kwak.seong.min@fatosdabolsa.com.br',
     avatarUrl: '/images/avatars/avatar_9.png',
     phone: '313-812-8947',
     createdAt: 1522875600000,
@@ -182,7 +182,7 @@ export default [
       street: '368 Lamberts Branch Road',
       zipCode: '84111'
     },
-    email: 'merrile.burgett@devias.io',
+    email: 'merrile.burgett@fatosdabolsa.com.br',
     phone: '801-301-7894',
     avatarUrl: '/images/avatars/avatar_10.png',
     createdAt: 1522702800000,

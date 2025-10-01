@@ -1,94 +1,76 @@
-## [Devias Kit - React](https://material-kit-react.devias.io/)
+# Fatos da Bolsa Hub
 
-![license](https://img.shields.io/badge/license-MIT-blue.svg)
+Fatos da Bolsa Hub é um painel administrativo desenvolvido para equipes que acompanham dados de mercado, materiais educacionais e relatórios internos sobre a bolsa de valores. O projeto combina Next.js, React e Material UI para oferecer uma base robusta que pode ser facilmente estendida com integrações proprietárias, automações e fluxos de trabalho colaborativos.
 
-[![Devias Kit - React](https://github.com/devias-io/material-kit-react/blob/main/public/assets/thumbnail.png)](https://material-kit-react.devias.io/)
+## Recursos principais
 
-> Free React Admin Dashboard made with [MUI's](https://mui.com) components, [React](https://reactjs.org) and of course [Next.js](https://github.com/vercel/next.js) to boost your app development process!
+- **Dashboard personalizável:** visualize KPIs, gráficos e status de campanhas em tempo real.
+- **Gestão de membros e clientes:** organize contatos, preferências e permissões com formulários validados.
+- **Fluxos de autenticação completos:** telas de login, cadastro, redefinição de senha e convites com layout consistente.
+- **Componentes reutilizáveis:** bibliotecas de cartões, tabelas, gráficos e formulários para acelerar novas páginas.
+- **Integração com serviços externos:** estrutura preparada para conectar APIs de dados financeiros, automação de e-mail e armazenamento em nuvem.
 
-## Pages 
+## Tecnologias
 
-- [Dashboard](https://material-kit-react.devias.io)
-- [Customers](https://material-kit-react.devias.io/dashboard/customers)
-- [Integrations](https://material-kit-react.devias.io/dashboard/integrations)
-- [Settings](https://material-kit-react.devias.io/dashboard/settings)
-- [Account](https://material-kit-react.devias.io/dashboard/account)
-- [Sign In](https://material-kit-react.devias.io/auth/sign-in)
-- [Sign Up](https://material-kit-react.devias.io/auth/sign-up)
-- [Reset Password](https://material-kit-react.devias.io/auth/reset-password)
+- [Next.js](https://nextjs.org) 14
+- [React](https://react.dev)
+- [Material UI](https://mui.com)
+- [Prisma](https://www.prisma.io)
+- [TypeScript](https://www.typescriptlang.org)
 
-## Free Figma Community File
+## Primeiros passos
 
-- [Duplicate File](https://www.figma.com/file/b3L1Np4RYiicZAOMopHNkm/Devias-Dashboard-Design-Library-Kit)
+1. Instale as dependências:
 
-## Upgrade to PRO Version
+   ```bash
+   npm install
+   ```
 
-We also have a pro version of this product which bundles even more pages and components if you want
-to save more time and design efforts :)
+2. Configure as variáveis de ambiente necessárias na raiz do projeto (`.env.local`).
 
-| Free Version (this one)  | [Devias Kit Pro](https://mui.com/store/items/devias-kit-pro/)                |
-| ------------------------ | :--------------------------------------------------------------------------- |
-| **8** Pages              | **80+** Pages                                                                |
-| ✔ Custom Authentication  | ✔ Authentication with **Amplify**, **Auth0**, **Firebase** and **Supabase**  |
-| -                        | ✔ Vite Version                                                               |
-| -                        | ✔ Dark Mode Support                                                          |
-| -                        | ✔ Complete Users Flows                                                       |
-| -                        | ✔ Premium Technical Support                                                  |
+3. Execute as migrações e gere o cliente Prisma:
 
-## Quick start
+   ```bash
+   npx prisma migrate deploy
+   npm run postinstall
+   ```
 
-- Clone the repo: `git clone https://github.com/devias-io/material-kit-react.git`
-- Make sure your Node.js and npm versions are up to date
-- Install dependencies: `npm install` or `yarn`
-- Start the server: `npm run dev` or `yarn dev`
-- Open browser: `http://localhost:3000`
+4. Inicie o servidor de desenvolvimento:
 
-## File Structure
+   ```bash
+   npm run dev
+   ```
 
-Within the download you'll find the following directories and files:
+5. Acesse [`http://localhost:3000`](http://localhost:3000) para visualizar a aplicação.
+
+## Scripts disponíveis
+
+- `npm run dev` – inicia o ambiente de desenvolvimento com hot reload.
+- `npm run build` – gera a versão otimizada para produção após executar `prisma generate`.
+- `npm run start` – executa o build gerado.
+- `npm run lint` – valida o código com as regras ESLint configuradas para o projeto.
+- `npm run typecheck` – garante que não há erros de tipagem TypeScript.
+- `npm run format:write` – aplica a formatação consistente definida pelo Prettier.
+
+## Estrutura do projeto
 
 ```
-┌── .editorconfig
-├── .eslintrc.js
-├── .gitignore
-├── CHANGELOG.md
-├── LICENSE.md
-├── next-env.d.ts
-├── next.config.js
-├── package.json
-├── README.md
-├── tsconfig.json
+┌── prisma
 ├── public
-└── src
-	├── components
-	├── contexts
-	├── hooks
-	├── lib
-	├── styles
-	├── types
-	└── app
-		├── layout.tsx
-		├── page.tsx
-		├── auth
-		└── dashboard
+├── src
+│   ├── components
+│   ├── layouts
+│   ├── lib
+│   ├── pages e views protegidas
+│   └── styles e temas
+├── package.json
+└── README.md
 ```
 
-## FAQ API
+## Suporte
 
-The `/api/faq` endpoint is public and does not require `Authorization` or `X-User-Email` headers.
+Este repositório é mantido pela equipe Fatos da Bolsa. Para dúvidas, sugestões ou suporte personalizado, entre em contato pelo e-mail [contato@fatosdabolsa.com.br](mailto:contato@fatosdabolsa.com.br).
 
-## Resources
+## Licença
 
-- More freebies like this one: https://devias.io
-
-## Reporting Issues:
-
-- [Github Issues Page](https://github.com/devias-io/material-kit-react/issues)
-
-## License
-
-- Licensed under [MIT](https://github.com/devias-io/material-kit-react/blob/main/LICENSE.md)
-
-## Contact Us
-
-- Email Us: support@deviasio.zendesk.com
+Distribuído sob a licença MIT. Veja `LICENSE.md` para mais detalhes.
