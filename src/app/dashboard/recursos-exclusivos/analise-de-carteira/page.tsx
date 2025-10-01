@@ -125,19 +125,23 @@ function AnaliseCarteiraClientePage() {
   const expectedHeaders = [
     {
       key: 'ativo',
-      labels: ['ATIVO', 'TICKER', 'CÓDIGO', 'CODIGO']
+      labels: ['ATIVO', 'TICKER', 'CÓDIGO', 'CODIGO'],
+      required: true
     },
     {
       key: 'categoria',
-      labels: ['CATEGORIA', 'CLASSE', 'TIPO']
+      labels: ['CATEGORIA', 'CLASSE', 'TIPO'],
+      required: false
     },
     {
       key: 'quantidade',
-      labels: ['QTDE', 'QUANTIDADE', 'QTD']
+      labels: ['QTDE', 'QUANTIDADE', 'QTD'],
+      required: true
     },
     {
       key: 'precoMedio',
-      labels: ['PREÇO MÉDIO', 'PRECO MEDIO', 'PREÇO MEDIO', 'PRECO MÉDIO']
+      labels: ['PREÇO MÉDIO', 'PRECO MEDIO', 'PREÇO MEDIO', 'PRECO MÉDIO'],
+      required: true
     }
   ];
 
@@ -213,6 +217,37 @@ function AnaliseCarteiraClientePage() {
 
     const match = Object.keys(categoryGroupMap).find(key => normalized.includes(key) || normalizedNoSpace.includes(key));
     return match ? categoryGroupMap[match] : 'outros';
+  };
+
+  const deriveCategoryFromSheetName = (sheetName) => {
+    const normalizedSheetName = normalizeText(sheetName);
+    if (!normalizedSheetName) return '';
+
+    const normalizedGroupEntries = Object.entries(groupDisplayNames).map(([groupKey, displayName]) => ({
+      groupKey,
+      displayName,
+      normalizedDisplay: normalizeText(displayName)
+    }));
+
+    const directDisplayMatch = normalizedGroupEntries.find(({ normalizedDisplay }) =>
+      normalizedDisplay && normalizedSheetName.includes(normalizedDisplay)
+    );
+    if (directDisplayMatch) {
+      return directDisplayMatch.displayName;
+    }
+
+    const categoryGroupMatch = Object.entries(categoryGroupMap).find(([rawCategoryKey, groupKey]) => {
+      const normalizedCategoryKey = normalizeText(rawCategoryKey);
+      if (!normalizedCategoryKey) return false;
+      return normalizedSheetName.includes(normalizedCategoryKey) || normalizedSheetName.replace(/\s/g, '').includes(normalizedCategoryKey);
+    });
+
+    if (categoryGroupMatch) {
+      const [, groupKey] = categoryGroupMatch;
+      return groupDisplayNames[groupKey] || groupKey;
+    }
+
+    return '';
   };
 
   const parseNumber = (value) => {
@@ -429,51 +464,62 @@ function AnaliseCarteiraClientePage() {
         return filtered.length > 0 ? filtered : workbook.SheetNames;
       })();
 
-      let selectedSheetName = null;
-      let headerRowIndex = -1;
-      let headerColumnMap = {};
+      const coletarPlanilhasValidas = (sheetNames) => {
+        const resultado = [];
 
-      for (const sheetName of prioritizedSheetNames) {
-        const worksheet = workbook.Sheets[sheetName];
-        if (!worksheet) continue;
+        for (const sheetName of sheetNames) {
+          const worksheet = workbook.Sheets[sheetName];
+          if (!worksheet) continue;
 
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false });
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false });
 
-        for (let rowIndex = 0; rowIndex < jsonData.length; rowIndex++) {
-          const row = jsonData[rowIndex];
-          if (!row || row.length === 0) continue;
+          for (let rowIndex = 0; rowIndex < jsonData.length; rowIndex++) {
+            const row = jsonData[rowIndex];
+            if (!row || row.length === 0) continue;
 
-          const normalizedCells = row.map((cell) => normalizeText(cell));
-          const headerMapCandidate = {};
+            const normalizedCells = row.map((cell) => normalizeText(cell));
+            const headerMapCandidate = {};
 
-          expectedHeaders.forEach((header) => {
-            const foundIndex = normalizedCells.findIndex((cell) =>
-              header.labels.some((label) => {
-                const normalizedLabel = normalizeText(label);
-                return normalizedLabel && cell.includes(normalizedLabel);
-              })
-            );
+            expectedHeaders.forEach((header) => {
+              const foundIndex = normalizedCells.findIndex((cell) =>
+                header.labels.some((label) => {
+                  const normalizedLabel = normalizeText(label);
+                  return normalizedLabel && cell.includes(normalizedLabel);
+                })
+              );
 
-            if (foundIndex !== -1) {
-              headerMapCandidate[header.key] = foundIndex;
+              if (foundIndex !== -1) {
+                headerMapCandidate[header.key] = foundIndex;
+              }
+            });
+
+            const allRequiredPresent = expectedHeaders
+              .filter((header) => header.required)
+              .every((header) => headerMapCandidate[header.key] !== undefined);
+
+            if (allRequiredPresent) {
+              resultado.push({
+                sheetName,
+                headerRowIndex: rowIndex,
+                headerColumnMap: headerMapCandidate,
+                jsonData
+              });
+              break;
             }
-          });
-
-          if (Object.keys(headerMapCandidate).length === expectedHeaders.length) {
-            selectedSheetName = sheetName;
-            headerRowIndex = rowIndex;
-            headerColumnMap = headerMapCandidate;
-            break;
           }
         }
 
-        if (selectedSheetName) {
-          break;
-        }
+        return resultado;
+      };
+
+      let planilhasValidas = coletarPlanilhasValidas(prioritizedSheetNames);
+
+      if (planilhasValidas.length === 0 && prioritizedSheetNames.length !== workbook.SheetNames.length) {
+        planilhasValidas = coletarPlanilhasValidas(workbook.SheetNames);
       }
 
-      if (!selectedSheetName || headerRowIndex === -1) {
-        setErrors(['Não foi possível localizar uma aba com os cabeçalhos ATIVO, CATEGORIA, QTDE e PREÇO MÉDIO.']);
+      if (planilhasValidas.length === 0) {
+        setErrors(['Não foi possível localizar uma aba com os cabeçalhos ATIVO, QTDE e PREÇO MÉDIO.']);
         setPortfolioData({
           groups: {},
           totals: {
@@ -486,36 +532,44 @@ function AnaliseCarteiraClientePage() {
         return;
       }
 
-      const worksheetSelecionada = workbook.Sheets[selectedSheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheetSelecionada, { header: 1, blankrows: false });
-      const linhasDados = jsonData.slice(headerRowIndex + 1);
-
       const linhasProcessadas = [];
 
-      linhasDados.forEach((row, rowIndex) => {
-        if (!row) return;
+      planilhasValidas.forEach(({ sheetName, headerRowIndex, headerColumnMap, jsonData }) => {
+        const linhasDados = jsonData.slice(headerRowIndex + 1);
+        const fallbackCategoria = deriveCategoryFromSheetName(sheetName);
 
-        const ativo = headerColumnMap.ativo !== undefined ? row[headerColumnMap.ativo] : '';
-        const categoria = headerColumnMap.categoria !== undefined ? row[headerColumnMap.categoria] : '';
-        const qtde = headerColumnMap.quantidade !== undefined ? row[headerColumnMap.quantidade] : '';
-        const precoMedio = headerColumnMap.precoMedio !== undefined ? row[headerColumnMap.precoMedio] : '';
+        linhasDados.forEach((row, rowIndex) => {
+          if (!row) return;
 
-        const hasContent = [ativo, categoria, qtde, precoMedio].some((valor) => {
-          if (valor === null || valor === undefined) return false;
-          return String(valor).trim() !== '';
-        });
+          const ativo = headerColumnMap.ativo !== undefined ? row[headerColumnMap.ativo] : '';
+          const categoriaDaLinha = headerColumnMap.categoria !== undefined
+            ? row[headerColumnMap.categoria]
+            : fallbackCategoria;
+          const qtde = headerColumnMap.quantidade !== undefined ? row[headerColumnMap.quantidade] : '';
+          const precoMedio = headerColumnMap.precoMedio !== undefined ? row[headerColumnMap.precoMedio] : '';
 
-        if (!hasContent) {
-          return;
-        }
+          const hasCoreContent = [ativo, qtde, precoMedio].some((valor) => {
+            if (valor === null || valor === undefined) return false;
+            return String(valor).trim() !== '';
+          });
 
-        linhasProcessadas.push({
-          id: `linha_${headerRowIndex + rowIndex + 2}_${rowIndex}`,
-          ativo,
-          categoria,
-          qtde,
-          precoMedio,
-          sourceRowNumber: headerRowIndex + rowIndex + 2
+          const hasContent = hasCoreContent || (categoriaDaLinha && String(categoriaDaLinha).trim() !== '');
+
+          if (!hasContent || !hasCoreContent) {
+            return;
+          }
+
+          const normalizedSheetId = normalizeText(sheetName).replace(/\s+/g, '-');
+
+          linhasProcessadas.push({
+            id: `linha_${normalizedSheetId}_${headerRowIndex + rowIndex + 2}_${rowIndex}`,
+            ativo,
+            categoria: categoriaDaLinha,
+            qtde,
+            precoMedio,
+            sourceRowNumber: headerRowIndex + rowIndex + 2,
+            sheetName
+          });
         });
       });
 
