@@ -6,6 +6,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { parseNumeroFlex } from './parseNumeroFlex';
 
 type CategoriaChave = 'acoes' | 'fiis' | 'rendaFixa' | 'exterior' | 'cripto' | 'reserva';
 
@@ -126,45 +127,6 @@ function extrairPrimeiroTexto(fonte: any, chaves: string[]): string | undefined 
   }
 
   return undefined;
-}
-
-function parseNumeroFlex(valor: unknown): number {
-  if (typeof valor === 'number') {
-    return Number.isFinite(valor) ? valor : 0;
-  }
-
-  if (typeof valor === 'string') {
-    const trimmed = valor.trim();
-    if (!trimmed) {
-      return 0;
-    }
-
-    let somenteNumeros = trimmed
-      .replace(/[^0-9,.-]/g, '')
-      .replace(/(?!^)-/g, '');
-
-    if (!somenteNumeros) {
-      return 0;
-    }
-
-    const virgulas = (somenteNumeros.match(/,/g) || []).length;
-    const pontos = (somenteNumeros.match(/\./g) || []).length;
-
-    if (virgulas && pontos) {
-      if (somenteNumeros.lastIndexOf(',') > somenteNumeros.lastIndexOf('.')) {
-        somenteNumeros = somenteNumeros.replace(/\./g, '').replace(',', '.');
-      } else {
-        somenteNumeros = somenteNumeros.replace(/,/g, '');
-      }
-    } else if (virgulas) {
-      somenteNumeros = somenteNumeros.replace(/,/g, '.');
-    }
-
-    const numero = parseFloat(somenteNumeros);
-    return Number.isFinite(numero) ? numero : 0;
-  }
-
-  return 0;
 }
 
 function identificarCategoria(possivelCategoria?: string | null, fallback?: string | null): CategoriaChave | null {
