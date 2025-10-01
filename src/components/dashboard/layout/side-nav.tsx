@@ -49,8 +49,8 @@ export function SideNav(): React.JSX.Element {
           const enhancedInfo = {
             ...info,
             userEmail,
-            pages: info.isAdmin 
-              ? [...(info.pages || []), 'admin-instagram', 'admin-renovacoes', 'admin-relatorio-semanal', 'admin-analises-trimesestrais', 'admin-central-duvidas'] // 🆕 NOVO: admin-central-duvidas
+            pages: info.isAdmin
+              ? [...(info.pages || []), 'admin-instagram', 'admin-renovacoes', 'admin-relatorio-semanal', 'admin-analises-trimesestrais', 'admin-carteiras', 'admin-central-duvidas'] // 🆕 NOVO: admin-central-duvidas
               : (info.pages || [])
           };
           

@@ -66,7 +66,7 @@ export const navIcons = {
   'gear': Gear,                   // Para menu Administração e configurações
   'shield-check': ShieldCheck,    // Para Super Admin
   'link': Link,                   // Para Integrações
-  'list': List,                   // Para Logs do Sistema
+  'list': List,                   // Para Analisar Carteiras
   'calendar': Calendar,
   
   // 📱 INSTAGRAM CLOSE FRIENDS
