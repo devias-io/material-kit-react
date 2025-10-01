@@ -37,7 +37,6 @@ export const paths = {
     adminIntegracoes: '/dashboard/central-agenda',
     adminSettings: '/dashboard/admin/settings',
     adminPlans: '/dashboard/admin/plans',
-    adminLogs: '/dashboard/admin/logs',
   },
   errors: {
     notFound: '/errors/not-found'

@@ -80,7 +80,7 @@ export const PLAN_PERMISSIONS = {
       // Páginas administrativas
       'admin', 'admin-dashboard', 'admin-usuarios', 'admin-instagram', 'admin-empresas', 'admin-proventos',
       'admin-relatorios', 'admin-relatorio-semanal', 'admin-analises-trimesestrais', 'admin-integracoes',
-      'admin-renovacoes', 'admin-settings', 'admin-carteiras', 'admin-logs'
+      'admin-renovacoes', 'admin-settings', 'admin-carteiras'
     ],
     adminPermissions: {
       canManageUsers: true,

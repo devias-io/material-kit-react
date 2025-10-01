@@ -253,11 +253,11 @@ export const navItems = [
         page: 'admin-integracoes'
       },
       {
-        key: 'admin-logs',
-        title: 'Logs do Sistema',
-        href: paths.dashboard.adminLogs,
+        key: 'admin-carteiras',
+        title: 'Analisar Carteiras',
+        href: paths.dashboard.adminCarteiras,
         icon: 'list',
-        page: 'admin-logs'
+        page: 'admin-carteiras'
       },
       // 🆕 NOVO ITEM: Central de Dúvidas Admin
       {

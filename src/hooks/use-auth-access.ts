@@ -94,7 +94,7 @@ export function useAuthAccess() {
             'recursos-exclusivos', 'recursos-dicas', 'recursos-analise', 'recursos-ebooks',
             'recursos-imposto', 'recursos-lives', 'recursos-milhas', 'recursos-planilhas', 'recursos-telegram', 'recursos-suporte', // 🆕 NOVO: Suporte
             'admin', 'admin-dashboard', 'admin-usuarios', 'admin-instagram', 'admin-empresas', 'admin-proventos',
-            'admin-relatorios', 'admin-relatorio-semanal', 'admin-analises-trimesestrais', 'admin-integracoes', 'admin-renovacoes', 'admin-settings', 'admin-logs', 'admin-central-duvidas' // 🆕 NOVO: admin-central-duvidas
+            'admin-relatorios', 'admin-relatorio-semanal', 'admin-analises-trimesestrais', 'admin-integracoes', 'admin-renovacoes', 'admin-settings', 'admin-carteiras', 'admin-central-duvidas' // 🆕 NOVO: admin-central-duvidas
           ]
         };
 
