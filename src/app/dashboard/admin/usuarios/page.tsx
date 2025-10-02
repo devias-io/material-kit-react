@@ -207,10 +207,18 @@ export default function AdminUsersPage() {
     }
   };
 
-  const filteredUsers = users.filter(user => 
-    user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const normalizeText = (value: string) =>
+    value
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase();
+
+  const normalizedSearchTerm = normalizeText(searchTerm);
+
+  const filteredUsers = users.filter(user =>
+    normalizeText(user.firstName).includes(normalizedSearchTerm) ||
+    normalizeText(user.lastName).includes(normalizedSearchTerm) ||
+    normalizeText(user.email).includes(normalizedSearchTerm)
   );
 
   // ✅ STATS ATUALIZADAS INCLUINDO LITE_V2
