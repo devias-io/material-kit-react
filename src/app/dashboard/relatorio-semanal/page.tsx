@@ -1930,7 +1930,7 @@ export default function RelatorioSemanalPage() {
 <section>
   <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
     <AlertCircle size={20} style={{ color: '#f59e0b' }} />
-    Disclosure regulatório
+    Disclosure 
   </h3>
   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: '#475569', fontSize: '14px', lineHeight: 1.7 }}>
     <p style={{ margin: 0 }}>
