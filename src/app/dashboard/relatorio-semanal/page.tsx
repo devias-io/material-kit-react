@@ -1927,54 +1927,40 @@ export default function RelatorioSemanalPage() {
           </>
         )}
 
-        <section
-          style={{
-            marginTop: '32px',
-            marginBottom: '48px',
-            padding: '24px',
-            borderRadius: '16px',
-            border: '1px solid #e5e7eb',
-            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.05)'
-          }}
-        >
-          <h3
-            style={{
-              margin: '0 0 16px 0',
-              fontSize: '18px',
-              fontWeight: 700,
-              color: '#0f172a',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <AlertCircle size={20} style={{ color: '#f59e0b' }} />
-            Disclosure regulatório
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: '#475569', fontSize: '14px', lineHeight: 1.7 }}>
-            <p style={{ margin: 0 }}>
-              Este relatório foi elaborado pela equipe de análise da Fatos da Bolsa com base em fontes públicas consideradas confiáveis,
-              mas a companhia não garante a integralidade ou a exatidão das informações aqui contidas e se reserva o direito de alterá-las sem aviso prévio.
-            </p>
-            <p style={{ margin: 0 }}>
-              As opiniões expressas refletem o julgamento dos analistas na data de divulgação e podem ser modificadas em decorrência de mudanças nas condições de mercado,
-              sem que isso implique na obrigação de comunicação dessas alterações.
-            </p>
-            <p style={{ margin: 0 }}>
-              Este material tem caráter exclusivamente informativo e não constitui oferta ou solicitação de compra ou venda de valores mobiliários,
-              devendo ser utilizado como um dos elementos para a tomada de decisão de investimento, sempre considerando o perfil individual de risco de cada investidor.
-            </p>
-            <p style={{ margin: 0 }}>
-              Data de elaboração do relatório: {new Date(relatorio.date).toLocaleDateString('pt-BR', {
-                day: '2-digit',
-                month: 'long',
-                year: 'numeric'
-              })}
-              .
-            </p>
-          </div>
-        </section>
+<section>
+  <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
+    <AlertCircle size={20} style={{ color: '#f59e0b' }} />
+    Disclosure regulatório
+  </h3>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: '#475569', fontSize: '14px', lineHeight: 1.7 }}>
+    <p style={{ margin: 0 }}>
+      A análise apresentada foi elaborada pelo analista de valores mobiliários autônomo Marcos Schilling Machado (CNPI nº 2529), nos termos da Resolução CVM Nº20/2021.
+    </p>
+    <p style={{ margin: 0 }}>
+      De acordo com a exigência regulatória do artigo 21 previsto na Resolução CVM nº 20, de 25 de fevereiro de 2021, o analista de valores mobiliários, responsável principal por este relatório, declara: (i) que as recomendações contidas neste relatório refletem única e exclusivamente sua opinião pessoal sobre a companhia analisada e seus valores mobiliários e foram elaborados de forma independente e autônoma; (ii) que as informações, opiniões, estimativas e projeções contidas neste documento referem-se à data presente e estão sujeitas a mudanças, não implicando necessariamente na obrigação de qualquer comunicação no sentido de atualização ou revisão com respeito a tal mudança.
+    </p>
+    <p style={{ margin: 0 }}>
+      O material produzido é baseado em informações públicas, consideradas fidedignas na data de sua publicação, portanto as estimativas, opiniões e recomendações estão sujeitas a mudanças sem aviso prévio. O conteúdo do relatório não pode ser reproduzido ou distribuído, do todo ou em parte dos relatórios, a terceiros, sem prévia e expressa autorização sob nenhuma forma, no todo ou em parte, sob pena da adoção de medidas cíveis e criminais, incluindo a obrigação de reparação de todas as perdas e danos causados, nos termos da Lei nº 9.610/98 e de outras aplicáveis.
+    </p>
+    <p style={{ margin: 0 }}>
+      Os relatórios disponibilizados aos seguidores e/ou assinantes da @fatosdabolsa não representam ofertas, negociação de valores mobiliários ou de outros instrumentos financeiros. As opiniões e recomendações dos analistas não implicam em quaisquer concessões de crédito e/ou promessa de rendimentos aos clientes. A Fatos da Bolsa e os analistas signatários não podem garantir que os investidores obterão lucros. Além disso, a Fatos da Bolsa e os analistas não compartilharão quaisquer ganhos de investimento com os investidores, nem assumirão qualquer responsabilidade por perdas incorridas.
+    </p>
+    <p style={{ margin: 0 }}>
+      Investimentos envolvem riscos e os investidores devem ser prudentes ao tomar suas decisões de investimento. A Fatos da Bolsa e os analistas signatários não possuem obrigações fiduciárias para com os destinatários deste relatório e, ao divulgá-lo, não estão agindo como um fiduciário. As decisões de investimentos e estratégias financeiras devem ser realizadas pelos próprios leitores, não sendo de responsabilidade dos analistas eventuais perdas que as recomendações possam gerar aos clientes.
+    </p>
+    <p style={{ margin: 0 }}>
+      Mais informações podem ser obtidas na Resolução CVM nº 20/2021, e no Código de Conduta da APIMEC para o Analista de Valores Mobiliários. Fonte: RI das empresas.
+    </p>
+    <p style={{ margin: 0 }}>
+      Data de elaboração do relatório de análise: {new Date("2025-09-29").toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      })}
+      .
+    </p>
+  </div>
+</section>
 
         {/* Rodapé */}
         <div style={{
