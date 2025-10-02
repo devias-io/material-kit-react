@@ -1926,7 +1926,56 @@ export default function RelatorioSemanalPage() {
             })}
           </>
         )}
-        
+
+        <section
+          style={{
+            marginTop: '32px',
+            marginBottom: '48px',
+            padding: '24px',
+            borderRadius: '16px',
+            border: '1px solid #e5e7eb',
+            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.05)'
+          }}
+        >
+          <h3
+            style={{
+              margin: '0 0 16px 0',
+              fontSize: '18px',
+              fontWeight: 700,
+              color: '#0f172a',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <AlertCircle size={20} style={{ color: '#f59e0b' }} />
+            Disclosure regulatório
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: '#475569', fontSize: '14px', lineHeight: 1.7 }}>
+            <p style={{ margin: 0 }}>
+              Este relatório foi elaborado pela equipe de análise da Fatos da Bolsa com base em fontes públicas consideradas confiáveis,
+              mas a companhia não garante a integralidade ou a exatidão das informações aqui contidas e se reserva o direito de alterá-las sem aviso prévio.
+            </p>
+            <p style={{ margin: 0 }}>
+              As opiniões expressas refletem o julgamento dos analistas na data de divulgação e podem ser modificadas em decorrência de mudanças nas condições de mercado,
+              sem que isso implique na obrigação de comunicação dessas alterações.
+            </p>
+            <p style={{ margin: 0 }}>
+              Este material tem caráter exclusivamente informativo e não constitui oferta ou solicitação de compra ou venda de valores mobiliários,
+              devendo ser utilizado como um dos elementos para a tomada de decisão de investimento, sempre considerando o perfil individual de risco de cada investidor.
+            </p>
+            <p style={{ margin: 0 }}>
+              Data de elaboração do relatório: {new Date(relatorio.date).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+              })}
+              .
+            </p>
+          </div>
+        </section>
+
         {/* Rodapé */}
         <div style={{
           textAlign: 'center',
