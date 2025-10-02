@@ -1,22 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { auth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
-async function verifyAuth(request: NextRequest) {
+async function verifyAuth() {
   try {
-    const userEmail = request.headers.get('x-user-email');
-    
-    if (userEmail === 'admin@fatosdobolsa.com') {
-      return {
-        id: 'ADM-001',
-        firstName: 'Admin',
-        lastName: 'Sistema',
-        email: userEmail,
-        plan: 'ADMIN'
-      };
+    const session = await auth();
+
+    if (session?.user?.plan === 'ADMIN') {
+      return session.user;
     }
-    
+
     return null;
   } catch (error) {
     console.error('❌ Erro na verificação:', error);
@@ -27,7 +22,7 @@ async function verifyAuth(request: NextRequest) {
 // GET - Buscar dados do usuário + compras
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const admin = await verifyAuth(request);
+    const admin = await verifyAuth();
     if (!admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -99,7 +94,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 // PUT - Atualizar dados do usuário
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const admin = await verifyAuth(request);
+    const admin = await verifyAuth();
     if (!admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -175,7 +170,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 // DELETE - Excluir usuário
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const admin = await verifyAuth(request);
+    const admin = await verifyAuth();
     if (!admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
