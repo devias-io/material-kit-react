@@ -901,9 +901,10 @@ const ItemCard = ({ item, sectionColor, onOpenAnalise }: {
   const empresa = item.empresa || item.company || '';
   const isProvento = item.isProvento || item.type || item.tipoProvento || item.value || item.valor;
   const temAnalise = item.temAnaliseTrismestral && item.analiseTrismestralId;
-  
+
   // Verificar se é item do Panorama Macro (sem ticker/empresa)
   const isPanoramaMacro = !ticker && !empresa && (item.titulo || item.analise);
+  const noticiaConteudoPrincipal = item.resumo || item.analise || item.summary;
   
   return (
     <div style={{
@@ -1155,9 +1156,9 @@ const ItemCard = ({ item, sectionColor, onOpenAnalise }: {
             {item.titulo || item.title || item.news}
           </h4>
 
-          {(item.resumo || item.summary) && (
-            <HTMLContent 
-              content={item.resumo || item.summary || ''}
+          {noticiaConteudoPrincipal && (
+            <HTMLContent
+              content={noticiaConteudoPrincipal || ''}
               style={{
                 fontSize: 'clamp(14px, 2.2vw, 17px)',
                 color: '#4b5563',
