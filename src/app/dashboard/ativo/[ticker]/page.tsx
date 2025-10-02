@@ -19,6 +19,12 @@ import { useHGBrasilFII } from '../../../../hooks/ativo/useHGBrasilFII';
 import { useCotacaoCompleta } from '../../../../hooks/ativo/useCotacaoCompleta';
 import { useBRAPIETF } from '@/hooks/useBRAPIETF';
 import { useRelatoriosEstatisticas } from '@/hooks/useRelatoriosAPI';
+import { useAuthAccess } from '@/hooks/use-auth-access';
+import {
+  CARTEIRA_PERMISSION_MAP,
+  getCarteirasForTicker,
+  type CarteiraKey
+} from '@/utils/carteira-access';
 
 // ✅ IMPORT ÚNICO CORRIGIDO
 import { 
@@ -2360,16 +2366,37 @@ const GerenciadorRelatorios = React.memo(({ ticker }) => {
 export default function AtivoPage() {
   const params = useParams();
   const router = useRouter();
-  const { 
-    dados, 
-    CARTEIRAS_CONFIG, 
-    cotacoes, 
+  const {
+    dados,
+    CARTEIRAS_CONFIG,
+    cotacoes,
     buscarCotacoes
   } = useDataStore();
-  
+  const { planInfo } = useAuthAccess();
+
   const ticker = params?.ticker?.toString().toUpperCase();
   const { isMobile, isMobileOrTablet } = useResponsive();
-  
+  const carteirasPossiveis = useMemo(
+    () => getCarteirasForTicker(ticker, dados),
+    [ticker, dados]
+  );
+  const podeAcessarCarteira = useCallback(
+    (carteira: CarteiraKey) => {
+      const permission = CARTEIRA_PERMISSION_MAP[carteira];
+
+      if (!permission) {
+        return true;
+      }
+
+      if (!planInfo?.pages || planInfo.pages.length === 0) {
+        return true;
+      }
+
+      return planInfo.pages.includes(permission);
+    },
+    [planInfo?.pages]
+  );
+
   // ✅ VERIFICAÇÃO PRECOCE DO TICKER
   if (!ticker) {
     return (
@@ -2390,11 +2417,34 @@ export default function AtivoPage() {
       </div>
     );
   }
-  
+
   // ✅ ESTADOS BÁSICOS
   const [ativo, setAtivo] = useState(null);
   const [carteira, setCarteira] = useState(null);
   const [loading, setLoading] = useState(true);
+  const deveNegarAcesso = useMemo(() => {
+    if (!ticker) return false;
+    if (carteirasPossiveis.length === 0) return false;
+    if (!planInfo?.pages || planInfo.pages.length === 0) return false;
+
+    return !carteirasPossiveis.some(carteira => podeAcessarCarteira(carteira));
+  }, [carteirasPossiveis, planInfo?.pages, podeAcessarCarteira, ticker]);
+
+  useEffect(() => {
+    if (!deveNegarAcesso) {
+      return;
+    }
+
+    cacheUtils.clear(`ativo_${ticker}`);
+    try {
+      sessionStorage.clear();
+    } catch (error) {
+      console.warn('Falha ao limpar sessionStorage:', error);
+    }
+    setAtivo(null);
+    setCarteira(null);
+    setLoading(false);
+  }, [deveNegarAcesso, ticker]);
 
   // ✅ DETECTORES DE TIPO DE ATIVO (MEMOIZADOS) - Só executa se ticker existe
   const tipoAtivo = useMemo(() => {
@@ -2500,13 +2550,73 @@ export default function AtivoPage() {
     return `${percentual}%`;
   }, [dados]);
 
+  if (deveNegarAcesso) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          backgroundColor: '#f8fafc',
+          padding: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <div style={{ textAlign: 'center', maxWidth: '520px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '24px' }}>🚫</div>
+          <h1
+            style={{
+              fontSize: '32px',
+              fontWeight: '800',
+              color: '#1e293b',
+              marginBottom: '16px'
+            }}
+          >
+            Acesso negado ao ativo
+          </h1>
+          <p
+            style={{
+              fontSize: '18px',
+              color: '#64748b',
+              marginBottom: '32px'
+            }}
+          >
+            O ativo <strong>{ticker}</strong> faz parte de uma carteira que não está disponível
+            no seu plano atual. Entre em contato com o suporte para saber mais sobre como
+            desbloquear esse conteúdo.
+          </p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            style={{
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '16px 32px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            🏠 Voltar ao Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ✅ EFFECT PARA BUSCAR DADOS BÁSICOS (OTIMIZADO)
   useEffect(() => {
+    if (deveNegarAcesso) {
+      setLoading(false);
+      return;
+    }
+
     if (!dados || Object.keys(dados).length === 0) {
       const timer = setTimeout(() => {
         setLoading(false);
       }, 2000);
-      
+
       return () => clearTimeout(timer);
     }
 
@@ -2514,12 +2624,22 @@ export default function AtivoPage() {
     const buscarDadosAtivo = () => {
       // Cache para dados do ativo
       const cached = cacheUtils.get(`ativo_${ticker}`);
-      
+
       if (cached) {
-        setAtivo(cached.ativo);
-        setCarteira(cached.carteira);
-        setLoading(false);
-        return;
+        const carteiraCache = cached.carteira as CarteiraKey;
+        const carteiraValida = Object.prototype.hasOwnProperty.call(
+          CARTEIRA_PERMISSION_MAP,
+          carteiraCache
+        );
+
+        if (carteiraValida && planInfo?.pages && !podeAcessarCarteira(carteiraCache)) {
+          cacheUtils.clear(`ativo_${ticker}`);
+        } else {
+          setAtivo(cached.ativo);
+          setCarteira(cached.carteira);
+          setLoading(false);
+          return;
+        }
       }
 
       // BUSCA EM MÚLTIPLAS CARTEIRAS
@@ -2592,7 +2712,14 @@ export default function AtivoPage() {
     };
 
     buscarDadosAtivo();
-  }, [ticker, dados, CARTEIRAS_CONFIG]);
+  }, [
+    CARTEIRAS_CONFIG,
+    dados,
+    deveNegarAcesso,
+    planInfo?.pages,
+    podeAcessarCarteira,
+    ticker
+  ]);
 
   // ✅ CÁLCULOS MEMOIZADOS
   const calculatedData = useMemo(() => {

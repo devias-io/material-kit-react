@@ -4,6 +4,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUser } from '@/hooks/use-user';
+import { useAuthAccess } from '@/hooks/use-auth-access';
+import {
+  ALL_CARTEIRA_KEYS,
+  CarteiraKey,
+  createEmptyCarteirasData,
+  resolveCarteirasPermitidas,
+  sanitizeCarteirasData
+} from '@/utils/carteira-access';
 
 // 🎯 DADOS INICIAIS DAS CARTEIRAS (mantidos iguais)
 const DADOS_INICIAIS = {
@@ -384,10 +392,11 @@ export const useDataStore = () => {
 // 🎯 PROVIDER SIMPLIFICADO - CORRIGIDO PARA FUNCIONAR
 export const DataStoreProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useUser();
+  const { planInfo } = useAuthAccess();
   const queryClient = useQueryClient();
 
   // 🔥 STATES SIMPLIFICADOS
-  const [dados, setDados] = useState(DADOS_INICIAIS);
+  const [dados, setDados] = useState(() => createEmptyCarteirasData());
   const [cotacoes, setCotacoes] = useState<Record<string, number>>({});
   const [cotacaoUSD, setCotacaoUSD] = useState(5.85);
   const [loading, setLoading] = useState(false);
@@ -436,11 +445,39 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     return !!user?.id;
   }, [user?.id]);
 
+  const allowedCarteiras = useMemo(() => {
+    if (!user?.id) {
+      return new Set<CarteiraKey>(ALL_CARTEIRA_KEYS);
+    }
+
+    const pages = planInfo?.pages;
+    if (!pages || pages.length === 0) {
+      return new Set<CarteiraKey>();
+    }
+
+    return resolveCarteirasPermitidas(pages, { userPlan: user?.plan });
+  }, [user?.id, user?.plan, planInfo?.pages]);
+
+  const isCarteiraPermitida = useCallback(
+    (carteira: string) => {
+      if (!user?.id) return true;
+
+      return allowedCarteiras.has(carteira as CarteiraKey);
+    },
+    [allowedCarteiras, user?.id]
+  );
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    setDados(prevDados => sanitizeCarteirasData(prevDados, allowedCarteiras));
+  }, [allowedCarteiras, user?.id]);
+
   // 🔥 REACT QUERIES SIMPLIFICADAS COM ENABLED CORRETO
   const smallCapsQuery = useQuery({
     queryKey: ['carteira', 'smallCaps', user?.id],
     queryFn: () => api.getCarteira('smallCaps'),
-    enabled: !!user?.id && isAuthenticated, // 🔥 REMOVIDO modoSincronizacao === 'hibrido'
+    enabled: !!user?.id && isAuthenticated && isCarteiraPermitida('smallCaps'), // 🔥 REMOVIDO modoSincronizacao === 'hibrido'
     staleTime: 2 * 60 * 1000, // 🔥 REDUZIDO PARA 2min
     refetchOnWindowFocus: false,
     retry: 1
@@ -449,7 +486,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   const microCapsQuery = useQuery({
     queryKey: ['carteira', 'microCaps', user?.id],
     queryFn: () => api.getCarteira('microCaps'),
-    enabled: !!user?.id && isAuthenticated,
+    enabled: !!user?.id && isAuthenticated && isCarteiraPermitida('microCaps'),
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -458,7 +495,11 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   const dividendosQuery = useQuery({
     queryKey: ['carteira', 'dividendos', user?.id],
     queryFn: () => api.getCarteira('dividendos'),
-    enabled: !!user?.id && isAuthenticated && modoSincronizacao === 'hibrido',
+    enabled:
+      !!user?.id &&
+      isAuthenticated &&
+      modoSincronizacao === 'hibrido' &&
+      isCarteiraPermitida('dividendos'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -467,7 +508,11 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   const fiisQuery = useQuery({
     queryKey: ['carteira', 'fiis', user?.id],
     queryFn: () => api.getCarteira('fiis'),
-    enabled: !!user?.id && isAuthenticated && modoSincronizacao === 'hibrido',
+    enabled:
+      !!user?.id &&
+      isAuthenticated &&
+      modoSincronizacao === 'hibrido' &&
+      isCarteiraPermitida('fiis'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -476,7 +521,11 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   const dividendosInternacionalQuery = useQuery({
     queryKey: ['carteira', 'dividendosInternacional', user?.id],
     queryFn: () => api.getCarteira('dividendosInternacional'),
-    enabled: !!user?.id && isAuthenticated && modoSincronizacao === 'hibrido',
+    enabled:
+      !!user?.id &&
+      isAuthenticated &&
+      modoSincronizacao === 'hibrido' &&
+      isCarteiraPermitida('dividendosInternacional'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -485,7 +534,11 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   const etfsQuery = useQuery({
     queryKey: ['carteira', 'etfs', user?.id],
     queryFn: () => api.getCarteira('etfs'),
-    enabled: !!user?.id && isAuthenticated && modoSincronizacao === 'hibrido',
+    enabled:
+      !!user?.id &&
+      isAuthenticated &&
+      modoSincronizacao === 'hibrido' &&
+      isCarteiraPermitida('etfs'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -494,7 +547,11 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   const projetoAmericaQuery = useQuery({
     queryKey: ['carteira', 'projetoAmerica', user?.id],
     queryFn: () => api.getCarteira('projetoAmerica'),
-    enabled: !!user?.id && isAuthenticated && modoSincronizacao === 'hibrido',
+    enabled:
+      !!user?.id &&
+      isAuthenticated &&
+      modoSincronizacao === 'hibrido' &&
+      isCarteiraPermitida('projetoAmerica'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -503,7 +560,11 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   const exteriorStocksQuery = useQuery({
     queryKey: ['carteira', 'exteriorStocks', user?.id],
     queryFn: () => api.getCarteira('exteriorStocks'),
-    enabled: !!user?.id && isAuthenticated && modoSincronizacao === 'hibrido',
+    enabled:
+      !!user?.id &&
+      isAuthenticated &&
+      modoSincronizacao === 'hibrido' &&
+      isCarteiraPermitida('exteriorStocks'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -742,6 +803,11 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     
     // 🔥 MODO HÍBRIDO MELHORADO
     const dadosCombinados = Object.keys(CARTEIRAS_CONFIG).reduce((acc, carteira) => {
+      if (user?.id && !isCarteiraPermitida(carteira)) {
+        acc[carteira] = [];
+        return acc;
+      }
+
       const query = carteirasQueries[carteira as keyof typeof carteirasQueries];
       const dadosBanco = query?.data || [];
       const dadosLocal = dados[carteira] || [];
@@ -769,13 +835,14 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       
       return acc;
     }, {} as any);
-    
+
     return dadosCombinados;
   }, [
-    dados, 
-    carteirasQueries, 
-    modoSincronizacao, 
+    dados,
+    carteirasQueries,
+    modoSincronizacao,
     user?.id,
+    isCarteiraPermitida,
     reordenarMutation.isPending,
     adicionarMutation.isPending,
     editarMutation.isPending,
@@ -835,13 +902,17 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
 
   // 🔥 FUNÇÃO obterCarteira
   const obterCarteira = useCallback((nomeCarteira: string) => {
+    if (user?.id && !isCarteiraPermitida(nomeCarteira)) {
+      return [];
+    }
+
     const dadosCarteira = dadosFinais[nomeCarteira] || [];
     return dadosCarteira.map((item: any) => ({
       ...item,
       precoAtual: cotacoes[item.ticker] || null,
       isReal: !!cotacoes[item.ticker]
     }));
-  }, [dadosFinais, cotacoes]);
+  }, [cotacoes, dadosFinais, isCarteiraPermitida, user?.id]);
 
   // 🔥 FUNÇÕES CRUD HÍBRIDAS CORRIGIDAS
   const adicionarAtivo = useCallback((carteira: string, novoAtivo: any) => {
@@ -970,6 +1041,10 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   }, [dadosFinais, buscarCotacoes, buscarCotacaoUSD]);
 
   const converterUSDparaBRL = useCallback((carteira: string, cotacaoCustomizada = null) => {
+    if (user?.id && !isCarteiraPermitida(carteira)) {
+      return false;
+    }
+
     const carteiraConfig = CARTEIRAS_CONFIG[carteira as keyof typeof CARTEIRAS_CONFIG];
     if (!carteiraConfig || !carteiraConfig.suportaBDR) {
       return false;
@@ -1005,7 +1080,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     salvarDados(novosDados);
     
     return ativosParaConverter.length;
-  }, [dados, cotacaoUSD, salvarDados]);
+  }, [cotacaoUSD, dados, isCarteiraPermitida, salvarDados, user?.id]);
 
   const obterEstatisticas = useCallback(() => {
     const totalAtivos = Object.values(dadosFinais).reduce((acc: number, carteira: any) => 
@@ -1137,6 +1212,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     obterEstatisticas,
     debug,
     debugReordenacao,
+    isCarteiraPermitida,
 
     // Estados React Query
     isLoading: Object.values(carteirasQueries).some((q: any) => q.isLoading),
