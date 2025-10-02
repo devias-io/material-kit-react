@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
           // 🔥 DADOS DO HOTMART (essenciais para liberação de membros)
           hotmartCustomerId: hotmartInfo?.hotmartCustomerId || user.hotmartCustomerId || null,
           
-          createdAt: user.createdAt?.toISOString() || new Date().toISOString(),
+          createdAt: user.createdAt?.toISOString() ?? null,
           lastLogin: user.lastLogin?.toISOString() || null,
           totalPurchases,
           purchaseCount: userPurchases.length,
@@ -181,7 +181,7 @@ export async function GET(request: NextRequest) {
           status: user.status,
           origin: user.origin,
           hotmartCustomerId: user.hotmartCustomerId || null,
-          createdAt: new Date().toISOString(),
+          createdAt: user.createdAt?.toISOString() ?? null,
           lastLogin: null,
           totalPurchases: 0,
           purchaseCount: 0,
