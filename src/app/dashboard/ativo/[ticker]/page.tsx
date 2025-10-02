@@ -2377,7 +2377,7 @@ export default function AtivoPage() {
   const ticker = params?.ticker?.toString().toUpperCase();
   const { isMobile, isMobileOrTablet } = useResponsive();
   const carteirasPossiveis = useMemo(
-    () => getCarteirasForTicker(ticker, dados),
+    () => (ticker ? getCarteirasForTicker(ticker, dados) : []),
     [ticker, dados]
   );
   const podeAcessarCarteira = useCallback(
@@ -2396,27 +2396,6 @@ export default function AtivoPage() {
     },
     [planInfo?.pages]
   );
-
-  // ✅ VERIFICAÇÃO PRECOCE DO TICKER
-  if (!ticker) {
-    return (
-      <div style={{ 
-        minHeight: '100vh', 
-        backgroundColor: '#f8fafc', 
-        padding: '24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
-          <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1e293b' }}>
-            Ticker não informado
-          </h2>
-        </div>
-      </div>
-    );
-  }
 
   // ✅ ESTADOS BÁSICOS
   const [ativo, setAtivo] = useState(null);
@@ -2448,13 +2427,24 @@ export default function AtivoPage() {
 
   // ✅ DETECTORES DE TIPO DE ATIVO (MEMOIZADOS) - Só executa se ticker existe
   const tipoAtivo = useMemo(() => {
+    if (!ticker) {
+      return {
+        ehBDREstrangeiro: false,
+        tickerEstrangeiro: null,
+        bdrCorrespondente: null,
+        temBDR: false,
+        ehETF: false,
+        ehFII: false
+      };
+    }
+
     const ehBDREstrangeiro = isBDREstrangeiro(ticker);
     const tickerEstrangeiro = ehBDREstrangeiro ? getEstrangeiroFromBDR(ticker) : null;
     const bdrCorrespondente = getBDRFromAmericano(ticker);
     const temBDR = !!bdrCorrespondente;
     const ehETF = isETF(ticker);
     const ehFII = ticker.includes('11') || ticker.endsWith('11');
-    
+
     return {
       ehBDREstrangeiro,
       tickerEstrangeiro,
@@ -2469,8 +2459,8 @@ export default function AtivoPage() {
   const { cotacaoUSD, loading: loadingUSD, ultimaAtualizacao: atualizacaoUSD, refetch: refetchUSD } = useCotacaoUSD();
   
   // Dados básicos sempre carregados
-  const { dadosFinanceiros, loading: dadosLoading, error: dadosError, ultimaAtualizacao, refetch } = useDadosFinanceiros(ticker);
-  const { cotacaoCompleta, loading: loadingCotacao, error: errorCotacao } = useCotacaoCompleta(ticker, tipoAtivo.ehBDREstrangeiro);
+  const { dadosFinanceiros, loading: dadosLoading, error: dadosError, ultimaAtualizacao, refetch } = useDadosFinanceiros(ticker || '');
+  const { cotacaoCompleta, loading: loadingCotacao, error: errorCotacao } = useCotacaoCompleta(ticker || '', tipoAtivo.ehBDREstrangeiro);
   
   // Dados condicionais baseados no tipo (sempre chamados, mas podem retornar null)
   const { dadosFII: dadosFIIHGBrasil, loading: loadingFIIHGBrasil } = useHGBrasilFII(
@@ -2498,9 +2488,9 @@ export default function AtivoPage() {
   );
 
   // ✅ HOOKS INTEGRADOS (sempre chamados)
-  const { dy12Meses, dyFormatado, loading: loadingDY, fonte: fonteDY } = useDividendYieldIntegrado(ticker);
+  const { dy12Meses, dyFormatado, loading: loadingDY, fonte: fonteDY } = useDividendYieldIntegrado(ticker || '');
   const { valorProventos, performanceProventos, loading: loadingProventos, fonte: fonteProventos } = useProventosIntegrado(
-    ticker, 
+    ticker || '',
     ativo?.dataEntrada || '', 
     ativo?.precoEntrada
   );
@@ -2552,6 +2542,13 @@ export default function AtivoPage() {
 
   // ✅ EFFECT PARA BUSCAR DADOS BÁSICOS (OTIMIZADO)
   useEffect(() => {
+    if (!ticker) {
+      setAtivo(null);
+      setCarteira(null);
+      setLoading(false);
+      return;
+    }
+
     if (deveNegarAcesso) {
       setLoading(false);
       return;
@@ -2850,7 +2847,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
   ]);
 
   // Estados de carregamento e erro (com stages)
-  if (loadingStages.stage1) {
+  if (ticker && loadingStages.stage1) {
     return (
       <div style={{ 
         minHeight: '100vh', 
@@ -2870,7 +2867,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
     );
   }
 
-  if (!ativo || !carteira) {
+  if (ticker && (!ativo || !carteira)) {
     return (
       <div style={{ 
         minHeight: '100vh', 
@@ -2919,11 +2916,11 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
 
   const carteiraConfig = CARTEIRAS_CONFIG[carteira];
 
-  return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f8fafc', 
-      padding: isMobile ? '16px' : '24px' 
+  const content = ticker ? (
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#f8fafc',
+      padding: isMobile ? '16px' : '24px'
     }}>
       {/* Navegação */}
       <div style={{ marginBottom: '24px' }}>
@@ -2962,17 +2959,17 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
             gap: isMobile ? '16px' : '24px',
             alignItems: isMobileOrTablet ? 'center' : 'flex-start'
           }}>
-            
+
             {/* AVATAR DA EMPRESA */}
-            <CompanyAvatar 
+            <CompanyAvatar
               symbol={ticker}
               companyName={getNomeEmpresa(ticker, ativo?.setor || '')}
               size={isMobile ? 80 : isMobileOrTablet ? 100 : 120}
             />
-            
+
             {/* INFORMAÇÕES CENTRAIS */}
-            <div style={{ 
-              flex: 1, 
+            <div style={{
+              flex: 1,
               textAlign: isMobileOrTablet ? 'center' : 'left',
               minWidth: 0
             }}>
@@ -2985,20 +2982,20 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 marginBottom: '8px',
                 flexWrap: 'wrap'
               }}>
-                <h1 style={{ 
-                  fontSize: isMobile ? '1.8rem' : isMobileOrTablet ? '2.2rem' : '2.5rem', 
-                  fontWeight: 700, 
+                <h1 style={{
+                  fontSize: isMobile ? '1.8rem' : isMobileOrTablet ? '2.2rem' : '2.5rem',
+                  fontWeight: 700,
                   margin: 0,
                   color: '#1f2937',
                   letterSpacing: '-0.025em'
                 }}>
                   {ticker}
                 </h1>
-                
+
                 {/* Badges responsivos */}
-                <div style={{ 
-                  display: 'flex', 
-                  gap: isMobile ? '6px' : '8px', 
+                <div style={{
+                  display: 'flex',
+                  gap: isMobile ? '6px' : '8px',
                   flexWrap: 'wrap',
                   justifyContent: isMobileOrTablet ? 'center' : 'flex-start'
                 }}>
@@ -3013,7 +3010,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                   }}>
                     {carteiraConfig?.nome || carteira}
                   </div>
-                                    
+
                   {ativo.posicaoEncerrada && (
                     <div style={{
                       background: '#ef4444',
@@ -3028,18 +3025,18 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                   )}
                 </div>
               </div>
-              
+
               {/* Nome da empresa */}
-              <h2 style={{ 
-                fontSize: isMobile ? '1rem' : isMobileOrTablet ? '1.1rem' : '1.25rem', 
-                fontWeight: 600, 
+              <h2 style={{
+                fontSize: isMobile ? '1rem' : isMobileOrTablet ? '1.1rem' : '1.25rem',
+                fontWeight: 600,
                 margin: '0 0 12px 0',
                 color: '#374151',
                 lineHeight: '1.4'
               }}>
                 {getNomeEmpresa(ticker, ativo.setor)}
               </h2>
-              
+
               {/* Info do setor */}
               <div style={{
                 background: '#e2e8f0',
@@ -3055,9 +3052,9 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 {tipoAtivo.ehFII && ' • Fundo Imobiliário'}
                 {tipoAtivo.ehBDREstrangeiro && ` • Mercado: ${getMercadoOrigem(tipoAtivo.tickerEstrangeiro)}`}
               </div>
-              
+
               {/* Descrição da empresa */}
-              <p style={{ 
+              <p style={{
                 fontSize: isMobile ? '14px' : '16px',
                 lineHeight: 1.6,
                 color: '#4b5563',
@@ -3066,7 +3063,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
               }}>
                 {getDescricaoEmpresa(ticker, ativo.setor)}
               </p>
-              
+
               {/* Alerta de posição encerrada */}
               {ativo.posicaoEncerrada && (
                 <div style={{
@@ -3083,14 +3080,14 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 </div>
               )}
             </div>
-            
+
             {/* PREÇO E VARIAÇÃO */}
-            <div style={{ 
+            <div style={{
               textAlign: isMobileOrTablet ? 'center' : 'right',
               minWidth: isMobileOrTablet ? 'auto' : '200px'
             }}>
-              <div style={{ 
-                fontSize: isMobile ? '2rem' : isMobileOrTablet ? '2.5rem' : '3rem', 
+              <div style={{
+                fontSize: isMobile ? '2rem' : isMobileOrTablet ? '2.5rem' : '3rem',
                 fontWeight: 700,
                 color: '#1f2937',
                 lineHeight: 1,
@@ -3098,10 +3095,10 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
               }}>
                 {calculatedData.precoAtualFormatado}
               </div>
-              
-              <div style={{ 
-                color: calculatedData.variationData?.isPositive ? '#22c55e' : '#ef4444', 
-                fontWeight: 700, 
+
+              <div style={{
+                color: calculatedData.variationData?.isPositive ? '#22c55e' : '#ef4444',
+                fontWeight: 700,
                 fontSize: isMobile ? '0.9rem' : isMobileOrTablet ? '1.1rem' : '1.2rem',
                 display: 'flex',
                 alignItems: 'center',
@@ -3125,7 +3122,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
         <>
           {/* Para ativos americanos com BDR disponível */}
           {tipoAtivo.temBDR && tipoAtivo.bdrCorrespondente && (
-            <BDRAmericanoInfo 
+            <BDRAmericanoInfo
               ticker={ticker}
               bdrCorrespondente={tipoAtivo.bdrCorrespondente}
               temBDR={tipoAtivo.temBDR}
@@ -3141,7 +3138,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
 
           {/* Dados Específicos de FII */}
           {tipoAtivo.ehFII && (
-            <FIISpecificCards 
+            <FIISpecificCards
               ticker={ticker}
               dadosFII={dadosFIIHGBrasil}
               loading={loadingFIIHGBrasil}
@@ -3151,11 +3148,11 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
 
           {/* Grid de Cards de Métricas */}
           {tipoAtivo.ehETF ? (
-            <LazyComponent 
+            <LazyComponent
               condition={!loadingStages.stage2}
               fallback={<SkeletonLoader variant="card" count={4} />}
             >
-              <ETFMetricCards 
+              <ETFMetricCards
                 ticker={ticker}
                 etfData={etfBRAPIData}
                 loading={loadingETFBRAPI}
@@ -3171,8 +3168,8 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 loading={loadingProventos}
               />
 
-              <MetricCard 
-                title="P/L" 
+              <MetricCard
+                title="P/L"
                 value={(() => {
                   if (ticker.match(/\d$/) && !ticker.includes('11')) {
                     if (dadosHGBrasil?.pl && dadosHGBrasil.pl > 0 && dadosHGBrasil.pl < 1000) {
@@ -3186,7 +3183,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                     }
                     return 'N/A';
                   }
-                  
+
                   else if (!ticker.match(/\d$/)) {
                     if (dadosYahoo?.pl && dadosYahoo.pl > 0 && dadosYahoo.pl < 999) {
                       return dadosYahoo.pl.toFixed(2);
@@ -3199,7 +3196,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                     }
                     return 'N/A';
                   }
-                  
+
                   else {
                     if (dadosHGBrasil?.pl && dadosHGBrasil.pl > 0) {
                       return dadosHGBrasil.pl.toFixed(2);
@@ -3213,7 +3210,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                     return 'N/A';
                   }
                 })()}
-                
+
                 subtitle={(() => {
                   if (ticker.match(/\d$/) && !ticker.includes('11')) {
                     if (dadosHGBrasil?.pl && dadosHGBrasil.pl > 0 && dadosHGBrasil.pl < 1000) {
@@ -3236,15 +3233,15 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                       return "";
                     }
                   }
-                  
+
                   return "";
                 })()}
-                
+
                 loading={dadosLoading || loadingHGBrasil || loadingYahoo}
               />
-              
-              <MetricCard 
-                title="DIVIDEND YIELD" 
+
+              <MetricCard
+                title="DIVIDEND YIELD"
                 value={(() => {
                   if (dy12Meses > 0) {
                     return dyFormatado;
@@ -3271,9 +3268,9 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 })()}
                 loading={loadingDY || loadingHGBrasil || loadingYahoo}
               />
-              
-              <MetricCard 
-                title="P/VP" 
+
+              <MetricCard
+                title="P/VP"
                 value={(() => {
                   if (dadosYahoo?.pvp && dadosYahoo.pvp > 0 && dadosYahoo.pvp < 999) {
                     return dadosYahoo.pvp.toFixed(2);
@@ -3302,11 +3299,11 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
       {/* STAGE 3: COMPONENTES PESADOS COM LAZY LOADING */}
       {!loadingStages.stage3 && (
         <>
-          <LazyComponent 
+          <LazyComponent
             condition={!loadingStages.stage3}
             fallback={<SkeletonLoader variant="card" count={2} />}
           >
-            <ETFHoldings 
+            <ETFHoldings
               ticker={ticker}
               dadosYahoo={dadosYahoo}
               dadosBRAPI={etfBRAPIData}
@@ -3314,7 +3311,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
             />
           </LazyComponent>
 
-          <LazyComponent 
+          <LazyComponent
             condition={!loadingStages.stage3}
             fallback={<SkeletonLoader variant="card" count={2} />}
           >
@@ -3322,7 +3319,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
           </LazyComponent>
 
           <GerenciadorRelatorios ticker={ticker} />
-          
+
           <AgendaCorporativa ticker={ticker} isFII={tipoAtivo.ehFII} />
 
           <HistoricoDividendos
@@ -3332,8 +3329,8 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
             isFII={tipoAtivo.ehFII}
           />
 
-          <DadosPosicaoExpandidos 
-            empresa={ativo} 
+          <DadosPosicaoExpandidos
+            empresa={ativo}
             dadosFinanceiros={dadosFinanceiros}
             precoAtualFormatado={calculatedData.precoAtualFormatado}
             isFII={tipoAtivo.ehFII}
@@ -3344,5 +3341,23 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
         </>
       )}
     </div>
+  ) : (
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#f8fafc',
+      padding: '24px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+        <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1e293b' }}>
+          Ticker não informado
+        </h2>
+      </div>
+    </div>
   );
+
+  return content;
 }
