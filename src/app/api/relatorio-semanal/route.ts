@@ -116,12 +116,66 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(relatoriosTransformados);
       
     } else {
-      // PÚBLICO: Apenas o mais recente publicado
-      const relatorio = await prisma.relatorioSemanal.findFirst({
-        where: { status: 'published' },
-        orderBy: { createdAt: 'desc' }
-      });
-      
+      const listFlag = searchParams.has('list');
+      const reportId = searchParams.get('id');
+      const reportDate = searchParams.get('date');
+      const reportWeek = searchParams.get('semana');
+
+      if (listFlag) {
+        const relatoriosPublicados = await prisma.relatorioSemanal.findMany({
+          where: { status: 'published' },
+          orderBy: [
+            { dataPublicacao: 'desc' },
+            { createdAt: 'desc' }
+          ],
+          select: {
+            id: true,
+            dataPublicacao: true,
+            semana: true,
+            titulo: true
+          }
+        });
+
+        return NextResponse.json(relatoriosPublicados);
+      }
+
+      let relatorio;
+
+      if (reportId) {
+        relatorio = await prisma.relatorioSemanal.findFirst({
+          where: {
+            id: reportId,
+            status: 'published'
+          }
+        });
+      } else if (reportDate || reportWeek) {
+        const filters: any[] = [];
+
+        if (reportDate) {
+          filters.push({ OR: [{ dataPublicacao: reportDate }, { date: reportDate }] });
+        }
+
+        if (reportWeek) {
+          filters.push({ OR: [{ semana: reportWeek }, { weekOf: reportWeek }] });
+        }
+
+        relatorio = await prisma.relatorioSemanal.findFirst({
+          where: {
+            status: 'published',
+            ...(filters.length ? { AND: filters } : {})
+          },
+          orderBy: { createdAt: 'desc' }
+        });
+      }
+
+      if (!relatorio) {
+        // PÚBLICO: Apenas o mais recente publicado
+        relatorio = await prisma.relatorioSemanal.findFirst({
+          where: { status: 'published' },
+          orderBy: { createdAt: 'desc' }
+        });
+      }
+
       if (relatorio) {
         // Converter para formato compatível com visualização
         const relatorioFormatted = {

@@ -81,6 +81,13 @@ interface RelatorioData {
   exterior?: ItemRelatorio[];
 }
 
+interface HistoricoRelatorio {
+  id: string;
+  dataPublicacao: string | null;
+  semana: string | null;
+  titulo?: string | null;
+}
+
 // Import do hook de autenticação
 import { useAuthAccess } from '@/hooks/use-auth-access';
 
@@ -1252,10 +1259,31 @@ export default function RelatorioSemanalPage() {
   const [relatorio, setRelatorio] = useState<RelatorioData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+  const [historico, setHistorico] = useState<HistoricoRelatorio[]>([]);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [showHistorico, setShowHistorico] = useState(false);
+  const [loadingHistorico, setLoadingHistorico] = useState(false);
+  const [historicoError, setHistoricoError] = useState<string | null>(null);
+
   // 🆕 Estados para o modal de análise trimestral
   const [analiseModalAberta, setAnaliseModalAberta] = useState<AnaliseTrimestreData | null>(null);
   const [carregandoAnalise, setCarregandoAnalise] = useState(false);
+
+  const formatarDataHistorico = (data: string | null | undefined) => {
+    if (!data) return 'Data indisponível';
+
+    const parsedDate = new Date(data);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return data;
+    }
+
+    return parsedDate.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
   
   // Hook de autenticação e permissões
   let userPermissions: string[] = [];
@@ -1306,7 +1334,7 @@ export default function RelatorioSemanalPage() {
   // 🆕 Função para abrir análise trimestral
   const abrirAnalise = useCallback(async (analiseId: string) => {
     setCarregandoAnalise(true);
-    
+
     try {
       console.log('🔍 Buscando análise trimestral:', analiseId);
       const response = await fetch('/api/analises-trimestrais');
@@ -1337,46 +1365,99 @@ export default function RelatorioSemanalPage() {
     setAnaliseModalAberta(null);
   }, []);
 
-  // Carregar relatório
-useEffect(() => {
-  const loadRelatorio = async () => {
+  const loadRelatorio = useCallback(async ({ reportId, date, semana }: { reportId?: string; date?: string; semana?: string } = {}) => {
     try {
       setLoading(true);
-      
-      // Buscar da API em vez do IndexedDB
-      const response = await fetch('/api/relatorio-semanal');
-      
+      setError(null);
+
+      const params = new URLSearchParams();
+
+      if (reportId) {
+        params.set('id', reportId);
+      } else {
+        if (date) params.set('date', date);
+        if (semana) params.set('semana', semana);
+      }
+
+      const queryString = params.toString();
+      const response = await fetch(`/api/relatorio-semanal${queryString ? `?${queryString}` : ''}`);
+
       if (!response.ok) {
         throw new Error(`Erro HTTP: ${response.status}`);
       }
-      
-      const relatorio = await response.json();
-      
-      if (relatorio) {
-        // Migrar dados legados se necessário
-        if (relatorio.exterior && !relatorio.exteriorStocks) {
-          relatorio.exteriorStocks = relatorio.exterior;
-          relatorio.exteriorETFs = [];
-          relatorio.exteriorDividendos = [];
-          relatorio.exteriorProjetoAmerica = [];
+
+      const relatorioResponse = await response.json();
+
+      if (relatorioResponse) {
+        if (relatorioResponse.exterior && !relatorioResponse.exteriorStocks) {
+          relatorioResponse.exteriorStocks = relatorioResponse.exterior;
+          relatorioResponse.exteriorETFs = [];
+          relatorioResponse.exteriorDividendos = [];
+          relatorioResponse.exteriorProjetoAmerica = [];
         }
-        
-        setRelatorio(relatorio);
+
+        setRelatorio(relatorioResponse);
+        setSelectedReportId(relatorioResponse.id ?? null);
+        setError(null);
       } else {
+        setRelatorio(null);
         setError('Nenhum relatório publicado disponível');
+        setSelectedReportId(null);
       }
-      
-      setLoading(false);
-      
     } catch (error) {
       console.error('Erro ao carregar relatório:', error);
+      setRelatorio(null);
       setError('Erro ao carregar relatório');
+      setSelectedReportId(null);
+    } finally {
       setLoading(false);
     }
-  };
-  
-  loadRelatorio();
-}, []);
+  }, []);
+
+  const carregarHistorico = useCallback(async () => {
+    try {
+      setLoadingHistorico(true);
+      setHistoricoError(null);
+
+      const response = await fetch('/api/relatorio-semanal?list=true');
+
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`);
+      }
+
+      const historicoResponse = await response.json();
+
+      if (Array.isArray(historicoResponse)) {
+        setHistorico(historicoResponse);
+      } else {
+        setHistorico([]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar histórico de relatórios:', error);
+      setHistorico([]);
+      setHistoricoError('Não foi possível carregar o histórico de relatórios.');
+    } finally {
+      setLoadingHistorico(false);
+    }
+  }, []);
+
+  const handleSelectHistorico = useCallback(async (entry: HistoricoRelatorio) => {
+    setShowHistorico(false);
+
+    await loadRelatorio({
+      reportId: entry.id,
+      date: entry.dataPublicacao ?? undefined,
+      semana: entry.semana ?? undefined
+    });
+  }, [loadRelatorio]);
+
+  useEffect(() => {
+    loadRelatorio();
+  }, [loadRelatorio]);
+
+  useEffect(() => {
+    carregarHistorico();
+  }, [carregarHistorico]);
 
   if (loading) {
     return (
@@ -1553,11 +1634,146 @@ useEffect(() => {
         }} 
       />
       
-      <div style={{ 
-        maxWidth: '1200px', 
-        margin: '0 auto', 
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
         padding: 'clamp(24px, 4vw, 40px) clamp(20px, 3vw, 30px)'
       }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginBottom: 'clamp(16px, 3vw, 24px)'
+        }}>
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setShowHistorico((prev) => !prev)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: '#1f2937',
+                color: 'white',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '10px 16px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 600,
+                boxShadow: '0 8px 20px rgba(15, 23, 42, 0.25)'
+              }}
+              aria-expanded={showHistorico}
+              aria-haspopup="listbox"
+            >
+              <Calendar size={16} />
+              {selectedReportId ? 'Histórico de relatórios' : 'Selecionar data'}
+            </button>
+
+            {showHistorico && (
+              <div
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  marginTop: '8px',
+                  backgroundColor: 'white',
+                  borderRadius: '12px',
+                  boxShadow: '0 20px 45px rgba(15, 23, 42, 0.2)',
+                  border: '1px solid #e2e8f0',
+                  width: 'min(320px, 80vw)',
+                  zIndex: 50,
+                  padding: '16px'
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '12px'
+                  }}
+                >
+                  <strong style={{ fontSize: '14px', color: '#0f172a' }}>Selecione uma data</strong>
+                  {loadingHistorico && (
+                    <span style={{ fontSize: '12px', color: '#64748b' }}>Carregando...</span>
+                  )}
+                </div>
+
+                {historicoError && (
+                  <p style={{ fontSize: '12px', color: '#dc2626' }}>{historicoError}</p>
+                )}
+
+                {!historicoError && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                      maxHeight: '260px',
+                      overflowY: 'auto'
+                    }}
+                  >
+                    {historico.length === 0 && !loadingHistorico && (
+                      <span style={{ fontSize: '13px', color: '#64748b' }}>
+                        Nenhum relatório publicado encontrado.
+                      </span>
+                    )}
+
+                    {historico.map((item) => {
+                      const isSelected = selectedReportId === item.id;
+
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => handleSelectHistorico(item)}
+                          style={{
+                            textAlign: 'left',
+                            padding: '10px 12px',
+                            borderRadius: '10px',
+                            border: '1px solid',
+                            borderColor: isSelected ? '#0ea5e9' : 'transparent',
+                            backgroundColor: isSelected ? '#0ea5e9' : '#f8fafc',
+                            color: isSelected ? 'white' : '#0f172a',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <span style={{ fontSize: '14px', fontWeight: 600 }}>
+                            {formatarDataHistorico(item.dataPublicacao ?? relatorio.date)}
+                          </span>
+                          {item.semana && (
+                            <span
+                              style={{
+                                fontSize: '12px',
+                                color: isSelected ? 'rgba(255, 255, 255, 0.8)' : '#475569'
+                              }}
+                            >
+                              {item.semana}
+                            </span>
+                          )}
+                          {item.titulo && (
+                            <span
+                              style={{
+                                fontSize: '12px',
+                                color: isSelected ? 'rgba(255, 255, 255, 0.75)' : '#94a3b8'
+                              }}
+                            >
+                              {item.titulo}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Seções nacionais */}
         {sections.map((section) => {
           const hasAccess = section.alwaysVisible || mapearSecaoParaPermissao(section.key, userPermissions);
