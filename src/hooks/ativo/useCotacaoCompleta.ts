@@ -37,123 +37,145 @@ export function useCotacaoCompleta(ticker: string, ehBDREstrangeiro: boolean = f
       
       const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
       let cotacaoObtida = false;
-      let cotacaoData = null;
+      let cotacaoData: any = null;
       
       console.log(`🔍 Buscando cotação para ${ticker}:`, { isMobile, deviceDetected });
 
-      if (isMobile) {
-        // 📱 MOBILE: Estratégia agressiva
-        console.log('📱 ESTRATÉGIA MOBILE: Múltiplas tentativas');
-        
-        // ESTRATÉGIA 1: User-Agent Desktop
-        if (!cotacaoObtida) {
-          try {
-            console.log(`📱🔄 ${ticker}: Tentativa 1 - User-Agent Desktop`);
-            
-            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`, {
-              method: 'GET',
-              headers: {
-                'Accept': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-              }
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              if (data.results?.[0]?.regularMarketPrice > 0) {
-                cotacaoData = data.results[0];
-                cotacaoObtida = true;
-                console.log(`📱✅ ${ticker}: Obtido via Desktop UA`);
-              }
-            }
-          } catch (error: any) {
-            console.log(`📱❌ ${ticker} (Desktop UA):`, error.message);
-          }
-        }
-        
-        // ESTRATÉGIA 2: Sem User-Agent
-        if (!cotacaoObtida) {
-          try {
-            console.log(`📱🔄 ${ticker}: Tentativa 2 - Sem User-Agent`);
-            
-            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`, {
-              method: 'GET',
-              headers: {
-                'Accept': 'application/json'
-              }
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              if (data.results?.[0]?.regularMarketPrice > 0) {
-                cotacaoData = data.results[0];
-                cotacaoObtida = true;
-                console.log(`📱✅ ${ticker}: Obtido sem UA`);
-              }
-            }
-          } catch (error: any) {
-            console.log(`📱❌ ${ticker} (Sem UA):`, error.message);
-          }
-        }
-        
-        // ESTRATÉGIA 3: URL simplificada
-        if (!cotacaoObtida) {
-          try {
-            console.log(`📱🔄 ${ticker}: Tentativa 3 - URL simplificada`);
-            
-            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&range=1d`, {
-              method: 'GET',
-              mode: 'cors'
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              if (data.results?.[0]?.regularMarketPrice > 0) {
-                cotacaoData = data.results[0];
-                cotacaoObtida = true;
-                console.log(`📱✅ ${ticker}: Obtido via URL simples`);
-              }
-            }
-          } catch (error: any) {
-            console.log(`📱❌ ${ticker} (URL simples):`, error.message);
-          }
-        }
-        
-      } else {
-        // 🖥️ DESKTOP: Estratégia original
-        console.log('🖥️ ESTRATÉGIA DESKTOP');
-        
+      const executarTentativa = async (
+        descricao: string,
+        url: string,
+        init?: RequestInit
+      ) => {
         try {
-          const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`, {
+          console.log(`${descricao}`);
+          const response = await fetch(url, init);
+
+          if (!response.ok) {
+            console.log(`${descricao} - resposta não OK:`, response.status);
+            return;
+          }
+
+          const data = await response.json();
+          if (data.results?.[0]?.regularMarketPrice > 0) {
+            cotacaoData = data.results[0];
+            cotacaoObtida = true;
+            console.log(`${descricao} ✅`);
+          } else {
+            console.log(`${descricao} - dados inválidos`);
+          }
+        } catch (error: any) {
+          console.log(`${descricao} ❌:`, error?.message || error);
+        }
+      };
+
+      const baseUrl = `https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`;
+
+      const tentativasMobile = [
+        {
+          descricao: `📱🔄 ${ticker}: Tentativa 1 - User-Agent Desktop`,
+          url: baseUrl,
+          init: {
             method: 'GET',
             headers: {
-              'Accept': 'application/json',
-              'User-Agent': 'Ativo-Individual-App'
+              Accept: 'application/json',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'Cache-Control': 'no-cache',
+              Pragma: 'no-cache'
             }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (data.results?.[0]?.regularMarketPrice > 0) {
-              cotacaoData = data.results[0];
-              cotacaoObtida = true;
-              console.log(`🖥️✅ ${ticker}: Obtido desktop`);
+          } as RequestInit
+        },
+        {
+          descricao: `📱🔄 ${ticker}: Tentativa 2 - Sem User-Agent`,
+          url: baseUrl,
+          init: {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json'
             }
-          }
-        } catch (error) {
-          console.error(`🖥️❌ ${ticker} Desktop:`, error);
+          } as RequestInit
+        },
+        {
+          descricao: `📱🔄 ${ticker}: Tentativa 3 - URL simplificada`,
+          url: `${baseUrl}&range=1d`,
+          init: {
+            method: 'GET',
+            mode: 'cors'
+          } as RequestInit
         }
+      ];
+
+      const tentativasDesktop = [
+        {
+          descricao: `🖥️🔄 ${ticker}: Tentativa 1 - Sem User-Agent`,
+          url: baseUrl,
+          init: {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json'
+            }
+          } as RequestInit
+        },
+        {
+          descricao: `🖥️🔄 ${ticker}: Tentativa 2 - URL simplificada`,
+          url: `${baseUrl}&range=1d`,
+          init: {
+            method: 'GET',
+            mode: 'cors'
+          } as RequestInit
+        }
+      ];
+
+      const tentativas = isMobile ? tentativasMobile : tentativasDesktop;
+
+      for (const tentativa of tentativas) {
+        if (cotacaoObtida) {
+          break;
+        }
+
+        await executarTentativa(tentativa.descricao, tentativa.url, tentativa.init);
       }
 
       // ✅ PROCESSAR RESULTADO
       if (cotacaoObtida && cotacaoData) {
+        const parseNumero = (valor: any) => {
+          if (typeof valor === 'number' && !Number.isNaN(valor)) {
+            return valor;
+          }
+
+          if (typeof valor === 'string') {
+            const convertido = Number(valor);
+            if (!Number.isNaN(convertido)) {
+              return convertido;
+            }
+          }
+
+          return undefined;
+        };
+
+        const calcularVariacaoPercentual = (dados: any) => {
+          const variacaoPercentual = parseNumero(dados?.regularMarketChangePercent);
+          if (variacaoPercentual !== undefined) {
+            return variacaoPercentual;
+          }
+
+          const variacao = parseNumero(dados?.regularMarketChange);
+          const precoAtual = parseNumero(dados?.regularMarketPrice);
+
+          if (variacao !== undefined && precoAtual !== undefined) {
+            const precoAnterior = precoAtual - variacao;
+            if (precoAnterior) {
+              return (variacao / precoAnterior) * 100;
+            }
+          }
+
+          return 0;
+        };
+
         const cotacaoAtivo = {
-          regularMarketPrice: cotacaoData.regularMarketPrice,
-          regularMarketChange: cotacaoData.regularMarketChange || 0,
-          regularMarketChangePercent: cotacaoData.regularMarketChangePercent || 0,
-          regularMarketVolume: cotacaoData.regularMarketVolume || 0,
+          regularMarketPrice: parseNumero(cotacaoData.regularMarketPrice) ?? 0,
+          regularMarketChange: parseNumero(cotacaoData.regularMarketChange) ?? 0,
+          regularMarketChangePercent: calcularVariacaoPercentual(cotacaoData),
+          regularMarketVolume: parseNumero(cotacaoData.regularMarketVolume) ?? 0,
           shortName: cotacaoData.shortName || cotacaoData.longName,
           dadosCompletos: cotacaoData,
           isBDREstrangeiro: ehBDREstrangeiro
