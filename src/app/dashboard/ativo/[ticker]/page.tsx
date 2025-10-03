@@ -2716,6 +2716,10 @@ export default function AtivoPage() {
     </div>
   );
 
+  if (deveNegarAcesso) {
+    return acessoNegadoContent;
+  }
+
   // ✅ CÁLCULOS MEMOIZADOS
   const calculatedData = useMemo(() => {
     if (!ativo) return {};
@@ -2868,11 +2872,11 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
     : '#6b7280';
 
   // Estados de carregamento e erro (com stages)
-  if (!deveNegarAcesso && ticker && loadingStages.stage1) {
+  if (ticker && loadingStages.stage1) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        backgroundColor: '#f8fafc', 
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#f8fafc',
         padding: '24px',
         display: 'flex',
         alignItems: 'center',
@@ -2888,11 +2892,11 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
     );
   }
 
-  if (!deveNegarAcesso && ticker && (!ativo || !carteira)) {
+  if (ticker && (!ativo || !carteira)) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        backgroundColor: '#f8fafc', 
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#f8fafc',
         padding: '24px',
         display: 'flex',
         alignItems: 'center',
@@ -3380,5 +3384,5 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
     </div>
   );
 
-  return deveNegarAcesso ? acessoNegadoContent : dashboardContent;
+  return dashboardContent;
 }
