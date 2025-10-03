@@ -148,6 +148,41 @@ const HTMLContent: React.FC<{ content: string; style?: React.CSSProperties }> = 
       .replace(/javascript:/gi, '');
   };
 
+  const enforceResponsiveImages = (html: string) => {
+    if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+      return html;
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const images = Array.from(doc.getElementsByTagName('img'));
+
+    images.forEach((img) => {
+      img.removeAttribute('width');
+      img.removeAttribute('height');
+
+      const existingStyle = img.getAttribute('style') || '';
+      const filteredStyle = existingStyle
+        .split(';')
+        .map((styleRule) => styleRule.trim())
+        .filter((styleRule) => styleRule && !/^width\s*:/i.test(styleRule) && !/^height\s*:/i.test(styleRule))
+        .join('; ');
+
+      const responsiveStyles = 'max-width:100%; height:auto; display:block;';
+      const combinedStyles = [filteredStyle, responsiveStyles]
+        .filter(Boolean)
+        .join(filteredStyle ? '; ' : '')
+        .trim();
+
+      img.setAttribute('style', combinedStyles);
+    });
+
+    return doc.body.innerHTML;
+  };
+
+  const sanitized = sanitizeHTML(content);
+  const normalized = enforceResponsiveImages(sanitized);
+
   return (
     <div
       style={{
@@ -156,7 +191,7 @@ const HTMLContent: React.FC<{ content: string; style?: React.CSSProperties }> = 
         color: '#4b5563',
         ...style
       }}
-      dangerouslySetInnerHTML={{ __html: sanitizeHTML(content) }}
+      dangerouslySetInnerHTML={{ __html: normalized }}
     />
   );
 };
