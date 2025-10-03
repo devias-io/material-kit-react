@@ -229,13 +229,40 @@ function aplicarFiltrosRigorososPorPlano(
     'LITE': {
       limites: { default: 20, smallCaps: 15, dividendos: 20 },
       filtros: {
-        smallCaps: (item: any) => ['Technology', 'Financial', 'Healthcare'].includes(item.setor)
+        smallCaps: (item: any) => [
+          'Shoppings',
+          'Industrial',
+          'Petróleo',
+          'Educação',
+          'Sucroenergético',
+          'Sucroenergetico',
+          'Commodities',
+          'Químico',
+          'Quimico',
+          'Saúde',
+          'Saude',
+          'Construção Civil',
+          'Construcao Civil',
+          'Logística',
+          'Logistica',
+          'Energia'
+        ].includes(item.setor)
       }
     },
     'LITE_V2': {
       limites: { default: 10, smallCaps: 8, dividendos: 12 },
       filtros: {
-        smallCaps: (item: any) => ['Technology', 'Healthcare'].includes(item.setor),
+        smallCaps: (item: any) => [
+          'Shoppings',
+          'Industrial',
+          'Petróleo',
+          'Sucroenergético',
+          'Sucroenergetico',
+          'Saúde',
+          'Saude',
+          'Construção Civil',
+          'Construcao Civil'
+        ].includes(item.setor),
         dividendos: (item: any) => ['Bancos', 'Telecomunicações'].includes(item.setor)
       }
     },
