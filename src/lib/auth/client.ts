@@ -92,6 +92,11 @@ export interface SignInWithPasswordParams {
   password: string;
 }
 
+export interface SignInWithPasswordSuccessResponse {
+  message?: string;
+  user?: (User & { mustChangePassword?: boolean }) | null;
+}
+
 export interface ResetPasswordParams {
   email: string;
 }
@@ -117,7 +122,9 @@ class AuthClient {
     return { error: 'Social authentication not implemented' };
   }
 
-  async signInWithPassword(params: SignInWithPasswordParams): Promise<{ error?: string }> {
+  async signInWithPassword(
+    params: SignInWithPasswordParams
+  ): Promise<{ data?: SignInWithPasswordSuccessResponse; error?: string }> {
     const { email, password } = params;
 
     try {
@@ -131,7 +138,8 @@ class AuthClient {
       });
 
       if (response.ok) {
-        return { error: null };
+        const data = (await response.json()) as SignInWithPasswordSuccessResponse;
+        return { data };
       }
 
       const errorData = await response.json();
