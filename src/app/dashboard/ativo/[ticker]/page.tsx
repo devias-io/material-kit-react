@@ -2663,63 +2663,6 @@ export default function AtivoPage() {
     ticker
   ]);
 
-  const acessoNegadoContent = (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#f8fafc',
-        padding: '24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-    >
-      <div style={{ textAlign: 'center', maxWidth: '520px' }}>
-        <div style={{ fontSize: '64px', marginBottom: '24px' }}>🚫</div>
-        <h1
-          style={{
-            fontSize: '32px',
-            fontWeight: '800',
-            color: '#1e293b',
-            marginBottom: '16px'
-          }}
-        >
-          Acesso negado ao ativo
-        </h1>
-        <p
-          style={{
-            fontSize: '18px',
-            color: '#64748b',
-            marginBottom: '32px'
-          }}
-        >
-          O ativo <strong>{ticker}</strong> faz parte de uma carteira que não está disponível
-          no seu plano atual. Entre em contato com o suporte para saber mais sobre como
-          desbloquear esse conteúdo.
-        </p>
-        <button
-          onClick={() => router.push('/dashboard')}
-          style={{
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '16px 32px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: 'pointer'
-          }}
-        >
-          🏠 Voltar ao Dashboard
-        </button>
-      </div>
-    </div>
-  );
-
-  if (deveNegarAcesso) {
-    return acessoNegadoContent;
-  }
-
   // ✅ CÁLCULOS MEMOIZADOS
   const calculatedData = useMemo(() => {
     if (!ativo) return {};
@@ -2847,6 +2790,63 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
     CARTEIRAS_CONFIG,
     tipoAtivo
   ]);
+
+  const acessoNegadoContent = (
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundColor: '#f8fafc',
+        padding: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+    >
+      <div style={{ textAlign: 'center', maxWidth: '520px' }}>
+        <div style={{ fontSize: '64px', marginBottom: '24px' }}>🚫</div>
+        <h1
+          style={{
+            fontSize: '32px',
+            fontWeight: '800',
+            color: '#1e293b',
+            marginBottom: '16px'
+          }}
+        >
+          Acesso negado ao ativo
+        </h1>
+        <p
+          style={{
+            fontSize: '18px',
+            color: '#64748b',
+            marginBottom: '32px'
+          }}
+        >
+          O ativo <strong>{ticker}</strong> faz parte de uma carteira que não está disponível
+          no seu plano atual. Entre em contato com o suporte para saber mais sobre como
+          desbloquear esse conteúdo.
+        </p>
+        <button
+          onClick={() => router.push('/dashboard')}
+          style={{
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '12px',
+            padding: '16px 32px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: 'pointer'
+          }}
+        >
+          🏠 Voltar ao Dashboard
+        </button>
+      </div>
+    </div>
+  );
+
+  if (deveNegarAcesso) {
+    return acessoNegadoContent;
+  }
 
   const performanceTotal = calculatedData.performanceData?.total;
   const performanceAcao = calculatedData.performanceData?.acao;
