@@ -52,35 +52,37 @@ export function SignInForm(): React.JSX.Element {
       console.log('🚀 Tentando login com:', values);
 
       try {
-        const { error } = await authClient.signInWithPassword(values);
-        console.log('📝 Resultado do signInWithPassword:', { error });
+        const { data, error } = await authClient.signInWithPassword(values);
+        console.log('📝 Resultado do signInWithPassword:', { error, data });
 
         if (error) {
           console.log('❌ Erro no login:', error);
           setError('root', { type: 'server', message: error });
-          setIsPending(false);
           return;
         }
 
+        const mustChangePassword = data?.user?.mustChangePassword;
+
         console.log('✅ Login bem-sucedido, verificando sessão...');
-        await checkSession?.();
-        
-        // 🆕 VERIFICAR SE PRECISA ALTERAR SENHA
-        const { data: userData } = await authClient.getUser();
-        console.log('👤 Dados do usuário após login:', userData);
-        
-        if (userData?.mustChangePassword) {
+        if (checkSession) {
+          checkSession().catch(err => {
+            console.error('⚠️ Erro ao atualizar sessão:', err);
+          });
+        }
+
+        if (mustChangePassword) {
           console.log('🔐 Usuário precisa alterar senha - redirecionando...');
           router.push('/auth/change-password');
           return;
         }
-        
+
         console.log('🚀 Redirecionando para dashboard...');
         router.push('/dashboard');
-        
+
       } catch (err) {
         console.error('💥 Erro inesperado no login:', err);
         setError('root', { type: 'server', message: 'Erro inesperado. Tente novamente.' });
+      } finally {
         setIsPending(false);
       }
     },
