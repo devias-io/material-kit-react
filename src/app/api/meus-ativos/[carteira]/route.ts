@@ -220,36 +220,29 @@ function aplicarFiltrosRigorososPorPlano(
   console.log(`🔒 [FILTRO] Aplicando filtros para plano ${plano} na carteira ${carteira}`);
   console.log(`📊 [FILTRO] Dados de entrada: ${dados.length} itens`);
   
-  // 🔒 CONFIGURAÇÃO DE LIMITES E FILTROS POR PLANO
+  // 🔒 CONFIGURAÇÃO DE FILTROS POR PLANO
   const CONFIGURACAO_PLANOS = {
     'VIP': {
-      limites: { default: 50, smallCaps: 50, microCaps: 30 },
       filtros: {} // VIP vê tudo
     },
     'LITE': {
-      limites: { default: 20, smallCaps: 15, dividendos: 20 },
       filtros: {}
     },
     'LITE_V2': {
-      limites: { default: 10, smallCaps: 8, dividendos: 12 },
       filtros: {}
     },
     'RENDA_PASSIVA': {
-      limites: { dividendos: 15, fiis: 15 },
       filtros: {}
     },
     'FIIS': {
-      limites: { fiis: 20 },
       filtros: {
         fiis: (item: any) => true // FIIS vê todos os FIIs
       }
     },
     'AMERICA': {
-      limites: { default: 20, exteriorStocks: 25, projetoAmerica: 20 },
       filtros: {} // América vê tudo do internacional
     },
     'ADMIN': {
-      limites: { default: 9999 },
       filtros: {} // Admin vê tudo
     }
   };
@@ -269,11 +262,7 @@ function aplicarFiltrosRigorososPorPlano(
     console.log(`🔍 [FILTRO] Após filtro de conteúdo: ${dadosFiltrados.length} itens`);
   }
   
-  // 2. Aplicar limite quantitativo
-  const limite = config.limites[carteira] || config.limites.default || 5;
-  dadosFiltrados = dadosFiltrados.slice(0, limite);
-  
-  console.log(`📊 [FILTRO] Resultado final - Limite ${limite}: ${dadosFiltrados.length} itens`);
+  console.log(`📊 [FILTRO] Resultado final sem limite aplicado: ${dadosFiltrados.length} itens`);
   console.log(`👤 [FILTRO] Usuário ${userEmail} (${plano}) acessando ${carteira}`);
   
   return dadosFiltrados;
