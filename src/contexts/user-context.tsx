@@ -44,9 +44,8 @@ export function UserProvider({ children }: UserProviderProps): React.JSX.Element
       if (response.ok) {
         const data = await response.json();
         if (data.user) {
-          setState({ user: data.user, error: null, isLoading: true });
-          await refreshProfile();
-          setState(prev => ({ ...prev, error: null, isLoading: false }));
+          setState({ user: data.user, error: null, isLoading: false });
+          void refreshProfile();
         } else {
           setState({ user: null, error: null, isLoading: false });
           if (typeof window !== 'undefined') {
