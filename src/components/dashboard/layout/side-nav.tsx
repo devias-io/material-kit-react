@@ -15,239 +15,61 @@ import { paths } from '@/paths';
 import { isNavItemActive } from '@/lib/is-nav-item-active';
 import { Logo } from '@/components/core/logo';
 import { CaretDown } from '@phosphor-icons/react/dist/ssr/CaretDown';
-import { authClient } from '@/lib/auth/client';
+import { useAuthAccess } from '@/hooks/use-auth-access';
 
 import { navItems } from './config';
 import { navIcons } from './nav-icons';
 
-// 🛡️ Interface expandida para incluir informações de admin
-interface ExtendedPlanInfo {
-  displayName: string;
-  pages: string[];
-  isAdmin?: boolean;
-  adminPermissions?: any;
-  userEmail?: string;
+function filterNavItems(items: NavItemConfig[], hasAccessSync: (page: string) => boolean): NavItemConfig[] {
+  return items
+    .map(item => {
+      if (item.items && item.items.length > 0) {
+        const filteredSubItems = item.items.filter(subItem => {
+          if (!subItem.page) {
+            return true;
+          }
+
+          return hasAccessSync(subItem.page);
+        });
+
+        const hasMainAccess = !item.page || hasAccessSync(item.page);
+        const hasSubItems = filteredSubItems.length > 0;
+
+        if (hasMainAccess || hasSubItems) {
+          return {
+            ...item,
+            items: filteredSubItems,
+          };
+        }
+
+        return null;
+      }
+
+      if (!item.page) {
+        return item;
+      }
+
+      return hasAccessSync(item.page) ? item : null;
+    })
+    .filter((item): item is NavItemConfig => item !== null);
 }
 
 export function SideNav(): React.JSX.Element {
   const pathname = usePathname();
   const [expandedItems, setExpandedItems] = React.useState<Record<string, boolean>>({});
-  
-  // 🛡️ Tipo expandido para incluir isAdmin
-  const [planInfo, setPlanInfo] = React.useState<ExtendedPlanInfo | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const { planInfo, loading, hasAccessSync } = useAuthAccess();
 
-  React.useEffect(() => {
-    const loadPlanInfo = async () => {
-      try {
-        console.log('🔄 Carregando planInfo...');
-        const userEmail = localStorage.getItem('user-email') || '';
-        const info = await authClient.getPlanInfo();
-        console.log('📋 PlanInfo recebido:', info);
-        
-        if (info) {
-          const enhancedInfo = {
-            ...info,
-            userEmail,
-            pages: info.isAdmin
-              ? [...(info.pages || []), 'admin-instagram', 'admin-renovacoes', 'admin-relatorio-semanal', 'admin-analises-trimesestrais', 'admin-carteiras', 'admin-central-duvidas'] // 🆕 NOVO: admin-central-duvidas
-              : (info.pages || [])
-          };
-          
-          // 🔥 GARANTIR que 'relatorio-semanal' e 'recursos-suporte' estejam sempre presentes
-          if (!enhancedInfo.pages.includes('relatorio-semanal')) {
-            enhancedInfo.pages.unshift('relatorio-semanal'); // Adicionar no início
-          }
-          if (!enhancedInfo.pages.includes('recursos-suporte')) {
-            enhancedInfo.pages.push('recursos-suporte'); // Adicionar suporte
-          }
-          
-          setPlanInfo(enhancedInfo);
-          
-          // 🛡️ Log especial para admins
-          if (info.isAdmin) {
-            console.log('🛡️ Usuário logado como ADMINISTRADOR');
-            console.log('🔑 Permissões admin:', info.adminPermissions);
-          }
-        } else {
-          console.log('⚠️ PlanInfo é null, usando fallback VIP');
-          setPlanInfo({
-            displayName: 'Close Friends VIP',
-            pages: ['relatorio-semanal', 'small-caps', 'micro-caps', 'dividendos', 'fundos-imobiliarios', 'rentabilidades', 'internacional', 'internacional-projeto-america', 'recursos-exclusivos', 'recursos-suporte'], // 📋 Garantir relatório + suporte no fallback
-            isAdmin: false
-          });
-        }
-      } catch (error) {
-        console.error('❌ Error loading plan info:', error);
-        console.log('🔄 Usando fallback VIP devido ao erro');
-        setPlanInfo({
-          displayName: 'Close Friends VIP',
-          pages: ['relatorio-semanal', 'small-caps', 'micro-caps', 'dividendos', 'fundos-imobiliarios', 'rentabilidades', 'internacional', 'internacional-projeto-america', 'recursos-exclusivos', 'recursos-suporte'], // 📋 Garantir relatório + suporte no fallback
-          isAdmin: false
-        });
-      } finally {
-        setLoading(false);
-        console.log('✅ Loading finalizado');
-      }
-    };
-
-    loadPlanInfo();
-  }, []);
-
-  // 🛡️ Função hasAccessSync atualizada para suportar admin
-  const hasAccessSync = (page: string): boolean => {
-    if (!page) {
-      console.log('⚠️ Página vazia fornecida');
-      return true;
-    }
-    
-    if (!planInfo) {
-      console.log('⚠️ planInfo não carregado ainda');
-      return true; // Se não carregou ainda, mostra tudo
-    }
-
-    // 📋 GARANTIR acesso ao relatório semanal para TODOS
-    if (page === 'relatorio-semanal') {
-      console.log('📋 Relatório semanal - acesso garantido');
-      return true;
-    }
-
-    // 🆕 GARANTIR acesso ao suporte para TODOS
-    if (page === 'recursos-suporte') {
-      console.log('🆕 Suporte - acesso garantido');
-      return true;
-    }
-
-    // VERIFICAÇÕES ESPECÍFICAS PARA PÁGINAS ADMIN
-    if (page === 'admin-instagram') {
-      const isInstagramAdmin = planInfo.isAdmin || planInfo.userEmail === 'jacbdias@gmail.com';
-      console.log(`📱 Verificando acesso Instagram Admin para ${planInfo.userEmail}: ${isInstagramAdmin}`);
-      return isInstagramAdmin;
-    }
-
-    // 📊 VERIFICAÇÃO PARA RENOVAÇÕES
-    if (page === 'admin-renovacoes') {
-      const isRenovacoesAdmin = planInfo.isAdmin;
-      console.log(`📊 Verificando acesso Renovações Admin para ${planInfo.userEmail}: ${isRenovacoesAdmin}`);
-      return isRenovacoesAdmin;
-    }
-
-    // 📋 VERIFICAÇÃO PARA RELATÓRIO SEMANAL ADMIN
-    if (page === 'admin-relatorio-semanal') {
-      const isRelatorioAdmin = planInfo.isAdmin;
-      console.log(`📋 Verificando acesso Relatório Semanal Admin para ${planInfo.userEmail}: ${isRelatorioAdmin}`);
-      return isRelatorioAdmin;
-    }
-
-    // 📊 NOVA: VERIFICAÇÃO PARA ANÁLISES TRIMESTRAIS ADMIN
-    if (page === 'admin-analises-trimesestrais') {
-      const isAnalisesTrimesestraisAdmin = planInfo.isAdmin;
-      console.log(`📊 Verificando acesso Análises Trimestrais Admin para ${planInfo.userEmail}: ${isAnalisesTrimesestraisAdmin}`);
-      return isAnalisesTrimesestraisAdmin;
-    }
-
-    // 🆕 NOVA: VERIFICAÇÃO PARA CENTRAL DE DÚVIDAS ADMIN
-    if (page === 'admin-central-duvidas') {
-      const isCentralDuvidasAdmin = planInfo.isAdmin;
-      console.log(`🆕 Verificando acesso Central de Dúvidas Admin para ${planInfo.userEmail}: ${isCentralDuvidasAdmin}`);
-      return isCentralDuvidasAdmin;
-    }
-    
-    // 🛡️ VERIFICAÇÃO ESPECIAL PARA PÁGINAS ADMINISTRATIVAS
-    if (page.startsWith('admin')) {
-      const isAdminUser = planInfo.isAdmin || false;
-      console.log(`🛡️ Verificando acesso admin para "${page}": ${isAdminUser}`);
-      
-      if (!isAdminUser) {
-        console.log(`❌ Usuário não é admin, negando acesso a "${page}"`);
-        return false;
-      }
-      
-      // Se é admin, verificar se tem a página específica
-      const hasPageAccess = planInfo.pages.includes(page);
-      console.log(`🔑 Admin verificando página "${page}": ${hasPageAccess}`);
-      return hasPageAccess;
-    }
-    
-    const hasAccess = planInfo.pages.includes(page);
-    console.log(`🔑 Verificando "${page}": ${hasAccess}`);
-    
-    // Debug específico para internacional-dividendos
-    if (page === 'internacional-dividendos') {
-      console.log('🚨 DEBUG internacional-dividendos:', {
-        page,
-        hasAccess,
-        planPages: planInfo.pages,
-        includes: planInfo.pages.includes('internacional-dividendos')
-      });
-    }
-    
-    return hasAccess;
-  };
+  const filteredNavItems = React.useMemo(
+    () => filterNavItems([...navItems], hasAccessSync),
+    [hasAccessSync]
+  );
 
   const toggleExpanded = (key: string) => {
     setExpandedItems(prev => ({
       ...prev,
-      [key]: !prev[key]
+      [key]: !prev[key],
     }));
   };
-
-// ✅ FUNÇÃO CORRIGIDA - Substitua a função getFilteredNavItems existente por esta:
-const getFilteredNavItems = (items: NavItemConfig[]): NavItemConfig[] => {
-  return items.map(item => {
-    console.log(`📋 Processando item: ${item.title} (key: ${item.key})`);
-    
-    // Se tem subitens
-    if (item.items && item.items.length > 0) {
-      console.log(`📁 ${item.title} tem ${item.items.length} subitens`);
-      
-      // Filtrar subitens - criar nova lista para não modificar o original
-      const filteredSubItems = item.items.filter(subItem => {
-        if (!subItem.page) {
-          console.log(`📄 ${subItem.title} sem página - sempre visível`);
-          return true;
-        }
-        const subItemAccess = hasAccessSync(subItem.page);
-        console.log(`📄 ${subItem.title} (${subItem.page}): ${subItemAccess}`);
-        return subItemAccess;
-      });
-      
-      console.log(`📁 ${item.title} subitens após filtro: ${filteredSubItems.length}`);
-      
-      // Verificar se deve mostrar o item principal
-      const hasMainAccess = !item.page || hasAccessSync(item.page);
-      const hasSubItems = filteredSubItems.length > 0;
-      const shouldShow = hasMainAccess || hasSubItems;
-      
-      console.log(`🔍 ${item.title} - MainAccess: ${hasMainAccess}, SubItems: ${hasSubItems}, Show: ${shouldShow}`);
-      
-      if (shouldShow) {
-        // ✅ CORREÇÃO: Retornar uma nova instância do item, não mutar o original
-        console.log(`✅ ${item.title} INCLUÍDO com ${filteredSubItems.length} subitens`);
-        return {
-          ...item,
-          items: filteredSubItems
-        };
-      } else {
-        console.log(`❌ ${item.title} REMOVIDO`);
-        return null; // Será filtrado abaixo
-      }
-    }
-    
-    // Para itens sem subitens
-    if (!item.page) {
-      console.log(`✅ ${item.title} sem página - sempre visível`);
-      return item;
-    }
-    
-    const itemAccess = hasAccessSync(item.page);
-    console.log(`🔍 ${item.title} (${item.page}): ${itemAccess}`);
-    return itemAccess ? item : null; // Será filtrado abaixo
-  }).filter(item => item !== null) as NavItemConfig[]; // ✅ Remover itens null
-};
-
-  const filteredNavItems = getFilteredNavItems([...navItems]);
-  console.log('🎯 Itens finais:', filteredNavItems.map(item => item.title));
 
   return (
     <Box
@@ -304,9 +126,8 @@ const getFilteredNavItems = (items: NavItemConfig[]): NavItemConfig[] => {
               Plano
             </Typography>
             <Typography color="inherit" variant="subtitle1">
-              {planInfo?.displayName || 'Carregando...'}
-              {/* 🛡️ Badge para admins (mantido só o badge simples) */}
-              {planInfo?.isAdmin && (
+              {planInfo.displayName || 'Carregando...'}
+              {planInfo.isAdmin && (
                 <Typography
                   component="span"
                   sx={{
@@ -330,15 +151,14 @@ const getFilteredNavItems = (items: NavItemConfig[]): NavItemConfig[] => {
 
       <Divider sx={{ borderColor: 'var(--mui-palette-neutral-700)' }} />
 
-      <Box 
-        component="nav" 
-        sx={{ 
-          flex: '1 1 auto', 
+      <Box
+        component="nav"
+        sx={{
+          flex: '1 1 auto',
           p: '12px',
           overflowY: 'auto',
           overflowX: 'hidden',
           maxHeight: 'calc(100vh - 200px)',
-          // Scrollbar customizada
           '&::-webkit-scrollbar': {
             width: '6px',
           },
@@ -362,11 +182,11 @@ const getFilteredNavItems = (items: NavItemConfig[]): NavItemConfig[] => {
             Carregando menu...
           </Typography>
         ) : (
-          renderNavItems({ 
-            pathname, 
+          renderNavItems({
+            pathname,
             items: filteredNavItems,
-            expandedItems, 
-            toggleExpanded 
+            expandedItems,
+            toggleExpanded,
           })
         )}
       </Box>
@@ -389,13 +209,13 @@ function renderNavItems({
     (acc: React.ReactNode[], curr: NavItemConfig): React.ReactNode[] => {
       const { key, ...item } = curr;
       acc.push(
-        <NavItem 
-          key={key} 
+        <NavItem
+          key={key}
           itemKey={key}
-          pathname={pathname} 
+          pathname={pathname}
           expandedItems={expandedItems}
           toggleExpanded={toggleExpanded}
-          {...item} 
+          {...item}
         />
       );
       return acc;
@@ -468,7 +288,7 @@ function NavItem({
               }),
               '&:hover': {
                 bgcolor: active ? 'var(--NavItem-active-background)' : 'var(--NavItem-hover-background)',
-              }
+              },
             }}
           >
             <Box
@@ -518,7 +338,7 @@ function NavItem({
               height: 24,
               '&:hover': {
                 bgcolor: 'rgba(255, 255, 255, 0.1)',
-              }
+              },
             }}
           >
             <CaretDown
@@ -533,11 +353,11 @@ function NavItem({
 
         <Collapse in={isExpanded}>
           <Box sx={{ pl: 2, mt: 1 }}>
-            {renderNavItems({ 
-              pathname, 
-              items: items, 
-              expandedItems, 
-              toggleExpanded 
+            {renderNavItems({
+              pathname,
+              items: items,
+              expandedItems,
+              toggleExpanded,
             })}
           </Box>
         </Collapse>

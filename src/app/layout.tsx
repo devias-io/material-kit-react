@@ -4,6 +4,7 @@ import '@/styles/global.css';
 import { UserProvider } from '@/contexts/user-context';
 import { LocalizationProvider } from '@/components/core/localization-provider';
 import { ThemeProvider } from '@/components/core/theme-provider/theme-provider';
+import { AuthAccessProvider } from '@/contexts/auth-access-context';
 
 // 🔥 IMPORTS DOS PROVIDERS
 import { QueryProvider } from '@/components/providers/query-provider';
@@ -21,15 +22,17 @@ export default function Layout({ children }: LayoutProps): React.JSX.Element {
       <body>
         <LocalizationProvider>
           <UserProvider>
-            {/* 🔥 QUERY PROVIDER (Client Component) */}
-            <QueryProvider>
-              {/* 🔥 DATASTORE PROVIDER (com sincronização) */}
-              <DataStoreProvider>
-                <ThemeProvider>
-                  {children}
-                </ThemeProvider>
-              </DataStoreProvider>
-            </QueryProvider>
+            <AuthAccessProvider>
+              {/* 🔥 QUERY PROVIDER (Client Component) */}
+              <QueryProvider>
+                {/* 🔥 DATASTORE PROVIDER (com sincronização) */}
+                <DataStoreProvider>
+                  <ThemeProvider>
+                    {children}
+                  </ThemeProvider>
+                </DataStoreProvider>
+              </QueryProvider>
+            </AuthAccessProvider>
           </UserProvider>
         </LocalizationProvider>
       </body>

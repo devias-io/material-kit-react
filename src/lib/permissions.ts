@@ -10,7 +10,7 @@ export const PLAN_PERMISSIONS = {
       'internacional', 'internacional-etfs', 'internacional-stocks', 'internacional-dividendos', 'internacional-projeto-america',
       'recursos-exclusivos', 'recursos-dicas', 'recursos-analise', 'recursos-ebooks',
       'recursos-imposto', 'recursos-lives', 'recursos-milhas', 'recursos-planilhas', 'recursos-telegram',
-      'recursos-reserva'
+      'recursos-reserva', 'recursos-suporte'
     ]
   },
   'LITE': {
@@ -21,7 +21,7 @@ export const PLAN_PERMISSIONS = {
       'small-caps', 'dividendos', 'fundos-imobiliarios', 'rentabilidades',
       'internacional', 'internacional-etfs', 'internacional-stocks', // LITE original tem internacional
       'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
-      'recursos-reserva'
+      'recursos-reserva', 'recursos-suporte'
     ]
   },
   'LITE_V2': {
@@ -32,7 +32,7 @@ export const PLAN_PERMISSIONS = {
       'small-caps', 'dividendos', 'fundos-imobiliarios', 'rentabilidades',
       // LITE_V2 NÃO tem internacional (diferença principal)
       'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
-      'recursos-reserva'
+      'recursos-reserva', 'recursos-suporte'
     ]
   },
   'RENDA_PASSIVA': {
@@ -42,7 +42,7 @@ export const PLAN_PERMISSIONS = {
       'relatorio-semanal',
       'dividendos', 'fundos-imobiliarios', 'rentabilidades',
       'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
-      'recursos-reserva'
+      'recursos-reserva', 'recursos-suporte'
     ]
   },
   'FIIS': {
@@ -52,7 +52,7 @@ export const PLAN_PERMISSIONS = {
       'relatorio-semanal',
       'fundos-imobiliarios', 'rentabilidades',
       'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
-      'recursos-reserva'
+      'recursos-reserva', 'recursos-suporte'
     ]
   },
   'AMERICA': {
@@ -62,7 +62,7 @@ export const PLAN_PERMISSIONS = {
       'relatorio-semanal',
       'internacional', 'internacional-etfs', 'internacional-stocks', 'internacional-dividendos', 'internacional-projeto-america',
       'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-lives', 'recursos-planilhas', 'recursos-telegram',
-      'recursos-reserva'
+      'recursos-reserva', 'recursos-suporte'
     ]
   },
   'ADMIN': {
@@ -75,12 +75,12 @@ export const PLAN_PERMISSIONS = {
       'internacional', 'internacional-etfs', 'internacional-stocks', 'internacional-dividendos', 'internacional-projeto-america',
       'recursos-exclusivos', 'recursos-dicas', 'recursos-analise', 'recursos-ebooks',
       'recursos-imposto', 'recursos-lives', 'recursos-milhas', 'recursos-planilhas', 'recursos-telegram',
-      'recursos-reserva',
+      'recursos-reserva', 'recursos-suporte',
       
       // Páginas administrativas
       'admin', 'admin-dashboard', 'admin-usuarios', 'admin-instagram', 'admin-empresas', 'admin-proventos',
       'admin-relatorios', 'admin-relatorio-semanal', 'admin-analises-trimesestrais', 'admin-integracoes',
-      'admin-renovacoes', 'admin-settings', 'admin-carteiras'
+      'admin-renovacoes', 'admin-settings', 'admin-carteiras', 'admin-central-duvidas'
     ],
     adminPermissions: {
       canManageUsers: true,
