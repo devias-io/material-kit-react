@@ -8,11 +8,11 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { ArrowLeft as ArrowLeftIcon } from '@phosphor-icons/react/dist/ssr/ArrowLeft';
-import { ArrowRight as ArrowRightIcon } from '@phosphor-icons/react/dist/ssr/ArrowRight';
 import { ChartLine as ChartLineIcon } from '@phosphor-icons/react/dist/ssr/ChartLine';
 import { TrendUp as TrendUpIcon } from '@phosphor-icons/react/dist/ssr/TrendUp';
 import { CurrencyDollar as CurrencyDollarIcon } from '@phosphor-icons/react/dist/ssr/CurrencyDollar';
 import { Star as StarIcon } from '@phosphor-icons/react/dist/ssr/Star';
+import { useAuthAccess } from '@/hooks/use-auth-access';
 
 // 🎨 CARD DE NAVEGAÇÃO MODERNO
 interface NavigationCardProps {
@@ -21,6 +21,10 @@ interface NavigationCardProps {
   icon: React.ReactNode;
   href: string;
   isNew?: boolean;
+}
+
+interface NavigationCardConfig extends NavigationCardProps {
+  permission: string;
 }
 
 function NavigationCard({ title, description, icon, href, isNew = false }: NavigationCardProps): React.JSX.Element {
@@ -200,24 +204,29 @@ function NavigationCard({ title, description, icon, href, isNew = false }: Navig
 }
 
 export default function Page(): React.JSX.Element {
-  const navigationCards = [
+  const { hasAccessSync, loading } = useAuthAccess();
+
+  const navigationCards: NavigationCardConfig[] = [
     {
       title: 'ETFs',
       description: 'Fundos diversificados para exposição global',
       icon: <ChartLineIcon />,
-      href: '/dashboard/internacional/etfs'
+      href: '/dashboard/internacional/etfs',
+      permission: 'internacional-etfs'
     },
     {
       title: 'Stocks',
       description: 'Ações individuais de empresas globais',
       icon: <TrendUpIcon />,
-      href: '/dashboard/internacional/stocks'
+      href: '/dashboard/internacional/stocks',
+      permission: 'internacional-stocks'
     },
     {
       title: 'Dividendos',
       description: 'Ativos focados em renda passiva',
       icon: <CurrencyDollarIcon />,
-      href: '/dashboard/internacional/dividendos'
+      href: '/dashboard/internacional/dividendos',
+      permission: 'internacional-dividendos'
     },
     // 🇺🇸 NOVO CARD - Projeto América
     {
@@ -225,9 +234,12 @@ export default function Page(): React.JSX.Element {
       description: 'Investimentos estratégicos no mercado americano',
       icon: <StarIcon />,
       href: '/dashboard/internacional/projeto-america',
-      isNew: true
+      isNew: true,
+      permission: 'internacional-projeto-america'
     }
   ];
+
+  const accessibleCards = navigationCards.filter(card => hasAccessSync(card.permission));
 
   return (
     <Box 
@@ -286,10 +298,44 @@ export default function Page(): React.JSX.Element {
           mx: 'auto'
         }}
       >
-        {navigationCards.map((card, index) => (
+        {accessibleCards.map((card, index) => (
           <NavigationCard key={index} {...card} />
         ))}
       </Box>
+
+      {!loading && accessibleCards.length === 0 && (
+        <Box
+          sx={{
+            mt: 6,
+            p: 4,
+            borderRadius: 3,
+            border: '1px solid #e2e8f0',
+            backgroundColor: '#ffffff',
+            maxWidth: '720px',
+            mx: 'auto',
+            textAlign: 'center'
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 700,
+              color: '#1e293b',
+              mb: 1
+            }}
+          >
+            Seu plano não inclui carteiras internacionais
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: '#64748b'
+            }}
+          >
+            Entre em contato com nosso suporte para saber mais sobre os planos que oferecem acesso às carteiras internacionais.
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 }
