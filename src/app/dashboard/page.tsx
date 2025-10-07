@@ -2,52 +2,74 @@
 
 import React from 'react';
 
+import { useAuthAccess } from '@/hooks/use-auth-access';
+
+interface NavigationCard {
+  title: string;
+  description: string;
+  icon: string;
+  href: string;
+  permission: string;
+  isNew?: boolean;
+}
+
 export default function DashboardOverview() {
-  const navigationCards = [
+  const { hasAccessSync, loading } = useAuthAccess();
+
+  const navigationCards: NavigationCard[] = [
     {
       title: 'Small Caps',
       description: 'Análise de ações de pequeno porte com alto potencial',
       icon: '📈',
-      href: '/dashboard/overview'
+      href: '/dashboard/overview',
+      permission: 'small-caps'
     },
     {
       title: 'Micro Caps',
       description: 'Oportunidades em empresas de micro capitalização',
       icon: '📊',
-      href: '/dashboard/customers'
+      href: '/dashboard/customers',
+      permission: 'micro-caps'
     },
     {
       title: 'Dividendos',
       description: 'Acompanhe os melhores pagadores de dividendos',
       icon: '💰',
-      href: '/dashboard/integrations'
+      href: '/dashboard/integrations',
+      permission: 'dividendos'
     },
     {
       title: 'Fundos Imobiliários',
       description: 'Carteira diversificada de FIIs com foco em renda',
       icon: '🏢',
-      href: '/dashboard/settings'
+      href: '/dashboard/settings',
+      permission: 'fundos-imobiliarios'
     },
     {
       title: 'Rentabilidades',
       description: 'Performance detalhada de todas as carteiras',
       icon: '📋',
-      href: '/dashboard/rentabilidades'
+      href: '/dashboard/rentabilidades',
+      permission: 'rentabilidades'
     },
     {
       title: 'Internacional',
       description: 'Mercados globais e oportunidades no exterior',
       icon: '🌍',
-      href: '/dashboard/internacional'
+      href: '/dashboard/internacional',
+      permission: 'internacional'
     },
     {
       title: 'Recursos Exclusivos',
       description: 'Ferramentas e análises premium para membros',
       icon: '🎁',
       href: '/dashboard/recursos-exclusivos',
+      permission: 'recursos-exclusivos',
       isNew: true
     }
   ];
+
+  const accessibleCards = navigationCards.filter(card => hasAccessSync(card.permission));
 
   const handleNavigation = (href: string) => {
     window.location.href = href;
@@ -88,7 +110,7 @@ export default function DashboardOverview() {
         maxWidth: '1400px',
         margin: '0 auto'
       }}>
-        {navigationCards.map((card, index) => (
+        {accessibleCards.map((card, index) => (
           <div
             key={index}
             onClick={() => handleNavigation(card.href)}
@@ -238,6 +260,36 @@ export default function DashboardOverview() {
           </div>
         ))}
       </div>
+
+      {!loading && accessibleCards.length === 0 && (
+        <div style={{
+          marginTop: '48px',
+          padding: '24px',
+          borderRadius: '12px',
+          border: '1px solid #e2e8f0',
+          backgroundColor: '#ffffff',
+          maxWidth: '720px',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          textAlign: 'center'
+        }}>
+          <h3 style={{
+            marginBottom: '12px',
+            fontSize: '20px',
+            fontWeight: '700',
+            color: '#1e293b'
+          }}>
+            Acesso indisponível para o seu plano
+          </h3>
+          <p style={{
+            margin: 0,
+            color: '#64748b',
+            fontSize: '16px'
+          }}>
+            Entre em contato com o suporte para conhecer planos que liberam estas carteiras.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
