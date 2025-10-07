@@ -18,6 +18,13 @@ export default function DashboardOverview() {
 
   const navigationCards: NavigationCard[] = [
     {
+      title: 'Relatório Semanal',
+      description: 'Resumo completo com as principais recomendações da semana',
+      icon: '🗓️',
+      href: '/dashboard/relatorio-semanal',
+      permission: 'relatorio-semanal'
+    },
+    {
       title: 'Small Caps',
       description: 'Análise de ações de pequeno porte com alto potencial',
       icon: '📈',
