@@ -39,31 +39,46 @@ export function UserProvider({ children }: UserProviderProps): React.JSX.Element
   }, []);
 
   const checkSession = React.useCallback(async (): Promise<void> => {
+    setState(prev => ({ ...prev, isLoading: true }));
+    let nextUser: User | null | undefined;
+    let nextError: string | null | undefined;
+
     try {
       const response = await fetch('/api/auth/me', { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         if (data.user) {
-          setState({ user: data.user, error: null, isLoading: false });
+          nextUser = data.user;
+          nextError = null;
           void refreshProfile();
         } else {
-          setState({ user: null, error: null, isLoading: false });
+          nextUser = null;
+          nextError = null;
           if (typeof window !== 'undefined') {
             localStorage.removeItem('user-data');
           }
         }
       } else {
-        setState({ user: null, error: null, isLoading: false });
+        nextUser = null;
+        nextError = null;
         if (typeof window !== 'undefined') {
           localStorage.removeItem('user-data');
         }
       }
     } catch (err) {
       logger.error(err);
-      setState({ user: null, error: 'Something went wrong', isLoading: false });
+      nextUser = null;
+      nextError = 'Something went wrong';
       if (typeof window !== 'undefined') {
         localStorage.removeItem('user-data');
       }
+    } finally {
+      setState(prev => ({
+        ...prev,
+        user: nextUser ?? prev.user,
+        error: nextError ?? prev.error,
+        isLoading: false,
+      }));
     }
   }, [refreshProfile]);
 
