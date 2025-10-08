@@ -20,17 +20,31 @@ import { useAuthAccess } from '@/hooks/use-auth-access';
 import { navItems } from './config';
 import { navIcons } from './nav-icons';
 
-function filterNavItems(items: NavItemConfig[], hasAccessSync: (page: string) => boolean): NavItemConfig[] {
+function filterNavItems(
+  items: NavItemConfig[],
+  hasAccessSync: (page: string) => boolean,
+  isAdmin: boolean
+): NavItemConfig[] {
   return items
     .map(item => {
-      if (item.items && item.items.length > 0) {
-        const filteredSubItems = item.items.filter(subItem => {
-          if (!subItem.page) {
-            return true;
-          }
+      if (item.requiresAdmin && !isAdmin) {
+        return null;
+      }
 
-          return hasAccessSync(subItem.page);
-        });
+      if (item.items && item.items.length > 0) {
+        const filteredSubItems = item.items
+          .map(subItem => {
+            if (subItem.requiresAdmin && !isAdmin) {
+              return null;
+            }
+
+            if (!subItem.page) {
+              return subItem;
+            }
+
+            return hasAccessSync(subItem.page) ? subItem : null;
+          })
+          .filter((subItem): subItem is NavItemConfig => subItem !== null);
 
         const hasMainAccess = !item.page || hasAccessSync(item.page);
         const hasSubItems = filteredSubItems.length > 0;
@@ -60,8 +74,8 @@ export function SideNav(): React.JSX.Element {
   const { planInfo, loading, hasAccessSync } = useAuthAccess();
 
   const filteredNavItems = React.useMemo(
-    () => filterNavItems([...navItems], hasAccessSync),
-    [hasAccessSync]
+    () => filterNavItems([...navItems], hasAccessSync, planInfo.isAdmin),
+    [hasAccessSync, planInfo.isAdmin]
   );
 
   const toggleExpanded = (key: string) => {

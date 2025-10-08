@@ -40,12 +40,13 @@ export const navItems = [
     icon: 'buildings',
     page: 'fundos-imobiliarios'
   },
-  { 
-    key: 'rentabilidades', 
-    title: 'Rentabilidades', 
-    href: paths.dashboard.rentabilidades, 
+  {
+    key: 'rentabilidades',
+    title: 'Rentabilidades',
+    href: paths.dashboard.rentabilidades,
     icon: 'chart-line',
-    page: 'rentabilidades'
+    page: 'rentabilidades',
+    requiresAdmin: true,
   },
   {
     key: 'internacional',
