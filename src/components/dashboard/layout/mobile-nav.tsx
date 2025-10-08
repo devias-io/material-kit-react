@@ -85,6 +85,14 @@ export function MobileNav({ onClose, open = false }: MobileNavProps): React.JSX.
       PaperProps={{
         sx: {
           '--Drawer-horizontalWidth': '280px',
+          '--NavItem-color': 'var(--mui-palette-neutral-300)',
+          '--NavItem-hover-background': 'rgba(255, 255, 255, 0.04)',
+          '--NavItem-active-background': '#4dfb01',
+          '--NavItem-active-color': '#000000',
+          '--NavItem-disabled-color': 'var(--mui-palette-neutral-500)',
+          '--NavItem-icon-color': 'var(--mui-palette-neutral-400)',
+          '--NavItem-icon-active-color': '#000000',
+          '--NavItem-icon-disabled-color': 'var(--mui-palette-neutral-600)',
           background: 'linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)',
           color: 'var(--mui-palette-common-white)',
         },
