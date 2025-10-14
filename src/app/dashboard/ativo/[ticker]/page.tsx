@@ -3331,6 +3331,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
             <ETFHoldings
               ticker={ticker}
               dadosYahoo={dadosYahoo}
+              isETF={tipoAtivo.ehETF}
               dadosBRAPI={etfBRAPIData}
               loading={loadingYahoo || loadingETFBRAPI}
             />

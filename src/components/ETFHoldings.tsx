@@ -58,9 +58,9 @@ const useResponsive = () => {
 };
 
 // 🏢 FUNÇÃO PARA DETECTAR ETFs AUTOMATICAMENTE
-const isETF = (ticker: string): boolean => {
+const detectETF = (ticker: string): boolean => {
   if (!ticker) return false;
-  
+
   // Lista de ETFs conhecidos
   const etfsConhecidos = [
     'QQQ', 'SPY', 'VTI', 'VEA', 'VWO', 'QUAL', 'SOXX', 'XLF', 'XLK', 'XLV', 'XLE',
@@ -75,28 +75,26 @@ const isETF = (ticker: string): boolean => {
   if (etfsConhecidos.includes(ticker.toUpperCase())) {
     return true;
   }
-  
+
   // Verificar padrões comuns de ETFs
   const etfPatterns = [
     /ETF$/i,           // Termina com ETF
-    /^[A-Z]{3,4}$/,    // 3-4 letras (maioria dos ETFs)
-    /^I[A-Z]{2}$/,     // iShares (IVV, IJH, etc)
-    /^V[A-Z]{2,3}$/,   // Vanguard (VOO, VTI, etc)
     /^XL[A-Z]$/,       // SPDR Sector (XLF, XLK, etc)
     /^ARK[A-Z]$/       // ARK ETFs (ARKK, ARKQ, etc)
   ];
-  
+
   return etfPatterns.some(pattern => pattern.test(ticker));
 };
 
 // 🚀 HOOK PARA BUSCAR DADOS REAIS DE ETFs VIA API
-const useETFData = (ticker: string) => {
+const useETFData = (ticker: string, isETFHint?: boolean) => {
   const [etfData, setETFData] = useState<ETFData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchETFData = React.useCallback(async () => {
-    if (!ticker || !isETF(ticker)) return;
+    const ehETF = typeof isETFHint === 'boolean' ? isETFHint : detectETF(ticker);
+    if (!ticker || !ehETF) return;
 
     setLoading(true);
     setError(null);
@@ -211,7 +209,7 @@ const useETFData = (ticker: string) => {
     } finally {
       setLoading(false);
     }
-  }, [ticker]);
+  }, [ticker, isETFHint]);
 
   React.useEffect(() => {
     fetchETFData();
@@ -367,19 +365,26 @@ interface ETFData {
 interface ETFHoldingsProps {
   ticker: string;
   dadosYahoo?: any;
+  dadosBRAPI?: any;
+  isETF?: boolean;
   loading?: boolean;
 }
 
 // 📊 COMPONENTE PRINCIPAL ETF HOLDINGS RESPONSIVO
-const ETFHoldings: React.FC<ETFHoldingsProps> = ({ ticker, dadosYahoo, loading: externalLoading = false }) => {
+const ETFHoldings: React.FC<ETFHoldingsProps> = ({ ticker, dadosYahoo, dadosBRAPI, isETF: isETFProp, loading: externalLoading = false }) => {
   const { isMobile, isMobileOrTablet } = useResponsive();
   const [mostrarTodos, setMostrarTodos] = useState(false);
-  
+
   // 🚀 USAR HOOK DE API REAL
-  const { etfData, loading: apiLoading, error: apiError, refetch } = useETFData(ticker);
-  
+  const shouldFetchETF = typeof isETFProp === 'boolean' ? isETFProp : !!dadosBRAPI;
+  const { etfData, loading: apiLoading, error: apiError, refetch } = useETFData(ticker, shouldFetchETF);
+
   // Verificar se é ETF
-  const ehETF = isETF(ticker);
+  const ehETF = typeof isETFProp === 'boolean'
+    ? isETFProp
+    : dadosBRAPI
+      ? true
+      : detectETF(ticker);
   
   // Combinar loading states
   const loading = externalLoading || apiLoading;
@@ -732,6 +737,6 @@ const ETFHoldings: React.FC<ETFHoldingsProps> = ({ ticker, dadosYahoo, loading: 
   );
 };
 
-export { isETF };
+export { detectETF as isETF };
 
 export default ETFHoldings;
