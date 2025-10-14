@@ -582,6 +582,13 @@ function calcularViesAutomatico(precoTeto: number | undefined, precoAtual: strin
 }
 
 // 🚀 FUNÇÃO OTIMIZADA PARA BUSCAR COTAÇÕES - SEMPRE ESTRATÉGIA MOBILE
+const normalizarTicker = (symbol?: string) => {
+  if (!symbol) return '';
+
+  const [base] = symbol.split('.');
+  return base.toUpperCase();
+};
+
 async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Promise<Map<string, any>> {
   const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
   const cotacoesMap = new Map();
@@ -603,14 +610,25 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
         
         data.results.forEach((quote: any) => {
           if (quote.regularMarketPrice > 0) {
-            cotacoesMap.set(quote.symbol, {
+            const tickerNormalizado = normalizarTicker(quote.symbol);
+            const chavePrincipal = tickerNormalizado || (quote.symbol ? quote.symbol.toUpperCase() : '');
+
+            if (!chavePrincipal) return;
+
+            const dadosCotacao = {
               precoAtual: quote.regularMarketPrice,
               variacao: quote.regularMarketChange || 0,
               variacaoPercent: quote.regularMarketChangePercent || 0,
               volume: quote.regularMarketVolume || 0,
               nome: quote.shortName || quote.longName || quote.symbol,
               dadosCompletos: quote
-            });
+            };
+
+            cotacoesMap.set(chavePrincipal, dadosCotacao);
+
+            if (quote.symbol && chavePrincipal !== quote.symbol) {
+              cotacoesMap.set(quote.symbol, dadosCotacao);
+            }
           }
         });
         
@@ -638,14 +656,23 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
         const quote = data.results?.[0];
         
         if (quote?.regularMarketPrice > 0) {
-          cotacoesMap.set(ticker, {
+          const tickerNormalizado = normalizarTicker(quote.symbol) || ticker;
+          const chavePrincipal = tickerNormalizado || ticker;
+
+          const dadosCotacao = {
             precoAtual: quote.regularMarketPrice,
             variacao: quote.regularMarketChange || 0,
             variacaoPercent: quote.regularMarketChangePercent || 0,
             volume: quote.regularMarketVolume || 0,
             nome: quote.shortName || quote.longName || ticker,
             dadosCompletos: quote
-          });
+          };
+
+          cotacoesMap.set(chavePrincipal, dadosCotacao);
+
+          if (quote.symbol && chavePrincipal !== quote.symbol) {
+            cotacoesMap.set(quote.symbol, dadosCotacao);
+          }
         }
       }
     } catch (error) {
@@ -681,14 +708,30 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
         console.log('✅ DY BATCH SUCCESS:', data.results.length, 'DYs em 1 só request');
         
         data.results.forEach((ativo: any) => {
+          const tickerNormalizado = normalizarTicker(ativo.symbol);
+          const chavePrincipal = tickerNormalizado || (ativo.symbol ? ativo.symbol.toUpperCase() : '');
           const lastDividend = ativo.defaultKeyStatistics?.lastDividendValue;
           const currentPrice = ativo.regularMarketPrice;
-          
+
+          if (!chavePrincipal) {
+            return;
+          }
+
           if (lastDividend && lastDividend > 0 && currentPrice && currentPrice > 0) {
             const dyCalculado = (lastDividend * 12 / currentPrice) * 100;
-            dyMap.set(ativo.symbol, `${dyCalculado.toFixed(2).replace('.', ',')}%`);
+            const valorCalculado = `${dyCalculado.toFixed(2).replace('.', ',')}%`;
+
+            dyMap.set(chavePrincipal, valorCalculado);
+
+            if (ativo.symbol && chavePrincipal !== ativo.symbol) {
+              dyMap.set(ativo.symbol, valorCalculado);
+            }
           } else {
-            dyMap.set(ativo.symbol, '0,00%');
+            dyMap.set(chavePrincipal, '0,00%');
+
+            if (ativo.symbol && chavePrincipal !== ativo.symbol) {
+              dyMap.set(ativo.symbol, '0,00%');
+            }
           }
         });
         
@@ -716,11 +759,24 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
         const lastDividend = ativo?.defaultKeyStatistics?.lastDividendValue;
         const currentPrice = ativo?.regularMarketPrice;
         
+        const tickerNormalizado = normalizarTicker(ativo?.symbol) || ticker;
+        const chavePrincipal = tickerNormalizado || ticker;
+
         if (lastDividend && lastDividend > 0 && currentPrice && currentPrice > 0) {
           const dyCalculado = (lastDividend * 12 / currentPrice) * 100;
-          dyMap.set(ticker, `${dyCalculado.toFixed(2).replace('.', ',')}%`);
+          const valorCalculado = `${dyCalculado.toFixed(2).replace('.', ',')}%`;
+
+          dyMap.set(chavePrincipal, valorCalculado);
+
+          if (ativo?.symbol && chavePrincipal !== ativo.symbol) {
+            dyMap.set(ativo.symbol, valorCalculado);
+          }
         } else {
-          dyMap.set(ticker, '0,00%');
+          dyMap.set(chavePrincipal, '0,00%');
+
+          if (ativo?.symbol && chavePrincipal !== ativo.symbol) {
+            dyMap.set(ativo.symbol, '0,00%');
+          }
         }
       }
     } catch (error) {
@@ -732,8 +788,14 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   
   // Garantir que todos os tickers tenham DY
   tickers.forEach(ticker => {
-    if (!dyMap.has(ticker)) {
-      dyMap.set(ticker, '0,00%');
+    const tickerNormalizado = normalizarTicker(ticker) || ticker;
+
+    if (!dyMap.has(tickerNormalizado)) {
+      dyMap.set(tickerNormalizado, '0,00%');
+    }
+
+    if (tickerNormalizado !== ticker && !dyMap.has(ticker)) {
+      dyMap.set(ticker, dyMap.get(tickerNormalizado) || '0,00%');
     }
   });
   
@@ -817,7 +879,13 @@ function useFiisIntegradas() {
 
     resultados.forEach((resultado) => {
       if (resultado.status === 'fulfilled') {
-        novosProventos.set(resultado.value.ticker, resultado.value.valor);
+        const tickerNormalizado = normalizarTicker(resultado.value.ticker) || resultado.value.ticker;
+
+        novosProventos.set(tickerNormalizado, resultado.value.valor);
+
+        if (tickerNormalizado !== resultado.value.ticker) {
+          novosProventos.set(resultado.value.ticker, resultado.value.valor);
+        }
       }
     });
     
@@ -931,19 +999,20 @@ function useFiisIntegradas() {
 
     // 🎯 PROCESSAR TODOS OS ATIVOS COM TOTAL RETURN CORRETO
     const ativosFinais = fiisData.map((ativo, index) => {
-      const cotacao = cotacoesCompletas.get(ativo.ticker);
-      
+      const tickerNormalizado = normalizarTicker(ativo.ticker) || ativo.ticker;
+      const cotacao = cotacoesCompletas.get(tickerNormalizado);
+
       // 🔍 DEBUG DY ASSIGNMENT
-      const dyAPI = dyCompletos.get(ativo.ticker) || '0,00%';
+      const dyAPI = dyCompletos.get(tickerNormalizado) || '0,00%';
       console.log(`🔍 [ASSIGN-DEBUG] ${ativo.ticker}:`);
       console.log(`  - dyCompletos.size: ${dyCompletos.size}`);
-      console.log(`  - dyCompletos.has('${ativo.ticker}'): ${dyCompletos.has(ativo.ticker)}`);
-      console.log(`  - dyCompletos.get('${ativo.ticker}'): ${dyCompletos.get(ativo.ticker)}`);
+      console.log(`  - dyCompletos.has('${ativo.ticker}'): ${dyCompletos.has(tickerNormalizado)}`);
+      console.log(`  - dyCompletos.get('${ativo.ticker}'): ${dyCompletos.get(tickerNormalizado)}`);
       console.log(`  - dyAPI final: ${dyAPI}`);
       console.log(`  - loadingDY: ${loadingDY}`);
       
-      const proventosAtivo = proventosCompletos.get(ativo.ticker) || 0;
-    
+      const proventosAtivo = proventosCompletos.get(tickerNormalizado) || proventosCompletos.get(ativo.ticker) || 0;
+
       if (cotacao && cotacao.precoAtual > 0) {
         // ✅ ATIVO COM COTAÇÃO REAL
         const precoAtualNum = cotacao.precoAtual;
@@ -951,7 +1020,11 @@ function useFiisIntegradas() {
         const performanceProventos = ativo.precoEntrada > 0 ? (proventosAtivo / ativo.precoEntrada) * 100 : 0;
         const performanceTotal = performanceAcao + performanceProventos;
         
-        novasCotacoes[ativo.ticker] = precoAtualNum;
+        novasCotacoes[tickerNormalizado] = precoAtualNum;
+
+        if (tickerNormalizado !== ativo.ticker) {
+          novasCotacoes[ativo.ticker] = precoAtualNum;
+        }
         
         console.log(`🏆 ${ativo.ticker}: DY final que será usado = ${dyAPI}`);
         
