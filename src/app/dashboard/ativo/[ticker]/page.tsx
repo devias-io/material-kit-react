@@ -34,14 +34,15 @@ import {
   useHGBrasilAcoes,
   useYahooFinanceInternacional,
   useCotacaoUSD,
-  formatCurrency, 
+  formatCurrency,
   formatarValor,
   isBDREstrangeiro,
   getEstrangeiroFromBDR,
   getMercadoOrigem,
+  BDR_ESTRANGEIRO_MAPPING,
   DadosFinanceiros,
   DadosFII,
-  Relatorio 
+  Relatorio
 } from '../../../../hooks/useAtivoDetalhes';
 
 // ✅ CACHE INTELIGENTE UTILITÁRIO
@@ -140,9 +141,22 @@ const ETF_LIST = new Set([
   'PDBC', 'DBA', 'USO', 'UNG', 'ARKK', 'ARKQ', 'ARKW', 'ARKG', 'ARKF'
 ]);
 
+const EQUITY_OVERRIDE_TICKERS = new Set(
+  [
+    ...Object.keys(BDR_ESTRANGEIRO_MAPPING),
+    ...Object.values(BDR_ESTRANGEIRO_MAPPING)
+  ].map(ticker => ticker.toUpperCase())
+);
+
 const isETF = (ticker) => {
   if (!ticker) return false;
-  return ETF_LIST.has(ticker.toUpperCase());
+  const normalizedTicker = ticker.toUpperCase();
+
+  if (EQUITY_OVERRIDE_TICKERS.has(normalizedTicker)) {
+    return false;
+  }
+
+  return ETF_LIST.has(normalizedTicker);
 };
 
 // ✅ HOOK RESPONSIVO OTIMIZADO
@@ -3331,6 +3345,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
             <ETFHoldings
               ticker={ticker}
               dadosYahoo={dadosYahoo}
+              isETF={tipoAtivo.ehETF}
               dadosBRAPI={etfBRAPIData}
               loading={loadingYahoo || loadingETFBRAPI}
             />
