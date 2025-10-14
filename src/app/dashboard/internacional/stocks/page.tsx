@@ -363,7 +363,7 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
   return cotacoesMap;
 }
 
-// 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO OTIMIZADA
+// 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO OTIMIZADA COM CÁLCULO MANUAL
 async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
   const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
@@ -385,14 +385,35 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
         
         data.results.forEach((result: any) => {
           const ticker = result.symbol;
-          const dy = result.defaultKeyStatistics?.dividendYield;
+          
+          // 🎯 ESTRATÉGIA 1: Tentar usar dividendYield da API
+          let dy = result.defaultKeyStatistics?.dividendYield;
+          
+          // 🎯 ESTRATÉGIA 2: Calcular manualmente se não houver dividendYield
+          if (!dy || dy <= 0) {
+            const lastDividendValue = result.defaultKeyStatistics?.lastDividendValue;
+            const regularMarketPrice = result.regularMarketPrice;
+            
+            if (lastDividendValue && regularMarketPrice && regularMarketPrice > 0) {
+              // Calcular DY: (Dividendo Anual / Preço Atual)
+              // Assumindo pagamento trimestral (4x ao ano)
+              const dividendoAnual = lastDividendValue * 4;
+              dy = dividendoAnual / regularMarketPrice;
+              
+              console.log(`💡 [DY-CALC] ${ticker}: Calculado manualmente`);
+              console.log(`   - Último dividendo: $${lastDividendValue}`);
+              console.log(`   - Dividendo anual: $${dividendoAnual.toFixed(2)}`);
+              console.log(`   - Preço atual: $${regularMarketPrice.toFixed(2)}`);
+              console.log(`   - DY calculado: ${(dy * 100).toFixed(2)}%`);
+            }
+          }
           
           if (dy && dy > 0) {
             dyMap.set(ticker, `${(dy * 100).toFixed(2).replace('.', ',')}%`);
             console.log(`✅ [DY] ${ticker}: ${(dy * 100).toFixed(2)}%`);
           } else {
             dyMap.set(ticker, '0,00%');
-            console.log(`❌ [DY] ${ticker}: DY não encontrado`);
+            console.log(`❌ [DY] ${ticker}: DY não encontrado (empresa não paga dividendos)`);
           }
         });
         
@@ -417,14 +438,34 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
         const data = await response.json();
         const result = data.results?.[0];
         
-        const dy = result?.defaultKeyStatistics?.dividendYield;
+        // 🎯 ESTRATÉGIA 1: Tentar usar dividendYield da API
+        let dy = result?.defaultKeyStatistics?.dividendYield;
+        
+        // 🎯 ESTRATÉGIA 2: Calcular manualmente se não houver dividendYield
+        if (!dy || dy <= 0) {
+          const lastDividendValue = result?.defaultKeyStatistics?.lastDividendValue;
+          const regularMarketPrice = result?.regularMarketPrice;
+          
+          if (lastDividendValue && regularMarketPrice && regularMarketPrice > 0) {
+            // Calcular DY: (Dividendo Anual / Preço Atual)
+            // Assumindo pagamento trimestral (4x ao ano)
+            const dividendoAnual = lastDividendValue * 4;
+            dy = dividendoAnual / regularMarketPrice;
+            
+            console.log(`💡 [DY-CALC] ${ticker}: Calculado manualmente`);
+            console.log(`   - Último dividendo: $${lastDividendValue}`);
+            console.log(`   - Dividendo anual: $${dividendoAnual.toFixed(2)}`);
+            console.log(`   - Preço atual: $${regularMarketPrice.toFixed(2)}`);
+            console.log(`   - DY calculado: ${(dy * 100).toFixed(2)}%`);
+          }
+        }
         
         if (dy && dy > 0) {
           dyMap.set(ticker, `${(dy * 100).toFixed(2).replace('.', ',')}%`);
           console.log(`✅ [DY] ${ticker}: ${(dy * 100).toFixed(2)}%`);
         } else {
           dyMap.set(ticker, '0,00%');
-          console.log(`❌ [DY] ${ticker}: DY não encontrado`);
+          console.log(`❌ [DY] ${ticker}: DY não encontrado (empresa não paga dividendos)`);
         }
       }
     } catch (error) {
