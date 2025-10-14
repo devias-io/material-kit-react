@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { BDR_ESTRANGEIRO_MAPPING } from '@/hooks/useAtivoDetalhes';
 
 // 🔥 HOOK RESPONSIVO INTERNO
 const useResponsive = () => {
@@ -57,9 +58,22 @@ const useResponsive = () => {
   };
 };
 
+const EQUITY_OVERRIDE_TICKERS = new Set(
+  [
+    ...Object.keys(BDR_ESTRANGEIRO_MAPPING),
+    ...Object.values(BDR_ESTRANGEIRO_MAPPING)
+  ].map(ticker => ticker.toUpperCase())
+);
+
 // 🏢 FUNÇÃO PARA DETECTAR ETFs AUTOMATICAMENTE
 const detectETF = (ticker: string): boolean => {
   if (!ticker) return false;
+
+  const normalizedTicker = ticker.toUpperCase();
+
+  if (EQUITY_OVERRIDE_TICKERS.has(normalizedTicker)) {
+    return false;
+  }
 
   // Lista de ETFs conhecidos
   const etfsConhecidos = [
@@ -70,9 +84,9 @@ const detectETF = (ticker: string): boolean => {
     'XLC', 'XLI', 'XLB', 'XLRE', 'XLP', 'XLY', 'XLU', 'GLD', 'SLV', 'IAU',
     'PDBC', 'DBA', 'USO', 'UNG', 'ARKK', 'ARKQ', 'ARKW', 'ARKG', 'ARKF'
   ];
-  
+
   // Verificar se está na lista de ETFs conhecidos
-  if (etfsConhecidos.includes(ticker.toUpperCase())) {
+  if (etfsConhecidos.includes(normalizedTicker)) {
     return true;
   }
 
@@ -83,7 +97,7 @@ const detectETF = (ticker: string): boolean => {
     /^ARK[A-Z]$/       // ARK ETFs (ARKK, ARKQ, etc)
   ];
 
-  return etfPatterns.some(pattern => pattern.test(ticker));
+  return etfPatterns.some(pattern => pattern.test(normalizedTicker));
 };
 
 // 🚀 HOOK PARA BUSCAR DADOS REAIS DE ETFs VIA API
