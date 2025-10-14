@@ -21,6 +21,12 @@ const setCachedData = (key: string, data: any) => {
   globalCache.set(key, { data, timestamp: Date.now() });
 };
 
+const WHITE_LOGO_TICKERS = ['XP', 'UNH'];
+const CUSTOM_LOGO_URLS: Record<string, string> = {
+  XP: 'https://logo.clearbit.com/xpi.com.br',
+  UNH: 'https://logo.clearbit.com/unitedhealthgroup.com'
+};
+
 // 🔥 DETECÇÃO DE DISPOSITIVO SIMPLIFICADA E OTIMIZADA
 const useDeviceDetection = () => {
   const [isMobile, setIsMobile] = React.useState(() => {
@@ -371,6 +377,39 @@ function isETF(ticker: string): boolean {
   return etfsConhecidos.includes(tickerUpper);
 }
 
+// 🔄 FUNÇÃO PARA DETERMINAR FREQUÊNCIA DE DIVIDENDOS
+function getFrequenciaDividendos(ticker: string): number {
+  const tickerUpper = ticker.toUpperCase();
+  
+  // 📊 Empresas que pagam ANUALMENTE (1x por ano)
+  const empresasAnuais = [
+    'XP',      // XP Inc. - paga anual
+    'NU',      // Nubank - paga anual
+    'PAGS',    // PagSeguro - paga anual
+    'STNE',    // Stone - paga anual
+    'ARCO',    // Arco Platform - paga anual
+    'BRFS',    // BRF - paga anual
+  ];
+  
+  if (empresasAnuais.includes(tickerUpper)) {
+    return 1; // Anual
+  }
+  
+  // 📊 Empresas que pagam SEMESTRALMENTE (2x por ano)
+  const empresasSemestrais = [
+    'VALE',    // Vale - paga semestral
+    'ITUB',    // Itaú (ADR) - paga semestral
+    'BBD',     // Bradesco (ADR) - paga semestral
+  ];
+  
+  if (empresasSemestrais.includes(tickerUpper)) {
+    return 2; // Semestral
+  }
+  
+  // 📊 Default: empresas americanas pagam TRIMESTRAL (4x por ano)
+  return 4;
+}
+
 // 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO FINAL COM SUPORTE A ETFs
 async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
@@ -609,7 +648,6 @@ function useProjetoAmericaIntegradas() {
       // Desativar loadings
       setLoadingCotacoes(false);
       setLoadingDY(false);
-      
       // Marcar como pronto para processamento final
       setTodosOsDadosProntos(true);
 
@@ -1078,6 +1116,8 @@ export default function ProjetoAmericaPage() {
               <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {ativosAtualizados.map((ativo, index) => {
                   const temCotacaoReal = ativo.statusApi === 'success';
+                  const ticker = (ativo.ticker ?? '').toUpperCase();
+                  const logoSrc = CUSTOM_LOGO_URLS[ticker] ?? `https://financialmodelingprep.com/image-stock/${ticker}.png`;
                   
                   return (
                     <div 
@@ -1125,7 +1165,9 @@ export default function ProjetoAmericaPage() {
                           height: '36px',
                           borderRadius: '6px',
                           overflow: 'hidden',
-                          backgroundColor: '#ffffff',
+                          backgroundColor: WHITE_LOGO_TICKERS.includes(ticker)
+                            ? '#f1f5f9'
+                            : '#ffffff',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1134,8 +1176,8 @@ export default function ProjetoAmericaPage() {
                           padding: '4px'
                         }}>
                           <img 
-                            src={`https://financialmodelingprep.com/image-stock/${ativo.ticker}.png`}
-                            alt={`Logo ${ativo.ticker}`}
+                            src={logoSrc}
+                            alt={`Logo ${ticker}`}
                             style={{
                               width: '100%',
                               height: '100%',
@@ -1152,7 +1194,7 @@ export default function ProjetoAmericaPage() {
                                 parent.style.fontWeight = '700';
                                 parent.style.fontSize = '12px';
                                 parent.style.letterSpacing = '0.5px';
-                                parent.textContent = ativo.ticker.slice(0, 2).toUpperCase();
+                                parent.textContent = ticker.slice(0, 2);
                               }
                             }}
                           />
@@ -1293,6 +1335,8 @@ export default function ProjetoAmericaPage() {
                   <tbody>
                     {ativosAtualizados.map((ativo, index) => {
                       const temCotacaoReal = ativo.statusApi === 'success';
+                      const ticker = (ativo.ticker ?? '').toUpperCase();
+                      const logoSrc = CUSTOM_LOGO_URLS[ticker] ?? `https://financialmodelingprep.com/image-stock/${ticker}.png`;
                       
                       return (
                         <tr 
@@ -1306,7 +1350,7 @@ export default function ProjetoAmericaPage() {
                             window.location.href = `/dashboard/ativo/${ativo.ticker}`;
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f8fafc';
+                            e.currentTarget.style.backgroundColor =e.currentTarget.style.backgroundColor = '#f8fafc';
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = 'transparent';
@@ -1339,7 +1383,9 @@ export default function ProjetoAmericaPage() {
                                 height: '48px',
                                 borderRadius: '8px',
                                 overflow: 'hidden',
-                                backgroundColor: '#ffffff',
+                                backgroundColor: WHITE_LOGO_TICKERS.includes(ticker)
+                                  ? '#f1f5f9'
+                                  : '#ffffff',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -1349,8 +1395,8 @@ export default function ProjetoAmericaPage() {
                                 flexShrink: 0
                               }}>
                                 <img 
-                                  src={`https://financialmodelingprep.com/image-stock/${ativo.ticker}.png`}
-                                  alt={`Logo ${ativo.ticker}`}
+                                  src={logoSrc}
+                                  alt={`Logo ${ticker}`}
                                   style={{
                                     width: '36px',
                                     height: '36px',
@@ -1368,7 +1414,7 @@ export default function ProjetoAmericaPage() {
                                       parent.style.fontWeight = '700';
                                       parent.style.fontSize = '14px';
                                       parent.style.letterSpacing = '0.5px';
-                                      parent.textContent = ativo.ticker.slice(0, 2).toUpperCase();
+                                      parent.textContent = ticker.slice(0, 2);
                                     }
                                   }}
                                 />
