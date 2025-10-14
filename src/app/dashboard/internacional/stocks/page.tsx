@@ -518,19 +518,6 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   console.log('📊 DY Final Map:', Object.fromEntries(dyMap));
   return dyMap;
 }
-```
-
-## ✅ Após Essa Correção:
-
-**Console logs esperados para XP:**
-```
-💡 [DY-CALC] XP: Calculado (ANUAL)
-   - Último dividendo: $0.65
-   - Frequência: 1x ao ano
-   - Dividendo anual: $0.65
-   - Preço atual: $16.15
-   - DY calculado: 4.02%
-✅ [DY] XP: 4.02%
   
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL
 function useExteriorStocksIntegradas() {
