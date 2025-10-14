@@ -363,7 +363,27 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
   return cotacoesMap;
 }
 
-// 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO OTIMIZADA COM CÁLCULO MANUAL
+// 🔄 FUNÇÃO PARA DETERMINAR FREQUÊNCIA DE DIVIDENDOS
+function getFrequenciaDividendos(ticker: string): number {
+  const tickerUpper = ticker.toUpperCase();
+  
+  // 📊 Empresas que pagam ANUALMENTE (1x por ano)
+  const empresasAnuais = ['XP', 'NU', 'PAGS', 'STNE', 'ARCO', 'BRFS'];
+  if (empresasAnuais.includes(tickerUpper)) {
+    return 1;
+  }
+  
+  // 📊 Empresas que pagam SEMESTRALMENTE (2x por ano)
+  const empresasSemestrais = ['VALE', 'ITUB', 'BBD'];
+  if (empresasSemestrais.includes(tickerUpper)) {
+    return 2;
+  }
+  
+  // 📊 Default: empresas americanas pagam TRIMESTRAL (4x por ano)
+  return 4;
+}
+
+// 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO FINAL CORRIGIDA
 async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
   const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
@@ -395,13 +415,19 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
             const regularMarketPrice = result.regularMarketPrice;
             
             if (lastDividendValue && regularMarketPrice && regularMarketPrice > 0) {
+              // 🎯 Determinar frequência baseado no ticker
+              const frequencia = getFrequenciaDividendos(ticker);
+              
               // Calcular DY: (Dividendo Anual / Preço Atual)
-              // Assumindo pagamento trimestral (4x ao ano)
-              const dividendoAnual = lastDividendValue * 4;
+              const dividendoAnual = lastDividendValue * frequencia;
               dy = dividendoAnual / regularMarketPrice;
               
-              console.log(`💡 [DY-CALC] ${ticker}: Calculado manualmente`);
-              console.log(`   - Último dividendo: $${lastDividendValue}`);
+              const frequenciaTexto = frequencia === 1 ? 'ANUAL' : 
+                                     frequencia === 2 ? 'SEMESTRAL' : 'TRIMESTRAL';
+              
+              console.log(`💡 [DY-CALC] ${ticker}: Calculado (${frequenciaTexto})`);
+              console.log(`   - Último dividendo: $${lastDividendValue.toFixed(2)}`);
+              console.log(`   - Frequência: ${frequencia}x ao ano`);
               console.log(`   - Dividendo anual: $${dividendoAnual.toFixed(2)}`);
               console.log(`   - Preço atual: $${regularMarketPrice.toFixed(2)}`);
               console.log(`   - DY calculado: ${(dy * 100).toFixed(2)}%`);
@@ -413,7 +439,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
             console.log(`✅ [DY] ${ticker}: ${(dy * 100).toFixed(2)}%`);
           } else {
             dyMap.set(ticker, '0,00%');
-            console.log(`❌ [DY] ${ticker}: DY não encontrado (empresa não paga dividendos)`);
+            console.log(`❌ [DY] ${ticker}: Sem dividendos`);
           }
         });
         
@@ -424,7 +450,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
     console.log('❌ DY Batch falhou, usando paralelo individual');
   }
   
-  // ✅ PARALELO INDIVIDUAL
+  // ✅ PARALELO INDIVIDUAL (mesma lógica)
   const promises = tickers.map(async (ticker) => {
     try {
       const response = await Promise.race([
@@ -447,13 +473,19 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
           const regularMarketPrice = result?.regularMarketPrice;
           
           if (lastDividendValue && regularMarketPrice && regularMarketPrice > 0) {
+            // 🎯 Determinar frequência baseado no ticker
+            const frequencia = getFrequenciaDividendos(ticker);
+            
             // Calcular DY: (Dividendo Anual / Preço Atual)
-            // Assumindo pagamento trimestral (4x ao ano)
-            const dividendoAnual = lastDividendValue * 4;
+            const dividendoAnual = lastDividendValue * frequencia;
             dy = dividendoAnual / regularMarketPrice;
             
-            console.log(`💡 [DY-CALC] ${ticker}: Calculado manualmente`);
-            console.log(`   - Último dividendo: $${lastDividendValue}`);
+            const frequenciaTexto = frequencia === 1 ? 'ANUAL' : 
+                                   frequencia === 2 ? 'SEMESTRAL' : 'TRIMESTRAL';
+            
+            console.log(`💡 [DY-CALC] ${ticker}: Calculado (${frequenciaTexto})`);
+            console.log(`   - Último dividendo: $${lastDividendValue.toFixed(2)}`);
+            console.log(`   - Frequência: ${frequencia}x ao ano`);
             console.log(`   - Dividendo anual: $${dividendoAnual.toFixed(2)}`);
             console.log(`   - Preço atual: $${regularMarketPrice.toFixed(2)}`);
             console.log(`   - DY calculado: ${(dy * 100).toFixed(2)}%`);
@@ -465,7 +497,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
           console.log(`✅ [DY] ${ticker}: ${(dy * 100).toFixed(2)}%`);
         } else {
           dyMap.set(ticker, '0,00%');
-          console.log(`❌ [DY] ${ticker}: DY não encontrado (empresa não paga dividendos)`);
+          console.log(`❌ [DY] ${ticker}: Sem dividendos`);
         }
       }
     } catch (error) {
@@ -486,7 +518,20 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   console.log('📊 DY Final Map:', Object.fromEntries(dyMap));
   return dyMap;
 }
+```
 
+## ✅ Após Essa Correção:
+
+**Console logs esperados para XP:**
+```
+💡 [DY-CALC] XP: Calculado (ANUAL)
+   - Último dividendo: $0.65
+   - Frequência: 1x ao ano
+   - Dividendo anual: $0.65
+   - Preço atual: $16.15
+   - DY calculado: 4.02%
+✅ [DY] XP: 4.02%
+  
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL
 function useExteriorStocksIntegradas() {
   const { dados } = useDataStore();
