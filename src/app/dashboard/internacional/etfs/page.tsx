@@ -364,6 +364,53 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
   return cotacoesMap;
 }
 
+// 🔄 FUNÇÃO PARA IDENTIFICAR SE É ETF
+function isETF(ticker: string): boolean {
+  const tickerUpper = ticker.toUpperCase();
+  
+  // Lista de ETFs conhecidos
+  const etfsConhecidos = [
+    'VOO', 'SPY', 'QQQ', 'IVV', 'VTI', 'SCHD', 
+    'VGT', 'XLK', 'VUG', 'VTV', 'VYM', 'VXUS',
+    'BND', 'AGG', 'TLT', 'GLD', 'SLV', 'USO'
+  ];
+  
+  return etfsConhecidos.includes(tickerUpper);
+}
+
+// 🔄 FUNÇÃO PARA DETERMINAR FREQUÊNCIA DE DIVIDENDOS
+function getFrequenciaDividendos(ticker: string): number {
+  const tickerUpper = ticker.toUpperCase();
+  
+  // 📊 Empresas que pagam ANUALMENTE (1x por ano)
+  const empresasAnuais = [
+    'XP',      // XP Inc. - paga anual
+    'NU',      // Nubank - paga anual
+    'PAGS',    // PagSeguro - paga anual
+    'STNE',    // Stone - paga anual
+    'ARCO',    // Arco Platform - paga anual
+    'BRFS',    // BRF - paga anual
+  ];
+  
+  if (empresasAnuais.includes(tickerUpper)) {
+    return 1; // Anual
+  }
+  
+  // 📊 Empresas que pagam SEMESTRALMENTE (2x por ano)
+  const empresasSemestrais = [
+    'VALE',    // Vale - paga semestral
+    'ITUB',    // Itaú (ADR) - paga semestral
+    'BBD',     // Bradesco (ADR) - paga semestral
+  ];
+  
+  if (empresasSemestrais.includes(tickerUpper)) {
+    return 2; // Semestral
+  }
+  
+  // 📊 Default: empresas americanas pagam TRIMESTRAL (4x por ano)
+  return 4;
+}
+
 // 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO FINAL COM SUPORTE A ETFs
 async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
