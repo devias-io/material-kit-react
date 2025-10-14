@@ -116,97 +116,48 @@ const useETFData = (ticker: string, isETFHint?: boolean) => {
     try {
       console.log(`🔍 Buscando dados reais do ETF ${ticker}...`);
 
-      // MÉTODO 1: Tentar Yahoo Finance para ETF Holdings
-try {
-  const yahooUrl = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=topHoldings`;
-  const yahooResponse = await fetch(yahooUrl, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0'
-    }
-  });
-  
-  if (yahooResponse.ok) {
-    const yahooData = await yahooResponse.json();
-    const holdings = yahooData?.quoteSummary?.result?.[0]?.topHoldings?.holdings;
-    
-    if (holdings && Array.isArray(holdings)) {
-      const processedData: ETFData = {
-        name: yahooData.quoteSummary.result[0].quoteType.longName,
-        description: yahooData.quoteSummary.result[0].summaryProfile?.longBusinessSummary || '',
-        totalHoldings: holdings.length,
-        topHoldings: holdings.slice(0, 10).map((h: any) => ({
-          symbol: h.symbol,
-          name: h.holdingName,
-          weight: h.holdingPercent * 100, // Yahoo retorna decimal
-          sector: h.sector || 'Unknown'
-        })),
-        sectorBreakdown: []
-      };
-      
-      setETFData(processedData);
-      console.log(`✅ Holdings carregados via Yahoo Finance`);
-      return;
-    }
-  }
-} catch (error) {
-  console.log('⚠️ Yahoo Finance falhou:', error);
-}
-      
-      // MÉTODO 2: Tentar via proxy CORS para APIs alternativas
       try {
-        // Usar Financial Modeling Prep (tem plano gratuito)
-        const fmpKey = 'demo'; // Substitua por sua chave
-        const fmpUrl = `https://financialmodelingprep.com/api/v3/etf-holder/${ticker}?apikey=${fmpKey}`;
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(fmpUrl)}`;
-        
-        const proxyResponse = await fetch(proxyUrl);
-        if (proxyResponse.ok) {
-          const proxyData = await proxyResponse.json();
-          const fmpData = JSON.parse(proxyData.contents);
-          
-          if (fmpData && Array.isArray(fmpData) && fmpData.length > 0) {
-            console.log(`📊 Dados FMP encontrados para ${ticker}:`, fmpData);
-            
-            const processedData: ETFData = {
-              name: `${ticker} ETF`,
-              description: `Exchange Traded Fund ${ticker}`,
-              totalHoldings: fmpData.length,
-              topHoldings: fmpData.slice(0, 10).map((holding: any) => ({
-                symbol: holding.asset,
-                name: holding.assetName || holding.asset,
-                weight: parseFloat(holding.weightPercentage) || 0,
-                sector: holding.sector || 'Unknown'
-              })),
-              sectorBreakdown: []
-            };
-            
-            // Calcular breakdown por setor
-            const sectorMap: Record<string, number> = {};
-            fmpData.forEach((holding: any) => {
-              const sector = holding.sector || 'Unknown';
-              const weight = parseFloat(holding.weightPercentage) || 0;
-              sectorMap[sector] = (sectorMap[sector] || 0) + weight;
-            });
-            
-            processedData.sectorBreakdown = Object.entries(sectorMap).map(([sector, weight]) => ({
-              sector,
-              weight
-            }));
-            
-            setETFData(processedData);
-            console.log(`✅ ETF ${ticker} carregado via FMP API`);
+        const apiResponse = await fetch(`/api/market/etf/holdings?ticker=${ticker}`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          cache: 'no-store'
+        });
+
+        if (apiResponse.ok) {
+          const payload = await apiResponse.json();
+          if (
+            payload?.data?.topHoldings &&
+            Array.isArray(payload.data.topHoldings) &&
+            payload.data.topHoldings.length > 0
+          ) {
+            setETFData(payload.data);
+            console.log(
+              `✅ Holdings carregados via rota interna (${payload.source || 'desconhecida'})`
+            );
             return;
           }
+
+          if (payload?.message) {
+            console.log(`ℹ️ Rota interna respondeu sem holdings: ${payload.message}`);
+            setError(payload.message);
+          }
+        } else {
+          const errorPayload = await apiResponse.json().catch(() => null);
+          console.log(`⚠️ Rota interna falhou (${apiResponse.status}):`, errorPayload);
+          setError(
+            errorPayload?.message || `Falha ao buscar holdings (${apiResponse.status})`
+          );
         }
-      } catch (fmpError) {
-        console.log(`⚠️ FMP API falhou para ${ticker}:`, fmpError);
+      } catch (internalError) {
+        console.log(`⚠️ Erro ao chamar rota interna para ${ticker}:`, internalError);
       }
 
-      // MÉTODO 3: Fallback para dados mock (temporário)
+      // Fallback para dados mock (temporário)
       console.log(`📋 Usando dados mock como fallback para ${ticker}`);
       const mockData = getETFHoldingsMock(ticker);
       if (mockData) {
         setETFData(mockData);
+        setError(null);
         console.log(`✅ Dados mock carregados para ${ticker}`);
       } else {
         // Se não tem mock, criar dados básicos
@@ -321,6 +272,36 @@ const getETFHoldingsMock = (ticker: string) => {
         { sector: 'Utilities', weight: 2.8 },
         { sector: 'Real Estate', weight: 2.5 },
         { sector: 'Materials', weight: 2.4 }
+      ]
+    },
+    'VOO': {
+      name: 'Vanguard S&P 500 ETF',
+      description: 'Seeks to track the performance of the S&P 500 Index.',
+      totalHoldings: 500,
+      topHoldings: [
+        { symbol: 'AAPL', name: 'Apple Inc.', weight: 7.3, sector: 'Technology' },
+        { symbol: 'MSFT', name: 'Microsoft Corporation', weight: 6.7, sector: 'Technology' },
+        { symbol: 'NVDA', name: 'NVIDIA Corporation', weight: 4.5, sector: 'Technology' },
+        { symbol: 'AMZN', name: 'Amazon.com Inc.', weight: 3.4, sector: 'Consumer Discretionary' },
+        { symbol: 'META', name: 'Meta Platforms Inc.', weight: 2.2, sector: 'Communication Services' },
+        { symbol: 'GOOGL', name: 'Alphabet Inc. Class A', weight: 1.9, sector: 'Communication Services' },
+        { symbol: 'GOOG', name: 'Alphabet Inc. Class C', weight: 1.8, sector: 'Communication Services' },
+        { symbol: 'BRK.B', name: 'Berkshire Hathaway Inc. Class B', weight: 1.8, sector: 'Financial Services' },
+        { symbol: 'LLY', name: 'Eli Lilly and Company', weight: 1.6, sector: 'Healthcare' },
+        { symbol: 'TSLA', name: 'Tesla Inc.', weight: 1.5, sector: 'Consumer Discretionary' }
+      ],
+      sectorBreakdown: [
+        { sector: 'Technology', weight: 29.0 },
+        { sector: 'Financial Services', weight: 12.9 },
+        { sector: 'Healthcare', weight: 13.0 },
+        { sector: 'Consumer Discretionary', weight: 10.2 },
+        { sector: 'Communication Services', weight: 8.8 },
+        { sector: 'Industrials', weight: 8.0 },
+        { sector: 'Consumer Staples', weight: 6.0 },
+        { sector: 'Energy', weight: 4.1 },
+        { sector: 'Utilities', weight: 2.7 },
+        { sector: 'Real Estate', weight: 2.4 },
+        { sector: 'Materials', weight: 2.3 }
       ]
     },
     'VTI': {
