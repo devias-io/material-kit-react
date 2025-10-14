@@ -357,27 +357,21 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
   return cotacoesMap;
 }
 
-// 🔄 FUNÇÃO PARA DETERMINAR FREQUÊNCIA DE DIVIDENDOS
-function getFrequenciaDividendos(ticker: string): number {
+// 🔄 FUNÇÃO PARA IDENTIFICAR SE É ETF
+function isETF(ticker: string): boolean {
   const tickerUpper = ticker.toUpperCase();
   
-  // 📊 Empresas que pagam ANUALMENTE (1x por ano)
-  const empresasAnuais = ['XP', 'NU', 'PAGS', 'STNE', 'ARCO', 'BRFS'];
-  if (empresasAnuais.includes(tickerUpper)) {
-    return 1;
-  }
+  // Lista de ETFs conhecidos
+  const etfsConhecidos = [
+    'VOO', 'SPY', 'QQQ', 'IVV', 'VTI', 'SCHD', 
+    'VGT', 'XLK', 'VUG', 'VTV', 'VYM', 'VXUS',
+    'BND', 'AGG', 'TLT', 'GLD', 'SLV', 'USO'
+  ];
   
-  // 📊 Empresas que pagam SEMESTRALMENTE (2x por ano)
-  const empresasSemestrais = ['VALE', 'ITUB', 'BBD'];
-  if (empresasSemestrais.includes(tickerUpper)) {
-    return 2;
-  }
-  
-  // 📊 Default: empresas americanas pagam TRIMESTRAL (4x por ano)
-  return 4;
+  return etfsConhecidos.includes(tickerUpper);
 }
 
-// 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO FINAL CORRIGIDA
+// 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO FINAL COM SUPORTE A ETFs
 async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
   const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
@@ -399,32 +393,45 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
         
         data.results.forEach((result: any) => {
           const ticker = result.symbol;
+          let dy = null;
           
-          // 🎯 ESTRATÉGIA 1: Tentar usar dividendYield da API
-          let dy = result.defaultKeyStatistics?.dividendYield;
-          
-          // 🎯 ESTRATÉGIA 2: Calcular manualmente se não houver dividendYield
-          if (!dy || dy <= 0) {
-            const lastDividendValue = result.defaultKeyStatistics?.lastDividendValue;
-            const regularMarketPrice = result.regularMarketPrice;
+          // 🎯 ESTRATÉGIA 1: Verificar se é ETF
+          if (isETF(ticker)) {
+            // Para ETFs, usar o campo "yield" que já vem em %
+            const etfYield = result.defaultKeyStatistics?.yield;
             
-            if (lastDividendValue && regularMarketPrice && regularMarketPrice > 0) {
-              // 🎯 Determinar frequência baseado no ticker
-              const frequencia = getFrequenciaDividendos(ticker);
+            if (etfYield && etfYield > 0) {
+              dy = etfYield; // Já está em formato decimal (0.0115 = 1.15%)
               
-              // Calcular DY: (Dividendo Anual / Preço Atual)
-              const dividendoAnual = lastDividendValue * frequencia;
-              dy = dividendoAnual / regularMarketPrice;
+              console.log(`📊 [ETF-YIELD] ${ticker}: ${(dy * 100).toFixed(2)}%`);
+              console.log(`   - Tipo: ETF`);
+              console.log(`   - Yield direto da API: ${(dy * 100).toFixed(2)}%`);
+            }
+          } else {
+            // 🎯 ESTRATÉGIA 2: Ações - tentar dividendYield da API
+            dy = result.defaultKeyStatistics?.dividendYield;
+            
+            // 🎯 ESTRATÉGIA 3: Ações - calcular manualmente se necessário
+            if (!dy || dy <= 0) {
+              const lastDividendValue = result.defaultKeyStatistics?.lastDividendValue;
+              const regularMarketPrice = result.regularMarketPrice;
               
-              const frequenciaTexto = frequencia === 1 ? 'ANUAL' : 
-                                     frequencia === 2 ? 'SEMESTRAL' : 'TRIMESTRAL';
-              
-              console.log(`💡 [DY-CALC] ${ticker}: Calculado (${frequenciaTexto})`);
-              console.log(`   - Último dividendo: $${lastDividendValue.toFixed(2)}`);
-              console.log(`   - Frequência: ${frequencia}x ao ano`);
-              console.log(`   - Dividendo anual: $${dividendoAnual.toFixed(2)}`);
-              console.log(`   - Preço atual: $${regularMarketPrice.toFixed(2)}`);
-              console.log(`   - DY calculado: ${(dy * 100).toFixed(2)}%`);
+              if (lastDividendValue && regularMarketPrice && regularMarketPrice > 0) {
+                const frequencia = getFrequenciaDividendos(ticker);
+                const dividendoAnual = lastDividendValue * frequencia;
+                dy = dividendoAnual / regularMarketPrice;
+                
+                const frequenciaTexto = frequencia === 1 ? 'ANUAL' : 
+                                       frequencia === 2 ? 'SEMESTRAL' : 'TRIMESTRAL';
+                
+                console.log(`💡 [DY-CALC] ${ticker}: Calculado (${frequenciaTexto})`);
+                console.log(`   - Tipo: Ação`);
+                console.log(`   - Último dividendo: $${lastDividendValue.toFixed(2)}`);
+                console.log(`   - Frequência: ${frequencia}x ao ano`);
+                console.log(`   - Dividendo anual: $${dividendoAnual.toFixed(2)}`);
+                console.log(`   - Preço atual: $${regularMarketPrice.toFixed(2)}`);
+                console.log(`   - DY calculado: ${(dy * 100).toFixed(2)}%`);
+              }
             }
           }
           
@@ -433,7 +440,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
             console.log(`✅ [DY] ${ticker}: ${(dy * 100).toFixed(2)}%`);
           } else {
             dyMap.set(ticker, '0,00%');
-            console.log(`❌ [DY] ${ticker}: Sem dividendos`);
+            console.log(`❌ [DY] ${ticker}: Sem dividendos/yield`);
           }
         });
         
@@ -457,32 +464,44 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
       if (response.ok) {
         const data = await response.json();
         const result = data.results?.[0];
+        let dy = null;
         
-        // 🎯 ESTRATÉGIA 1: Tentar usar dividendYield da API
-        let dy = result?.defaultKeyStatistics?.dividendYield;
-        
-        // 🎯 ESTRATÉGIA 2: Calcular manualmente se não houver dividendYield
-        if (!dy || dy <= 0) {
-          const lastDividendValue = result?.defaultKeyStatistics?.lastDividendValue;
-          const regularMarketPrice = result?.regularMarketPrice;
+        // 🎯 ESTRATÉGIA 1: Verificar se é ETF
+        if (isETF(ticker)) {
+          const etfYield = result?.defaultKeyStatistics?.yield;
           
-          if (lastDividendValue && regularMarketPrice && regularMarketPrice > 0) {
-            // 🎯 Determinar frequência baseado no ticker
-            const frequencia = getFrequenciaDividendos(ticker);
+          if (etfYield && etfYield > 0) {
+            dy = etfYield;
             
-            // Calcular DY: (Dividendo Anual / Preço Atual)
-            const dividendoAnual = lastDividendValue * frequencia;
-            dy = dividendoAnual / regularMarketPrice;
+            console.log(`📊 [ETF-YIELD] ${ticker}: ${(dy * 100).toFixed(2)}%`);
+            console.log(`   - Tipo: ETF`);
+            console.log(`   - Yield direto da API: ${(dy * 100).toFixed(2)}%`);
+          }
+        } else {
+          // 🎯 ESTRATÉGIA 2: Ações - tentar dividendYield da API
+          dy = result?.defaultKeyStatistics?.dividendYield;
+          
+          // 🎯 ESTRATÉGIA 3: Ações - calcular manualmente se necessário
+          if (!dy || dy <= 0) {
+            const lastDividendValue = result?.defaultKeyStatistics?.lastDividendValue;
+            const regularMarketPrice = result?.regularMarketPrice;
             
-            const frequenciaTexto = frequencia === 1 ? 'ANUAL' : 
-                                   frequencia === 2 ? 'SEMESTRAL' : 'TRIMESTRAL';
-            
-            console.log(`💡 [DY-CALC] ${ticker}: Calculado (${frequenciaTexto})`);
-            console.log(`   - Último dividendo: $${lastDividendValue.toFixed(2)}`);
-            console.log(`   - Frequência: ${frequencia}x ao ano`);
-            console.log(`   - Dividendo anual: $${dividendoAnual.toFixed(2)}`);
-            console.log(`   - Preço atual: $${regularMarketPrice.toFixed(2)}`);
-            console.log(`   - DY calculado: ${(dy * 100).toFixed(2)}%`);
+            if (lastDividendValue && regularMarketPrice && regularMarketPrice > 0) {
+              const frequencia = getFrequenciaDividendos(ticker);
+              const dividendoAnual = lastDividendValue * frequencia;
+              dy = dividendoAnual / regularMarketPrice;
+              
+              const frequenciaTexto = frequencia === 1 ? 'ANUAL' : 
+                                     frequencia === 2 ? 'SEMESTRAL' : 'TRIMESTRAL';
+              
+              console.log(`💡 [DY-CALC] ${ticker}: Calculado (${frequenciaTexto})`);
+              console.log(`   - Tipo: Ação`);
+              console.log(`   - Último dividendo: $${lastDividendValue.toFixed(2)}`);
+              console.log(`   - Frequência: ${frequencia}x ao ano`);
+              console.log(`   - Dividendo anual: $${dividendoAnual.toFixed(2)}`);
+              console.log(`   - Preço atual: $${regularMarketPrice.toFixed(2)}`);
+              console.log(`   - DY calculado: ${(dy * 100).toFixed(2)}%`);
+            }
           }
         }
         
@@ -491,7 +510,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
           console.log(`✅ [DY] ${ticker}: ${(dy * 100).toFixed(2)}%`);
         } else {
           dyMap.set(ticker, '0,00%');
-          console.log(`❌ [DY] ${ticker}: Sem dividendos`);
+          console.log(`❌ [DY] ${ticker}: Sem dividendos/yield`);
         }
       }
     } catch (error) {
