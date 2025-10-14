@@ -65,11 +65,23 @@ const EQUITY_OVERRIDE_TICKERS = new Set(
   ].map(ticker => ticker.toUpperCase())
 );
 
+const ETF_TICKER_ALIASES: Record<string, string> = {
+  GOLD11: 'IAU',
+  BTLT39: 'TLT'
+};
+
+const resolveETFTicker = (ticker: string): string => {
+  if (!ticker) return '';
+
+  const normalizedTicker = ticker.trim().toUpperCase();
+  return ETF_TICKER_ALIASES[normalizedTicker] || normalizedTicker;
+};
+
 // 🏢 FUNÇÃO PARA DETECTAR ETFs AUTOMATICAMENTE
 const detectETF = (ticker: string): boolean => {
   if (!ticker) return false;
 
-  const normalizedTicker = ticker.toUpperCase();
+  const normalizedTicker = resolveETFTicker(ticker);
 
   if (EQUITY_OVERRIDE_TICKERS.has(normalizedTicker)) {
     return false;
@@ -82,7 +94,8 @@ const detectETF = (ticker: string): boolean => {
     'VOO', 'IVV', 'VXUS', 'BND', 'AGG', 'LQD', 'HYG', 'EMB', 'VB', 'VTV', 'VUG',
     'IWM', 'IWN', 'IWO', 'IJH', 'IJR', 'IJK', 'IJJ', 'IJS', 'IWV', 'ITOT',
     'XLC', 'XLI', 'XLB', 'XLRE', 'XLP', 'XLY', 'XLU', 'GLD', 'SLV', 'IAU',
-    'PDBC', 'DBA', 'USO', 'UNG', 'ARKK', 'ARKQ', 'ARKW', 'ARKG', 'ARKF'
+    'PDBC', 'DBA', 'USO', 'UNG', 'ARKK', 'ARKQ', 'ARKW', 'ARKG', 'ARKF',
+    'JEPQ', 'SCHD'
   ];
 
   // Verificar se está na lista de ETFs conhecidos
@@ -110,6 +123,8 @@ const useETFData = (ticker: string, isETFHint?: boolean) => {
     const ehETF = typeof isETFHint === 'boolean' ? isETFHint : detectETF(ticker);
     if (!ticker || !ehETF) return;
 
+    const resolvedTicker = resolveETFTicker(ticker);
+
     setLoading(true);
     setError(null);
 
@@ -117,7 +132,7 @@ const useETFData = (ticker: string, isETFHint?: boolean) => {
       console.log(`🔍 Buscando dados reais do ETF ${ticker}...`);
 
       try {
-        const apiResponse = await fetch(`/api/market/etf/holdings?ticker=${ticker}`, {
+        const apiResponse = await fetch(`/api/market/etf/holdings?ticker=${resolvedTicker}`, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           cache: 'no-store'
@@ -187,7 +202,7 @@ const useETFData = (ticker: string, isETFHint?: boolean) => {
 };
 
 const getETFHoldingsMock = (ticker: string) => {
-  const etfData: Record<string, any> = {
+  const etfData: Record<string, ETFData> = {
     'QUAL': {
       name: 'iShares MSCI USA Quality Factor ETF',
       description: 'Tracks investment results of an index composed of U.S. large- and mid-cap stocks with quality characteristics.',
@@ -333,10 +348,322 @@ const getETFHoldingsMock = (ticker: string) => {
         { sector: 'Materials', weight: 2.7 },
         { sector: 'Utilities', weight: 2.6 }
       ]
+    },
+    'IJS': {
+      name: 'iShares S&P Small-Cap 600 Value ETF',
+      description: 'Provides exposure to small-cap U.S. stocks with value characteristics from the S&P SmallCap 600 Value Index.',
+      totalHoldings: 480,
+      topHoldings: [
+        { symbol: 'BJ', name: "BJ's Wholesale Club Holdings, Inc.", weight: 0.78, sector: 'Consumer Staples' },
+        { symbol: 'CMC', name: 'Commercial Metals Company', weight: 0.72, sector: 'Materials' },
+        { symbol: 'EME', name: 'EMCOR Group, Inc.', weight: 0.69, sector: 'Industrials' },
+        { symbol: 'MLI', name: 'Mueller Industries, Inc.', weight: 0.65, sector: 'Industrials' },
+        { symbol: 'GPI', name: 'Group 1 Automotive, Inc.', weight: 0.62, sector: 'Consumer Discretionary' },
+        { symbol: 'SAIA', name: 'Saia, Inc.', weight: 0.61, sector: 'Industrials' },
+        { symbol: 'DDS', name: "Dillard's, Inc. Class A", weight: 0.59, sector: 'Consumer Discretionary' },
+        { symbol: 'SIGI', name: 'Selective Insurance Group, Inc.', weight: 0.57, sector: 'Financial Services' },
+        { symbol: 'JEF', name: 'Jefferies Financial Group Inc.', weight: 0.55, sector: 'Financial Services' },
+        { symbol: 'MTZ', name: 'MasTec, Inc.', weight: 0.54, sector: 'Industrials' }
+      ],
+      sectorBreakdown: [
+        { sector: 'Industrials', weight: 23.5 },
+        { sector: 'Consumer Discretionary', weight: 15.8 },
+        { sector: 'Financial Services', weight: 15.2 },
+        { sector: 'Energy', weight: 8.6 },
+        { sector: 'Materials', weight: 8.4 },
+        { sector: 'Healthcare', weight: 7.9 },
+        { sector: 'Consumer Staples', weight: 6.8 },
+        { sector: 'Real Estate', weight: 4.5 },
+        { sector: 'Information Technology', weight: 3.7 },
+        { sector: 'Utilities', weight: 2.8 },
+        { sector: 'Communication Services', weight: 2.8 }
+      ]
+    },
+    'VNQ': {
+      name: 'Vanguard Real Estate ETF',
+      description: 'Tracks the performance of the MSCI US Investable Market Real Estate 25/50 Index covering U.S. REITs.',
+      totalHoldings: 165,
+      topHoldings: [
+        { symbol: 'PLD', name: 'Prologis, Inc.', weight: 8.3, sector: 'Industrial REIT' },
+        { symbol: 'AMT', name: 'American Tower Corporation', weight: 7.1, sector: 'Specialized REIT' },
+        { symbol: 'EQIX', name: 'Equinix, Inc.', weight: 5.6, sector: 'Data Center REIT' },
+        { symbol: 'WELL', name: 'Welltower Inc.', weight: 4.3, sector: 'Healthcare REIT' },
+        { symbol: 'O', name: 'Realty Income Corporation', weight: 4.0, sector: 'Retail REIT' },
+        { symbol: 'PSA', name: 'Public Storage', weight: 3.8, sector: 'Self-Storage REIT' },
+        { symbol: 'SPG', name: 'Simon Property Group, Inc.', weight: 3.6, sector: 'Retail REIT' },
+        { symbol: 'DLR', name: 'Digital Realty Trust, Inc.', weight: 3.0, sector: 'Data Center REIT' },
+        { symbol: 'VICI', name: 'VICI Properties Inc.', weight: 2.9, sector: 'Specialized REIT' },
+        { symbol: 'EXR', name: 'Extra Space Storage Inc.', weight: 2.5, sector: 'Self-Storage REIT' }
+      ],
+      sectorBreakdown: [
+        { sector: 'Industrial REITs', weight: 18.5 },
+        { sector: 'Specialized REITs', weight: 17.2 },
+        { sector: 'Data Center REITs', weight: 12.6 },
+        { sector: 'Healthcare REITs', weight: 10.4 },
+        { sector: 'Retail REITs', weight: 14.9 },
+        { sector: 'Residential REITs', weight: 9.3 },
+        { sector: 'Diversified REITs', weight: 6.1 },
+        { sector: 'Office REITs', weight: 5.1 },
+        { sector: 'Lodging & Resorts', weight: 3.2 },
+        { sector: 'Self-Storage REITs', weight: 2.7 }
+      ]
+    },
+    'SCHP': {
+      name: 'Schwab U.S. TIPS ETF',
+      description: 'Provides exposure to U.S. Treasury Inflation-Protected Securities (TIPS) across the maturity spectrum.',
+      totalHoldings: 45,
+      topHoldings: [
+        { symbol: 'TII 0.125% 01/2033', name: 'U.S. Treasury Inflation-Indexed Bond 0.125% 01/15/2033', weight: 4.2, sector: 'U.S. Treasury' },
+        { symbol: 'TII 0.125% 07/2032', name: 'U.S. Treasury Inflation-Indexed Bond 0.125% 07/15/2032', weight: 4.0, sector: 'U.S. Treasury' },
+        { symbol: 'TII 0.125% 01/2030', name: 'U.S. Treasury Inflation-Indexed Bond 0.125% 01/15/2030', weight: 3.8, sector: 'U.S. Treasury' },
+        { symbol: 'TII 0.375% 07/2027', name: 'U.S. Treasury Inflation-Indexed Bond 0.375% 07/15/2027', weight: 3.7, sector: 'U.S. Treasury' },
+        { symbol: 'TII 0.125% 07/2031', name: 'U.S. Treasury Inflation-Indexed Bond 0.125% 07/15/2031', weight: 3.5, sector: 'U.S. Treasury' },
+        { symbol: 'TII 0.125% 01/2029', name: 'U.S. Treasury Inflation-Indexed Bond 0.125% 01/15/2029', weight: 3.4, sector: 'U.S. Treasury' },
+        { symbol: 'TII 0.125% 07/2029', name: 'U.S. Treasury Inflation-Indexed Bond 0.125% 07/15/2029', weight: 3.3, sector: 'U.S. Treasury' },
+        { symbol: 'TII 0.125% 01/2034', name: 'U.S. Treasury Inflation-Indexed Bond 0.125% 01/15/2034', weight: 3.2, sector: 'U.S. Treasury' },
+        { symbol: 'TII 0.125% 07/2034', name: 'U.S. Treasury Inflation-Indexed Bond 0.125% 07/15/2034', weight: 3.1, sector: 'U.S. Treasury' },
+        { symbol: 'TII 0.625% 01/2026', name: 'U.S. Treasury Inflation-Indexed Bond 0.625% 01/15/2026', weight: 3.0, sector: 'U.S. Treasury' }
+      ],
+      sectorBreakdown: [
+        { sector: 'U.S. Treasury Inflation-Protected Securities', weight: 96.0 },
+        { sector: 'Cash & Equivalents', weight: 4.0 }
+      ]
+    },
+    'IAU': {
+      name: 'iShares Gold Trust',
+      description: 'Seeks to reflect generally the performance of the price of gold by holding gold bullion.',
+      totalHoldings: 1,
+      topHoldings: [
+        { symbol: 'XAU', name: 'Allocated Gold Bullion (London Good Delivery)', weight: 100.0, sector: 'Precious Metals' }
+      ],
+      sectorBreakdown: [
+        { sector: 'Gold Bullion', weight: 100.0 }
+      ]
+    },
+    'HERO': {
+      name: 'Global X Video Games & Esports ETF',
+      description: 'Targets companies involved in the development and publishing of video games, esports, and related hardware.',
+      totalHoldings: 51,
+      topHoldings: [
+        { symbol: 'NVDA', name: 'NVIDIA Corporation', weight: 6.5, sector: 'Technology' },
+        { symbol: 'TCEHY', name: 'Tencent Holdings Ltd.', weight: 6.1, sector: 'Communication Services' },
+        { symbol: 'ATVI', name: 'Activision Blizzard, Inc.', weight: 5.0, sector: 'Communication Services' },
+        { symbol: 'EA', name: 'Electronic Arts Inc.', weight: 4.4, sector: 'Communication Services' },
+        { symbol: 'NTDOY', name: 'Nintendo Co., Ltd.', weight: 4.2, sector: 'Consumer Discretionary' },
+        { symbol: 'SE', name: 'Sea Limited ADR', weight: 4.0, sector: 'Communication Services' },
+        { symbol: 'SONY', name: 'Sony Group Corporation', weight: 3.8, sector: 'Communication Services' },
+        { symbol: 'UBI.PA', name: 'Ubisoft Entertainment SA', weight: 3.5, sector: 'Communication Services' },
+        { symbol: 'RBLX', name: 'Roblox Corporation Class A', weight: 3.4, sector: 'Communication Services' },
+        { symbol: 'TTWO', name: 'Take-Two Interactive Software, Inc.', weight: 3.2, sector: 'Communication Services' }
+      ],
+      sectorBreakdown: [
+        { sector: 'Communication Services', weight: 56.0 },
+        { sector: 'Technology', weight: 32.0 },
+        { sector: 'Consumer Discretionary', weight: 12.0 }
+      ]
+    },
+    'SOXX': {
+      name: 'iShares Semiconductor ETF',
+      description: 'Tracks the performance of U.S.-listed semiconductor companies as represented by the ICE Semiconductor Index.',
+      totalHoldings: 30,
+      topHoldings: [
+        { symbol: 'NVDA', name: 'NVIDIA Corporation', weight: 9.7, sector: 'Semiconductors' },
+        { symbol: 'AVGO', name: 'Broadcom Inc.', weight: 8.2, sector: 'Semiconductors' },
+        { symbol: 'ASML', name: 'ASML Holding N.V.', weight: 6.6, sector: 'Semiconductor Equipment' },
+        { symbol: 'TSM', name: 'Taiwan Semiconductor Manufacturing Co. Ltd.', weight: 6.3, sector: 'Semiconductors' },
+        { symbol: 'AMD', name: 'Advanced Micro Devices, Inc.', weight: 5.5, sector: 'Semiconductors' },
+        { symbol: 'QCOM', name: 'QUALCOMM Incorporated', weight: 4.9, sector: 'Semiconductors' },
+        { symbol: 'ADI', name: 'Analog Devices, Inc.', weight: 4.6, sector: 'Semiconductors' },
+        { symbol: 'INTC', name: 'Intel Corporation', weight: 4.4, sector: 'Semiconductors' },
+        { symbol: 'TXN', name: 'Texas Instruments Incorporated', weight: 4.1, sector: 'Semiconductors' },
+        { symbol: 'LRCX', name: 'Lam Research Corporation', weight: 3.8, sector: 'Semiconductor Equipment' }
+      ],
+      sectorBreakdown: [
+        { sector: 'Semiconductors', weight: 70.0 },
+        { sector: 'Semiconductor Equipment', weight: 30.0 }
+      ]
+    },
+    'MCHI': {
+      name: 'iShares MSCI China ETF',
+      description: 'Seeks to track the investment results of a broad-based index composed of Chinese equities.',
+      totalHoldings: 635,
+      topHoldings: [
+        { symbol: 'TCEHY', name: 'Tencent Holdings Ltd.', weight: 13.5, sector: 'Communication Services' },
+        { symbol: 'BABA', name: 'Alibaba Group Holding Ltd.', weight: 8.8, sector: 'Consumer Discretionary' },
+        { symbol: '3690.HK', name: 'Meituan Class B', weight: 5.4, sector: 'Consumer Discretionary' },
+        { symbol: 'PDD', name: 'PDD Holdings Inc.', weight: 4.7, sector: 'Consumer Discretionary' },
+        { symbol: 'JD', name: 'JD.com Inc. Class A', weight: 3.1, sector: 'Consumer Discretionary' },
+        { symbol: 'BYDDY', name: 'BYD Company Ltd. ADR', weight: 2.8, sector: 'Consumer Discretionary' },
+        { symbol: 'CICHY', name: 'China Construction Bank Corp. ADR', weight: 2.5, sector: 'Financial Services' },
+        { symbol: 'LI', name: 'Li Auto Inc. ADR', weight: 2.1, sector: 'Consumer Discretionary' },
+        { symbol: '2318.HK', name: 'Ping An Insurance Group Co. of China Ltd. Class H', weight: 1.9, sector: 'Financial Services' },
+        { symbol: 'NTES', name: 'NetEase Inc.', weight: 1.9, sector: 'Communication Services' }
+      ],
+      sectorBreakdown: [
+        { sector: 'Consumer Discretionary', weight: 34.0 },
+        { sector: 'Communication Services', weight: 25.0 },
+        { sector: 'Financial Services', weight: 18.0 },
+        { sector: 'Industrials', weight: 9.0 },
+        { sector: 'Information Technology', weight: 7.0 },
+        { sector: 'Healthcare', weight: 4.0 },
+        { sector: 'Materials', weight: 2.0 },
+        { sector: 'Real Estate', weight: 1.0 }
+      ]
+    },
+    'TFLO': {
+      name: 'iShares Treasury Floating Rate Bond ETF',
+      description: 'Provides access to U.S. Treasury floating rate notes with remaining maturities between one month and two years.',
+      totalHoldings: 95,
+      topHoldings: [
+        { symbol: 'FRN 07/2026', name: 'U.S. Treasury Floating Rate Note 07/31/2026', weight: 2.2, sector: 'U.S. Treasury' },
+        { symbol: 'FRN 04/2026', name: 'U.S. Treasury Floating Rate Note 04/30/2026', weight: 2.2, sector: 'U.S. Treasury' },
+        { symbol: 'FRN 01/2026', name: 'U.S. Treasury Floating Rate Note 01/31/2026', weight: 2.1, sector: 'U.S. Treasury' },
+        { symbol: 'FRN 10/2025', name: 'U.S. Treasury Floating Rate Note 10/31/2025', weight: 2.1, sector: 'U.S. Treasury' },
+        { symbol: 'FRN 07/2025', name: 'U.S. Treasury Floating Rate Note 07/31/2025', weight: 2.1, sector: 'U.S. Treasury' },
+        { symbol: 'FRN 04/2025', name: 'U.S. Treasury Floating Rate Note 04/30/2025', weight: 2.0, sector: 'U.S. Treasury' },
+        { symbol: 'FRN 01/2025', name: 'U.S. Treasury Floating Rate Note 01/31/2025', weight: 2.0, sector: 'U.S. Treasury' },
+        { symbol: 'FRN 10/2024', name: 'U.S. Treasury Floating Rate Note 10/31/2024', weight: 2.0, sector: 'U.S. Treasury' },
+        { symbol: 'FRN 07/2024', name: 'U.S. Treasury Floating Rate Note 07/31/2024', weight: 1.9, sector: 'U.S. Treasury' },
+        { symbol: 'FRN 04/2024', name: 'U.S. Treasury Floating Rate Note 04/30/2024', weight: 1.9, sector: 'U.S. Treasury' }
+      ],
+      sectorBreakdown: [
+        { sector: 'U.S. Treasury Floating Rate Notes', weight: 97.0 },
+        { sector: 'Cash & Equivalents', weight: 3.0 }
+      ]
+    },
+    'NOBL': {
+      name: 'ProShares S&P 500 Dividend Aristocrats ETF',
+      description: 'Tracks the S&P 500 Dividend Aristocrats Index of companies with at least 25 consecutive years of dividend growth.',
+      totalHoldings: 67,
+      topHoldings: [
+        { symbol: 'MMM', name: '3M Company', weight: 1.9, sector: 'Industrials' },
+        { symbol: 'PEP', name: 'PepsiCo, Inc.', weight: 1.8, sector: 'Consumer Staples' },
+        { symbol: 'KO', name: 'The Coca-Cola Company', weight: 1.7, sector: 'Consumer Staples' },
+        { symbol: 'EMR', name: 'Emerson Electric Co.', weight: 1.6, sector: 'Industrials' },
+        { symbol: 'WMT', name: 'Walmart Inc.', weight: 1.6, sector: 'Consumer Staples' },
+        { symbol: 'MCD', name: 'McDonald\'s Corporation', weight: 1.5, sector: 'Consumer Discretionary' },
+        { symbol: 'PG', name: 'The Procter & Gamble Company', weight: 1.5, sector: 'Consumer Staples' },
+        { symbol: 'CL', name: 'Colgate-Palmolive Company', weight: 1.4, sector: 'Consumer Staples' },
+        { symbol: 'ABT', name: 'Abbott Laboratories', weight: 1.4, sector: 'Healthcare' },
+        { symbol: 'LOW', name: 'Lowe\'s Companies, Inc.', weight: 1.3, sector: 'Consumer Discretionary' }
+      ],
+      sectorBreakdown: [
+        { sector: 'Consumer Staples', weight: 26.0 },
+        { sector: 'Industrials', weight: 22.0 },
+        { sector: 'Healthcare', weight: 14.0 },
+        { sector: 'Consumer Discretionary', weight: 11.0 },
+        { sector: 'Materials', weight: 8.0 },
+        { sector: 'Financial Services', weight: 7.0 },
+        { sector: 'Energy', weight: 5.0 },
+        { sector: 'Utilities', weight: 4.0 },
+        { sector: 'Communication Services', weight: 3.0 }
+      ]
+    },
+    'TLT': {
+      name: 'iShares 20+ Year Treasury Bond ETF',
+      description: 'Provides exposure to long-term U.S. Treasury bonds with maturities of 20 years or more.',
+      totalHoldings: 35,
+      topHoldings: [
+        { symbol: 'UST 2.375% 05/2050', name: 'U.S. Treasury Bond 2.375% 05/15/2050', weight: 3.1, sector: 'U.S. Treasury' },
+        { symbol: 'UST 1.250% 05/2050', name: 'U.S. Treasury Bond 1.250% 05/15/2050', weight: 3.0, sector: 'U.S. Treasury' },
+        { symbol: 'UST 1.625% 11/2050', name: 'U.S. Treasury Bond 1.625% 11/15/2050', weight: 2.9, sector: 'U.S. Treasury' },
+        { symbol: 'UST 1.500% 02/2051', name: 'U.S. Treasury Bond 1.500% 02/15/2051', weight: 2.9, sector: 'U.S. Treasury' },
+        { symbol: 'UST 1.875% 02/2051', name: 'U.S. Treasury Bond 1.875% 02/15/2051', weight: 2.8, sector: 'U.S. Treasury' },
+        { symbol: 'UST 2.000% 08/2051', name: 'U.S. Treasury Bond 2.000% 08/15/2051', weight: 2.8, sector: 'U.S. Treasury' },
+        { symbol: 'UST 1.750% 11/2051', name: 'U.S. Treasury Bond 1.750% 11/15/2051', weight: 2.7, sector: 'U.S. Treasury' },
+        { symbol: 'UST 2.375% 02/2052', name: 'U.S. Treasury Bond 2.375% 02/15/2052', weight: 2.7, sector: 'U.S. Treasury' },
+        { symbol: 'UST 2.500% 08/2052', name: 'U.S. Treasury Bond 2.500% 08/15/2052', weight: 2.6, sector: 'U.S. Treasury' },
+        { symbol: 'UST 2.375% 11/2052', name: 'U.S. Treasury Bond 2.375% 11/15/2052', weight: 2.6, sector: 'U.S. Treasury' }
+      ],
+      sectorBreakdown: [
+        { sector: 'U.S. Treasury Bonds', weight: 100.0 }
+      ]
+    },
+    'JEPQ': {
+      name: 'JPMorgan Nasdaq Equity Premium Income ETF',
+      description: 'Combines a low-volatility equity portfolio linked to the Nasdaq-100 with an options overlay for monthly income.',
+      totalHoldings: 110,
+      topHoldings: [
+        { symbol: 'MSFT', name: 'Microsoft Corporation', weight: 9.5, sector: 'Technology' },
+        { symbol: 'AAPL', name: 'Apple Inc.', weight: 9.2, sector: 'Technology' },
+        { symbol: 'NVDA', name: 'NVIDIA Corporation', weight: 7.4, sector: 'Technology' },
+        { symbol: 'AMZN', name: 'Amazon.com Inc.', weight: 6.2, sector: 'Consumer Discretionary' },
+        { symbol: 'META', name: 'Meta Platforms Inc.', weight: 4.9, sector: 'Communication Services' },
+        { symbol: 'GOOGL', name: 'Alphabet Inc. Class A', weight: 4.4, sector: 'Communication Services' },
+        { symbol: 'AVGO', name: 'Broadcom Inc.', weight: 3.6, sector: 'Technology' },
+        { symbol: 'NFLX', name: 'Netflix, Inc.', weight: 3.2, sector: 'Communication Services' },
+        { symbol: 'TSLA', name: 'Tesla Inc.', weight: 3.0, sector: 'Consumer Discretionary' },
+        { symbol: 'COST', name: 'Costco Wholesale Corporation', weight: 2.7, sector: 'Consumer Staples' }
+      ],
+      sectorBreakdown: [
+        { sector: 'Technology', weight: 45.0 },
+        { sector: 'Communication Services', weight: 25.0 },
+        { sector: 'Consumer Discretionary', weight: 20.0 },
+        { sector: 'Consumer Staples', weight: 5.0 },
+        { sector: 'Healthcare', weight: 5.0 }
+      ]
+    },
+    'SCHD': {
+      name: 'Schwab U.S. Dividend Equity ETF',
+      description: 'Tracks the Dow Jones U.S. Dividend 100 Index focusing on quality U.S. companies with sustainable dividends.',
+      totalHoldings: 104,
+      topHoldings: [
+        { symbol: 'AVGO', name: 'Broadcom Inc.', weight: 4.5, sector: 'Technology' },
+        { symbol: 'TXN', name: 'Texas Instruments Incorporated', weight: 4.0, sector: 'Technology' },
+        { symbol: 'HD', name: 'The Home Depot, Inc.', weight: 3.8, sector: 'Consumer Discretionary' },
+        { symbol: 'MRK', name: 'Merck & Co., Inc.', weight: 3.7, sector: 'Healthcare' },
+        { symbol: 'PEP', name: 'PepsiCo, Inc.', weight: 3.6, sector: 'Consumer Staples' },
+        { symbol: 'KO', name: 'The Coca-Cola Company', weight: 3.4, sector: 'Consumer Staples' },
+        { symbol: 'AMGN', name: 'Amgen Inc.', weight: 3.3, sector: 'Healthcare' },
+        { symbol: 'CSCO', name: 'Cisco Systems, Inc.', weight: 3.2, sector: 'Technology' },
+        { symbol: 'VZ', name: 'Verizon Communications Inc.', weight: 3.1, sector: 'Communication Services' },
+        { symbol: 'LMT', name: 'Lockheed Martin Corporation', weight: 3.0, sector: 'Industrials' }
+      ],
+      sectorBreakdown: [
+        { sector: 'Consumer Staples', weight: 21.0 },
+        { sector: 'Information Technology', weight: 19.0 },
+        { sector: 'Industrials', weight: 16.0 },
+        { sector: 'Healthcare', weight: 16.0 },
+        { sector: 'Financial Services', weight: 12.0 },
+        { sector: 'Energy', weight: 6.0 },
+        { sector: 'Communication Services', weight: 5.0 },
+        { sector: 'Materials', weight: 3.0 },
+        { sector: 'Consumer Discretionary', weight: 2.0 }
+      ]
+    },
+    'IWM': {
+      name: 'iShares Russell 2000 ETF',
+      description: 'Seeks to track the investment results of an index composed of small-cap U.S. equities.',
+      totalHoldings: 2008,
+      topHoldings: [
+        { symbol: 'SMCI', name: 'Super Micro Computer, Inc.', weight: 0.64, sector: 'Technology' },
+        { symbol: 'NVR', name: 'NVR, Inc.', weight: 0.48, sector: 'Consumer Discretionary' },
+        { symbol: 'DECK', name: 'Deckers Outdoor Corporation', weight: 0.44, sector: 'Consumer Discretionary' },
+        { symbol: 'CELH', name: 'Celsius Holdings, Inc.', weight: 0.41, sector: 'Consumer Staples' },
+        { symbol: 'RNR', name: 'RenaissanceRe Holdings Ltd.', weight: 0.37, sector: 'Financial Services' },
+        { symbol: 'BLDR', name: 'Builders FirstSource, Inc.', weight: 0.36, sector: 'Industrials' },
+        { symbol: 'LSCC', name: 'Lattice Semiconductor Corporation', weight: 0.35, sector: 'Technology' },
+        { symbol: 'PNFP', name: 'Pinnacle Financial Partners, Inc.', weight: 0.34, sector: 'Financial Services' },
+        { symbol: 'SPSC', name: 'SPS Commerce, Inc.', weight: 0.33, sector: 'Technology' },
+        { symbol: 'WWD', name: 'Woodward, Inc.', weight: 0.32, sector: 'Industrials' }
+      ],
+      sectorBreakdown: [
+        { sector: 'Industrials', weight: 17.0 },
+        { sector: 'Healthcare', weight: 16.0 },
+        { sector: 'Information Technology', weight: 15.0 },
+        { sector: 'Financial Services', weight: 14.0 },
+        { sector: 'Consumer Discretionary', weight: 13.0 },
+        { sector: 'Energy', weight: 6.0 },
+        { sector: 'Materials', weight: 6.0 },
+        { sector: 'Real Estate', weight: 5.0 },
+        { sector: 'Consumer Staples', weight: 4.0 },
+        { sector: 'Communication Services', weight: 4.0 }
+      ]
     }
   };
   
-  return etfData[ticker.toUpperCase()] || null;
+  const normalizedTicker = resolveETFTicker(ticker);
+  return etfData[normalizedTicker] || null;
 };
 
 // 🎨 INTERFACES
@@ -434,7 +761,8 @@ const ETFHoldings: React.FC<ETFHoldingsProps> = ({ ticker, dadosYahoo, dadosBRAP
       ]
     };
     
-    return mockData[ticker.toUpperCase()] || [];
+    const normalizedTicker = resolveETFTicker(ticker);
+    return mockData[normalizedTicker] || [];
   };
 
   const holdings = getHoldingsData();
