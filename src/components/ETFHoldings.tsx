@@ -105,38 +105,41 @@ const useETFData = (ticker: string) => {
       console.log(`🔍 Buscando dados reais do ETF ${ticker}...`);
 
       // MÉTODO 1: Tentar Yahoo Finance para ETF Holdings
-      try {
-        const yahooHoldingsUrl = `https://query1.finance.yahoo.com/v7/finance/options/${ticker}`;
-        const yahooResponse = await fetch(yahooHoldingsUrl);
-        
-        if (yahooResponse.ok) {
-          const yahooData = await yahooResponse.json();
-          console.log(`📊 Resposta Yahoo Finance para ${ticker}:`, yahooData);
-          
-          // Processar dados do Yahoo se disponível
-          if (yahooData && yahooData.optionChain) {
-            const result = yahooData.optionChain.result[0];
-            if (result && result.quote) {
-              const quote = result.quote;
-              
-              const processedData: ETFData = {
-                name: quote.longName || quote.shortName || `${ticker} ETF`,
-                description: quote.description || `Exchange Traded Fund tracking ${ticker}`,
-                totalHoldings: quote.sharesOutstanding || 0,
-                topHoldings: [], // Yahoo basic não tem holdings, usar fallback
-                sectorBreakdown: []
-              };
-              
-              setETFData(processedData);
-              console.log(`✅ Dados Yahoo processados para ${ticker}`);
-              return;
-            }
-          }
-        }
-      } catch (yahooError) {
-        console.log(`⚠️ Yahoo Finance falhou para ${ticker}:`, yahooError);
-      }
-
+try {
+  const yahooUrl = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=topHoldings`;
+  const yahooResponse = await fetch(yahooUrl, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0'
+    }
+  });
+  
+  if (yahooResponse.ok) {
+    const yahooData = await yahooResponse.json();
+    const holdings = yahooData?.quoteSummary?.result?.[0]?.topHoldings?.holdings;
+    
+    if (holdings && Array.isArray(holdings)) {
+      const processedData: ETFData = {
+        name: yahooData.quoteSummary.result[0].quoteType.longName,
+        description: yahooData.quoteSummary.result[0].summaryProfile?.longBusinessSummary || '',
+        totalHoldings: holdings.length,
+        topHoldings: holdings.slice(0, 10).map((h: any) => ({
+          symbol: h.symbol,
+          name: h.holdingName,
+          weight: h.holdingPercent * 100, // Yahoo retorna decimal
+          sector: h.sector || 'Unknown'
+        })),
+        sectorBreakdown: []
+      };
+      
+      setETFData(processedData);
+      console.log(`✅ Holdings carregados via Yahoo Finance`);
+      return;
+    }
+  }
+} catch (error) {
+  console.log('⚠️ Yahoo Finance falhou:', error);
+}
+      
       // MÉTODO 2: Tentar via proxy CORS para APIs alternativas
       try {
         // Usar Financial Modeling Prep (tem plano gratuito)
