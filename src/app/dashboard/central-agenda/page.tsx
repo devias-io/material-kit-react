@@ -309,11 +309,12 @@ export default function CentralAgendaPage() {
 
   // ✅ LIMPAR VIA API
   const handleLimparTudo = async () => {
-    if (!confirm('Tem certeza que deseja apagar todos os dados?')) return;
-    
     try {
       await limparTodos();
       await carregarEstatisticas();
+      setEventosSelecionados([]);
+      setModoSelecao(false);
+      setDialogLimpar(false);
       alert('Dados removidos com sucesso.');
     } catch (error) {
       alert('Erro ao remover dados');
