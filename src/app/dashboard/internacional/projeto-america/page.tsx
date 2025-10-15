@@ -21,11 +21,12 @@ const setCachedData = (key: string, data: any) => {
   globalCache.set(key, { data, timestamp: Date.now() });
 };
 
-const WHITE_LOGO_TICKERS = ['XP', 'UNH', 'QQQ', 'ARE'];
+const WHITE_LOGO_TICKERS = ['XP', 'UNH', 'QQQ', 'ARE','WPC'];
 const CUSTOM_LOGO_URLS: Record<string, string> = {
   XP: 'https://logo.clearbit.com/xpi.com.br',
   UNH: 'https://logo.clearbit.com/unitedhealthgroup.com',
   QQQ: 'https://logo.clearbit.com/invesco.com',
+  WPC: 'https://logo.clearbit.com/wpcarey.com',
   ARE: 'https://investidor10.com.br/storage/stocks/thumbnails/rbQCq2xzJWAfLgUdBYeJJAymyTHUU0Bn4lFs5jpw.jpg'
 };
 
