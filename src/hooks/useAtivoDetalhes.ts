@@ -17,6 +17,11 @@ export interface DadosFinanceiros {
   marketCap?: number;
   pl?: number;
   dy?: number;
+  regularMarketPrice?: number;
+  fiftyTwoWeekHigh?: number;
+  fiftyTwoWeekLow?: number;
+  lastDividendValue?: number;
+  lastDividendDate?: string;
 }
 
 export interface DadosFII {
@@ -46,6 +51,8 @@ export interface DadosYahooFinance {
   eps?: number;
   dividendRate?: number;
   payoutRatio?: number;
+  fiftyTwoWeekHigh?: number;
+  fiftyTwoWeekLow?: number;
   fonte: string;
   ultimaAtualizacao?: string;
 }
@@ -324,7 +331,8 @@ if (parsed.timestamp && (Date.now() - parsed.timestamp) < 6 * 60 * 60 * 1000) {
         const data = await response.json();
         if (data.results && data.results.length > 0) {
           const quote = data.results[0];
-          
+          const stats = quote?.defaultKeyStatistics || {};
+
           const dadosProcessados: DadosFinanceiros = {
             precoAtual: quote.regularMarketPrice || quote.currentPrice || 0,
             variacao: quote.regularMarketChange || 0,
@@ -332,7 +340,12 @@ if (parsed.timestamp && (Date.now() - parsed.timestamp) < 6 * 60 * 60 * 1000) {
             volume: quote.regularMarketVolume || 0,
             dy: quote.dividendYield || 0,
             marketCap: quote.marketCap,
-            pl: quote.priceEarnings
+            pl: quote.priceEarnings,
+            regularMarketPrice: quote.regularMarketPrice || quote.currentPrice || 0,
+            fiftyTwoWeekHigh: quote.fiftyTwoWeekHigh,
+            fiftyTwoWeekLow: quote.fiftyTwoWeekLow,
+            lastDividendValue: stats.lastDividendValue || quote.lastDividendValue,
+            lastDividendDate: stats.lastDividendDate || quote.lastDividendDate
           };
 
           setDadosFinanceiros(dadosProcessados);
@@ -357,7 +370,8 @@ if (parsed.timestamp && (Date.now() - parsed.timestamp) < 6 * 60 * 60 * 1000) {
         volume: 1000000,
         dy: ticker.includes('11') ? 8.5 : 4.2,
         marketCap: ticker.includes('11') ? 2200000000 : 15000000000,
-        pl: ticker.includes('11') ? undefined : 12.5
+        pl: ticker.includes('11') ? undefined : 12.5,
+        regularMarketPrice: ticker.includes('11') ? 100.00 : 85.75
       };
       
       setDadosFinanceiros(dadosEstaticos);
@@ -875,6 +889,8 @@ export function useYahooFinanceInternacional(ticker: string | undefined) {
     eps?: number;
     dividendRate?: number;
     payoutRatio?: number;
+    fiftyTwoWeekHigh?: number;
+    fiftyTwoWeekLow?: number;
     fonte: string;
     ultimaAtualizacao?: string;
   } | null>(null);
@@ -989,6 +1005,8 @@ export function useYahooFinanceInternacional(ticker: string | undefined) {
                   volume: summaryDetail.volume?.raw || summaryDetail.averageVolume?.raw,
                   beta: defaultKeyStatistics.beta?.raw,
                   eps: defaultKeyStatistics.trailingEps?.raw,
+                  fiftyTwoWeekHigh: summaryDetail.fiftyTwoWeekHigh?.raw || price.fiftyTwoWeekHigh?.raw,
+                  fiftyTwoWeekLow: summaryDetail.fiftyTwoWeekLow?.raw || price.fiftyTwoWeekLow?.raw,
                   fonte: 'yahoo-mobile-ua-desktop'
                 };
 
@@ -1046,6 +1064,8 @@ export function useYahooFinanceInternacional(ticker: string | undefined) {
                   dividendYield: result.summaryDetail?.dividendYield || result.defaultKeyStatistics?.dividendYield,
                   marketCap: result.marketCap,
                   volume: result.regularMarketVolume,
+                  fiftyTwoWeekHigh: result.fiftyTwoWeekHigh || result.summaryDetail?.fiftyTwoWeekHigh,
+                  fiftyTwoWeekLow: result.fiftyTwoWeekLow || result.summaryDetail?.fiftyTwoWeekLow,
                   fonte: 'brapi-internacional-mobile'
                 };
 
@@ -1097,6 +1117,8 @@ export function useYahooFinanceInternacional(ticker: string | undefined) {
                   pvp: defaultKeyStatistics.priceToBook?.raw,
                   marketCap: summaryDetail.marketCap?.raw,
                   volume: summaryDetail.volume?.raw,
+                  fiftyTwoWeekHigh: summaryDetail.fiftyTwoWeekHigh?.raw || defaultKeyStatistics.fiftyTwoWeekHigh?.raw,
+                  fiftyTwoWeekLow: summaryDetail.fiftyTwoWeekLow?.raw || defaultKeyStatistics.fiftyTwoWeekLow?.raw,
                   fonte: 'yahoo-mobile-direto'
                 };
 
@@ -1167,6 +1189,8 @@ export function useYahooFinanceInternacional(ticker: string | undefined) {
                 volume: summaryDetail.volume?.raw || summaryDetail.averageVolume?.raw,
                 beta: defaultKeyStatistics.beta?.raw,
                 eps: defaultKeyStatistics.trailingEps?.raw,
+                fiftyTwoWeekHigh: summaryDetail.fiftyTwoWeekHigh?.raw || price.fiftyTwoWeekHigh?.raw,
+                fiftyTwoWeekLow: summaryDetail.fiftyTwoWeekLow?.raw || price.fiftyTwoWeekLow?.raw,
                 fonte: 'yahoo-desktop'
               };
 
