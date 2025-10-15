@@ -21,6 +21,16 @@ const setCachedData = (key: string, data: any) => {
   globalCache.set(key, { data, timestamp: Date.now() });
 };
 
+const WHITE_LOGO_TICKERS = ['XP', 'UNH', 'QQQ', 'ARE','SOXX','MCHI'];
+
+const CUSTOM_LOGO_URLS: Record<string, string> = {
+  XP: 'https://logo.clearbit.com/xpi.com.br',
+  SOXX: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWYDS--_v0EujW81cPjl386t2Tlm7vVXMb0A&s',
+  QQQ: 'https://logo.clearbit.com/invesco.com',
+  ARE: 'https://logo.clearbit.com/alexandriarealestate.com',
+  MCHI: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWYDS--_v0EujW81cPjl386t2Tlm7vVXMb0A&s'
+};
+
 // 🔥 DETECÇÃO DE DISPOSITIVO SIMPLIFICADA E OTIMIZADA
 const useDeviceDetection = () => {
   const [isMobile, setIsMobile] = React.useState(() => {
