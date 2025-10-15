@@ -1008,10 +1008,12 @@ export default function ETFsInternacionaisPage() {
             {isMobile ? (
               // 📱 MOBILE: Cards verticais
               <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {ativosAtualizados.map((ativo, index) => {
-                  const temCotacaoReal = ativo.statusApi === 'success';
-                  
-                  return (
+{ativosAtualizados.map((ativo, index) => {
+  const temCotacaoReal = ativo.statusApi === 'success';
+  const ticker = (ativo.ticker ?? '').toUpperCase();
+  const logoSrc = CUSTOM_LOGO_URLS[ticker] ?? `https://financialmodelingprep.com/image-stock/${ticker}.png`;
+  
+  return (
                     <div 
                       key={ativo.id || index}
                       style={{
@@ -1057,7 +1059,9 @@ export default function ETFsInternacionaisPage() {
                           height: '36px',
                           borderRadius: '6px',
                           overflow: 'hidden',
-                          backgroundColor: '#ffffff',
+   backgroundColor: WHITE_LOGO_TICKERS.includes(ticker)
+    ? '#f1f5f9'
+    : '#ffffff',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1065,9 +1069,9 @@ export default function ETFsInternacionaisPage() {
                           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
                           padding: '4px'
                         }}>
-                          <img 
-                            src={`https://financialmodelingprep.com/image-stock/${ativo.ticker}.png`}
-                            alt={`Logo ${ativo.ticker}`}
+<img 
+  src={logoSrc}
+  alt={`Logo ${ticker}`}
                             style={{
                               width: '100%',
                               height: '100%',
@@ -1220,10 +1224,12 @@ export default function ETFsInternacionaisPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {ativosAtualizados.map((ativo, index) => {
-                      const temCotacaoReal = ativo.statusApi === 'success';
-                      
-                      return (
+{ativosAtualizados.map((ativo, index) => {
+  const temCotacaoReal = ativo.statusApi === 'success';
+  const ticker = (ativo.ticker ?? '').toUpperCase();
+  const logoSrc = CUSTOM_LOGO_URLS[ticker] ?? `https://financialmodelingprep.com/image-stock/${ticker}.png`;
+  
+  return (
                         <tr 
                           key={ativo.id || index} 
                           style={{ 
@@ -1268,15 +1274,17 @@ export default function ETFsInternacionaisPage() {
                                 height: '40px',
                                 borderRadius: '8px',
                                 overflow: 'hidden',
-                                backgroundColor: '#f8fafc',
+     backgroundColor: WHITE_LOGO_TICKERS.includes(ticker)
+    ? '#f1f5f9'
+    : '#ffffff',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 border: '1px solid #e2e8f0'
                               }}>
-                                <img 
-                                  src={`https://financialmodelingprep.com/image-stock/${ativo.ticker}.png`}
-                                  alt={`Logo ${ativo.ticker}`}
+<img 
+  src={logoSrc}
+  alt={`Logo ${ticker}`}
                                   style={{
                                     width: '32px',
                                     height: '32px',
