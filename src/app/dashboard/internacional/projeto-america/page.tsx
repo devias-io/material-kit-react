@@ -21,10 +21,12 @@ const setCachedData = (key: string, data: any) => {
   globalCache.set(key, { data, timestamp: Date.now() });
 };
 
-const WHITE_LOGO_TICKERS = ['XP', 'UNH'];
+const WHITE_LOGO_TICKERS = ['XP', 'UNH', 'QQQ', 'ARE'];
 const CUSTOM_LOGO_URLS: Record<string, string> = {
   XP: 'https://logo.clearbit.com/xpi.com.br',
-  UNH: 'https://logo.clearbit.com/unitedhealthgroup.com'
+  UNH: 'https://logo.clearbit.com/unitedhealthgroup.com',
+  QQQ: 'https://logo.clearbit.com/invesco.com',
+  ARE: 'https://logo.clearbit.com/alexandriarealestate.com'
 };
 
 // 🔥 DETECÇÃO DE DISPOSITIVO SIMPLIFICADA E OTIMIZADA
