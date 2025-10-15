@@ -26,7 +26,7 @@ const CUSTOM_LOGO_URLS: Record<string, string> = {
   XP: 'https://logo.clearbit.com/xpi.com.br',
   UNH: 'https://logo.clearbit.com/unitedhealthgroup.com',
   QQQ: 'https://logo.clearbit.com/invesco.com',
-  ARE: 'https://logo.clearbit.com/alexandriarealestate.com'
+  ARE: 'https://investidor10.com.br/storage/stocks/thumbnails/rbQCq2xzJWAfLgUdBYeJJAymyTHUU0Bn4lFs5jpw.jpg'
 };
 
 // 🔥 DETECÇÃO DE DISPOSITIVO SIMPLIFICADA E OTIMIZADA
