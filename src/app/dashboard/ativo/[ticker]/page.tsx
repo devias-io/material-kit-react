@@ -27,10 +27,10 @@ import {
 } from '@/utils/carteira-access';
 
 // ✅ IMPORT ÚNICO CORRIGIDO
-import { 
-  useDadosFinanceiros, 
-  useDadosFII, 
-  useDadosBDR, 
+import {
+  useDadosFinanceiros,
+  useDadosFII,
+  useDadosBDR,
   useHGBrasilAcoes,
   useYahooFinanceInternacional,
   useCotacaoUSD,
@@ -44,6 +44,16 @@ import {
   DadosFII,
   Relatorio
 } from '../../../../hooks/useAtivoDetalhes';
+
+interface TipoAtivo {
+  ehBDREstrangeiro: boolean;
+  tickerEstrangeiro: string | null;
+  bdrCorrespondente: string | null;
+  temBDR: boolean;
+  ehETF: boolean;
+  ehFII: boolean;
+  ehREIT: boolean;
+}
 
 // ✅ CACHE INTELIGENTE UTILITÁRIO
 const cacheUtils = {
@@ -141,6 +151,11 @@ const ETF_LIST = new Set([
   'PDBC', 'DBA', 'USO', 'UNG', 'ARKK', 'ARKQ', 'ARKW', 'ARKG', 'ARKF'
 ]);
 
+const KNOWN_REITS = new Set([
+  'WPC', 'O', 'STAG', 'ADC', 'NNN', 'AVB', 'PLD',
+  'AMT', 'ARE', 'SPG', 'DOC', 'VNQ'
+]);
+
 const EQUITY_OVERRIDE_TICKERS = new Set(
   [
     ...Object.keys(BDR_ESTRANGEIRO_MAPPING),
@@ -157,6 +172,12 @@ const isETF = (ticker) => {
   }
 
   return ETF_LIST.has(normalizedTicker);
+};
+
+const isREIT = (ticker) => {
+  if (!ticker) return false;
+  const normalizedTicker = ticker.toUpperCase();
+  return KNOWN_REITS.has(normalizedTicker);
 };
 
 // ✅ HOOK RESPONSIVO OTIMIZADO
@@ -2440,7 +2461,7 @@ export default function AtivoPage() {
   }, [deveNegarAcesso, ticker]);
 
   // ✅ DETECTORES DE TIPO DE ATIVO (MEMOIZADOS) - Só executa se ticker existe
-  const tipoAtivo = useMemo(() => {
+  const tipoAtivo = useMemo<TipoAtivo>(() => {
     if (!ticker) {
       return {
         ehBDREstrangeiro: false,
@@ -2448,7 +2469,8 @@ export default function AtivoPage() {
         bdrCorrespondente: null,
         temBDR: false,
         ehETF: false,
-        ehFII: false
+        ehFII: false,
+        ehREIT: false
       };
     }
 
@@ -2458,6 +2480,7 @@ export default function AtivoPage() {
     const temBDR = !!bdrCorrespondente;
     const ehETF = isETF(ticker);
     const ehFII = ticker.includes('11') || ticker.endsWith('11');
+    const ehREIT = isREIT(ticker);
 
     return {
       ehBDREstrangeiro,
@@ -2465,7 +2488,8 @@ export default function AtivoPage() {
       bdrCorrespondente,
       temBDR,
       ehETF,
-      ehFII
+      ehFII,
+      ehREIT
     };
   }, [ticker]);
 
@@ -2954,6 +2978,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
   }
 
   const carteiraConfig = CARTEIRAS_CONFIG[carteira];
+  const moedaPadrao = carteiraConfig?.moeda || 'BRL';
 
   const dashboardContent = ticker ? (
     <div style={{
@@ -3197,6 +3222,102 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 loading={loadingETFBRAPI}
               />
             </LazyComponent>
+          ) : tipoAtivo.ehREIT ? (
+            <ResponsiveGrid minCardWidth={200} gap={20}>
+              <MetricCard
+                title="MIN. 52 SEMANAS"
+                value={dadosYahoo?.fiftyTwoWeekLow
+                  ? formatCurrency(dadosYahoo.fiftyTwoWeekLow, moedaPadrao)
+                  : dadosFinanceiros?.fiftyTwoWeekLow
+                  ? formatCurrency(dadosFinanceiros.fiftyTwoWeekLow, moedaPadrao)
+                  : 'N/A'}
+                subtitle={(() => {
+                  const low = dadosYahoo?.fiftyTwoWeekLow || dadosFinanceiros?.fiftyTwoWeekLow;
+                  const current = dadosFinanceiros?.precoAtual || cotacaoCompleta?.regularMarketPrice;
+                  if (low && current) {
+                    const distancia = ((current - low) / low) * 100;
+                    return `+${distancia.toFixed(1)}% acima`;
+                  }
+                  return 'Mínima anual';
+                })()}
+                loading={dadosLoading || loadingYahoo}
+                icon="📉"
+                color="#ef4444"
+              />
+
+              <MetricCard
+                title="MÁX. 52 SEMANAS"
+                value={dadosYahoo?.fiftyTwoWeekHigh
+                  ? formatCurrency(dadosYahoo.fiftyTwoWeekHigh, moedaPadrao)
+                  : dadosFinanceiros?.fiftyTwoWeekHigh
+                  ? formatCurrency(dadosFinanceiros.fiftyTwoWeekHigh, moedaPadrao)
+                  : 'N/A'}
+                subtitle={(() => {
+                  const high = dadosYahoo?.fiftyTwoWeekHigh || dadosFinanceiros?.fiftyTwoWeekHigh;
+                  const current = dadosFinanceiros?.precoAtual || cotacaoCompleta?.regularMarketPrice;
+                  if (high && current) {
+                    const distancia = ((high - current) / current) * 100;
+                    return `${distancia.toFixed(1)}% abaixo`;
+                  }
+                  return 'Máxima anual';
+                })()}
+                loading={dadosLoading || loadingYahoo}
+                icon="📈"
+                color="#22c55e"
+              />
+
+              <MetricCard
+                title="PERFORMANCE TOTAL"
+                value={formattedPerformanceTotal}
+                subtitle={performanceSubtitle}
+                color={performanceColor}
+                loading={loadingProventos}
+              />
+
+              <MetricCard
+                title="DIVIDEND YIELD"
+                value={(() => {
+                  if (dy12Meses > 0) {
+                    return dyFormatado;
+                  }
+
+                  if (dadosYahoo?.dividendYield && dadosYahoo.dividendYield > 0) {
+                    return `${dadosYahoo.dividendYield.toFixed(2)}%`;
+                  }
+
+                  if (dadosFinanceiros?.lastDividendValue && dadosFinanceiros?.regularMarketPrice) {
+                    const quarterlyDiv = dadosFinanceiros.lastDividendValue;
+                    const annualDiv = quarterlyDiv * 4;
+                    const price = dadosFinanceiros.regularMarketPrice;
+                    const calculatedDY = (annualDiv / price) * 100;
+                    return `${calculatedDY.toFixed(2)}%`;
+                  }
+
+                  if (dadosHGBrasil?.dividendYield12m) {
+                    return `${dadosHGBrasil.dividendYield12m.toFixed(2)}%`;
+                  }
+
+                  return 'N/A';
+                })()}
+                subtitle={(() => {
+                  if (dy12Meses > 0) {
+                    return fonteDY || 'Calculado';
+                  }
+                  if (dadosYahoo?.dividendYield && dadosYahoo.dividendYield > 0) {
+                    return 'Yahoo Finance';
+                  }
+                  if (dadosFinanceiros?.lastDividendValue && dadosFinanceiros?.regularMarketPrice) {
+                    return 'Estimado (último div × 4)';
+                  }
+                  if (dadosHGBrasil?.dividendYield12m) {
+                    return dadosHGBrasil?.fonte || 'HG Brasil';
+                  }
+                  return '';
+                })()}
+                loading={loadingDY || loadingHGBrasil || loadingYahoo || dadosLoading}
+                icon="💰"
+              />
+            </ResponsiveGrid>
           ) : !tipoAtivo.ehFII && (
             <ResponsiveGrid minCardWidth={200} gap={20}>
               <MetricCard
