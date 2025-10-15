@@ -181,72 +181,115 @@ const isREIT = (ticker) => {
 };
 
 // ✅ HOOK RESPONSIVO OTIMIZADO
-const useResponsive = () => {
-  const [screenSize, setScreenSize] = useState(() => {
-    if (typeof window === 'undefined') return 'desktop';
-    
-    const width = window.innerWidth;
-    if (width <= 480) return 'mobile';
-    if (width <= 768) return 'tablet';
-    if (width <= 1024) return 'laptop';
-    return 'desktop';
-  });
+const RESPONSIVE_BREAKPOINTS = {
+  mobile: 480,
+  tablet: 768,
+  laptop: 1024,
+  desktop: 1200
+};
 
-  const [dimensions, setDimensions] = useState(() => ({
-    width: typeof window !== 'undefined' ? window.innerWidth : 1200,
-    height: typeof window !== 'undefined' ? window.innerHeight : 800
-  }));
+const createResponsiveState = (width, height) => {
+  const screenSize = width <= RESPONSIVE_BREAKPOINTS.mobile
+    ? 'mobile'
+    : width <= RESPONSIVE_BREAKPOINTS.tablet
+    ? 'tablet'
+    : width <= RESPONSIVE_BREAKPOINTS.laptop
+    ? 'laptop'
+    : 'desktop';
 
-  useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      
-      setDimensions({ width, height });
-      
-      if (width <= 480) setScreenSize('mobile');
-      else if (width <= 768) setScreenSize('tablet');
-      else if (width <= 1024) setScreenSize('laptop');
-      else setScreenSize('desktop');
-    };
-
-    // ✅ DEBOUNCE OTIMIZADO PARA MOBILE
-    let timeoutId;
-    const debouncedResize = () => {
-      clearTimeout(timeoutId);
-      // Debounce maior para mobile (menos re-renders)
-      const delay = window.innerWidth <= 768 ? 300 : 150;
-      timeoutId = setTimeout(handleResize, delay);
-    };
-
-    window.addEventListener('resize', debouncedResize, { passive: true });
-    return () => {
-      window.removeEventListener('resize', debouncedResize);
-      clearTimeout(timeoutId);
-    };
-  }, []);
-
-  // ✅ MEMOIZE COMPUTED VALUES
-  const computedValues = useMemo(() => ({
+  return {
+    screenSize,
     isMobile: screenSize === 'mobile',
     isTablet: screenSize === 'tablet',
     isLaptop: screenSize === 'laptop',
     isDesktop: screenSize === 'desktop',
-    isMobileOrTablet: screenSize === 'mobile' || screenSize === 'tablet'
-  }), [screenSize]);
-
-  return {
-    screenSize,
-    ...computedValues,
-    width: dimensions.width,
-    height: dimensions.height,
-    breakpoints: {
-      mobile: 480,
-      tablet: 768,
-      laptop: 1024,
-      desktop: 1200
-    }
+    isMobileOrTablet: screenSize === 'mobile' || screenSize === 'tablet',
+    width,
+    height,
+    breakpoints: RESPONSIVE_BREAKPOINTS
   };
+};
+
+const DEFAULT_RESPONSIVE_STATE = createResponsiveState(1200, 800);
+
+let responsiveState = DEFAULT_RESPONSIVE_STATE;
+const responsiveSubscribers = new Set();
+let resizeListenerRegistered = false;
+let resizeTimeoutId = null;
+let resizeListener = null;
+
+const notifyResponsiveSubscribers = () => {
+  responsiveSubscribers.forEach(subscriber => {
+    subscriber(responsiveState);
+  });
+};
+
+const updateResponsiveState = () => {
+  if (typeof window === 'undefined') return;
+
+  responsiveState = createResponsiveState(window.innerWidth, window.innerHeight);
+  notifyResponsiveSubscribers();
+};
+
+const ensureResizeListener = () => {
+  if (resizeListenerRegistered || typeof window === 'undefined') {
+    return;
+  }
+
+  resizeListener = () => {
+    clearTimeout(resizeTimeoutId);
+    const delay = window.innerWidth <= RESPONSIVE_BREAKPOINTS.tablet ? 300 : 150;
+    resizeTimeoutId = window.setTimeout(updateResponsiveState, delay);
+  };
+
+  window.addEventListener('resize', resizeListener, { passive: true });
+  resizeListenerRegistered = true;
+
+  updateResponsiveState();
+};
+
+const cleanupResizeListenerIfNeeded = () => {
+  if (responsiveSubscribers.size === 0 && resizeListenerRegistered && typeof window !== 'undefined') {
+    if (resizeListener) {
+      window.removeEventListener('resize', resizeListener);
+    }
+    clearTimeout(resizeTimeoutId);
+    resizeTimeoutId = null;
+    resizeListenerRegistered = false;
+    resizeListener = null;
+  }
+};
+
+const useResponsive = () => {
+  const [state, setState] = useState(() => {
+    if (typeof window === 'undefined') {
+      return DEFAULT_RESPONSIVE_STATE;
+    }
+
+    return createResponsiveState(window.innerWidth, window.innerHeight);
+  });
+
+  useEffect(() => {
+    ensureResizeListener();
+
+    const subscriber = (nextState) => {
+      setState(nextState);
+    };
+
+    responsiveSubscribers.add(subscriber);
+
+    // Garantir que o estado inicial reflita a largura/altura atuais
+    if (typeof window !== 'undefined') {
+      subscriber(createResponsiveState(window.innerWidth, window.innerHeight));
+    }
+
+    return () => {
+      responsiveSubscribers.delete(subscriber);
+      cleanupResizeListenerIfNeeded();
+    };
+  }, []);
+
+  return state;
 };
 
 // ✅ HOOK DE LOADING PROGRESSIVO
