@@ -122,18 +122,18 @@ export async function enviarEmailCredenciais(
         }
         .login-button { 
           display: block;
-          background: #010101;
+          background: linear-gradient(135deg, #010101 0%, #1a1a1a 100%);
           color: white !important; 
-          padding: 16px 32px; 
+          padding: 18px 40px; 
           text-decoration: none; 
-          border-radius: 12px; 
+          border-radius: 8px; 
           margin: 30px auto;
           text-align: center;
-          font-weight: 700;
-          font-size: 18px;
-          border: 2px solid #4bf700;
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+          font-weight: 600;
+          font-size: 16px;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
           max-width: 280px;
+          transition: all 0.3s ease;
         }
         .info-box { 
           background: linear-gradient(135deg, #fef5e7 0%, #fef3cd 100%);
