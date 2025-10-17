@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { HOTMART_INTEGRATIONS } from '@/data/integrations';
 
 const prisma = new PrismaClient();
 
@@ -20,40 +21,12 @@ export async function GET(request: NextRequest) {
 
     await prisma.$connect();
 
-    // Buscar integrações (usando tabela auxiliar ou arquivo de configuração)
-    // Por enquanto, retornar dados mockados até implementarmos tabela
-    const integrations = [
-      {
-        id: '124159',
-        productName: 'Projeto Trump',
-        productId: 'fb056612-bcc6-4217-9e6d-2a5d1110ac2f',
-        plan: 'VIP',
-        webhookUrl: `${new URL(request.url).origin}/api/webhooks/hotmart/124159`,
-        status: 'ACTIVE',
-        createdAt: '2024-01-15',
-        totalSales: 45
-      },
-      {
-        id: '99519',
-        productName: 'Troca de Plano - VIP',
-        productId: 'upgrade-vip-2024',
-        plan: 'VIP',
-        webhookUrl: `${new URL(request.url).origin}/api/webhooks/hotmart/99519`,
-        status: 'ACTIVE',
-        createdAt: '2024-02-20',
-        totalSales: 23
-      },
-      {
-        id: '99516',
-        productName: 'Projeto FIIs',
-        productId: 'projeto-fiis-2024',
-        plan: 'FIIS',
-        webhookUrl: `${new URL(request.url).origin}/api/webhooks/hotmart/99516`,
-        status: 'ACTIVE',
-        createdAt: '2024-03-10',
-        totalSales: 67
-      }
-    ];
+    const origin = new URL(request.url).origin;
+
+    const integrations = HOTMART_INTEGRATIONS.map(integration => ({
+      ...integration,
+      webhookUrl: `${origin}/api/webhooks/hotmart/${integration.id}`,
+    }));
 
     await prisma.$disconnect();
 

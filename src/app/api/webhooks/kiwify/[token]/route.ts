@@ -4,14 +4,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { enviarEmailCredenciais } from '@/lib/auth/email'; // ✅ ADICIONADO
 import { hashPassword } from '@/lib/auth/password'; // ✅ ADICIONADO
+import { KIWIFY_TOKEN_MAPPING } from '@/data/integrations';
 
 const prisma = new PrismaClient();
-
-// ✅ TOKEN ÚNICO DA KIWIFY CONFIGURADO
-const KIWIFY_TOKEN_MAPPING: Record<string, { name: string; plan: string; integrationId: string }> = {
-  '27419sqm9vm': { name: 'Produto Fatos da Bolsa', plan: 'VIP', integrationId: 'KW001' }, // Será substituído pela detecção automática
-  'KWiChuFSyPUjAgdJs': { name: 'Close Friends VIP - Turma 6', plan: 'VIP', integrationId: 'KWVIP06' },
-};
 
 function extractString(value: unknown): string {
   if (typeof value === 'string') {

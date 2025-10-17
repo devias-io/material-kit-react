@@ -31,17 +31,9 @@ import {
   Link
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
+import { KIWIFY_INTEGRATIONS, type TokenIntegrationConfig } from '@/data/integrations';
 
-interface KiwifyIntegration {
-  id: string;
-  productName: string;
-  token: string;
-  plan: string;
-  webhookUrl: string;
-  status: 'ACTIVE' | 'INACTIVE';
-  createdAt: string;
-  totalSales?: number;
-}
+type KiwifyIntegration = TokenIntegrationConfig & { webhookUrl: string };
 
 export default function KiwifyPage() {
   const router = useRouter();
@@ -65,22 +57,17 @@ export default function KiwifyPage() {
     try {
       setLoading(true);
       
-      // ✅ DADOS REAIS DA KIWIFY (não mock)
-      const realIntegrations: KiwifyIntegration[] = [
-        {
-          id: 'KW001',
-          productName: 'Produto Fatos da Bolsa',
-          token: '27419sqm9vm', // ✅ TOKEN REAL FUNCIONANDO
-          plan: 'VIP',
-          webhookUrl: `${window.location.origin}/api/webhooks/kiwify/27419sqm9vm`,
-          status: 'ACTIVE',
-          createdAt: '2024-07-16',
-          totalSales: 1 // ✅ JÁ TEM 1 USUÁRIO CRIADO
-        }
-      ];
-      
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+
+      const realIntegrations: KiwifyIntegration[] = KIWIFY_INTEGRATIONS.map(integration => ({
+        ...integration,
+        webhookUrl: origin ? `${origin}/api/webhooks/kiwify/${integration.token}` : integration.token,
+      }));
+
       setIntegrations(realIntegrations);
-      console.log('✅ Integração Kiwify real carregada:', realIntegrations[0]);
+      if (realIntegrations.length > 0) {
+        console.log('✅ Integração Kiwify real carregada:', realIntegrations[0]);
+      }
     } catch (error) {
       console.error('Erro ao carregar integrações Kiwify:', error);
     } finally {
