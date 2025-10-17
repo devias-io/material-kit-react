@@ -113,7 +113,6 @@ export async function enviarEmailCredenciais(
           padding: 12px 16px;
           border-radius: 8px;
           border: 1px solid #cbd5e0;
-          font-family: 'Courier New', Courier, monospace;
           font-size: 15px;
           color: #1a202c;
           font-weight: 600;
