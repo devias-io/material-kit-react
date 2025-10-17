@@ -246,7 +246,7 @@ export async function enviarEmailCredenciais(
         <!-- Header -->
         <div class="header">
           <img src="${loginUrl}/assets/avatar-36.png" alt="Fatos da Bolsa Logo" class="logo" />
-          <h1>🎉 Bem-vindo ao Fatos da Bolsa!</h1>
+          <h1>Bem-vindo ao Fatos da Bolsa!</h1>
           <p>Sua jornada de sucesso nos investimentos começa agora</p>
         </div>
         
