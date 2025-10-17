@@ -198,15 +198,16 @@ function detectarPlanoKiwify(webhookData: any): { plan: string; productName: str
 
     if (valor && valor > 0) {
       // Ajustar valores conforme seus preços reais
-      if (valor >= 150) {
+      if (valor >= 400) {
         return { plan: 'VIP', productName: `Produto VIP - R$ ${valor}`, rawProductName: productName };
-      } else if (valor >= 100) {
-        return { plan: 'FIIS', productName: `Projeto FIIs - R$ ${valor}`, rawProductName: productName };
-      } else {
-        // Para LITE, como diferenciar V1 de V2 por valor?
-        // Assumir V2 como padrão para novos produtos
-        return { plan: 'LITE_V2', productName: `Close Friends LITE 2.0 - R$ ${valor}`, rawProductName: productName };
       }
+
+      // Valores abaixo de R$ 400 são tratados como ofertas LITE por padrão
+      return {
+        plan: 'LITE',
+        productName: `Close Friends LITE - R$ ${valor}`,
+        rawProductName: productName,
+      };
     }
 
     // 🎯 FALLBACK FINAL: LITE V2 como padrão mais seguro (produto mais recente)
