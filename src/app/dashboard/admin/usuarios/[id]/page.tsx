@@ -221,6 +221,10 @@ export default function EditUserPage() {
         'internacional-etfs', 'internacional-stocks',
         'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram'
       ],
+      'LITE_V2': [
+        'small-caps', 'dividendos', 'fundos-imobiliarios', 'rentabilidades',
+        'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram'
+      ],
       'RENDA_PASSIVA': [
         'dividendos', 'fundos-imobiliarios', 'rentabilidades',
         'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram'
@@ -264,6 +268,7 @@ export default function EditUserPage() {
     const planMap = {
       'VIP': { label: 'Close Friends VIP', color: '#8B5CF6', emoji: '👑' },
       'LITE': { label: 'Close Friends LITE', color: '#3B82F6', emoji: '⭐' },
+      'LITE_V2': { label: 'Close Friends LITE 2.0', color: '#1d4ed8', emoji: '🌟' },
       'RENDA_PASSIVA': { label: 'Projeto Renda Passiva', color: '#10B981', emoji: '💰' },
       'FIIS': { label: 'Projeto FIIs', color: '#F59E0B', emoji: '🏢' },
       'AMERICA': { label: 'Projeto América', color: '#EF4444', emoji: '🇺🇸' },
@@ -506,6 +511,7 @@ export default function EditUserPage() {
                     >
                       <MenuItem value="VIP">👑 Close Friends VIP</MenuItem>
                       <MenuItem value="LITE">⭐ Close Friends LITE</MenuItem>
+                      <MenuItem value="LITE_V2">🌟 Close Friends LITE 2.0</MenuItem>
                       <MenuItem value="RENDA_PASSIVA">💰 Projeto Renda Passiva</MenuItem>
                       <MenuItem value="FIIS">🏢 Projeto FIIs</MenuItem>
                       <MenuItem value="AMERICA">🇺🇸 Projeto América</MenuItem>
