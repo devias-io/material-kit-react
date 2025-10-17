@@ -8,8 +8,15 @@ export interface User {
   plan?: 'VIP' | 'LITE' | 'RENDA_PASSIVA' | 'FIIS' | 'AMERICA' | 'ADMIN';  // ← Adicionado ADMIN
   customPermissions?: string[];  // ← Adicionado customPermissions
   status?: 'ACTIVE' | 'INACTIVE' | 'PENDING';  // ← Adicionado status
-  expirationDate?: string;  // ← Adicionado expirationDate
+  expirationDate?: string | null;  // ← Adicionado expirationDate
   createdAt?: string;
   totalPurchases?: number;
+  recentPurchases?: Array<{
+    id: string;
+    amount?: number;
+    productName?: string | null;
+    status?: string | null;
+    createdAt?: string;
+  }>;
   [key: string]: unknown;
 }

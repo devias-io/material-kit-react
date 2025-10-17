@@ -9,33 +9,89 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { useUser } from '@/hooks/use-user';
+import type { User } from '@/types/user';
+
+const ONE_DAY_IN_MS = 1000 * 60 * 60 * 24;
+
+function parseDate(dateInput?: string | null): Date | null {
+  if (!dateInput) {
+    return null;
+  }
+
+  const parsed = new Date(dateInput);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed;
+}
+
+function formatDate(dateInput?: string | null): string {
+  const parsed = parseDate(dateInput);
+
+  if (!parsed) {
+    return 'Não disponível';
+  }
+
+  return parsed.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  });
+}
+
+function calculateFallbackExpiration(user: User | null | undefined): string | undefined {
+  if (user?.expirationDate) {
+    return user.expirationDate;
+  }
+
+  const lastValidPurchase = user?.recentPurchases?.find(
+    (purchase) => purchase.status === 'COMPLETED' && purchase.createdAt
+  );
+
+  if (!lastValidPurchase?.createdAt) {
+    return undefined;
+  }
+
+  const purchaseDate = parseDate(lastValidPurchase.createdAt);
+  if (!purchaseDate) {
+    return undefined;
+  }
+
+  const fallback = new Date(purchaseDate);
+  fallback.setDate(fallback.getDate() + 365);
+
+  return fallback.toISOString();
+}
 
 export function AccountSubscription(): React.JSX.Element {
   const { user } = useUser();
-  const isExpired = (expirationDate?: string) => {
-    if (!expirationDate) return false;
-    return new Date(expirationDate) < new Date();
-  };
+  const effectiveExpiration = React.useMemo(() => calculateFallbackExpiration(user), [user]);
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Acesso vitalício';
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
+  const isExpired = React.useCallback((expirationDate?: string | null) => {
+    const parsed = parseDate(expirationDate ?? effectiveExpiration);
+    if (!parsed) {
+      return false;
+    }
 
-  const getStatusInfo = () => {
-    if (!user?.expirationDate) {
+    const endOfDay = new Date(parsed);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return endOfDay.getTime() < Date.now();
+  }, [effectiveExpiration]);
+
+  const getStatusInfo = React.useCallback(() => {
+    const expirationForStatus = effectiveExpiration ?? user?.expirationDate ?? null;
+
+    if (!expirationForStatus) {
       return {
-        label: 'Ativo - Vitalício',
-        color: 'success' as const,
-        icon: '♾️'
+        label: user?.plan === 'ADMIN' ? 'Acesso administrativo' : 'Ativo',
+        color: user?.plan === 'ADMIN' ? 'info' as const : 'success' as const,
+        icon: user?.plan === 'ADMIN' ? '🛡️' : '✅'
       };
     }
 
-    const expired = isExpired(user.expirationDate);
+    const expired = isExpired(expirationForStatus);
     if (expired) {
       return {
         label: 'Expirado',
@@ -44,8 +100,17 @@ export function AccountSubscription(): React.JSX.Element {
       };
     }
 
-    const daysLeft = Math.ceil((new Date(user.expirationDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-    
+    const expirationDate = parseDate(expirationForStatus);
+    if (!expirationDate) {
+      return {
+        label: 'Ativo',
+        color: 'success' as const,
+        icon: '✅'
+      };
+    }
+
+    const daysLeft = Math.ceil((expirationDate.getTime() - Date.now()) / ONE_DAY_IN_MS);
+
     if (daysLeft <= 7) {
       return {
         label: `Expira em ${daysLeft} dias`,
@@ -59,9 +124,21 @@ export function AccountSubscription(): React.JSX.Element {
       color: 'success' as const,
       icon: '✅'
     };
-  };
+  }, [effectiveExpiration, isExpired, user?.plan, user?.expirationDate]);
 
   const statusInfo = getStatusInfo();
+  const expirationToDisplay = effectiveExpiration ?? user?.expirationDate ?? null;
+  const formattedExpiration = React.useMemo(() => {
+    if (expirationToDisplay) {
+      return formatDate(expirationToDisplay);
+    }
+
+    if (user?.expirationDate === null) {
+      return 'Acesso vitalício';
+    }
+
+    return 'Não disponível';
+  }, [expirationToDisplay, user?.expirationDate]);
 
   return (
     <Card sx={{ 
@@ -99,7 +176,7 @@ export function AccountSubscription(): React.JSX.Element {
               Vencimento
             </Typography>
             <Typography variant="body1" sx={{ color: '#1E293B', fontWeight: '500' }}>
-              {formatDate(user?.expirationDate)}
+              {formattedExpiration}
             </Typography>
           </Box>
 
