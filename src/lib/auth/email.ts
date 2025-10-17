@@ -288,36 +288,6 @@ export async function enviarEmailCredenciais(
             🚀 Acessar Minha Conta
           </a>
           
-          <!-- Recursos Disponíveis -->
-          <div class="resources-section">
-            <h4>💎 O que você encontrará na plataforma:</h4>
-            <div class="resources-grid">
-              <div class="resource-item">
-                <strong>📊 Análises</strong>
-                <span>Relatórios detalhados</span>
-              </div>
-              <div class="resource-item">
-                <strong>📱 Close Friends</strong>
-                <span>Conteúdo exclusivo Instagram</span>
-              </div>
-              <div class="resource-item">
-                <strong>📲 Telegram</strong>
-                <span>Canais e grupos VIP</span>
-              </div>
-              <div class="resource-item">
-                <strong>📈 Carteiras</strong>
-                <span>Recomendações de investimento</span>
-              </div>
-              <div class="resource-item">
-                <strong>🎯 Rentabilidades</strong>
-                <span>Acompanhe performance</span>
-              </div>
-              <div class="resource-item">
-                <strong>📚 eBooks</strong>
-                <span>Material educativo</span>
-              </div>
-            </div>
-          </div>
           
           <!-- Informações Importantes -->
           <div class="info-box">
