@@ -20,6 +20,7 @@ function detectarPlanoKiwify(webhookData: any): { plan: string; productName: str
     
     // Extrair nome do produto de diferentes campos possíveis
     const productName = webhookData.product_name || 
+                       webhookData.order?.Product?.product_name ||
                        webhookData.product?.name ||
                        webhookData.offer_name ||
                        webhookData.product_title ||
@@ -37,7 +38,7 @@ function detectarPlanoKiwify(webhookData: any): { plan: string; productName: str
         produtoLower.includes('lite 2.0')) {
       return { 
         plan: 'LITE_V2', 
-        productName: `Close Friends LITE 2.0 - ${productName}` 
+        productName: productName // ✅ SEM DUPLICAR
       };
     }
     
@@ -47,15 +48,15 @@ function detectarPlanoKiwify(webhookData: any): { plan: string; productName: str
         (produtoLower.includes('lite') && !produtoLower.includes('2.0'))) {
       return { 
         plan: 'LITE', 
-        productName: `Close Friends LITE - ${productName}` 
+        productName: productName // ✅ SEM DUPLICAR
       };
     }
     
-    // 🔄 MIGRAÇÃO CF LITE (provavelmente é LITE original)
+    // 🔄 MIGRAÇÃO CF LITE
     if (produtoLower.includes('migração') && produtoLower.includes('lite')) {
       return { 
         plan: 'LITE', 
-        productName: `Migração CF LITE - ${productName}` 
+        productName: productName // ✅ SEM DUPLICAR
       };
     }
     
@@ -66,7 +67,7 @@ function detectarPlanoKiwify(webhookData: any): { plan: string; productName: str
         produtoLower.includes('turma')) {
       return { 
         plan: 'VIP', 
-        productName: `Close Friends VIP - ${productName}` 
+        productName: productName // ✅ SEM DUPLICAR
       };
     }
     
@@ -76,41 +77,41 @@ function detectarPlanoKiwify(webhookData: any): { plan: string; productName: str
         produtoLower.includes('fii')) {
       return { 
         plan: 'FIIS', 
-        productName: `Projeto FIIs - ${productName}` 
+        productName: productName // ✅ SEM DUPLICAR
       };
     }
     
-    // 📹 ANÁLISE EM VÍDEO (qual versão do LITE?)
+    // 📹 ANÁLISE EM VÍDEO
     if (produtoLower.includes('análise') && produtoLower.includes('vídeo')) {
-      // Por padrão, análise em vídeo = LITE original (você pode ajustar)
       return { 
         plan: 'LITE', 
-        productName: `Análise em Vídeo - ${productName}` 
+        productName: productName // ✅ SEM DUPLICAR
       };
     }
     
     // 🔢 FALLBACK POR VALOR (se não conseguir pelo nome)
-    const valor = webhookData.amount || webhookData.total_value || webhookData.value || 0;
-    console.log(`💰 Valor da compra: R$ ${valor}`);
+    const valor = webhookData.order?.Commissions?.charge_amount || 
+                  webhookData.amount || 
+                  webhookData.total_value || 
+                  webhookData.value || 0;
+    
+    console.log(`💰 Valor da compra: R$ ${(valor / 100).toFixed(2)}`);
     
     if (valor > 0) {
-      // Ajustar valores conforme seus preços reais
-      if (valor >= 150) {
-        return { plan: 'VIP', productName: `Produto VIP - R$ ${valor}` };
-      } else if (valor >= 100) {
-        return { plan: 'FIIS', productName: `Projeto FIIs - R$ ${valor}` };
+      if (valor >= 15000) { // R$ 150+
+        return { plan: 'VIP', productName: productName || `Produto VIP - R$ ${(valor/100).toFixed(2)}` };
+      } else if (valor >= 10000) { // R$ 100+
+        return { plan: 'FIIS', productName: productName || `Projeto FIIs - R$ ${(valor/100).toFixed(2)}` };
       } else {
-        // Para LITE, como diferenciar V1 de V2 por valor?
-        // Assumir V2 como padrão para novos produtos
-        return { plan: 'LITE_V2', productName: `Close Friends LITE 2.0 - R$ ${valor}` };
+        return { plan: 'LITE_V2', productName: productName || `Close Friends LITE 2.0 - R$ ${(valor/100).toFixed(2)}` };
       }
     }
     
-    // 🎯 FALLBACK FINAL: LITE V2 como padrão mais seguro (produto mais recente)
+    // 🎯 FALLBACK FINAL
     console.log(`⚠️ Não foi possível detectar o plano específico, usando LITE V2 como padrão`);
     return { 
       plan: 'LITE_V2', 
-      productName: `Produto Não Identificado - ${productName || 'Sem Nome'}` 
+      productName: productName || 'Produto Não Identificado'
     };
     
   } catch (error) {
