@@ -40,12 +40,24 @@ function formatDate(dateInput?: string | null): string {
   });
 }
 
-function calculateFallbackExpiration(user: User | null | undefined): string | undefined {
-  if (user?.expirationDate) {
+function calculateFallbackExpiration(user: User | null | undefined): string | null | undefined {
+  // Se não tem usuário, retorna undefined
+  if (!user) {
+    return undefined;
+  }
+
+  // Se expirationDate é uma string válida, usa ela
+  if (user.expirationDate && typeof user.expirationDate === 'string') {
     return user.expirationDate;
   }
 
-  const lastValidPurchase = user?.recentPurchases?.find(
+  // Se expirationDate é explicitamente null, significa acesso vitalício
+  if ('expirationDate' in user && user.expirationDate === null) {
+    return null;
+  }
+
+  // Se expirationDate é undefined ou não existe, tenta calcular a partir da última compra
+  const lastValidPurchase = user.recentPurchases?.find(
     (purchase) => purchase.status === 'COMPLETED' && purchase.createdAt
   );
 
@@ -128,17 +140,19 @@ export function AccountSubscription(): React.JSX.Element {
 
   const statusInfo = getStatusInfo();
   const expirationToDisplay = effectiveExpiration ?? user?.expirationDate ?? null;
-  const formattedExpiration = React.useMemo(() => {
-    if (expirationToDisplay) {
-      return formatDate(expirationToDisplay);
-    }
+const formattedExpiration = React.useMemo(() => {
+  // Se user.expirationDate é explicitamente null, é acesso vitalício
+  if (user && 'expirationDate' in user && user.expirationDate === null) {
+    return 'Acesso vitalício';
+  }
 
-    if (user?.expirationDate === null) {
-      return 'Acesso vitalício';
-    }
+  // Se temos uma data calculada, formata ela
+  if (expirationToDisplay) {
+    return formatDate(expirationToDisplay);
+  }
 
-    return 'Não disponível';
-  }, [expirationToDisplay, user?.expirationDate]);
+  return 'Não disponível';
+}, [expirationToDisplay, user]);
 
   return (
     <Card sx={{ 
