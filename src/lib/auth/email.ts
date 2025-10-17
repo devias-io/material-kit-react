@@ -52,20 +52,25 @@ export async function enviarEmailCredenciais(
           color: white;
           margin: 0;
           border: none;
+          line-height: 1.4;
         }
         .header h1 {
           margin: 0;
           font-size: 28px;
           font-weight: 700;
           text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          line-height: 1.3;
         }
         .header p {
           margin: 10px 0 0 0;
           font-size: 16px;
           opacity: 0.9;
+          line-height: 1.4;
         }
         .content {
           padding: 40px 30px;
+          background: white;
+          margin: 0;
         }
         .welcome-text {
           color: #2d3748;
@@ -204,17 +209,21 @@ export async function enviarEmailCredenciais(
           color: white;
           padding: 30px;
           text-align: center;
+          margin: 0;
+          line-height: 1.5;
         }
         .footer h4 {
           color: white;
           margin: 0 0 15px 0;
           font-size: 18px;
           font-weight: 600;
+          line-height: 1.3;
         }
         .footer p {
           margin: 8px 0;
           opacity: 0.8;
           font-size: 14px;
+          line-height: 1.5;
         }
         .logo {
           width: 120px;
@@ -246,7 +255,7 @@ export async function enviarEmailCredenciais(
         <!-- Header -->
         <div class="header">
           <img src="${loginUrl}/assets/avatar-36.png" alt="Fatos da Bolsa Logo" class="logo" />
-          <h1>Bem-vindo ao Fatos da Bolsa!</h1>
+          <h1>🎉 Bem-vindo ao Fatos da Bolsa!</h1>
           <p>Sua jornada de sucesso nos investimentos começa agora</p>
         </div>
         
