@@ -75,6 +75,7 @@ export default function EditUserPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [purchases, setPurchases] = React.useState<Purchase[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [resending, setResending] = React.useState(false);
 
   // Lista de conteúdos disponíveis para liberação
   const availableContents = [
@@ -193,6 +194,34 @@ export default function EditUserPage() {
     } catch (error) {
       console.error('Erro ao excluir:', error);
       alert('❌ Erro ao excluir usuário');
+    }
+  };
+
+  const handleResendInstructions = async () => {
+    if (!user) return;
+
+    try {
+      setResending(true);
+
+      const response = await fetch(`/api/admin/users/${userId}/resend-instructions`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao reenviar instruções');
+      }
+
+      const data = await response.json();
+      alert(data.message || '✅ Instruções reenviadas com sucesso!');
+    } catch (error) {
+      console.error('Erro ao reenviar instruções:', error);
+      alert('❌ Erro ao reenviar instruções de acesso');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -358,6 +387,26 @@ export default function EditUserPage() {
         </Box>
         
         <Box display="flex" gap={2}>
+          <Button
+            variant="outlined"
+            onClick={handleResendInstructions}
+            disabled={resending}
+            sx={{
+              color: '#3B82F6',
+              borderColor: '#3B82F6',
+              '&:hover': {
+                backgroundColor: '#EFF6FF',
+                borderColor: '#2563EB'
+              },
+              '&:disabled': {
+                color: '#94A3B8',
+                borderColor: '#94A3B8'
+              },
+              fontWeight: '500'
+            }}
+          >
+            {resending ? '📨 Reenviando...' : '📧 Reenviar instruções'}
+          </Button>
           <Button
             variant="outlined"
             onClick={() => setShowDeleteDialog(true)}
