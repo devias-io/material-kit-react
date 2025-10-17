@@ -10,113 +10,220 @@ const prisma = new PrismaClient();
 // ✅ TOKEN ÚNICO DA KIWIFY CONFIGURADO
 const KIWIFY_TOKEN_MAPPING: Record<string, { name: string; plan: string; integrationId: string }> = {
   '27419sqm9vm': { name: 'Produto Fatos da Bolsa', plan: 'VIP', integrationId: 'KW001' }, // Será substituído pela detecção automática
+  'KWiChuFSyPUjAgdJs': { name: 'Close Friends VIP - Turma 6', plan: 'VIP', integrationId: 'KWVIP06' },
 };
 
+function extractString(value: unknown): string {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+  return '';
+}
+
+function formatProductLabel(prefix: string, displayName: string): string {
+  const normalizedDisplay = displayName.trim();
+  if (!normalizedDisplay) {
+    return `${prefix} - Sem Nome`;
+  }
+
+  if (normalizedDisplay.toLowerCase().includes(prefix.toLowerCase())) {
+    return normalizedDisplay;
+  }
+
+  return `${prefix} - ${normalizedDisplay}`;
+}
+
+function parseKiwifyAmount(value: unknown): number | undefined {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[^0-9,.-]/g, '').replace(',', '.');
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  return undefined;
+}
+
+function extractProductNameFromKiwifyPayload(webhookData: any): { rawName: string; cleanedName: string } {
+  const orderData = webhookData?.order || webhookData?.data?.order || webhookData?.data || {};
+
+  const productCandidates: unknown[] = [
+    webhookData?.product_name,
+    webhookData?.product?.name,
+    webhookData?.Product?.product_name,
+    webhookData?.Product?.name,
+    webhookData?.name,
+    webhookData?.title,
+    orderData?.product_name,
+    orderData?.product_title,
+    orderData?.product?.name,
+    orderData?.Product?.product_name,
+    orderData?.Product?.name,
+    orderData?.name,
+    orderData?.offer_name,
+    orderData?.Product?.title,
+    orderData?.plan?.name,
+    orderData?.Subscription?.plan?.name,
+    webhookData?.data?.product_name,
+    webhookData?.data?.product?.name,
+    webhookData?.payload?.product_name,
+    webhookData?.payload?.product?.name,
+  ];
+
+  if (Array.isArray(orderData?.products)) {
+    for (const product of orderData.products) {
+      productCandidates.push(product?.name, product?.product_name, product?.title);
+    }
+  }
+
+  if (Array.isArray(webhookData?.products)) {
+    for (const product of webhookData.products) {
+      productCandidates.push(product?.name, product?.product_name, product?.title);
+    }
+  }
+
+  const rawName = productCandidates
+    .map(extractString)
+    .find((candidate) => candidate.length > 0) || '';
+
+  return { rawName, cleanedName: rawName.toLowerCase() };
+}
+
 // 🔍 FUNÇÃO PARA DETECTAR PLANO AUTOMATICAMENTE PELOS SEUS PRODUTOS
-function detectarPlanoKiwify(webhookData: any): { plan: string; productName: string } {
+function detectarPlanoKiwify(webhookData: any): { plan: string; productName: string; rawProductName: string } {
   try {
     console.log('🔍 Detectando plano do produto Kiwify:', webhookData);
-    
+
     // Extrair nome do produto de diferentes campos possíveis
-    const productName = webhookData.product_name || 
-                       webhookData.product?.name ||
-                       webhookData.offer_name ||
-                       webhookData.product_title ||
-                       webhookData.name ||
-                       '';
-    
-    console.log(`📋 Nome do produto recebido: "${productName}"`);
-    
+    const { rawName: productName, cleanedName: produtoLower } = extractProductNameFromKiwifyPayload(webhookData);
+    const displayName = productName || 'Sem Nome';
+
+    const orderData = webhookData?.order || webhookData?.data?.order || webhookData?.data || {};
+
+    console.log(`📋 Nome do produto recebido: "${displayName}"`);
+
     // 🔍 DETECTAR POR NOME (seus produtos reais) - ORDEM IMPORTA!
-    const produtoLower = productName.toLowerCase();
-    
-    // ⭐ CLOSE FRIENDS LITE 2.0 (detectar PRIMEIRO - mais específico)
-    if (produtoLower.includes('close friends lite 2.0') || 
+    if (produtoLower.includes('close friends lite 2.0') ||
         produtoLower.includes('cf lite 2.0') ||
         produtoLower.includes('lite 2.0')) {
-      return { 
-        plan: 'LITE_V2', 
-        productName: `Close Friends LITE 2.0 - ${productName}` 
+      return {
+        plan: 'LITE_V2',
+        productName: formatProductLabel('Close Friends LITE 2.0', displayName),
+        rawProductName: productName
       };
     }
-    
+
     // ⭐ CLOSE FRIENDS LITE ORIGINAL (detectar depois - menos específico)
-    if (produtoLower.includes('close friends lite') || 
+    if (produtoLower.includes('close friends lite') ||
         produtoLower.includes('cf lite') ||
         (produtoLower.includes('lite') && !produtoLower.includes('2.0'))) {
-      return { 
-        plan: 'LITE', 
-        productName: `Close Friends LITE - ${productName}` 
+      return {
+        plan: 'LITE',
+        productName: formatProductLabel('Close Friends LITE', displayName),
+        rawProductName: productName
       };
     }
-    
+
     // 🔄 MIGRAÇÃO CF LITE (provavelmente é LITE original)
     if (produtoLower.includes('migração') && produtoLower.includes('lite')) {
-      return { 
-        plan: 'LITE', 
-        productName: `Migração CF LITE - ${productName}` 
+      return {
+        plan: 'LITE',
+        productName: formatProductLabel('Migração CF LITE', displayName),
+        rawProductName: productName
       };
     }
-    
+
     // 👑 CLOSE FRIENDS VIP (todas as turmas)
-    if (produtoLower.includes('close friends vip') || 
+    if (produtoLower.includes('close friends vip') ||
         produtoLower.includes('cf vip') ||
         produtoLower.includes('vip') ||
         produtoLower.includes('turma')) {
-      return { 
-        plan: 'VIP', 
-        productName: `Close Friends VIP - ${productName}` 
+      return {
+        plan: 'VIP',
+        productName: formatProductLabel('Close Friends VIP', displayName),
+        rawProductName: productName
       };
     }
-    
+
     // 🏢 PROJETO FIIs
-    if (produtoLower.includes('projeto fiis') || 
+    if (produtoLower.includes('projeto fiis') ||
         produtoLower.includes('fiis') ||
         produtoLower.includes('fii')) {
-      return { 
-        plan: 'FIIS', 
-        productName: `Projeto FIIs - ${productName}` 
+      return {
+        plan: 'FIIS',
+        productName: formatProductLabel('Projeto FIIs', displayName),
+        rawProductName: productName
       };
     }
-    
+
     // 📹 ANÁLISE EM VÍDEO (qual versão do LITE?)
     if (produtoLower.includes('análise') && produtoLower.includes('vídeo')) {
       // Por padrão, análise em vídeo = LITE original (você pode ajustar)
-      return { 
-        plan: 'LITE', 
-        productName: `Análise em Vídeo - ${productName}` 
+      return {
+        plan: 'LITE',
+        productName: formatProductLabel('Análise em Vídeo', displayName),
+        rawProductName: productName
       };
     }
-    
+
     // 🔢 FALLBACK POR VALOR (se não conseguir pelo nome)
-    const valor = webhookData.amount || webhookData.total_value || webhookData.value || 0;
-    console.log(`💰 Valor da compra: R$ ${valor}`);
-    
-    if (valor > 0) {
+    const valorCandidates = [
+      webhookData?.amount,
+      webhookData?.total_value,
+      webhookData?.value,
+      orderData?.total_value,
+      orderData?.amount,
+      orderData?.value,
+      orderData?.price,
+      orderData?.payment_value,
+      orderData?.transaction_amount,
+      orderData?.gross_amount,
+      orderData?.charge_amount,
+      orderData?.Commissions?.charge_amount,
+      orderData?.Commissions?.product_base_price,
+    ];
+
+    const valor = valorCandidates
+      .map(parseKiwifyAmount)
+      .find((candidate) => typeof candidate === 'number' && candidate > 0);
+
+    console.log(`💰 Valor da compra: R$ ${valor ?? 0}`);
+
+    if (valor && valor > 0) {
       // Ajustar valores conforme seus preços reais
-      if (valor >= 150) {
-        return { plan: 'VIP', productName: `Produto VIP - R$ ${valor}` };
-      } else if (valor >= 100) {
-        return { plan: 'FIIS', productName: `Projeto FIIs - R$ ${valor}` };
-      } else {
-        // Para LITE, como diferenciar V1 de V2 por valor?
-        // Assumir V2 como padrão para novos produtos
-        return { plan: 'LITE_V2', productName: `Close Friends LITE 2.0 - R$ ${valor}` };
+      if (valor >= 400) {
+        return { plan: 'VIP', productName: `Produto VIP - R$ ${valor}`, rawProductName: productName };
       }
+
+      // Valores abaixo de R$ 400 são tratados como ofertas LITE por padrão
+      return {
+        plan: 'LITE',
+        productName: `Close Friends LITE - R$ ${valor}`,
+        rawProductName: productName,
+      };
     }
-    
+
     // 🎯 FALLBACK FINAL: LITE V2 como padrão mais seguro (produto mais recente)
     console.log(`⚠️ Não foi possível detectar o plano específico, usando LITE V2 como padrão`);
-    return { 
-      plan: 'LITE_V2', 
-      productName: `Produto Não Identificado - ${productName || 'Sem Nome'}` 
+    return {
+      plan: 'LITE_V2',
+      productName: formatProductLabel('Produto Não Identificado', displayName),
+      rawProductName: productName
     };
-    
+
   } catch (error) {
     console.error('❌ Erro ao detectar plano:', error);
-    return { 
-      plan: 'LITE_V2', 
-      productName: 'Produto com Erro de Detecção'
+    return {
+      plan: 'LITE_V2',
+      productName: 'Produto com Erro de Detecção',
+      rawProductName: ''
     };
   }
 }
@@ -176,7 +283,7 @@ export async function POST(
     console.log('📦 Dados do webhook Kiwify:', JSON.stringify(webhookData, null, 2));
 
     // 🔍 DETECTAR PLANO AUTOMATICAMENTE (AGORA DEPOIS DO PARSE)
-    const { plan: planoDetectado, productName: nomeDetectado } = detectarPlanoKiwify(webhookData);
+    const { plan: planoDetectado, productName: nomeDetectado, rawProductName } = detectarPlanoKiwify(webhookData);
     
     // ✅ SOBRESCREVER DADOS DA INTEGRAÇÃO COM DETECÇÃO AUTOMÁTICA
     const integrationData = {
@@ -198,7 +305,25 @@ export async function POST(
     const buyerEmail = customerData?.email || orderData?.email || webhookData.email;
     const buyerName = customerData?.name || customerData?.full_name || orderData?.customer_name || 'Cliente Kiwify';
     const transactionId = orderData?.order_id || orderData?.id || webhookData.order_id || `KW_${Date.now()}`;
-    const amount = orderData?.total_value || orderData?.amount || orderData?.value || 0;
+    const amountCandidates = [
+      orderData?.total_value,
+      orderData?.amount,
+      orderData?.value,
+      orderData?.price,
+      orderData?.payment_value,
+      orderData?.transaction_amount,
+      orderData?.gross_amount,
+      orderData?.charge_amount,
+      orderData?.Commissions?.charge_amount,
+      orderData?.Commissions?.product_base_price,
+      webhookData?.amount,
+      webhookData?.total_value,
+      webhookData?.value,
+    ];
+
+    const amount = amountCandidates
+      .map(parseKiwifyAmount)
+      .find((candidate) => typeof candidate === 'number') || 0;
 
     console.log('🔍 Dados extraídos do Kiwify:', {
       event, buyerEmail, buyerName, transactionId, amount,
@@ -396,7 +521,7 @@ export async function POST(
       productDetection: {
         detectedPlan: integrationData.plan,
         detectedProductName: integrationData.name,
-        originalProductName: webhookData.product_name || webhookData.name || 'N/A',
+        originalProductName: rawProductName || webhookData.product_name || webhookData.name || 'N/A',
         amount: amount
       },
       user: {
