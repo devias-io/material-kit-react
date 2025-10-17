@@ -32,7 +32,8 @@ export async function auth() {
         status: true,
         expirationDate: true,
         customPermissions: true,
-        avatar: true
+        avatar: true,
+        mustChangePassword: true
       }
     })
 
@@ -49,21 +50,35 @@ export async function auth() {
     const isAdmin = user.plan === 'ADMIN'
     
     // Verificar se tem acesso à análise de carteira
-    const hasVipAccess = user.plan === 'VIP' || 
+    let customPermissions: string[] = []
+
+    if (user.customPermissions) {
+      try {
+        customPermissions = JSON.parse(user.customPermissions || '[]')
+      } catch (error) {
+        console.error('Erro ao interpretar permissões personalizadas:', error)
+        customPermissions = []
+      }
+    }
+
+    const hasVipAccess = user.plan === 'VIP' ||
                         user.plan === 'ADMIN' ||
-                        (user.customPermissions && 
-                         JSON.parse(user.customPermissions || '[]').includes('recursos-exclusivos'))
+                        customPermissions.includes('recursos-exclusivos')
 
     return {
       user: {
         id: user.id,
         role: isAdmin ? 'ADMIN' : 'USER',
-        name: `${user.firstName} ${user.lastName}`,
+        name: `${user.firstName} ${user.lastName}`.trim(),
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
         plan: user.plan,
         avatar: user.avatar,
+        customPermissions,
         canUploadPortfolio: hasVipAccess,
-        hasVipAccess
+        hasVipAccess,
+        mustChangePassword: user.mustChangePassword
       }
     }
   } catch (error) {
