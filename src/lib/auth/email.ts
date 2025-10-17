@@ -86,15 +86,7 @@ export async function enviarEmailCredenciais(
           position: relative;
           overflow: hidden;
         }
-        .credentials::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 4px;
-          background: linear-gradient(90deg, #2d2d2d, #4bf700);
-        }
+
         .credentials h3 {
           color: #2d3748;
           font-size: 20px;
