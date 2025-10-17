@@ -11,6 +11,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
 import { useUser } from '@/hooks/use-user';
+import { useAuthAccess } from '@/hooks/use-auth-access';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -24,8 +25,21 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
+const PLAN_STYLE_MAP = {
+  VIP: { color: '#8B5CF6', emoji: '👑' },
+  LITE: { color: '#3B82F6', emoji: '⭐' },
+  LITE_V2: { color: '#2563EB', emoji: '⭐' },
+  RENDA_PASSIVA: { color: '#10B981', emoji: '💰' },
+  FIIS: { color: '#F59E0B', emoji: '🏢' },
+  AMERICA: { color: '#EF4444', emoji: '🇺🇸' },
+  ADMIN: { color: '#6B7280', emoji: '🛡️' }
+} as const;
+
+const DEFAULT_PLAN_STYLE = { color: '#9CA3AF', emoji: '📋' };
+
 export function AccountInfo(): React.JSX.Element {
   const { user, refreshProfile } = useUser();
+  const { planInfo: accessPlanInfo } = useAuthAccess();
   const [uploading, setUploading] = React.useState(false);
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,19 +94,16 @@ export function AccountInfo(): React.JSX.Element {
     }
   };
 
-  const getPlanInfo = (plan: string) => {
-    const planMap = {
-      'VIP': { label: 'Close Friends VIP', color: '#8B5CF6', emoji: '👑' },
-      'LITE': { label: 'Close Friends LITE', color: '#3B82F6', emoji: '⭐' },
-      'RENDA_PASSIVA': { label: 'Projeto Renda Passiva', color: '#10B981', emoji: '💰' },
-      'FIIS': { label: 'Projeto FIIs', color: '#F59E0B', emoji: '🏢' },
-      'AMERICA': { label: 'Projeto América', color: '#EF4444', emoji: '🇺🇸' },
-      'ADMIN': { label: 'Administrador', color: '#6B7280', emoji: '🛡️' }
-    };
-    return planMap[plan as keyof typeof planMap] || { label: plan, color: '#9CA3AF', emoji: '📋' };
-  };
+  const planKey = user?.plan as keyof typeof PLAN_STYLE_MAP | undefined;
+  const planInfo = React.useMemo(() => {
+    const style = planKey ? PLAN_STYLE_MAP[planKey] : DEFAULT_PLAN_STYLE;
 
-  const planInfo = getPlanInfo(user?.plan || 'LITE');
+    return {
+      label: accessPlanInfo.displayName,
+      color: style.color,
+      emoji: style.emoji,
+    };
+  }, [accessPlanInfo.displayName, planKey]);
 
   return (
     <Card sx={{ 
