@@ -50,6 +50,8 @@ export async function enviarEmailCredenciais(
           padding: 40px 30px;
           text-align: center;
           color: white;
+          margin: 0;
+          border: none;
         }
         .header h1 {
           margin: 0;
@@ -136,27 +138,30 @@ export async function enviarEmailCredenciais(
           transition: all 0.3s ease;
         }
         .info-box { 
-          background: linear-gradient(135deg, #fef5e7 0%, #fef3cd 100%);
-          border-left: 5px solid #f6ad55;
+          background: #f8f9fa;
+          border-left: 4px solid #4bf700;
           padding: 25px; 
           margin: 30px 0;
           border-radius: 8px;
         }
         .info-box h4 {
-          color: #c05621;
+          color: #1a1a1a;
           margin: 0 0 15px 0;
-          font-size: 18px;
-          font-weight: 700;
+          font-size: 17px;
+          font-weight: 600;
         }
         .info-list {
-          color: #744210;
-          font-size: 14px;
+          color: #4a5568;
+          font-size: 15px;
           line-height: 1.8;
           margin: 0;
           padding-left: 20px;
         }
         .info-list li {
           margin-bottom: 10px;
+        }
+        .info-list strong {
+          color: #1a1a1a;
         }
         .resources-section {
           background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
@@ -275,21 +280,18 @@ export async function enviarEmailCredenciais(
           </div>
           
           <!-- Botão de Acesso -->
-          <a href="${loginUrl}/auth/sign-in" class="login-button">
+          <a href="${loginUrl}/auth/sign-in" class="login-button" style="color: white !important; text-decoration: none;">
             🚀 Acessar Minha Conta
           </a>
           
           
           <!-- Informações Importantes -->
           <div class="info-box">
-            <h4>⚠️ Importante - Primeiros Passos:</h4>
+            <h4>💡 Próximos Passos</h4>
             <ul class="info-list">
-              <li><strong>Faça login</strong> usando seu email e a senha temporária acima</li>
-              <li><strong>Altere sua senha</strong> no primeiro acesso por segurança</li>
-              <li><strong>Complete seu perfil</strong> na área de configurações</li>
-              <li><strong>Cadastre seu Instagram</strong> para receber conteúdos do Close Friends</li>
-              <li><strong>Acesse nosso bot</strong> no Telegram para entrar nos grupos exclusivos</li>
-              <li><strong>Explore todas as seções</strong> disponíveis para sua assinatura</li>
+              <li><strong>Faça login</strong> com seu email e senha temporária</li>
+              <li><strong>Altere sua senha</strong> no primeiro acesso</li>
+              <li><strong>Complete seu perfil</strong> e explore a plataforma</li>
             </ul>
           </div>
         </div>
