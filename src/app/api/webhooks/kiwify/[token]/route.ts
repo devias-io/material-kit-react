@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 // ✅ TOKEN ÚNICO DA KIWIFY CONFIGURADO
 const KIWIFY_TOKEN_MAPPING: Record<string, { name: string; plan: string; integrationId: string }> = {
   '27419sqm9vm': { name: 'Produto Fatos da Bolsa', plan: 'VIP', integrationId: 'KW001' }, // Será substituído pela detecção automática
-  'KWChuFSyPUsAgdls': { name: 'Close Friends VIP - Turma 6', plan: 'VIP', integrationId: 'KWVIP06' },
+  'KWiChuFSyPUjAgdJs': { name: 'Close Friends VIP - Turma 6', plan: 'VIP', integrationId: 'KWVIP06' },
 };
 
 // 🔍 FUNÇÃO PARA DETECTAR PLANO AUTOMATICAMENTE PELOS SEUS PRODUTOS
