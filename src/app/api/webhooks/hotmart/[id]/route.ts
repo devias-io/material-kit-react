@@ -12,10 +12,34 @@ const TOKEN_MAPPING: Record<string, { name: string; plan: string; integrationId:
 };
 
 // 🔍 FUNÇÃO PARA DETECTAR PLANO AUTOMATICAMENTE PELOS SEUS PRODUTOS HOTMART
+const HOTMART_PRODUCT_IDS = {
+  LITE: new Set(['3129181']),
+  LITE_V2: new Set(['5060609', '1874171', '3671256']),
+  VIP: new Set(['1128762', '1762716', '2163067', '5060349', '1650879', '3670772', '2947386']),
+  FIIS: new Set(['4218223']),
+  RENDA_PASSIVA: new Set(['3547657']),
+  AMERICA: new Set(['5325106'])
+};
+
+function normalizarIdHotmart(valor: any): string | null {
+  if (!valor && valor !== 0) return null;
+
+  if (typeof valor === 'number') {
+    return valor.toString();
+  }
+
+  if (typeof valor === 'string') {
+    const trimmed = valor.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  return null;
+}
+
 function detectarPlanoHotmart(webhookData: any): { plan: string; productName: string } {
   try {
     console.log('🔍 Detectando plano do produto Hotmart:', webhookData);
-    
+
     // Extrair nome do produto de diferentes campos possíveis da Hotmart
     const productData = webhookData.data?.product || webhookData.product || {};
     const productName = productData?.name || 
@@ -25,8 +49,62 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
                        webhookData.name ||
                        '';
     
+    const productId = normalizarIdHotmart(
+      productData?.id ||
+      productData?.product_id ||
+      productData?.prod ||
+      webhookData.product_id ||
+      webhookData.prod ||
+      webhookData.id
+    );
+
     console.log(`📋 Nome do produto Hotmart recebido: "${productName}"`);
-    
+    console.log(`🆔 ID do produto Hotmart recebido: "${productId ?? 'desconhecido'}"`);
+
+    if (productId) {
+      if (HOTMART_PRODUCT_IDS.LITE.has(productId)) {
+        return {
+          plan: 'LITE',
+          productName: `Close Friends LITE Hotmart - Produto ${productId}`
+        };
+      }
+
+      if (HOTMART_PRODUCT_IDS.LITE_V2.has(productId)) {
+        return {
+          plan: 'LITE_V2',
+          productName: `Close Friends LITE 2.0 Hotmart - Produto ${productId}`
+        };
+      }
+
+      if (HOTMART_PRODUCT_IDS.VIP.has(productId)) {
+        return {
+          plan: 'VIP',
+          productName: `Close Friends VIP Hotmart - Produto ${productId}`
+        };
+      }
+
+      if (HOTMART_PRODUCT_IDS.FIIS.has(productId)) {
+        return {
+          plan: 'FIIS',
+          productName: `Projeto FIIs Hotmart - Produto ${productId}`
+        };
+      }
+
+      if (HOTMART_PRODUCT_IDS.RENDA_PASSIVA.has(productId)) {
+        return {
+          plan: 'RENDA_PASSIVA',
+          productName: `Projeto Renda Passiva Hotmart - Produto ${productId}`
+        };
+      }
+
+      if (HOTMART_PRODUCT_IDS.AMERICA.has(productId)) {
+        return {
+          plan: 'AMERICA',
+          productName: `Projeto Trump (América) Hotmart - Produto ${productId}`
+        };
+      }
+    }
+
     // 🔍 DETECTAR POR NOME (seus produtos reais na Hotmart)
     const produtoLower = productName.toLowerCase();
     
