@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({ // ✅ CORRIGIDO: createTransport (sem "er")
+const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: parseInt(process.env.SMTP_PORT || '587'),
   secure: false,
@@ -15,7 +15,7 @@ export async function enviarEmailCredenciais(
   nome: string, 
   senha: string
 ): Promise<void> {
-  const loginUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://membros.fatosdobolsa.com';
+  const loginUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://portal.fatosdabolsa.com.br';
   
   const htmlContent = `
     <!DOCTYPE html>
@@ -25,8 +25,13 @@ export async function enviarEmailCredenciais(
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Bem-vindo ao Fatos da Bolsa</title>
       <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
         body { 
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
           background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
           margin: 0; 
           padding: 40px 20px;
@@ -98,33 +103,36 @@ export async function enviarEmailCredenciais(
           text-align: center;
         }
         .credential-item { 
-          margin: 20px 0;
-          display: flex;
-          align-items: center;
-          gap: 12px;
+          margin: 15px 0;
+          background: white;
+          padding: 15px;
+          border-radius: 10px;
+          border: 2px solid #e2e8f0;
         }
         .credential-label {
           color: #4a5568;
           font-weight: 600;
-          font-size: 16px;
-          min-width: 120px;
+          font-size: 14px;
+          margin-bottom: 8px;
+          display: block;
         }
         .credential-value {
-          background: white;
+          background: #f8fafc;
           padding: 12px 16px;
           border-radius: 8px;
-          border: 2px solid #e2e8f0;
-          font-family: 'Courier New', monospace;
-          font-size: 16px;
-          color: #2d3748;
+          border: 1px solid #cbd5e0;
+          font-family: 'Courier New', Courier, monospace;
+          font-size: 15px;
+          color: #1a202c;
           font-weight: 600;
-          flex: 1;
           word-break: break-all;
+          display: block;
+          width: 100%;
         }
         .login-button { 
           display: block;
           background: #010101;
-          color: white; 
+          color: white !important; 
           padding: 16px 32px; 
           text-decoration: none; 
           border-radius: 12px; 
@@ -134,14 +142,7 @@ export async function enviarEmailCredenciais(
           font-size: 18px;
           border: 2px solid #4bf700;
           box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-          transition: all 0.3s ease;
-          max-width: 250px;
-        }
-        .login-button:hover {
-          transform: translateY(-2px);
-          background: #4bf700;
-          color: #010101;
-          box-shadow: 0 12px 35px rgba(75, 247, 0, 0.4);
+          max-width: 280px;
         }
         .info-box { 
           background: linear-gradient(135deg, #fef5e7 0%, #fef3cd 100%);
@@ -155,19 +156,16 @@ export async function enviarEmailCredenciais(
           margin: 0 0 15px 0;
           font-size: 18px;
           font-weight: 700;
-          display: flex;
-          align-items: center;
-          gap: 8px;
         }
         .info-list {
-          color: #c05621;
+          color: #744210;
           font-size: 14px;
-          line-height: 1.6;
+          line-height: 1.8;
           margin: 0;
           padding-left: 20px;
         }
         .info-list li {
-          margin-bottom: 8px;
+          margin-bottom: 10px;
         }
         .resources-section {
           background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
@@ -184,7 +182,7 @@ export async function enviarEmailCredenciais(
         }
         .resources-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          grid-template-columns: repeat(2, 1fr);
           gap: 15px;
           margin-top: 15px;
         }
@@ -199,10 +197,11 @@ export async function enviarEmailCredenciais(
           color: #010101;
           display: block;
           margin-bottom: 5px;
+          font-size: 15px;
         }
         .resource-item span {
           color: #4a5568;
-          font-size: 14px;
+          font-size: 13px;
         }
         .footer { 
           background: #010101;
@@ -225,26 +224,24 @@ export async function enviarEmailCredenciais(
           width: 120px;
           height: 120px;
           margin: 0 auto 20px auto;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
+          display: block;
           border-radius: 50%;
-          background: transparent;
         }
-        .logo img {
-          width: 120px;
-          height: 120px;
-          object-fit: cover;
-          border-radius: 50%;
-          background: transparent;
-        }
-        @media (max-width: 600px) {
-          .container { margin: 0 10px; }
+        
+        @media only screen and (max-width: 600px) {
+          body { padding: 20px 10px; }
+          .container { margin: 0; border-radius: 10px; }
           .content, .header, .footer { padding: 20px; }
-          .credential-item { flex-direction: column; align-items: flex-start; }
-          .credential-label { min-width: auto; }
-          .resources-grid { grid-template-columns: 1fr; }
+          .credentials { padding: 20px; }
+          .credential-item { padding: 12px; }
+          .resources-grid { 
+            grid-template-columns: 1fr; 
+            gap: 10px;
+          }
+          .login-button {
+            padding: 14px 24px;
+            font-size: 16px;
+          }
         }
       </style>
     </head>
@@ -252,9 +249,7 @@ export async function enviarEmailCredenciais(
       <div class="container">
         <!-- Header -->
         <div class="header">
-          <div class="logo">
-            <img src="${loginUrl}/assets/avatar-36.png" alt="Fatos da Bolsa Logo" />
-          </div>
+          <img src="${loginUrl}/assets/avatar-36.png" alt="Fatos da Bolsa Logo" class="logo" />
           <h1>🎉 Bem-vindo ao Fatos da Bolsa!</h1>
           <p>Sua jornada de sucesso nos investimentos começa agora</p>
         </div>
@@ -273,18 +268,18 @@ export async function enviarEmailCredenciais(
             <h3>🔑 Seus Dados de Acesso</h3>
             
             <div class="credential-item">
-              <div class="credential-label">🌐 Área de Membros:</div>
-              <div class="credential-value">${loginUrl}/auth/sign-in</div>
+              <span class="credential-label">🌐 Área de Membros:</span>
+              <span class="credential-value">${loginUrl}/auth/sign-in</span>
             </div>
             
             <div class="credential-item">
-              <div class="credential-label">📧 Login:</div>
-              <div class="credential-value">${email}</div>
+              <span class="credential-label">📧 Login:</span>
+              <span class="credential-value">${email}</span>
             </div>
             
             <div class="credential-item">
-              <div class="credential-label">🔒 Senha:</div>
-              <div class="credential-value">${senha}</div>
+              <span class="credential-label">🔒 Senha:</span>
+              <span class="credential-value">${senha}</span>
             </div>
           </div>
           
@@ -375,12 +370,85 @@ export async function enviarEmailResetSenha(
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); margin: 0; padding: 40px 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-        .header { background: #010101; padding: 40px 30px; text-align: center; color: white; }
-        .content { padding: 40px 30px; text-align: center; }
-        .button { display: inline-block; background: #010101; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; margin: 20px 0; font-weight: 700; border: 2px solid #4bf700; }
-        .footer { background: #010101; color: white; padding: 30px; text-align: center; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+          margin: 0; 
+          padding: 40px 20px; 
+        }
+        .container { 
+          max-width: 600px; 
+          margin: 0 auto; 
+          background: white; 
+          border-radius: 20px; 
+          overflow: hidden; 
+          box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+        }
+        .header { 
+          background: #010101; 
+          padding: 40px 30px; 
+          text-align: center; 
+          color: white; 
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 28px;
+          font-weight: 700;
+        }
+        .content { 
+          padding: 40px 30px; 
+          text-align: center; 
+        }
+        .content h2 {
+          color: #2d3748;
+          font-size: 24px;
+          margin-bottom: 15px;
+        }
+        .content p {
+          color: #4a5568;
+          font-size: 16px;
+          line-height: 1.6;
+          margin: 10px 0;
+        }
+        .button { 
+          display: inline-block; 
+          background: #010101; 
+          color: white !important; 
+          padding: 16px 32px; 
+          text-decoration: none; 
+          border-radius: 12px; 
+          margin: 20px 0; 
+          font-weight: 700; 
+          border: 2px solid #4bf700;
+          font-size: 18px;
+        }
+        .warning {
+          background: #fef5e7;
+          border-left: 4px solid #f6ad55;
+          padding: 20px;
+          border-radius: 8px;
+          margin-top: 30px;
+        }
+        .warning p {
+          color: #744210;
+          font-size: 14px;
+          margin: 5px 0;
+        }
+        .footer { 
+          background: #010101; 
+          color: white; 
+          padding: 30px; 
+          text-align: center; 
+        }
+        .footer p {
+          margin: 5px 0;
+          opacity: 0.8;
+        }
+        @media only screen and (max-width: 600px) {
+          body { padding: 20px 10px; }
+          .content, .header, .footer { padding: 20px; }
+        }
       </style>
     </head>
     <body>
@@ -395,14 +463,14 @@ export async function enviarEmailResetSenha(
           
           <a href="${resetUrl}" class="button">Redefinir Minha Senha</a>
           
-          <p style="color: #718096; font-size: 14px; margin-top: 30px;">
-            <strong>⚠️ Atenção:</strong> Este link é válido por apenas 2 horas.<br>
-            Se você não solicitou esta alteração, ignore este email.
-          </p>
+          <div class="warning">
+            <p><strong>⚠️ Atenção:</strong> Este link é válido por apenas 2 horas.</p>
+            <p>Se você não solicitou esta alteração, ignore este email.</p>
+          </div>
         </div>
         <div class="footer">
           <p><strong>Equipe Fatos da Bolsa</strong></p>
-          <p style="font-size: 12px; opacity: 0.7;">© 2025 Fatos da Bolsa</p>
+          <p style="font-size: 12px; opacity: 0.7; margin-top: 10px;">© 2025 Fatos da Bolsa</p>
         </div>
       </div>
     </body>
