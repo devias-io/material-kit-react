@@ -280,7 +280,7 @@ export async function enviarEmailCredenciais(
           </div>
           
           <!-- Botão de Acesso -->
-          <a href="${loginUrl}/auth/sign-in" class="login-button" style="color: white !important; text-decoration: none;">
+          <a href="${loginUrl}/auth/sign-in" class="login-button" style="background: #010101 !important; color: white !important; text-decoration: none; display: block;">
             🚀 Acessar Minha Conta
           </a>
           
