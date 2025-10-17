@@ -31,17 +31,9 @@ import {
   Link
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
+import { EDUZZ_INTEGRATIONS, type TokenIntegrationConfig } from '@/data/integrations';
 
-interface EduzzIntegration {
-  id: string;
-  productName: string;
-  token: string;
-  plan: string;
-  webhookUrl: string;
-  status: 'ACTIVE' | 'INACTIVE';
-  createdAt: string;
-  totalSales?: number;
-}
+type EduzzIntegration = TokenIntegrationConfig & { webhookUrl: string };
 
 export default function EduzzPage() {
   const router = useRouter();
@@ -64,22 +56,17 @@ export default function EduzzPage() {
   const loadIntegrations = async () => {
     try {
       setLoading(true);
-      // ✅ DADOS REAIS DA EDUZZ (incluindo token do teste)
-      const realIntegrations: EduzzIntegration[] = [
-        {
-          id: 'ED001',
-          productName: 'Produto Fatos da Bolsa Eduzz',
-          token: 'EDm2rYeqZWZHmCVmA', // ✅ TOKEN REAL DO SEU TESTE
-          plan: 'VIP',
-          webhookUrl: `${window.location.origin}/api/webhooks/eduzz/EDm2rYeqZWZHmCVmA`,
-          status: 'ACTIVE',
-          createdAt: '2025-07-16',
-          totalSales: 0
-        }
-      ];
-      
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+
+      const realIntegrations: EduzzIntegration[] = EDUZZ_INTEGRATIONS.map(integration => ({
+        ...integration,
+        webhookUrl: origin ? `${origin}/api/webhooks/eduzz/${integration.token}` : integration.token,
+      }));
+
       setIntegrations(realIntegrations);
-      console.log('✅ Integração Eduzz real carregada:', realIntegrations[0]);
+      if (realIntegrations.length > 0) {
+        console.log('✅ Integração Eduzz real carregada:', realIntegrations[0]);
+      }
     } catch (error) {
       console.error('Erro ao carregar integrações Eduzz:', error);
     } finally {

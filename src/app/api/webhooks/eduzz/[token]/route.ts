@@ -2,15 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { EDUZZ_TOKEN_MAPPING } from '@/data/integrations';
 
 const prisma = new PrismaClient();
-
-// ✅ TOKENS DA EDUZZ CONFIGURADOS
-const EDUZZ_TOKEN_MAPPING: Record<string, { name: string; plan: string; integrationId: string }> = {
-  'EDm2rYeqZWZHmCVmA': { name: 'Produto Fatos da Bolsa Eduzz', plan: 'VIP', integrationId: 'ED001' }, // Token original
-  'EDgZhmhuBZN4CP4uD': { name: 'Produto Fatos da Bolsa Eduzz', plan: 'VIP', integrationId: 'ED002' }, // ✅ SEU TOKEN ATUAL
-  // Será substituído pela detecção automática
-};
 
 // 🔍 FUNÇÃO PARA DETECTAR PLANO AUTOMATICAMENTE PELOS SEUS PRODUTOS EDUZZ
 function detectarPlanoEduzz(webhookData: any): { plan: string; productName: string } {

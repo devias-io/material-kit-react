@@ -14,10 +14,16 @@ import {
   CircularProgress
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
+import {
+  PLATFORM_METADATA,
+  PLATFORM_SLUGS,
+  getIntegrationsByPlatform,
+  type PlatformSlug
+} from '@/data/integrations';
 
 interface PlatformStats {
   name: string;
-  slug: string;
+  slug: PlatformSlug;
   emoji: string;
   color: string;
   totalIntegrations: number;
@@ -27,10 +33,47 @@ interface PlatformStats {
   description: string;
 }
 
-interface RealStats {
-  kiwify?: { active: boolean; sales: number; integrations: number };
-  hotmart?: { active: boolean; sales: number; integrations: number };
-  eduzz?: { active: boolean; sales: number; integrations: number }; // ✅ ADICIONADO
+type RealStats = Partial<Record<PlatformSlug, {
+  active: boolean;
+  sales: number;
+  integrations: number;
+  tokens: string[];
+}>>;
+
+interface IntegrationSummaryResponse {
+  id: string;
+  productName: string;
+  plan: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  totalSales: number;
+  webhookUrl: string;
+  token?: string;
+  productId?: string;
+}
+
+interface PlatformApiResponse {
+  slug: PlatformSlug;
+  name: string;
+  emoji: string;
+  color: string;
+  description: string;
+  status: 'active' | 'inactive' | 'coming-soon';
+  integrations: IntegrationSummaryResponse[];
+  totals: {
+    totalIntegrations: number;
+    activeIntegrations: number;
+    totalSales: number;
+  };
+}
+
+interface StatsApiResponse {
+  success: boolean;
+  platforms: PlatformApiResponse[];
+  totals: {
+    totalIntegrations: number;
+    activeIntegrations: number;
+    totalSales: number;
+  };
 }
 
 export default function IntegracoesMainPage() {
@@ -39,6 +82,44 @@ export default function IntegracoesMainPage() {
   const [loading, setLoading] = useState(true);
   const [realStats, setRealStats] = useState<RealStats>({});
 
+  const buildFallbackData = () => {
+    const fallbackPlatforms: PlatformStats[] = [];
+    const fallbackStats: RealStats = {};
+
+    PLATFORM_SLUGS.forEach(slug => {
+      const meta = PLATFORM_METADATA[slug];
+      const integrations = getIntegrationsByPlatform(slug);
+      const totalIntegrations = integrations.length;
+      const activeIntegrations = integrations.filter(integration => integration.status === 'ACTIVE').length;
+      const totalSales = integrations.reduce((sum, integration) => sum + integration.totalSales, 0);
+      const tokens = integrations
+        .map(integration => ('token' in integration ? integration.token : undefined))
+        .filter((token): token is string => Boolean(token));
+
+      const platformData: PlatformStats = {
+        name: meta.name,
+        slug,
+        emoji: meta.emoji,
+        color: meta.color,
+        totalIntegrations,
+        activeIntegrations,
+        totalSales,
+        status: activeIntegrations > 0 ? 'active' : meta.status,
+        description: meta.description
+      };
+
+      fallbackPlatforms.push(platformData);
+      fallbackStats[slug] = {
+        active: activeIntegrations > 0,
+        sales: totalSales,
+        integrations: totalIntegrations,
+        tokens
+      };
+    });
+
+    return { platformStats: fallbackPlatforms, realStats: fallbackStats };
+  };
+
   useEffect(() => {
     loadPlatformsStats();
   }, []);
@@ -46,152 +127,64 @@ export default function IntegracoesMainPage() {
   const loadPlatformsStats = async () => {
     try {
       setLoading(true);
-      
+
       // ✅ BUSCAR DADOS REAIS DAS INTEGRAÇÕES
       console.log('🔍 Carregando stats reais das integrações...');
-      
-      const statsData: RealStats = {};
-      
-      // 🥝 TESTAR INTEGRAÇÃO KIWIFY REAL
-      try {
-        const kiwifyResponse = await fetch('/api/webhooks/kiwify/27419sqm9vm', {
-          method: 'GET'
-        });
-        
-        if (kiwifyResponse.ok) {
-          const kiwifyData = await kiwifyResponse.json();
-          console.log('✅ Kiwify Status:', kiwifyData);
-          statsData.kiwify = {
-            active: kiwifyData.success,
-            sales: 1, // Você já criou 1 usuário
-            integrations: 1 // 1 integração ativa
-          };
+
+      const response = await fetch('/api/admin/integracoes/stats', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json'
         }
-      } catch (error) {
-        console.warn('⚠️ Erro ao buscar stats Kiwify:', error);
-        statsData.kiwify = { active: false, sales: 0, integrations: 0 };
+      });
+
+      if (!response.ok) {
+        throw new Error(`Falha ao carregar estatísticas (${response.status})`);
       }
 
-      // 🔥 STATS HOTMART (assumindo que está funcionando)
-      statsData.hotmart = {
-        active: true,
-        sales: 380,
-        integrations: 5
-      };
+      const data: StatsApiResponse = await response.json();
+      console.log('✅ Stats reais carregadas:', data);
 
-      // 📚 TESTAR INTEGRAÇÃO EDUZZ REAL
-      try {
-        const eduzzResponse = await fetch('/api/webhooks/eduzz/EDgZhmhuBZN4CP4uD', {
-          method: 'GET'
-        });
-        
-        if (eduzzResponse.ok) {
-          const eduzzData = await eduzzResponse.json();
-          console.log('✅ Eduzz Status:', eduzzData);
-          statsData.eduzz = {
-            active: eduzzData.success,
-            sales: 0, // Ainda não teve vendas
-            integrations: 1 // 1 integração configurada
-          };
-        }
-      } catch (error) {
-        console.warn('⚠️ Erro ao buscar stats Eduzz:', error);
-        statsData.eduzz = { active: false, sales: 0, integrations: 0 };
-      }
+      const mappedPlatforms: PlatformStats[] = data.platforms.map(platform => ({
+        name: platform.name,
+        slug: platform.slug,
+        emoji: platform.emoji,
+        color: platform.color,
+        totalIntegrations: platform.totals.totalIntegrations,
+        activeIntegrations: platform.totals.activeIntegrations,
+        totalSales: platform.totals.totalSales,
+        status: platform.status,
+        description: platform.description
+      }));
 
-      setRealStats(statsData);
-      
-      // ✅ DADOS REAIS DAS PLATAFORMAS
-      const realPlatforms: PlatformStats[] = [
-        {
-          name: 'Hotmart',
-          slug: 'hotmart',
-          emoji: '🔥',
-          color: '#FF6B35',
-          totalIntegrations: statsData.hotmart?.integrations || 5,
-          activeIntegrations: statsData.hotmart?.integrations || 5,
-          totalSales: statsData.hotmart?.sales || 380,
-          status: 'active',
-          description: 'Maior plataforma de produtos digitais do Brasil'
-        },
-        {
-          name: 'Kiwify',
-          slug: 'kiwify',
-          emoji: '🥝',
-          color: '#4ECDC4',
-          totalIntegrations: statsData.kiwify?.integrations || 0,
-          activeIntegrations: statsData.kiwify?.active ? (statsData.kiwify?.integrations || 0) : 0,
-          totalSales: statsData.kiwify?.sales || 0,
-          status: 'active',
-          description: statsData.kiwify?.active 
-            ? 'Plataforma moderna - TOKEN: 27419sqm9vm ✅' 
-            : 'Plataforma moderna para checkout e vendas'
-        },
-        {
-          name: 'Eduzz',
-          slug: 'eduzz',
-          emoji: '📚',
-          color: '#3D5AFE',
-          totalIntegrations: statsData.eduzz?.integrations || 0,
-          activeIntegrations: statsData.eduzz?.active ? (statsData.eduzz?.integrations || 0) : 0,
-          totalSales: statsData.eduzz?.sales || 0,
-          status: 'active', // ✅ MUDADO PARA ACTIVE
-          description: statsData.eduzz?.active 
-            ? 'Marketplace ativo - TOKEN: EDgZhmhuBZN4CP4uD ✅' 
-            : 'Marketplace de cursos e infoprodutos'
-        }
-      ];
-      
-      setPlatforms(realPlatforms);
-      console.log('✅ Stats reais carregadas:', realPlatforms);
-      
+      const statsMap: RealStats = data.platforms.reduce((acc, platform) => {
+        acc[platform.slug] = {
+          active: platform.totals.activeIntegrations > 0,
+          sales: platform.totals.totalSales,
+          integrations: platform.totals.totalIntegrations,
+          tokens: platform.integrations
+            .map(integration => integration.token)
+            .filter((token): token is string => Boolean(token))
+        };
+        return acc;
+      }, {} as RealStats);
+
+      setPlatforms(mappedPlatforms);
+      setRealStats(statsMap);
+
     } catch (error) {
       console.error('❌ Erro ao carregar stats das plataformas:', error);
-      
-      // Fallback para dados mock em caso de erro
-      const fallbackPlatforms: PlatformStats[] = [
-        {
-          name: 'Hotmart',
-          slug: 'hotmart',
-          emoji: '🔥',
-          color: '#FF6B35',
-          totalIntegrations: 5,
-          activeIntegrations: 5,
-          totalSales: 380,
-          status: 'active',
-          description: 'Maior plataforma de produtos digitais do Brasil'
-        },
-        {
-          name: 'Kiwify',
-          slug: 'kiwify',
-          emoji: '🥝',
-          color: '#4ECDC4',
-          totalIntegrations: 1,
-          activeIntegrations: 1,
-          totalSales: 1,
-          status: 'active',
-          description: 'Plataforma moderna - TOKEN: 27419sqm9vm (fallback)'
-        },
-        {
-          name: 'Eduzz',
-          slug: 'eduzz',
-          emoji: '📚',
-          color: '#3D5AFE',
-          totalIntegrations: 1,
-          activeIntegrations: 1,
-          totalSales: 0,
-          status: 'active',
-          description: 'Marketplace - TOKEN: EDgZhmhuBZN4CP4uD (fallback)'
-        }
-      ];
-      
-      setPlatforms(fallbackPlatforms);
+
+      const fallback = buildFallbackData();
+      setPlatforms(fallback.platformStats);
+      setRealStats(fallback.realStats);
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePlatformClick = (slug: string) => {
+  const handlePlatformClick = (slug: PlatformSlug) => {
     router.push(`/dashboard/admin/integracoes/${slug}`);
   };
 
@@ -204,6 +197,10 @@ export default function IntegracoesMainPage() {
   };
 
   const stats = getTotalStats();
+  const kiwifyTokens = realStats.kiwify?.tokens ?? [];
+  const eduzzTokens = realStats.eduzz?.tokens ?? [];
+  const kiwifyTokenLabel = kiwifyTokens.length > 0 ? kiwifyTokens.join(', ') : 'Nenhum token configurado';
+  const eduzzTokenLabel = eduzzTokens.length > 0 ? eduzzTokens.join(', ') : 'Nenhum token configurado';
 
   if (loading) {
     return (
@@ -233,7 +230,7 @@ export default function IntegracoesMainPage() {
             🥝 Kiwify Funcionando!
           </Typography>
           <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-            Token <strong>27419sqm9vm</strong> está ativo. {realStats.kiwify.sales} venda(s) processada(s) com sucesso.
+            Token(s) <strong>{kiwifyTokenLabel}</strong> ativo(s). {realStats.kiwify?.sales ?? 0} venda(s) processada(s) com sucesso.
           </Typography>
         </Alert>
       )}
@@ -244,7 +241,7 @@ export default function IntegracoesMainPage() {
             📚 Eduzz Funcionando!
           </Typography>
           <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-            Token <strong>EDgZhmhuBZN4CP4uD</strong> está ativo. {realStats.eduzz.sales} venda(s) processada(s) com sucesso.
+            Token(s) <strong>{eduzzTokenLabel}</strong> ativo(s). {realStats.eduzz?.sales ?? 0} venda(s) processada(s) com sucesso.
           </Typography>
         </Alert>
       )}
