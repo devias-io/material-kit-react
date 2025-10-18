@@ -381,7 +381,7 @@ export async function POST(request: NextRequest) {
     
     try {
       console.log(`📧 Enviando email de credenciais para ${email}...`);
-      await enviarEmailCredenciais(email, firstName, tempPassword);
+      await enviarEmailCredenciais(email, firstName, tempPassword, plan);
       emailSent = true;
       console.log('✅ Email enviado com sucesso!');
     } catch (error: any) {
