@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'; // 👈 ADICIONAR ESTA LINHA AQUI
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { auth } from '@/lib/auth';
+import { getActiveEntitlementCodes } from '@/lib/entitlements';
 
 const prisma = new PrismaClient();
 
@@ -23,7 +24,8 @@ export async function GET(_request: NextRequest) {
         purchases: {
           orderBy: { createdAt: 'desc' },
           take: 5 // Últimas 5 compras
-        }
+        },
+        entitlements: true,
       }
     });
 
@@ -34,6 +36,8 @@ export async function GET(_request: NextRequest) {
     }
 
     // Formatar dados para retorno
+    const activeEntitlements = getActiveEntitlementCodes(user.entitlements ?? []);
+
     const userData = {
       id: user.id,
       firstName: user.firstName,
@@ -46,6 +50,16 @@ export async function GET(_request: NextRequest) {
       createdAt: user.createdAt,
       lastLogin: user.lastLogin,
       mustChangePassword: user.mustChangePassword,
+      entitlements: user.entitlements.map(entitlement => ({
+        id: entitlement.id,
+        code: entitlement.code,
+        status: entitlement.status,
+        expiresAt: entitlement.expiresAt,
+        origin: entitlement.origin,
+        createdAt: entitlement.createdAt,
+        updatedAt: entitlement.updatedAt,
+      })),
+      activeEntitlements,
       totalPurchases: user.purchases.reduce((sum, p) => sum + p.amount, 0),
       purchaseCount: user.purchases.length,
       recentPurchases: user.purchases.map(p => ({

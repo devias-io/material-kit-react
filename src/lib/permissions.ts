@@ -115,14 +115,18 @@ export interface AdminPermissions {
  * Calcula as permissões finais do usuário
  * Combina permissões do plano base + customizadas do banco
  */
-export function getUserPermissions(plan: string, customPermissions?: string[]): string[] {
+export function getUserPermissions(plan: string, customPermissions?: string[], entitlements?: string[]): string[] {
   const basePlan = PLAN_PERMISSIONS[plan as keyof typeof PLAN_PERMISSIONS];
   const basePermissions = basePlan?.pages || [];
+  const entitlementPermissions = (entitlements || [])
+    .map(code => PLAN_PERMISSIONS[code as keyof typeof PLAN_PERMISSIONS])
+    .filter((config): config is (typeof PLAN_PERMISSIONS)[keyof typeof PLAN_PERMISSIONS] => Boolean(config))
+    .flatMap(config => config.pages || []);
   const customPerms = customPermissions || [];
-  
+
   // Combinar sem duplicatas
-  const allPermissions = [...new Set([...basePermissions, ...customPerms])];
-  
+  const allPermissions = [...new Set([...basePermissions, ...entitlementPermissions, ...customPerms])];
+
   return allPermissions;
 }
 
@@ -197,15 +201,16 @@ export function isValidPage(page: string): boolean {
 /**
  * Debug: informações completas de um plano
  */
-export function getDebugInfo(plan: string, customPermissions?: string[]) {
+export function getDebugInfo(plan: string, customPermissions?: string[], entitlements?: string[]) {
   const planInfo = getPlanInfo(plan);
-  const finalPermissions = getUserPermissions(plan, customPermissions);
-  
+  const finalPermissions = getUserPermissions(plan, customPermissions, entitlements);
+
   return {
     plan,
     planDisplayName: getPlanDisplayName(plan),
     basePermissions: planInfo?.pages || [],
     customPermissions: customPermissions || [],
+    entitlements: entitlements || [],
     finalPermissions,
     isAdmin: isUserAdmin(finalPermissions),
     adminPermissions: getAdminPermissions(plan),

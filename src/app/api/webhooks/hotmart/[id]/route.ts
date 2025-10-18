@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { hashPassword } from '@/lib/auth/password'; // ✅ ADICIONADO
+import { activateEntitlement, deactivateEntitlement, isAddonPlan } from '@/lib/entitlements';
 
 const prisma = new PrismaClient();
 
@@ -301,6 +302,8 @@ export async function POST(
 
     console.log(`✅ Plano Hotmart detectado: ${integrationData.name} → ${integrationData.plan}`);
 
+    const isAddonPurchase = isAddonPlan(integrationData.plan);
+
     // Extrair evento
     const event = webhookData.event || 'PURCHASE_APPROVED';
     console.log(`🎯 Evento Hotmart recebido: ${event}`);
@@ -324,9 +327,9 @@ export async function POST(
 
     // Processar diferentes tipos de eventos
     if (event === 'PURCHASE_REFUNDED' || event === 'PURCHASE_CANCELLED' || event === 'PURCHASE_CHARGEBACK') {
-      // REEMBOLSO/CANCELAMENTO - BLOQUEAR USUÁRIO
-      console.log(`🚫 Evento de ${event} na Hotmart - bloqueando usuário`);
-      
+      // REEMBOLSO/CANCELAMENTO - BLOQUEAR USUÁRIO OU REVOGAR COMPLEMENTO
+      console.log(`🚫 Evento de ${event} na Hotmart - avaliando revogação`);
+
       if (!buyerEmail || !buyerEmail.includes('@')) {
         console.log('❌ Email inválido para reembolso Hotmart:', buyerEmail);
         return NextResponse.json({
@@ -344,15 +347,27 @@ export async function POST(
       });
 
       if (user) {
-        // BLOQUEAR usuário por reembolso
-        user = await prisma.user.update({
-          where: { email },
-          data: {
-            status: 'INACTIVE',
-            expirationDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Ontem
-            origin: 'HOTMART'
-          }
-        });
+        const treatAsAddon = isAddonPurchase && user.plan !== integrationData.plan;
+        let updatedUser = user;
+
+        if (treatAsAddon) {
+          console.log(`♻️ Revogando complemento ${integrationData.plan} sem bloquear plano base`);
+          await deactivateEntitlement(prisma, {
+            userId: user.id,
+            code: integrationData.plan,
+            origin: 'HOTMART',
+          });
+        } else {
+          console.log('🚫 Bloqueando usuário por reembolso de plano principal');
+          updatedUser = await prisma.user.update({
+            where: { email },
+            data: {
+              status: 'INACTIVE',
+              expirationDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Ontem
+              origin: 'HOTMART'
+            }
+          });
+        }
 
         // Registrar reembolso
         try {
@@ -374,7 +389,9 @@ export async function POST(
 
         return NextResponse.json({
           success: true,
-          message: `Reembolso Hotmart processado - usuário bloqueado`,
+          message: treatAsAddon
+            ? `Reembolso Hotmart processado - complemento ${integrationData.plan} removido`
+            : `Reembolso Hotmart processado - usuário bloqueado`,
           platform: 'Hotmart',
           event: event,
           integration: {
@@ -384,16 +401,17 @@ export async function POST(
             token: token
           },
           user: {
-            id: user.id,
-            email: user.email,
-            status: user.status,
-            blocked: true
+            id: updatedUser.id,
+            email: updatedUser.email,
+            status: updatedUser.status,
+            blocked: !treatAsAddon
           },
           refund: {
             id: transactionId,
             amount: amount,
             product: integrationData.name
           },
+          entitlementRemoved: treatAsAddon,
           timestamp: new Date().toISOString()
         });
 
@@ -445,36 +463,59 @@ export async function POST(
 
     let isNewUser = false;
     let tempPassword = '';
+    let treatedAsAddon = false;
+    let entitlementExpiration: Date | null = null;
 
     if (user) {
       // ATUALIZAR usuário existente
       console.log(`🔄 Atualizando usuário existente: ${email}`);
-      
-      user = await prisma.user.update({
-        where: { email },
-        data: {
-          plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
-          status: 'ACTIVE',
-          hotmartCustomerId: transactionId,
-          expirationDate: calculateExpirationDate(integrationData.plan),
-          origin: 'HOTMART'
-        }
-      });
-      
+
+      treatedAsAddon = isAddonPurchase && user.plan !== integrationData.plan;
+
+      if (treatedAsAddon) {
+        console.log(`➕ Ativando complemento ${integrationData.plan} para ${email}`);
+        entitlementExpiration = calculateExpirationDate(integrationData.plan);
+        user = await prisma.user.update({
+          where: { email },
+          data: {
+            status: 'ACTIVE',
+            hotmartCustomerId: transactionId,
+            origin: 'HOTMART'
+          }
+        });
+      } else {
+        const nextExpiration = calculateExpirationDate(integrationData.plan);
+        entitlementExpiration = isAddonPurchase ? nextExpiration : entitlementExpiration;
+
+        user = await prisma.user.update({
+          where: { email },
+          data: {
+            plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
+            status: 'ACTIVE',
+            hotmartCustomerId: transactionId,
+            expirationDate: nextExpiration,
+            origin: 'HOTMART'
+          }
+        });
+      }
+
       console.log(`✅ Usuário atualizado via Hotmart: ${email} → ${integrationData.plan} via token ${token}`);
-      
+
     } else {
       // CRIAR novo usuário
       isNewUser = true;
       tempPassword = generateSecurePassword();
       const hashedPassword = await hashPassword(tempPassword); // ✅ USANDO HASH SEGURO
-      
+
       console.log(`➕ Criando novo usuário via Hotmart: ${email}`);
-      
+
       const nameParts = buyerName.split(' ');
       const firstName = nameParts[0] || 'Cliente';
       const lastName = nameParts.slice(1).join(' ') || 'Hotmart';
-      
+
+      const nextExpiration = calculateExpirationDate(integrationData.plan);
+      entitlementExpiration = isAddonPurchase ? nextExpiration : entitlementExpiration;
+
       user = await prisma.user.create({
         data: {
           email: email,
@@ -483,7 +524,7 @@ export async function POST(
           plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
           status: 'ACTIVE',
           hotmartCustomerId: transactionId,
-          expirationDate: calculateExpirationDate(integrationData.plan),
+          expirationDate: nextExpiration,
           origin: 'HOTMART',
           password: hashedPassword, // ✅ USANDO HASH SEGURO
           passwordCreatedAt: new Date(),
@@ -491,8 +532,19 @@ export async function POST(
           customPermissions: '[]'
         }
       });
-      
+
       console.log(`✅ Novo usuário criado via Hotmart: ${email} → ${integrationData.plan} via token ${token}`);
+    }
+
+    if (isAddonPurchase) {
+      const expiresAt = entitlementExpiration ?? calculateExpirationDate(integrationData.plan);
+      await activateEntitlement(prisma, {
+        userId: user.id,
+        code: integrationData.plan,
+        origin: 'HOTMART',
+        expiresAt,
+      });
+      console.log(`🎁 Complemento ${integrationData.plan} ativo até ${expiresAt.toISOString()}`);
     }
 
     // Registrar compra
@@ -535,7 +587,9 @@ export async function POST(
         plan: user.plan,
         status: user.status,
         isNewUser: isNewUser,
-        tempPassword: isNewUser ? tempPassword : undefined // ✅ Para debug
+        tempPassword: isNewUser ? tempPassword : undefined, // ✅ Para debug
+        addonGranted: isAddonPurchase,
+        treatedAsAddon,
       },
       transaction: {
         id: transactionId,

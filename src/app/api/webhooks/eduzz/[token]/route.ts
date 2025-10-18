@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { EDUZZ_TOKEN_MAPPING } from '@/data/integrations';
+import { activateEntitlement, deactivateEntitlement, isAddonPlan } from '@/lib/entitlements';
 
 const prisma = new PrismaClient();
 
@@ -153,6 +154,8 @@ export async function POST(
 
     console.log(`✅ Plano Eduzz detectado: ${integrationData.name} → ${integrationData.plan}`);
 
+    const isAddonPurchase = isAddonPlan(integrationData.plan);
+
     // Extrair evento (Eduzz usa diferentes eventos)
     const event = webhookData.event_type || webhookData.event || webhookData.tipo_evento || 'venda_aprovada';
     console.log(`🎯 Evento Eduzz recebido: ${event}`);
@@ -194,15 +197,27 @@ export async function POST(
       });
 
       if (user) {
-        // BLOQUEAR usuário por reembolso
-        user = await prisma.user.update({
-          where: { email },
-          data: {
-            status: 'INACTIVE',
-            expirationDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Ontem
-            origin: 'EDUZZ'
-          }
-        });
+        const treatAsAddon = isAddonPurchase && user.plan !== integrationData.plan;
+        let updatedUser = user;
+
+        if (treatAsAddon) {
+          console.log(`♻️ Revogando complemento ${integrationData.plan} (Eduzz)`);
+          await deactivateEntitlement(prisma, {
+            userId: user.id,
+            code: integrationData.plan,
+            origin: 'EDUZZ',
+          });
+        } else {
+          console.log('🚫 Bloqueando usuário por reembolso de plano principal (Eduzz)');
+          updatedUser = await prisma.user.update({
+            where: { email },
+            data: {
+              status: 'INACTIVE',
+              expirationDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Ontem
+              origin: 'EDUZZ'
+            }
+          });
+        }
 
         // Registrar reembolso
         try {
@@ -224,10 +239,28 @@ export async function POST(
 
         return NextResponse.json({
           success: true,
-          message: `Reembolso Eduzz processado - usuário bloqueado`,
+          message: treatAsAddon
+            ? `Reembolso Eduzz processado - complemento ${integrationData.plan} removido`
+            : `Reembolso Eduzz processado - usuário bloqueado`,
           platform: 'Eduzz',
           event: event,
-          user: { id: user.id, email: user.email, status: user.status, blocked: true }
+          user: {
+            id: updatedUser.id,
+            email: updatedUser.email,
+            status: updatedUser.status,
+            blocked: !treatAsAddon,
+          },
+          entitlementRemoved: treatAsAddon,
+        });
+      } else {
+        await prisma.$disconnect();
+
+        return NextResponse.json({
+          success: true,
+          message: 'Usuário não encontrado - reembolso registrado',
+          platform: 'Eduzz',
+          email: email,
+          event: event,
         });
       }
     }
@@ -265,34 +298,57 @@ export async function POST(
 
     let isNewUser = false;
     let tempPassword = '';
+    let treatedAsAddon = false;
+    let entitlementExpiration: Date | null = null;
 
     if (user) {
       // ATUALIZAR usuário existente
       console.log(`🔄 Atualizando usuário existente: ${email}`);
-      
-      user = await prisma.user.update({
-        where: { email },
-        data: {
-          plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
-          status: 'ACTIVE',
-          hotmartCustomerId: transactionId,
-          expirationDate: calculateExpirationDate(),
-          origin: 'EDUZZ'
-        }
-      });
-      
+
+      treatedAsAddon = isAddonPurchase && user.plan !== integrationData.plan;
+
+      if (treatedAsAddon) {
+        console.log(`➕ Ativando complemento ${integrationData.plan} para ${email} via Eduzz`);
+        entitlementExpiration = calculateExpirationDate();
+        user = await prisma.user.update({
+          where: { email },
+          data: {
+            status: 'ACTIVE',
+            hotmartCustomerId: transactionId,
+            origin: 'EDUZZ'
+          }
+        });
+      } else {
+        const nextExpiration = calculateExpirationDate();
+        entitlementExpiration = isAddonPurchase ? nextExpiration : entitlementExpiration;
+
+        user = await prisma.user.update({
+          where: { email },
+          data: {
+            plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
+            status: 'ACTIVE',
+            hotmartCustomerId: transactionId,
+            expirationDate: nextExpiration,
+            origin: 'EDUZZ'
+          }
+        });
+      }
+
       console.log(`✅ Usuário atualizado via Eduzz: ${email} → ${integrationData.plan}`);
-      
+
     } else {
       // CRIAR novo usuário
       isNewUser = true;
       tempPassword = generateSecurePassword();
       console.log(`➕ Criando novo usuário via Eduzz: ${email}`);
-      
+
       const nameParts = buyerName.split(' ');
       const firstName = nameParts[0] || 'Cliente';
       const lastName = nameParts.slice(1).join(' ') || 'Eduzz';
-      
+
+      const nextExpiration = calculateExpirationDate();
+      entitlementExpiration = isAddonPurchase ? nextExpiration : entitlementExpiration;
+
       user = await prisma.user.create({
         data: {
           email: email,
@@ -301,7 +357,7 @@ export async function POST(
           plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
           status: 'ACTIVE',
           hotmartCustomerId: transactionId,
-          expirationDate: calculateExpirationDate(),
+          expirationDate: nextExpiration,
           origin: 'EDUZZ',
           password: tempPassword, // ⚠️ SENHA SEM HASH (deve ser corrigido em produção)
           passwordCreatedAt: new Date(),
@@ -309,8 +365,19 @@ export async function POST(
           customPermissions: '[]'
         }
       });
-      
+
       console.log(`✅ Novo usuário criado via Eduzz: ${email} → ${integrationData.plan}`);
+    }
+
+    if (isAddonPurchase) {
+      const expiresAt = entitlementExpiration ?? calculateExpirationDate();
+      await activateEntitlement(prisma, {
+        userId: user.id,
+        code: integrationData.plan,
+        origin: 'EDUZZ',
+        expiresAt,
+      });
+      console.log(`🎁 Complemento ${integrationData.plan} ativo até ${expiresAt.toISOString()} via Eduzz`);
     }
 
     // Registrar compra
@@ -353,7 +420,9 @@ export async function POST(
         plan: user.plan,
         status: user.status,
         isNewUser: isNewUser,
-        tempPassword: isNewUser ? tempPassword : undefined // ✅ Para debug
+        tempPassword: isNewUser ? tempPassword : undefined, // ✅ Para debug
+        addonGranted: isAddonPurchase,
+        treatedAsAddon,
       },
       transaction: {
         id: transactionId,

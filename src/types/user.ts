@@ -1,3 +1,13 @@
+export interface UserEntitlement {
+  id: string;
+  code: string;
+  status: 'ACTIVE' | 'INACTIVE' | string;
+  expiresAt?: string | null;
+  origin?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface User {
   id: string;
   name?: string;
@@ -5,10 +15,12 @@ export interface User {
   email?: string;
   firstName?: string;
   lastName?: string;
-  plan?: 'VIP' | 'LITE' | 'RENDA_PASSIVA' | 'FIIS' | 'AMERICA' | 'ADMIN';  // ← Adicionado ADMIN
-  customPermissions?: string[];  // ← Adicionado customPermissions
-  status?: 'ACTIVE' | 'INACTIVE' | 'PENDING';  // ← Adicionado status
-  expirationDate?: string | null;  // ← Adicionado expirationDate
+  plan?: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'AMERICA' | 'ADMIN';
+  customPermissions?: string[];
+  entitlements?: UserEntitlement[];
+  activeEntitlements?: string[];
+  status?: 'ACTIVE' | 'INACTIVE' | 'PENDING';
+  expirationDate?: string | null;
   mustChangePassword?: boolean;
   createdAt?: string;
   totalPurchases?: number;
