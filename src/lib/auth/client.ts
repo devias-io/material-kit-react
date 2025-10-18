@@ -7,7 +7,7 @@ const planPermissions = {
     isAdmin: false,
     pages: [
       'small-caps', 'micro-caps', 'dividendos', 'fundos-imobiliarios', 'rentabilidades',
-      'internacional', 'internacional-etfs', 'internacional-stocks', 'internacional-dividendos', 'internacional-projeto-america',
+      'internacional', 'internacional-etfs', 'internacional-stocks', 'internacional-dividendos',
       'recursos-exclusivos', 'recursos-dicas', 'recursos-analise', 'recursos-ebooks',
       'recursos-imposto', 'recursos-lives', 'recursos-milhas', 'recursos-planilhas', 'recursos-telegram',
       'recursos-reserva'
