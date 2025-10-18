@@ -51,7 +51,12 @@ export async function POST(_request: NextRequest, { params }: { params: { id: st
     });
 
     try {
-      await enviarEmailCredenciais(user.email, user.firstName || 'usuário', tempPassword);
+      await enviarEmailCredenciais(
+        user.email,
+        user.firstName || 'usuário',
+        tempPassword,
+        user.plan || undefined
+      );
     } catch (emailError: any) {
       console.error('❌ Erro ao enviar email:', emailError);
       return NextResponse.json(

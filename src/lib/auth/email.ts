@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { getPlanDisplayName } from '@/lib/permissions';
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -11,11 +12,13 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function enviarEmailCredenciais(
-  email: string, 
-  nome: string, 
-  senha: string
+  email: string,
+  nome: string,
+  senha: string,
+  plano?: string
 ): Promise<void> {
   const loginUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://portal.fatosdabolsa.com.br';
+  const planoFormatado = getPlanDisplayName(plano);
   
   const htmlContent = `
     <!DOCTYPE html>
@@ -256,6 +259,7 @@ export async function enviarEmailCredenciais(
             <h2>Olá, ${nome}! Tudo bem?</h2>
             <p><strong>Parabéns e seja bem-vindo(a) ao Fatos da Bolsa!</strong></p>
             <p>Estamos muito felizes em ter você conosco.</p>
+            <p>Você agora faz parte do plano <strong>${planoFormatado}</strong>, criado especialmente para acelerar seus resultados.</p>
             <p>Na plataforma você terá acesso a <strong>todos os conteúdos disponíveis</strong> para a sua assinatura.</p>
           </div>
           
@@ -272,7 +276,12 @@ export async function enviarEmailCredenciais(
               <span class="credential-label">📧 Login:</span>
               <span class="credential-value">${email}</span>
             </div>
-            
+
+            <div class="credential-item">
+              <span class="credential-label">📋 Plano:</span>
+              <span class="credential-value">${planoFormatado}</span>
+            </div>
+
             <div class="credential-item">
               <span class="credential-label">🔒 Senha:</span>
               <span class="credential-value">${senha}</span>
