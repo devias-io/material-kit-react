@@ -35,6 +35,7 @@ import {
 } from '@mui/material';
 
 import { useUser } from '@/hooks/use-user';
+import { PLAN_PERMISSIONS } from '@/lib/permissions';
 import { useRouter, useParams } from 'next/navigation';
 
 interface User {
@@ -53,6 +54,16 @@ interface User {
   expirationDate?: string;
   customPermissions?: string[];
   origin: 'MANUAL' | 'HOTMART' | 'KIWIFY' | 'EDUZZ';
+  entitlements?: Array<{
+    id: string;
+    code: string;
+    status: string;
+    expiresAt?: string | null;
+    origin?: string | null;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  activeEntitlements?: string[];
 }
 
 interface Purchase {
@@ -84,11 +95,11 @@ export default function EditUserPage() {
     { id: 'dividendos', label: 'Dividendos', category: 'Principal' },
     { id: 'fundos-imobiliarios', label: 'Fundos Imobiliários', category: 'Principal' },
     { id: 'rentabilidades', label: 'Rentabilidades', category: 'Principal' },
-    
+
     { id: 'internacional-etfs', label: 'ETFs Internacionais', category: 'Internacional' },
     { id: 'internacional-stocks', label: 'Stocks', category: 'Internacional' },
     { id: 'internacional-dividendos', label: 'Dividendos Internacionais', category: 'Internacional' },
-    { id: 'projeto-america', label: 'Projeto América', category: 'Internacional' },
+    { id: 'internacional-projeto-america', label: 'Projeto América', category: 'Internacional' },
     
     { id: 'recursos-dicas', label: 'Dicas de Investimentos', category: 'Recursos Exclusivos' },
     { id: 'recursos-analise', label: 'Análise de Carteira', category: 'Recursos Exclusivos' },
@@ -99,6 +110,39 @@ export default function EditUserPage() {
     { id: 'recursos-planilhas', label: 'Planilhas', category: 'Recursos Exclusivos' },
     { id: 'recursos-telegram', label: 'Telegram', category: 'Recursos Exclusivos' }
   ];
+
+  const normalizePermissionId = (permissionId: string): string => {
+    if (permissionId === 'projeto-america') {
+      return 'internacional-projeto-america';
+    }
+
+    return permissionId;
+  };
+
+  const getArrayPermissions = (value: unknown): string[] => {
+    if (!value) {
+      return [];
+    }
+
+    if (Array.isArray(value)) {
+      return value.map(item => normalizePermissionId(String(item)));
+    }
+
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          return parsed.map(item => normalizePermissionId(String(item)));
+        }
+      } catch (error) {
+        if (value.trim().length > 0) {
+          return [normalizePermissionId(value)];
+        }
+      }
+    }
+
+    return [];
+  };
 
   // Verificar se é admin
   React.useEffect(() => {
@@ -135,7 +179,16 @@ export default function EditUserPage() {
       const data = await response.json();
       console.log('✅ Dados recebidos:', data);
       
-      setUser(data.user);
+      const normalizedCustomPermissions = getArrayPermissions(data.user.customPermissions);
+      const activeEntitlements = Array.isArray(data.user.activeEntitlements)
+        ? data.user.activeEntitlements
+        : [];
+
+      setUser({
+        ...data.user,
+        customPermissions: normalizedCustomPermissions,
+        activeEntitlements,
+      });
       setPurchases(data.purchases || []);
       setError(null);
       
@@ -228,69 +281,76 @@ export default function EditUserPage() {
   const handlePermissionChange = (contentId: string, checked: boolean) => {
     if (!user) return;
 
-    const currentPermissions = user.customPermissions || [];
+    const normalizedId = normalizePermissionId(contentId);
+    const currentPermissions = getArrayPermissions(user.customPermissions);
+
     const newPermissions = checked
-      ? [...currentPermissions, contentId]
-      : currentPermissions.filter(p => p !== contentId);
+      ? Array.from(new Set([...currentPermissions, normalizedId]))
+      : currentPermissions.filter(permission => normalizePermissionId(permission) !== normalizedId);
 
     setUser({ ...user, customPermissions: newPermissions });
   };
 
   // ✨ FUNÇÕES PARA PERMISSÕES - VERSÃO ÚNICA SEM DUPLICATAS
   const getPlanPermissions = (plan: string): string[] => {
-    const planPermissionsMap = {
-      'VIP': [
-        'small-caps', 'micro-caps', 'dividendos', 'fundos-imobiliarios', 'rentabilidades',
-        'internacional-etfs', 'internacional-stocks', 'internacional-dividendos', 'projeto-america',
-        'recursos-dicas', 'recursos-analise', 'recursos-ebooks', 'recursos-imposto',
-        'recursos-lives', 'recursos-milhas', 'recursos-planilhas', 'recursos-telegram'
-      ],
-      'LITE': [
-        'small-caps', 'dividendos', 'fundos-imobiliarios', 'rentabilidades',
-        'internacional-etfs', 'internacional-stocks',
-        'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram'
-      ],
-      'LITE_V2': [
-        'small-caps', 'dividendos', 'fundos-imobiliarios', 'rentabilidades',
-        'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram'
-      ],
-      'RENDA_PASSIVA': [
-        'dividendos', 'fundos-imobiliarios', 'rentabilidades',
-        'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram'
-      ],
-      'FIIS': [
-        'fundos-imobiliarios', 'rentabilidades',
-        'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram'
-      ],
-      'AMERICA': [
-        'internacional-etfs', 'internacional-stocks', 'internacional-dividendos', 'projeto-america',
-        'recursos-dicas', 'recursos-ebooks', 'recursos-lives', 'recursos-planilhas', 'recursos-telegram'
-      ],
-      'ADMIN': [
-        'small-caps', 'micro-caps', 'dividendos', 'fundos-imobiliarios', 'rentabilidades',
-        'internacional-etfs', 'internacional-stocks', 'internacional-dividendos', 'projeto-america',
-        'recursos-dicas', 'recursos-analise', 'recursos-ebooks', 'recursos-imposto',
-        'recursos-lives', 'recursos-milhas', 'recursos-planilhas', 'recursos-telegram'
-      ]
-    };
-    
-    return planPermissionsMap[plan as keyof typeof planPermissionsMap] || [];
+    const planConfig = PLAN_PERMISSIONS[plan as keyof typeof PLAN_PERMISSIONS];
+
+    if (!planConfig?.pages) {
+      return [];
+    }
+
+    return planConfig.pages.map(normalizePermissionId);
   };
 
   const isPermissionFromPlan = (contentId: string): boolean => {
     if (!user) return false;
+
     const planPermissions = getPlanPermissions(user.plan);
-    return planPermissions.includes(contentId);
+    const normalizedId = normalizePermissionId(contentId);
+
+    return planPermissions.includes(normalizedId);
   };
 
   const isCustomPermission = (contentId: string): boolean => {
     if (!user) return false;
-    const customPermissions = user.customPermissions || [];
-    return customPermissions.includes(contentId);
+
+    const customPermissions = getArrayPermissions(user.customPermissions);
+    const normalizedId = normalizePermissionId(contentId);
+
+    return customPermissions.includes(normalizedId);
+  };
+
+  const getEntitlementPermissions = (entitlements?: string[]): string[] => {
+    if (!entitlements || entitlements.length === 0) {
+      return [];
+    }
+
+    return entitlements.flatMap(code => {
+      const entitlementConfig = PLAN_PERMISSIONS[code as keyof typeof PLAN_PERMISSIONS];
+      return (entitlementConfig?.pages ?? []).map(normalizePermissionId);
+    });
+  };
+
+  const isPermissionFromEntitlement = (contentId: string): boolean => {
+    if (!user?.activeEntitlements?.length) {
+      return false;
+    }
+
+    const normalizedId = normalizePermissionId(contentId);
+    const entitlementPermissions = getEntitlementPermissions(user.activeEntitlements);
+
+    return entitlementPermissions.includes(normalizedId);
   };
 
   const hasPermission = (contentId: string): boolean => {
-    return isPermissionFromPlan(contentId) || isCustomPermission(contentId);
+    const normalizedId = normalizePermissionId(contentId);
+    const customPermissions = getArrayPermissions(user?.customPermissions);
+
+    return (
+      isPermissionFromPlan(contentId) ||
+      isPermissionFromEntitlement(contentId) ||
+      customPermissions.includes(normalizedId)
+    );
   };
 
   const getPlanInfo = (plan: string) => {
@@ -665,6 +725,7 @@ export default function EditUserPage() {
                       .filter(content => content.category === category)
                       .map(content => {
                         const fromPlan = isPermissionFromPlan(content.id);
+                        const fromEntitlement = isPermissionFromEntitlement(content.id);
                         const fromCustom = isCustomPermission(content.id);
                         const hasAccess = hasPermission(content.id);
                         
@@ -675,11 +736,11 @@ export default function EditUserPage() {
                                 <Checkbox
                                   checked={hasAccess}
                                   onChange={(e) => {
-                                    if (!fromPlan) {
+                                    if (!fromPlan && !fromEntitlement) {
                                       handlePermissionChange(content.id, e.target.checked);
                                     }
                                   }}
-                                  disabled={fromPlan}
+                                  disabled={fromPlan || fromEntitlement}
                                   sx={{ 
                                     color: fromPlan ? '#94A3B8' : '#3B82F6', 
                                     '&.Mui-checked': { 
@@ -700,10 +761,10 @@ export default function EditUserPage() {
                                     {content.label}
                                   </Typography>
                                   {fromPlan && (
-                                    <Chip 
-                                      label="Plano" 
-                                      size="small" 
-                                      sx={{ 
+                                    <Chip
+                                      label="Plano"
+                                      size="small"
+                                      sx={{
                                         backgroundColor: '#EFF6FF',
                                         color: '#3B82F6',
                                         fontSize: '10px',
@@ -712,9 +773,22 @@ export default function EditUserPage() {
                                       }}
                                     />
                                   )}
-                                  {fromCustom && !fromPlan && (
-                                    <Chip 
-                                      label="Extra" 
+                                  {!fromPlan && fromEntitlement && (
+                                    <Chip
+                                      label="Add-on"
+                                      size="small"
+                                      sx={{
+                                        backgroundColor: '#FEF2F2',
+                                        color: '#DC2626',
+                                        fontSize: '10px',
+                                        height: '20px',
+                                        border: '1px solid #FECACA'
+                                      }}
+                                    />
+                                  )}
+                                  {fromCustom && !fromPlan && !fromEntitlement && (
+                                    <Chip
+                                      label="Extra"
                                       size="small" 
                                       sx={{ 
                                         backgroundColor: '#F0FDF4',

@@ -33,7 +33,18 @@ export async function auth() {
         expirationDate: true,
         customPermissions: true,
         avatar: true,
-        mustChangePassword: true
+        mustChangePassword: true,
+        entitlements: {
+          select: {
+            id: true,
+            code: true,
+            status: true,
+            expiresAt: true,
+            origin: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        }
       }
     })
 
@@ -61,6 +72,18 @@ export async function auth() {
       }
     }
 
+    const activeEntitlements = (user.entitlements ?? []).filter(entitlement => {
+      if (entitlement.status !== 'ACTIVE') {
+        return false
+      }
+
+      if (entitlement.expiresAt && entitlement.expiresAt < new Date()) {
+        return false
+      }
+
+      return true
+    }).map(entitlement => entitlement.code)
+
     const hasVipAccess = user.plan === 'VIP' ||
                         user.plan === 'ADMIN' ||
                         customPermissions.includes('recursos-exclusivos')
@@ -76,6 +99,13 @@ export async function auth() {
         plan: user.plan,
         avatar: user.avatar,
         customPermissions,
+        entitlements: user.entitlements?.map(entitlement => ({
+          ...entitlement,
+          expiresAt: entitlement.expiresAt?.toISOString?.() ?? null,
+          createdAt: entitlement.createdAt?.toISOString?.(),
+          updatedAt: entitlement.updatedAt?.toISOString?.()
+        })),
+        activeEntitlements,
         canUploadPortfolio: hasVipAccess,
         hasVipAccess,
         mustChangePassword: user.mustChangePassword

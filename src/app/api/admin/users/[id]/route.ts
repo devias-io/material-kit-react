@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { auth } from '@/lib/auth';
+import { getActiveEntitlementCodes } from '@/lib/entitlements';
 
 const prisma = new PrismaClient();
 
@@ -31,7 +32,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     console.log('🔍 Buscando usuário com ID:', userId);
     
     const user = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
+      include: {
+        entitlements: true,
+      },
     });
 
     if (!user) {
@@ -57,6 +61,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }));
 
     // Formatar os dados do usuário conforme esperado pelo frontend
+    const activeEntitlements = getActiveEntitlementCodes(user.entitlements ?? []);
+
     const formattedUser = {
       id: user.id,
       firstName: user.firstName,
@@ -72,7 +78,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       purchaseCount: user.purchaseCount || 0,
       expirationDate: user.expirationDate?.toISOString(),
       customPermissions: user.customPermissions || [],
-      origin: user.origin
+      origin: user.origin,
+      entitlements: user.entitlements.map(entitlement => ({
+        id: entitlement.id,
+        code: entitlement.code,
+        status: entitlement.status,
+        expiresAt: entitlement.expiresAt?.toISOString(),
+        origin: entitlement.origin,
+        createdAt: entitlement.createdAt.toISOString(),
+        updatedAt: entitlement.updatedAt.toISOString(),
+      })),
+      activeEntitlements,
     };
 
     console.log(`✅ Encontradas ${purchases.length} compras para o usuário`);
@@ -132,12 +148,17 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: updateData
+      data: updateData,
+      include: {
+        entitlements: true,
+      },
     });
 
     console.log('✅ Usuário atualizado:', updatedUser.email);
 
     // Formatar resposta
+    const activeEntitlements = getActiveEntitlementCodes(updatedUser.entitlements ?? []);
+
     const formattedUser = {
       id: updatedUser.id,
       firstName: updatedUser.firstName,
@@ -153,7 +174,17 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       purchaseCount: updatedUser.purchaseCount || 0,
       expirationDate: updatedUser.expirationDate?.toISOString(),
       customPermissions: updatedUser.customPermissions || [],
-      origin: updatedUser.origin
+      origin: updatedUser.origin,
+      entitlements: updatedUser.entitlements.map(entitlement => ({
+        id: entitlement.id,
+        code: entitlement.code,
+        status: entitlement.status,
+        expiresAt: entitlement.expiresAt?.toISOString(),
+        origin: entitlement.origin,
+        createdAt: entitlement.createdAt.toISOString(),
+        updatedAt: entitlement.updatedAt.toISOString(),
+      })),
+      activeEntitlements,
     };
 
     return NextResponse.json({ user: formattedUser });
@@ -189,6 +220,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
     // Excluir relacionamentos primeiro (se necessário)
     await prisma.purchase.deleteMany({ where: { userId } });
+    await prisma.userEntitlement.deleteMany({ where: { userId } });
     
     // Excluir usuário
     await prisma.user.delete({
