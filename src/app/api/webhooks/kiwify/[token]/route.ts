@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { enviarEmailCredenciais } from '@/lib/auth/email'; // ✅ ADICIONADO
 import { hashPassword } from '@/lib/auth/password'; // ✅ ADICIONADO
 import { KIWIFY_TOKEN_MAPPING } from '@/data/integrations';
+import { activateEntitlement, deactivateEntitlement, isAddonPlan } from '@/lib/entitlements';
 
 const prisma = new PrismaClient();
 
@@ -289,6 +290,8 @@ export async function POST(
 
     console.log(`✅ Integração Kiwify encontrada: ${integrationData.name} → Plano ${integrationData.plan}`);
 
+    const isAddonPurchase = isAddonPlan(integrationData.plan);
+
     // Extrair evento (Kiwify usa diferentes eventos)
     const event = webhookData.event || webhookData.type || 'order.paid';
     console.log(`🎯 Evento Kiwify recebido: ${event}`);
@@ -329,8 +332,8 @@ export async function POST(
 
     // Processar diferentes tipos de eventos Kiwify
     if (event === 'order.refunded' || event === 'order.cancelled' || event === 'order.chargeback') {
-      // REEMBOLSO/CANCELAMENTO - BLOQUEAR USUÁRIO
-      console.log(`🚫 Evento de ${event} no Kiwify - bloqueando usuário`);
+      // REEMBOLSO/CANCELAMENTO - BLOQUEAR USUÁRIO OU REVOGAR COMPLEMENTO
+      console.log(`🚫 Evento de ${event} no Kiwify - avaliando revogação`);
       
       if (!buyerEmail || !buyerEmail.includes('@')) {
         console.log('❌ Email inválido para reembolso Kiwify:', buyerEmail);
@@ -348,15 +351,27 @@ export async function POST(
       });
 
       if (user) {
-        // BLOQUEAR usuário por reembolso
-        user = await prisma.user.update({
-          where: { email },
-          data: {
-            status: 'INACTIVE',
-            expirationDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Ontem
-            origin: 'KIWIFY'
-          }
-        });
+        const treatAsAddon = isAddonPurchase && user.plan !== integrationData.plan;
+        let updatedUser = user;
+
+        if (treatAsAddon) {
+          console.log(`♻️ Revogando complemento ${integrationData.plan} (Kiwify)`);
+          await deactivateEntitlement(prisma, {
+            userId: user.id,
+            code: integrationData.plan,
+            origin: 'KIWIFY',
+          });
+        } else {
+          console.log('🚫 Bloqueando usuário por reembolso de plano principal (Kiwify)');
+          updatedUser = await prisma.user.update({
+            where: { email },
+            data: {
+              status: 'INACTIVE',
+              expirationDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Ontem
+              origin: 'KIWIFY'
+            }
+          });
+        }
 
         // Registrar reembolso
         try {
@@ -378,10 +393,28 @@ export async function POST(
 
         return NextResponse.json({
           success: true,
-          message: `Reembolso Kiwify processado - usuário bloqueado`,
+          message: treatAsAddon
+            ? `Reembolso Kiwify processado - complemento ${integrationData.plan} removido`
+            : `Reembolso Kiwify processado - usuário bloqueado`,
           platform: 'Kiwify',
           event: event,
-          user: { id: user.id, email: user.email, status: user.status, blocked: true }
+          user: {
+            id: updatedUser.id,
+            email: updatedUser.email,
+            status: updatedUser.status,
+            blocked: !treatAsAddon,
+          },
+          entitlementRemoved: treatAsAddon,
+        });
+      } else {
+        await prisma.$disconnect();
+
+        return NextResponse.json({
+          success: true,
+          message: 'Usuário não encontrado - reembolso registrado',
+          platform: 'Kiwify',
+          email: email,
+          event: event,
         });
       }
     }
@@ -419,36 +452,59 @@ export async function POST(
 
     let isNewUser = false;
     let tempPassword = '';
+    let treatedAsAddon = false;
+    let entitlementExpiration: Date | null = null;
 
     if (user) {
       // ATUALIZAR usuário existente
       console.log(`🔄 Atualizando usuário existente: ${email}`);
-      
-      user = await prisma.user.update({
-        where: { email },
-        data: {
-          plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
-          status: 'ACTIVE',
-          hotmartCustomerId: transactionId,
-          expirationDate: calculateExpirationDate(),
-          origin: 'KIWIFY'
-        }
-      });
-      
+
+      treatedAsAddon = isAddonPurchase && user.plan !== integrationData.plan;
+
+      if (treatedAsAddon) {
+        console.log(`➕ Ativando complemento ${integrationData.plan} para ${email} via Kiwify`);
+        entitlementExpiration = calculateExpirationDate();
+        user = await prisma.user.update({
+          where: { email },
+          data: {
+            status: 'ACTIVE',
+            hotmartCustomerId: transactionId,
+            origin: 'KIWIFY'
+          }
+        });
+      } else {
+        const nextExpiration = calculateExpirationDate();
+        entitlementExpiration = isAddonPurchase ? nextExpiration : entitlementExpiration;
+
+        user = await prisma.user.update({
+          where: { email },
+          data: {
+            plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
+            status: 'ACTIVE',
+            hotmartCustomerId: transactionId,
+            expirationDate: nextExpiration,
+            origin: 'KIWIFY'
+          }
+        });
+      }
+
       console.log(`✅ Usuário atualizado via Kiwify: ${email} → ${integrationData.plan}`);
-      
+
     } else {
       // CRIAR novo usuário
       isNewUser = true;
       tempPassword = generateSecurePassword();
       const hashedPassword = await hashPassword(tempPassword);
-      
+
       console.log(`➕ Criando novo usuário via Kiwify: ${email}`);
-      
+
       const nameParts = buyerName.split(' ');
       const firstName = nameParts[0] || 'Cliente';
       const lastName = nameParts.slice(1).join(' ') || 'Kiwify';
-      
+
+      const nextExpiration = calculateExpirationDate();
+      entitlementExpiration = isAddonPurchase ? nextExpiration : entitlementExpiration;
+
       user = await prisma.user.create({
         data: {
           email: email,
@@ -457,7 +513,7 @@ export async function POST(
           plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
           status: 'ACTIVE',
           hotmartCustomerId: transactionId,
-          expirationDate: calculateExpirationDate(),
+          expirationDate: nextExpiration,
           origin: 'KIWIFY',
           password: hashedPassword, // ✅ USANDO HASH SEGURO
           passwordCreatedAt: new Date(),
@@ -465,8 +521,19 @@ export async function POST(
           customPermissions: '[]'
         }
       });
-      
+
       console.log(`✅ Novo usuário criado via Kiwify: ${email} → ${integrationData.plan}`);
+    }
+
+    if (isAddonPurchase) {
+      const expiresAt = entitlementExpiration ?? calculateExpirationDate();
+      await activateEntitlement(prisma, {
+        userId: user.id,
+        code: integrationData.plan,
+        origin: 'KIWIFY',
+        expiresAt,
+      });
+      console.log(`🎁 Complemento ${integrationData.plan} ativo até ${expiresAt.toISOString()} via Kiwify`);
     }
 
     // Registrar compra
@@ -525,7 +592,9 @@ export async function POST(
         plan: user.plan,
         status: user.status,
         isNewUser: isNewUser,
-        tempPassword: isNewUser ? tempPassword : undefined // ✅ Mostra senha para debug
+        tempPassword: isNewUser ? tempPassword : undefined, // ✅ Mostra senha para debug
+        addonGranted: isAddonPurchase,
+        treatedAsAddon,
       },
       transaction: {
         id: transactionId,

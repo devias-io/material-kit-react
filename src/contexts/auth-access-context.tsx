@@ -12,6 +12,7 @@ export interface AuthAccessPlanInfo {
   pages: string[];
   isAdmin: boolean;
   adminPermissions: AdminPermissions | null;
+  activeEntitlements: string[];
 }
 
 interface AuthAccessContextValue {
@@ -28,6 +29,7 @@ interface AuthAccessContextValue {
   debugInfo: {
     userPlan: string | undefined;
     customPermissions: string[] | undefined;
+    activeEntitlements: string[] | undefined;
     allPages: string[];
     isAdmin: boolean;
     hasInstagramAccess: boolean;
@@ -45,11 +47,48 @@ const FALLBACK_PLAN_INFO: AuthAccessPlanInfo = {
   pages: [...GUARANTEED_PAGES],
   isAdmin: false,
   adminPermissions: null,
+  activeEntitlements: [],
 };
 
 function ensureGuaranteedPages(pages: string[]): string[] {
   const pageSet = new Set<string>([...GUARANTEED_PAGES, ...pages]);
   return Array.from(pageSet);
+}
+
+function getActiveEntitlements(user: User | null): string[] {
+  if (!user) {
+    return [];
+  }
+
+  if (Array.isArray(user.activeEntitlements)) {
+    return user.activeEntitlements;
+  }
+
+  if (!Array.isArray(user.entitlements)) {
+    return [];
+  }
+
+  const now = Date.now();
+  return user.entitlements
+    .filter(entitlement => {
+      if (!entitlement?.code) {
+        return false;
+      }
+
+      if (entitlement.status && entitlement.status !== 'ACTIVE') {
+        return false;
+      }
+
+      if (entitlement.expiresAt) {
+        const expiresAt = new Date(entitlement.expiresAt).getTime();
+        if (!Number.isNaN(expiresAt) && expiresAt < now) {
+          return false;
+        }
+      }
+
+      return true;
+    })
+    .map(entitlement => entitlement.code);
 }
 
 function derivePlanInfo(user: User | null): AuthAccessPlanInfo {
@@ -59,20 +98,40 @@ function derivePlanInfo(user: User | null): AuthAccessPlanInfo {
 
   const planKey = user.plan as keyof typeof PLAN_PERMISSIONS | undefined;
   const planConfig = planKey ? PLAN_PERMISSIONS[planKey] : undefined;
+  const activeEntitlements = getActiveEntitlements(user);
+  const entitlementConfigs = activeEntitlements
+    .map(code => PLAN_PERMISSIONS[code as keyof typeof PLAN_PERMISSIONS])
+    .filter((config): config is (typeof PLAN_PERMISSIONS)[keyof typeof PLAN_PERMISSIONS] => Boolean(config));
 
-  const displayName = planConfig?.displayName ?? user.plan ?? FALLBACK_PLAN_INFO.displayName;
+  const displayNameParts: string[] = [];
+  if (planConfig?.displayName) {
+    displayNameParts.push(planConfig.displayName);
+  } else if (user.plan) {
+    displayNameParts.push(user.plan);
+  }
+
+  entitlementConfigs.forEach(config => {
+    if (config.displayName) {
+      displayNameParts.push(config.displayName);
+    }
+  });
+
+  const displayName = displayNameParts.length > 0 ? displayNameParts.join(' + ') : FALLBACK_PLAN_INFO.displayName;
   const basePages = planConfig?.pages ?? [];
-  const adminPermissions = planConfig?.adminPermissions ?? null;
-  const isAdmin = Boolean(planConfig?.isAdmin);
+  const addonPages = entitlementConfigs.flatMap(config => config.pages ?? []);
+  const allConfigs = [planConfig, ...entitlementConfigs].filter(Boolean);
+  const adminPermissions = allConfigs.find(config => config?.adminPermissions)?.adminPermissions ?? null;
+  const isAdmin = allConfigs.some(config => config?.isAdmin);
   const customPermissions = user.customPermissions ?? [];
 
-  const pages = ensureGuaranteedPages([...basePages, ...customPermissions]);
+  const pages = ensureGuaranteedPages([...basePages, ...addonPages, ...customPermissions]);
 
   return {
     displayName,
     pages,
     isAdmin,
     adminPermissions,
+    activeEntitlements,
   };
 }
 
@@ -89,6 +148,7 @@ export function AuthAccessProvider({ children }: AuthAccessProviderProps): React
   const userEmail = user?.email ?? null;
   const userPlan = user?.plan;
   const customPermissions = user?.customPermissions;
+  const activeEntitlements = user?.activeEntitlements ?? planInfo.activeEntitlements;
 
   const hasInstagramAdminAccess = React.useCallback(() => {
     if (!userEmail) {
@@ -187,6 +247,7 @@ export function AuthAccessProvider({ children }: AuthAccessProviderProps): React
       debugInfo: {
         userPlan,
         customPermissions,
+        activeEntitlements,
         allPages: planInfo.pages,
         isAdmin: planInfo.isAdmin,
         hasInstagramAccess: hasInstagramAdminAccess(),
@@ -198,6 +259,7 @@ export function AuthAccessProvider({ children }: AuthAccessProviderProps): React
     }),
     [
       customPermissions,
+      activeEntitlements,
       hasAccessSync,
       hasAnalisesTrimesestraisAdminAccess,
       hasCentralDuvidasAdminAccess,
