@@ -75,6 +75,33 @@ describe('AuthAccessProvider', () => {
     expect(authClient.getPlanInfo).not.toHaveBeenCalled();
   });
 
+  it('does not expose add-on pages when there is no entitlement', () => {
+    useUserMock.mockReturnValue({
+      user: {
+        plan: 'VIP',
+        customPermissions: [],
+        email: 'novipaddon@example.com',
+        activeEntitlements: [],
+      },
+      isLoading: false,
+    });
+
+    let received: ReturnType<typeof useAuthAccess> | undefined;
+
+    const Consumer = () => {
+      received = useAuthAccess();
+      return null;
+    };
+
+    renderToString(
+      <AuthAccessProvider>
+        <Consumer />
+      </AuthAccessProvider>
+    );
+
+    expect(received?.planInfo.pages).not.toContain('internacional-projeto-america');
+  });
+
   it('combines base plan and entitlement permissions', () => {
     useUserMock.mockReturnValue({
       user: {
