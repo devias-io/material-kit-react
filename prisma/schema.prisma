@@ -50,6 +50,7 @@ model User {
   projetoAmerica          UserProjetoAmerica[]
   smallCaps               UserSmallCaps[]
   comments                Comment[]
+  analisesTecnicas        AnaliseTecnica[]
 }
 
 model Purchase {
@@ -141,6 +142,26 @@ model InstagramCadastro {
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("instagram_cadastros")
+}
+
+model AnaliseTecnica {
+  id          String   @id @default(cuid())
+  ticker      String
+  slug        String   @unique
+  titulo      String
+  resumo      String?
+  conteudo    String
+  imagemCapa  String?
+  fonte       String?
+  publicado   Boolean  @default(true)
+  destaque    Boolean  @default(false)
+  autorId     String?
+  autor       User?    @relation(fields: [autorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ticker])
+  @@map("analises_tecnicas")
 }
 
 model HotmartIntegration {
