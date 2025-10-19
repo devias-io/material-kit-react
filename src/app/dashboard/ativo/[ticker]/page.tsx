@@ -9,6 +9,7 @@ import { Download, ExternalLink } from 'lucide-react';
 const AnalisesTrimesestrais = lazy(() => import('@/components/AnalisesTrimesestrais'));
 const ETFHoldings = lazy(() => import('@/components/ETFHoldings'));
 const ETFMetricCards = lazy(() => import('@/components/ETFMetricCards'));
+const TechnicalAnalysisSection = lazy(() => import('@/components/TechnicalAnalysisSection'));
 
 // ✅ IMPORTS BÁSICOS (mantidos síncronos)
 import { useAgendaCorporativaTicker } from '@/hooks/ativo/useAgendaCorporativaTicker';
@@ -3520,6 +3521,13 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
             fallback={<SkeletonLoader variant="card" count={2} />}
           >
             <AnalisesTrimesestrais ticker={ticker} />
+          </LazyComponent>
+
+          <LazyComponent
+            condition={!loadingStages.stage3}
+            fallback={<SkeletonLoader variant="card" count={1} />}
+          >
+            <TechnicalAnalysisSection ticker={ticker} />
           </LazyComponent>
 
           <GerenciadorRelatorios ticker={ticker} />
