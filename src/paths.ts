@@ -30,6 +30,8 @@ export const paths = {
     adminRelatorioSemanal: '/dashboard/admin/relatorio-semanal',
     // 🆕 NOVO: Análises Trimestrais
     adminAnalisesTrimesestrais: '/dashboard/admin/analises-trimesestrais',
+    // 🆕 NOVO: Análises Técnicas
+    adminAnaliseTecnica: '/dashboard/admin/analise-tecnica',
     // 🆕 NOVO: Central de Dúvidas Admin
     adminCentralDuvidas: '/dashboard/admin/central-duvidas',
     // 🆕 NOVO: Analisar Carteiras (substitui Logs do Sistema)
