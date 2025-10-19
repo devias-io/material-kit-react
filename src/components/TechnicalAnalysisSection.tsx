@@ -435,7 +435,7 @@ export default function TechnicalAnalysisSection({
                     </p>
                   </div>
 
-                  <div
+<div
                     style={{
                       borderRadius: isMobile ? '12px' : '14px',
                       background: '#f8fafc',
@@ -465,29 +465,28 @@ export default function TechnicalAnalysisSection({
                         __html: analiseSelecionada.conteudo
                       }}
                     />
-
-                    {analiseSelecionada.conteudo &&
-                      analiseSelecionada.conteudo.length > 480 && (
-                        <button
-                          type="button"
-                          onClick={() => setExpanded((prev) => !prev)}
-                          style={{
-                            marginTop: '16px',
-                            background: '#0f172a',
-                            color: '#f8fafc',
-                            border: 'none',
-                            borderRadius: '999px',
-                            padding: isMobile ? '10px 16px' : '10px 18px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            fontSize: isMobile ? '12px' : '13px',
-                            width: isMobile ? '100%' : 'auto'
-                          }}
-                        >
-                          {expanded ? 'Mostrar menos' : 'Ver análise completa'}
-                        </button>
-                      )}
                   </div>
+
+                  {analiseSelecionada.conteudo &&
+                    analiseSelecionada.conteudo.length > 480 && (
+                      <button
+                        type="button"
+                        onClick={() => setExpanded((prev) => !prev)}
+                        style={{
+                          background: '#0f172a',
+                          color: '#f8fafc',
+                          border: 'none',
+                          borderRadius: '999px',
+                          padding: isMobile ? '10px 16px' : '10px 18px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          fontSize: isMobile ? '12px' : '13px',
+                          width: isMobile ? '100%' : 'auto'
+                        }}
+                      >
+                        {expanded ? 'Mostrar menos' : 'Ver análise completa'}
+                      </button>
+                    )}
                 </div>
               </article>
 
