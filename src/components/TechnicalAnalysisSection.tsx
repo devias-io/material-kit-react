@@ -466,7 +466,9 @@ export default function TechnicalAnalysisSection({
                           background: '#f8fafc',
                           border: '1px solid #e2e8f0',
                           padding: accentBlockPadding,
-                          boxSizing: 'border-box'
+                          boxSizing: 'border-box',
+                          display: 'grid',
+                          gap: isMobile ? '14px' : '16px'
                         }}
                       >
                         <div
@@ -484,6 +486,29 @@ export default function TechnicalAnalysisSection({
                             __html: analiseSelecionada.conteudo
                           }}
                         />
+
+                        {expanded &&
+                          analiseSelecionada.conteudo.length > 480 && (
+                            <button
+                              type="button"
+                              onClick={() => setExpanded(false)}
+                              style={{
+                                background: '#0f172a',
+                                color: '#f8fafc',
+                                border: 'none',
+                                borderRadius: '999px',
+                                padding: isMobile ? '10px 16px' : '10px 18px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                fontSize: isMobile ? '12px' : '13px',
+                                width: isMobile ? '100%' : 'auto',
+                                justifySelf: isMobile ? 'stretch' : 'start'
+                              }}
+                              aria-expanded={expanded}
+                            >
+                              Mostrar menos
+                            </button>
+                          )}
                       </div>
                     )}
                 </div>
