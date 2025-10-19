@@ -475,62 +475,6 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
 
                 <div
                   style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: isMobile ? '14px' : '18px',
-                    color: '#0f172a',
-                    fontSize: isMobile ? '13px' : '14px',
-                  }}
-                >
-                  {analiseSelecionada.autor && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {analiseSelecionada.autor.avatar ? (
-                        <img
-                          src={analiseSelecionada.autor.avatar}
-                          alt={analiseSelecionada.autor.firstName ?? 'Autor da análise'}
-                          style={{
-                            width: isMobile ? '32px' : '36px',
-                            height: isMobile ? '32px' : '36px',
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                          }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: isMobile ? '32px' : '36px',
-                            height: isMobile ? '32px' : '36px',
-                            borderRadius: '50%',
-                            background: '#e2e8f0',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {(analiseSelecionada.autor.firstName?.[0] ?? 'A').toUpperCase()}
-                        </div>
-                      )}
-                      <div style={{ display: 'grid', gap: '2px' }}>
-                        <span style={{ fontWeight: 600 }}>
-                          {[analiseSelecionada.autor.firstName, analiseSelecionada.autor.lastName]
-                            .filter(Boolean)
-                            .join(' ') || analiseSelecionada.autor.email}
-                        </span>
-                        <span style={{ fontSize: '12px', color: '#64748b' }}>Equipe Fatos da Bolsa</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {analiseSelecionada.fonte && (
-                    <span style={{ color: '#64748b' }}>
-                      Fonte: <strong style={{ color: '#0f172a' }}>{analiseSelecionada.fonte}</strong>
-                    </span>
-                  )}
-                </div>
-
-                <div
-                  style={{
                     borderRadius: isMobile ? '12px' : '14px',
                     background: '#f8fafc',
                     border: '1px solid #e2e8f0',
