@@ -627,6 +627,9 @@ export default function TechnicalAnalysisSection({
 
         .technical-analysis-content > * {
           max-width: 100% !important;
+          width: 100% !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
         }
 
         .technical-analysis-content * {
