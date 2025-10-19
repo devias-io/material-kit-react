@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BarChart3, ExternalLink, RefreshCcw, ShieldAlert } from 'lucide-react';
 
 import { useMediaQuery } from '@/hooks/use-media-query';
@@ -39,7 +39,7 @@ const formataData = (dataISO: string) => {
     return data.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: 'long',
-      year: 'numeric',
+      year: 'numeric'
     });
   } catch (error) {
     console.error('Erro ao formatar data de análise técnica:', error);
@@ -64,13 +64,14 @@ const fallbackResumo = (conteudo: string, limite = 280) => {
   return `${texto.slice(0, limite).trim()}...`;
 };
 
-export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSectionProps) {
+export default function TechnicalAnalysisSection({
+  ticker
+}: TechnicalAnalysisSectionProps) {
   const [analises, setAnalises] = useState<AnaliseTecnica[]>([]);
   const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [expanded, setExpanded] = useState<boolean>(false);
-  const contentRef = useRef<HTMLDivElement>(null);
   const isTablet = useMediaQuery('(max-width: 1024px)');
   const isMobile = useMediaQuery('(max-width: 640px)');
 
@@ -83,22 +84,36 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
     setError('');
 
     try {
-      const params = new URLSearchParams({ ticker, publicado: 'true', limit: '5' });
-      const response = await fetch(`/api/analises-tecnicas?${params.toString()}`);
+      const params = new URLSearchParams({
+        ticker,
+        publicado: 'true',
+        limit: '5'
+      });
+      const response = await fetch(
+        `/api/analises-tecnicas?${params.toString()}`
+      );
 
       if (!response.ok) {
-        throw new Error(`Falha ao carregar análises técnicas (${response.status})`);
+        throw new Error(
+          `Falha ao carregar análises técnicas (${response.status})`
+        );
       }
 
       const data = await response.json();
-      const lista: AnaliseTecnica[] = Array.isArray(data?.analises) ? data.analises : [];
+      const lista: AnaliseTecnica[] = Array.isArray(data?.analises)
+        ? data.analises
+        : [];
 
       setAnalises(lista);
       setSelecionadaId(lista[0]?.id ?? null);
       setExpanded(false);
     } catch (err) {
       console.error('Erro ao carregar análises técnicas:', err);
-      setError(err instanceof Error ? err.message : 'Não foi possível carregar a análise técnica.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Não foi possível carregar a análise técnica.'
+      );
     } finally {
       setLoading(false);
     }
@@ -113,525 +128,631 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
       return analises[0] ?? null;
     }
 
-    return analises.find(item => item.id === selecionadaId) ?? analises[0] ?? null;
+    return (
+      analises.find((item) => item.id === selecionadaId) ?? analises[0] ?? null
+    );
   }, [analises, selecionadaId]);
 
-useEffect(() => {
-  if (!contentRef.current) {
-    return;
-  }
-
-  const container = contentRef.current;
-
-  const images = container.querySelectorAll<HTMLImageElement>('img');
-  images.forEach(img => {
-    img.style.maxWidth = '100%';
-    img.style.width = '100%';
-    img.style.height = 'auto';
-    img.style.display = 'block';
-    img.style.margin = '16px auto';
-    img.style.borderRadius = '12px';
-    img.style.objectFit = 'contain';
-    img.style.boxSizing = 'border-box';  // ← NOVO
-  });
-
-  const tables = container.querySelectorAll<HTMLTableElement>('table');
-  tables.forEach(table => {
-    table.style.width = '100%';
-    table.style.maxWidth = '100%';  // ← NOVO
-    table.style.borderCollapse = 'collapse';
-    table.style.display = 'block';
-    table.style.boxSizing = 'border-box';
-
-    if (table.dataset.taWrapped !== 'true') {
-      const wrapper = document.createElement('div');
-      wrapper.style.overflowX = 'auto';
-      wrapper.style.setProperty('-webkit-overflow-scrolling', 'touch');
-      wrapper.style.margin = isMobile ? '12px 0' : '16px 0';
-      wrapper.style.borderRadius = '12px';
-      wrapper.style.border = '1px solid #e2e8f0';
-      wrapper.style.background = '#ffffff';
-      wrapper.style.padding = isMobile ? '0 8px' : '0 12px';
-      wrapper.style.boxSizing = 'border-box';
-      wrapper.style.maxWidth = '100%';  // ← NOVO
-      wrapper.dataset.taWrapper = 'true';
-
-      const parent = table.parentElement;
-      if (parent) {
-        parent.insertBefore(wrapper, table);
-        wrapper.appendChild(table);
-        table.dataset.taWrapped = 'true';
-      }
-    }
-  });
-
-  const iframes = container.querySelectorAll<HTMLIFrameElement>('iframe');
-  iframes.forEach(iframe => {
-    iframe.style.width = '100%';
-    iframe.style.minHeight = isMobile ? '220px' : '320px';
-    iframe.style.border = 'none';
-    iframe.style.borderRadius = '12px';
-    iframe.style.boxSizing = 'border-box';
-    iframe.setAttribute('allowfullscreen', 'true');
-  });
-
-  const paragraphs = container.querySelectorAll<HTMLParagraphElement>('p');
-  paragraphs.forEach(paragraph => {
-    if (!paragraph.style.lineHeight) {
-      paragraph.style.lineHeight = '1.7';
-    }
-
-    if (!paragraph.style.marginBottom) {
-      paragraph.style.marginBottom = '1rem';
-    }
-    
-    // ← NOVOS estilos para parágrafos
-    paragraph.style.maxWidth = '100%';
-    paragraph.style.overflowWrap = 'break-word';
-    paragraph.style.wordBreak = 'break-word';
-  });
-
-  // ← NOVO BLOCO: força limites em TODOS os elementos
-  const allElements = container.querySelectorAll<HTMLElement>('*');
-  allElements.forEach(element => {
-    if (!element.style.maxWidth) {
-      element.style.maxWidth = '100%';
-    }
-    if (!element.style.boxSizing) {
-      element.style.boxSizing = 'border-box';
-    }
-  });
-}, [analiseSelecionada, expanded, isMobile]);
-  
-  const headerPadding = isMobile ? '20px 18px' : isTablet ? '24px 24px' : '28px 32px';
-  const containerPadding = isMobile ? '20px 16px' : isTablet ? '24px 24px' : '28px 32px';
+  const headerPadding = isMobile
+    ? '20px 18px'
+    : isTablet
+      ? '24px 24px'
+      : '28px 32px';
+  const containerPadding = isMobile
+    ? '20px 16px'
+    : isTablet
+      ? '24px 24px'
+      : '28px 32px';
   const articlePadding = isMobile ? '18px' : isTablet ? '22px' : '24px';
   const accentBlockPadding = isMobile ? '16px' : '20px';
   const supplementaryPadding = isMobile ? '18px' : '20px';
-  const sectionMaxWidth = isTablet ? '100%' : '960px';
 
   if (!ticker) {
     return null;
   }
-
-return (
-  <section
-    style={{
-      margin: isMobile ? '16px 12px 24px 12px' : '24px auto 32px',
-      width: isMobile ? 'calc(100% - 24px)' : '100%',
-      maxWidth: sectionMaxWidth,
-      borderRadius: isMobile ? '16px' : '18px',
-      background: '#ffffff',
-      border: '1px solid #e2e8f0',
-      boxShadow: '0 12px 32px rgba(15, 23, 42, 0.08)',
-      overflow: 'hidden',
-      boxSizing: 'border-box',
-    }}
-  >
-      <header
+  return (
+    <>
+      <section
         style={{
-          display: 'flex',
-          flexDirection: isTablet ? 'column' : 'row',
-          alignItems: isTablet ? 'stretch' : 'center',
-          justifyContent: isTablet ? 'flex-start' : 'space-between',
-          gap: '18px',
-          padding: headerPadding,
-          background: 'linear-gradient(135deg, #111827 0%, #1f2937 60%, #111827 100%)',
-          color: '#f8fafc',
-          boxSizing: 'border-box',
+          margin: isMobile ? '16px 0 24px' : '24px 0 32px',
+          width: '100%',
+          borderRadius: isMobile ? '16px' : '18px',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 12px 32px rgba(15, 23, 42, 0.08)',
+          overflow: 'hidden',
+          boxSizing: 'border-box'
         }}
       >
-        <div
+        <header
           style={{
             display: 'flex',
-            gap: isMobile ? '12px' : '16px',
-            alignItems: isMobile ? 'flex-start' : 'center',
-            flexWrap: 'wrap',
-          }}
-        >
-          <div
-            style={{
-              width: isMobile ? '40px' : '48px',
-              height: isMobile ? '40px' : '48px',
-              borderRadius: isMobile ? '10px' : '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(77, 251, 1, 0.12)',
-              color: '#4dfb01',
-            }}
-          >
-            <BarChart3 size={isMobile ? 22 : 26} strokeWidth={1.6} />
-          </div>
-          <div>
-            <p
-              style={{
-                margin: 0,
-                fontSize: isMobile ? '12px' : '13px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.12em',
-                color: 'rgba(248, 250, 252, 0.7)',
-                fontWeight: 600,
-              }}
-            >
-              Análise técnica
-            </p>
-            <h2
-              style={{
-                margin: isMobile ? '2px 0 0 0' : '4px 0 0 0',
-                fontSize: isMobile ? 'clamp(20px, 6vw, 26px)' : '28px',
-                fontWeight: 700,
-                letterSpacing: '-0.01em',
-              }}
-            >
-              Insights profissionais para {ticker.toUpperCase()}
-            </h2>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={carregarAnalises}
-          style={{
-            background: 'rgba(248, 250, 252, 0.08)',
-            border: '1px solid rgba(248, 250, 252, 0.18)',
+            flexDirection: isTablet ? 'column' : 'row',
+            alignItems: isTablet ? 'stretch' : 'center',
+            justifyContent: isTablet ? 'flex-start' : 'space-between',
+            gap: '18px',
+            padding: headerPadding,
+            background:
+              'linear-gradient(135deg, #111827 0%, #1f2937 60%, #111827 100%)',
             color: '#f8fafc',
-            borderRadius: '10px',
-            padding: isMobile ? '10px 14px' : '10px 16px',
-            fontSize: isMobile ? '12px' : '13px',
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease-in-out',
-            justifyContent: 'center',
-            width: isTablet ? '100%' : 'auto',
+            boxSizing: 'border-box'
           }}
         >
-          <RefreshCcw size={16} /> Atualizar
-        </button>
-      </header>
-
-      <div
-        style={{
-          padding: containerPadding,
-          display: 'grid',
-          gap: isMobile ? '18px' : '24px',
-          boxSizing: 'border-box',
-        }}
-      >
-        {loading ? (
-          <div style={{ display: 'grid', gap: '18px' }}>
-            <div
-              style={{
-                height: isMobile ? '180px' : '220px',
-                borderRadius: '16px',
-                background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%)',
-                backgroundSize: '400% 100%',
-                animation: 'pulse 1.6s ease infinite',
-              }}
-            />
-            <div
-              style={{
-                height: '18px',
-                width: isMobile ? '160px' : '220px',
-                borderRadius: '6px',
-                background: '#e2e8f0',
-              }}
-            />
-            <div
-              style={{
-                height: '14px',
-                width: isMobile ? '220px' : '320px',
-                borderRadius: '6px',
-                background: '#e2e8f0',
-              }}
-            />
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <div style={{ flex: 1, height: '12px', background: '#e2e8f0', borderRadius: '6px' }} />
-              <div style={{ flex: 1, height: '12px', background: '#e2e8f0', borderRadius: '6px' }} />
-            </div>
-          </div>
-        ) : error ? (
           <div
             style={{
               display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              padding: isMobile ? '20px' : '24px',
-              border: '1px solid #fecaca',
-              borderRadius: isMobile ? '14px' : '16px',
-              background: '#fef2f2',
-              color: '#b91c1c',
+              gap: isMobile ? '12px' : '16px',
+              alignItems: isMobile ? 'flex-start' : 'center',
+              flexWrap: 'wrap'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <ShieldAlert size={20} />
-              <strong>Não foi possível carregar a análise técnica</strong>
-            </div>
-            <span>{error}</span>
-          </div>
-        ) : !analiseSelecionada ? (
-          <div
-            style={{
-              padding: isMobile ? '24px' : '32px',
-              border: '2px dashed #cbd5f5',
-              borderRadius: isMobile ? '14px' : '16px',
-              background: '#f8fafc',
-              textAlign: 'center',
-              color: '#475569',
-            }}
-          >
-            <p style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
-              Nenhuma análise técnica publicada para este ativo ainda
-            </p>
-            <p style={{ margin: 0, fontSize: '14px' }}>
-              As análises cadastradas pelo time aparecem automaticamente aqui.
-            </p>
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gap: isMobile ? '20px' : '24px' }}>
-            <article
+            <div
               style={{
-                borderRadius: isMobile ? '14px' : '16px',
-                border: '1px solid #e2e8f0',
-                overflow: 'hidden',
+                width: isMobile ? '40px' : '48px',
+                height: isMobile ? '40px' : '48px',
+                borderRadius: isMobile ? '10px' : '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(77, 251, 1, 0.12)',
+                color: '#4dfb01'
               }}
             >
-              {analiseSelecionada.imagemCapa && (
-                <div style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
-                  <img
-                    src={analiseSelecionada.imagemCapa}
-                    alt={`Imagem ilustrativa da análise técnica ${analiseSelecionada.titulo}`}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      maxHeight: isMobile ? '220px' : isTablet ? '300px' : '360px',
-                      objectFit: 'cover',
-                    }}
-                  />
-                  {analiseSelecionada.destaque && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: isMobile ? '12px' : '18px',
-                        right: isMobile ? '12px' : '18px',
-                        background: 'rgba(77, 251, 1, 0.85)',
-                        color: '#0f172a',
-                        padding: isMobile ? '5px 10px' : '6px 12px',
-                        borderRadius: '999px',
-                        fontSize: isMobile ? '11px' : '12px',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                      }}
-                    >
-                      Destaque
-                    </span>
-                  )}
-                </div>
-              )}
-
-              <div
+              <BarChart3 size={isMobile ? 22 : 26} strokeWidth={1.6} />
+            </div>
+            <div>
+              <p
                 style={{
-                  padding: articlePadding,
-                  display: 'grid',
-                  gap: isMobile ? '16px' : '18px',
-                  boxSizing: 'border-box',
+                  margin: 0,
+                  fontSize: isMobile ? '12px' : '13px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                  color: 'rgba(248, 250, 252, 0.7)',
+                  fontWeight: 600
                 }}
               >
+                Análise técnica
+              </p>
+              <h2
+                style={{
+                  margin: isMobile ? '2px 0 0 0' : '4px 0 0 0',
+                  fontSize: isMobile ? 'clamp(20px, 6vw, 26px)' : '28px',
+                  fontWeight: 700,
+                  letterSpacing: '-0.01em'
+                }}
+              >
+                Insights profissionais para {ticker.toUpperCase()}
+              </h2>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={carregarAnalises}
+            style={{
+              background: 'rgba(248, 250, 252, 0.08)',
+              border: '1px solid rgba(248, 250, 252, 0.18)',
+              color: '#f8fafc',
+              borderRadius: '10px',
+              padding: isMobile ? '10px 14px' : '10px 16px',
+              fontSize: isMobile ? '12px' : '13px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease-in-out',
+              justifyContent: 'center',
+              width: isTablet ? '100%' : 'auto'
+            }}
+          >
+            <RefreshCcw size={16} /> Atualizar
+          </button>
+        </header>
+        <div
+          style={{
+            padding: containerPadding,
+            display: 'grid',
+            gap: isMobile ? '18px' : '24px',
+            boxSizing: 'border-box'
+          }}
+        >
+          {loading ? (
+            <div style={{ display: 'grid', gap: '18px' }}>
+              <div
+                style={{
+                  height: isMobile ? '180px' : '220px',
+                  borderRadius: '16px',
+                  background:
+                    'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%)',
+                  backgroundSize: '400% 100%',
+                  animation: 'pulse 1.6s ease infinite'
+                }}
+              />
+              <div
+                style={{
+                  height: '18px',
+                  width: isMobile ? '160px' : '220px',
+                  borderRadius: '6px',
+                  background: '#e2e8f0'
+                }}
+              />
+              <div
+                style={{
+                  height: '14px',
+                  width: isMobile ? '220px' : '320px',
+                  borderRadius: '6px',
+                  background: '#e2e8f0'
+                }}
+              />
+              <div style={{ display: 'flex', gap: '12px' }}>
                 <div
                   style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: isMobile ? '10px' : '12px',
-                    alignItems: 'center',
+                    flex: 1,
+                    height: '12px',
+                    background: '#e2e8f0',
+                    borderRadius: '6px'
+                  }}
+                />
+                <div
+                  style={{
+                    flex: 1,
+                    height: '12px',
+                    background: '#e2e8f0',
+                    borderRadius: '6px'
+                  }}
+                />
+              </div>
+            </div>
+          ) : error ? (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                padding: isMobile ? '20px' : '24px',
+                border: '1px solid #fecaca',
+                borderRadius: isMobile ? '14px' : '16px',
+                background: '#fef2f2',
+                color: '#b91c1c'
+              }}
+            >
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+              >
+                <ShieldAlert size={20} />
+                <strong>Não foi possível carregar a análise técnica</strong>
+              </div>
+              <span>{error}</span>
+            </div>
+          ) : !analiseSelecionada ? (
+            <div
+              style={{
+                padding: isMobile ? '24px' : '32px',
+                border: '2px dashed #cbd5f5',
+                borderRadius: isMobile ? '14px' : '16px',
+                background: '#f8fafc',
+                textAlign: 'center',
+                color: '#475569'
+              }}
+            >
+              <p
+                style={{
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  marginBottom: '8px'
+                }}
+              >
+                Nenhuma análise técnica publicada para este ativo ainda
+              </p>
+              <p style={{ margin: 0, fontSize: '14px' }}>
+                As análises cadastradas pelo time aparecem automaticamente aqui.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: isMobile ? '20px' : '24px' }}>
+              <article
+                style={{
+                  borderRadius: isMobile ? '14px' : '16px',
+                  border: '1px solid #e2e8f0',
+                  overflow: 'hidden'
+                }}
+              >
+                {analiseSelecionada.imagemCapa && (
+                  <div
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <img
+                      src={analiseSelecionada.imagemCapa}
+                      alt={`Imagem ilustrativa da análise técnica ${analiseSelecionada.titulo}`}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        maxHeight: isMobile
+                          ? '220px'
+                          : isTablet
+                            ? '300px'
+                            : '360px',
+                        objectFit: 'cover'
+                      }}
+                    />
+                    {analiseSelecionada.destaque && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: isMobile ? '12px' : '18px',
+                          right: isMobile ? '12px' : '18px',
+                          background: 'rgba(77, 251, 1, 0.85)',
+                          color: '#0f172a',
+                          padding: isMobile ? '5px 10px' : '6px 12px',
+                          borderRadius: '999px',
+                          fontSize: isMobile ? '11px' : '12px',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.08em'
+                        }}
+                      >
+                        Destaque
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    padding: articlePadding,
+                    display: 'grid',
+                    gap: isMobile ? '16px' : '18px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: isMobile ? '10px' : '12px',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '6px 12px',
+                        borderRadius: '999px',
+                        background: '#f1f5f9',
+                        color: '#0f172a',
+                        fontWeight: 600,
+                        fontSize: '12px',
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase'
+                      }}
+                    >
+                      {ticker.toUpperCase()}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: isMobile ? '12px' : '13px',
+                        color: '#64748b'
+                      }}
+                    >
+                      Atualizado em {formataData(analiseSelecionada.updatedAt)}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3
+                      style={{
+                        fontSize: isMobile ? 'clamp(20px, 6vw, 24px)' : '24px',
+                        lineHeight: 1.3,
+                        margin: 0,
+                        color: '#0f172a',
+                        fontWeight: 700
+                      }}
+                    >
+                      {analiseSelecionada.titulo}
+                    </h3>
+                    <p
+                      style={{
+                        margin: '12px 0 0 0',
+                        color: '#475569',
+                        fontSize: isMobile ? '15px' : '16px',
+                        lineHeight: 1.6
+                      }}
+                    >
+                      {analiseSelecionada.resumo ||
+                        fallbackResumo(analiseSelecionada.conteudo)}
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      borderRadius: isMobile ? '12px' : '14px',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      padding: accentBlockPadding,
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <div
+                      className="technical-analysis-content"
+                      style={{
+                        display: expanded ? 'block' : '-webkit-box',
+                        WebkitLineClamp: expanded ? 'none' : 6,
+                        WebkitBoxOrient: 'vertical',
+                        overflowY: expanded ? 'visible' : 'hidden',
+                        overflowX: 'hidden',
+                        color: '#1e293b',
+                        lineHeight: 1.7,
+                        fontSize: isMobile ? '14px' : '15px',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'anywhere',
+                        maxWidth: '100%',
+                        width: '100%',
+                        paddingBottom: expanded ? '4px' : '0'
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: analiseSelecionada.conteudo
+                      }}
+                    />
+
+                    {analiseSelecionada.conteudo &&
+                      analiseSelecionada.conteudo.length > 480 && (
+                        <button
+                          type="button"
+                          onClick={() => setExpanded((prev) => !prev)}
+                          style={{
+                            marginTop: '16px',
+                            background: '#0f172a',
+                            color: '#f8fafc',
+                            border: 'none',
+                            borderRadius: '999px',
+                            padding: isMobile ? '10px 16px' : '10px 18px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            fontSize: isMobile ? '12px' : '13px',
+                            width: isMobile ? '100%' : 'auto'
+                          }}
+                        >
+                          {expanded ? 'Mostrar menos' : 'Ver análise completa'}
+                        </button>
+                      )}
+                  </div>
+                </div>
+              </article>
+
+              {analises.length > 1 && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: isMobile ? '14px' : '16px',
+                    padding: supplementaryPadding,
+                    borderRadius: isMobile ? '14px' : '16px',
+                    border: '1px solid #e2e8f0',
+                    background: '#f8fafc',
+                    boxSizing: 'border-box'
                   }}
                 >
                   <span
                     style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '6px 12px',
-                      borderRadius: '999px',
-                      background: '#f1f5f9',
-                      color: '#0f172a',
+                      fontSize: isMobile ? '13px' : '14px',
                       fontWeight: 600,
-                      fontSize: '12px',
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
+                      color: '#1e293b'
                     }}
                   >
-                    {ticker.toUpperCase()}
+                    Outras leituras técnicas recentes
                   </span>
-                  <span style={{ fontSize: isMobile ? '12px' : '13px', color: '#64748b' }}>
-                    Atualizado em {formataData(analiseSelecionada.updatedAt)}
-                  </span>
-                </div>
 
-                <div>
-                  <h3
-                    style={{
-                      fontSize: isMobile ? 'clamp(20px, 6vw, 24px)' : '24px',
-                      lineHeight: 1.3,
-                      margin: 0,
-                      color: '#0f172a',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {analiseSelecionada.titulo}
-                  </h3>
-                  <p
-                    style={{
-                      margin: '12px 0 0 0',
-                      color: '#475569',
-                      fontSize: isMobile ? '15px' : '16px',
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {analiseSelecionada.resumo || fallbackResumo(analiseSelecionada.conteudo)}
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    borderRadius: isMobile ? '12px' : '14px',
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    padding: accentBlockPadding,
-                    boxSizing: 'border-box',
-                  }}
-                >
                   <div
-                    ref={contentRef}
                     style={{
-                      display: expanded ? 'block' : '-webkit-box',
-                      WebkitLineClamp: expanded ? 'none' : 6,
-                      WebkitBoxOrient: 'vertical',
-                      overflowY: expanded ? 'visible' : 'hidden',
-                      overflowX: 'hidden',
-                      color: '#1e293b',
-                      lineHeight: 1.7,
-                      fontSize: isMobile ? '14px' : '15px',
-                      wordBreak: 'break-word',
-                      overflowWrap: 'anywhere',
-                      maxWidth: '100%',
-                      width: '100%',
-                      paddingBottom: expanded ? '4px' : '0',
+                      display: 'grid',
+                      gap: isMobile ? '10px' : '12px',
+                      gridTemplateColumns: isMobile
+                        ? '1fr'
+                        : 'repeat(auto-fit, minmax(220px, 1fr))'
                     }}
-                    dangerouslySetInnerHTML={{ __html: analiseSelecionada.conteudo }}
-                  />
-
-                  {analiseSelecionada.conteudo && analiseSelecionada.conteudo.length > 480 && (
-                    <button
-                      type="button"
-                      onClick={() => setExpanded(prev => !prev)}
-                      style={{
-                        marginTop: '16px',
-                        background: '#0f172a',
-                        color: '#f8fafc',
-                        border: 'none',
-                        borderRadius: '999px',
-                        padding: isMobile ? '10px 16px' : '10px 18px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        fontSize: isMobile ? '12px' : '13px',
-                        width: isMobile ? '100%' : 'auto',
-                      }}
-                    >
-                      {expanded ? 'Mostrar menos' : 'Ver análise completa'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </article>
-
-            {analises.length > 1 && (
-              <div
-                style={{
-                  display: 'grid',
-                  gap: isMobile ? '14px' : '16px',
-                  padding: supplementaryPadding,
-                  borderRadius: isMobile ? '14px' : '16px',
-                  border: '1px solid #e2e8f0',
-                  background: '#f8fafc',
-                  boxSizing: 'border-box',
-                }}
-              >
-                <span style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 600, color: '#1e293b' }}>
-                  Outras leituras técnicas recentes
-                </span>
-
-                <div
-                  style={{
-                    display: 'grid',
-                    gap: isMobile ? '10px' : '12px',
-                    gridTemplateColumns: isMobile
-                      ? '1fr'
-                      : 'repeat(auto-fit, minmax(220px, 1fr))',
-                  }}
-                >
-                  {analises.map(analise => (
-                    <button
-                      key={analise.id}
-                      type="button"
-                      onClick={() => {
-                        setSelecionadaId(analise.id);
-                        setExpanded(false);
-                      }}
-                      style={{
-                        textAlign: 'left',
-                        borderRadius: isMobile ? '12px' : '14px',
-                        padding: isMobile ? '14px' : '16px',
-                        border:
-                          analiseSelecionada?.id === analise.id
-                            ? '2px solid rgba(77, 251, 1, 0.6)'
-                            : '1px solid transparent',
-                        background:
-                          analiseSelecionada?.id === analise.id ? '#ecfccb' : 'rgba(15, 23, 42, 0.04)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease-in-out',
-                        display: 'grid',
-                        gap: isMobile ? '6px' : '8px',
-                      }}
-                    >
-                      <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#64748b' }}>
-                        {formataData(analise.updatedAt)}
-                      </span>
-                      <strong
+                  >
+                    {analises.map((analise) => (
+                      <button
+                        key={analise.id}
+                        type="button"
+                        onClick={() => {
+                          setSelecionadaId(analise.id);
+                          setExpanded(false);
+                        }}
                         style={{
-                          fontSize: isMobile ? '14px' : '15px',
-                          color: '#0f172a',
-                          lineHeight: 1.4,
+                          textAlign: 'left',
+                          borderRadius: isMobile ? '12px' : '14px',
+                          padding: isMobile ? '14px' : '16px',
+                          border:
+                            analiseSelecionada?.id === analise.id
+                              ? '2px solid rgba(77, 251, 1, 0.6)'
+                              : '1px solid transparent',
+                          background:
+                            analiseSelecionada?.id === analise.id
+                              ? '#ecfccb'
+                              : 'rgba(15, 23, 42, 0.04)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease-in-out',
+                          display: 'grid',
+                          gap: isMobile ? '6px' : '8px'
                         }}
                       >
-                        {analise.titulo}
-                      </strong>
-                      <span style={{ fontSize: isMobile ? '12px' : '13px', color: '#475569' }}>
-                        {analise.resumo || fallbackResumo(analise.conteudo, 120)}
-                      </span>
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: isMobile ? '11px' : '12px',
-                          color: '#0f172a',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Ler análise <ExternalLink size={14} />
-                      </span>
-                    </button>
-                  ))}
+                        <span
+                          style={{
+                            fontSize: isMobile ? '11px' : '12px',
+                            color: '#64748b'
+                          }}
+                        >
+                          {formataData(analise.updatedAt)}
+                        </span>
+                        <strong
+                          style={{
+                            fontSize: isMobile ? '14px' : '15px',
+                            color: '#0f172a',
+                            lineHeight: 1.4
+                          }}
+                        >
+                          {analise.titulo}
+                        </strong>
+                        <span
+                          style={{
+                            fontSize: isMobile ? '12px' : '13px',
+                            color: '#475569'
+                          }}
+                        >
+                          {analise.resumo ||
+                            fallbackResumo(analise.conteudo, 120)}
+                        </span>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: isMobile ? '11px' : '12px',
+                            color: '#0f172a',
+                            fontWeight: 600
+                          }}
+                        >
+                          Ler análise <ExternalLink size={14} />
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </section>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+      <style jsx global>{`
+        .technical-analysis-content {
+          width: 100%;
+          max-width: 100%;
+          overflow-wrap: anywhere;
+        }
+
+        .technical-analysis-content > * {
+          max-width: 100% !important;
+        }
+
+        .technical-analysis-content * {
+          box-sizing: border-box;
+        }
+
+        .technical-analysis-content p {
+          line-height: 1.7;
+          margin-bottom: 1rem;
+        }
+
+        .technical-analysis-content img,
+        .technical-analysis-content video,
+        .technical-analysis-content canvas,
+        .technical-analysis-content svg {
+          width: 100% !important;
+          max-width: 100% !important;
+          height: auto !important;
+          display: block;
+          margin: 16px auto;
+          border-radius: 12px;
+        }
+
+        .technical-analysis-content figure {
+          width: 100% !important;
+          max-width: 100% !important;
+          margin: 16px auto;
+        }
+
+        .technical-analysis-content iframe {
+          width: 100% !important;
+          max-width: 100% !important;
+          border: none;
+          border-radius: 12px;
+          min-height: 320px;
+          display: block;
+          margin: 16px auto;
+        }
+
+        .technical-analysis-content table {
+          width: 100% !important;
+          max-width: 100% !important;
+          border-collapse: collapse;
+          display: block;
+          overflow-x: auto;
+          border-radius: 12px;
+          background: #ffffff;
+          margin: 16px 0;
+          padding: 0 12px;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .technical-analysis-content table th,
+        .technical-analysis-content table td {
+          padding: 8px 12px;
+          border: 1px solid #e2e8f0;
+          text-align: left;
+          font-size: 0.95em;
+        }
+
+        .technical-analysis-content pre,
+        .technical-analysis-content code {
+          white-space: pre-wrap;
+          word-break: break-word;
+          overflow-x: auto;
+        }
+
+        .technical-analysis-content blockquote {
+          border-left: 4px solid #0f172a;
+          padding-left: 16px;
+          margin: 16px 0;
+          background: rgba(15, 23, 42, 0.04);
+          color: #0f172a;
+        }
+
+        .technical-analysis-content ul,
+        .technical-analysis-content ol {
+          padding-left: 20px;
+        }
+
+        .technical-analysis-content a {
+          color: #0f172a;
+          text-decoration: underline;
+          word-break: break-word;
+        }
+
+        .technical-analysis-content figcaption {
+          margin-top: 8px;
+          font-size: 0.9em;
+          color: #475569;
+          text-align: center;
+        }
+
+        @media (max-width: 640px) {
+          .technical-analysis-content img,
+          .technical-analysis-content video,
+          .technical-analysis-content canvas,
+          .technical-analysis-content svg {
+            margin: 12px auto;
+            border-radius: 10px;
+          }
+
+          .technical-analysis-content iframe {
+            min-height: 220px;
+            margin: 12px auto;
+          }
+
+          .technical-analysis-content table {
+            border-radius: 10px;
+            padding: 0 8px;
+            margin: 12px 0;
+          }
+        }
+      `}</style>
+    </>
   );
 }
