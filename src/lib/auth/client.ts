@@ -45,7 +45,7 @@ const planPermissions = {
     displayName: 'Projeto América',
     isAdmin: false,
     pages: [
-      'internacional', 'internacional-etfs', 'internacional-stocks', 'internacional-dividendos', 'internacional-projeto-america',
+      'internacional', 'internacional-projeto-america',
       'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-lives', 'recursos-planilhas', 'recursos-telegram',
       'recursos-reserva'
     ]
