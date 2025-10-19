@@ -60,7 +60,7 @@ export const PLAN_PERMISSIONS = {
     isAdmin: false,
     pages: [
       'relatorio-semanal',
-      'internacional', 'internacional-etfs', 'internacional-stocks', 'internacional-dividendos', 'internacional-projeto-america',
+      'internacional', 'internacional-projeto-america',
       'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-lives', 'recursos-planilhas', 'recursos-telegram',
       'recursos-reserva', 'recursos-suporte'
     ]
