@@ -86,13 +86,22 @@ export async function PUT(
     }
 
     if (!slug) {
-      slug = ensureSlug(current.slug, Date.now());
+      const baseSlugSource =
+        current.slug && current.slug.trim().length > 0
+          ? current.slug
+          : current.titulo || current.ticker || current.id;
+      slug = ensureSlug(baseSlugSource, Date.now());
     } else if (slug !== current.slug) {
       const slugExists = await prisma.analiseTecnica.findUnique({ where: { slug } });
       if (slugExists && slugExists.id !== current.id) {
         slug = ensureSlug(slug, Date.now());
       }
     }
+
+    const nextAutorId =
+      typeof current.autorId === 'string' && current.autorId.trim().length > 0
+        ? current.autorId
+        : session.user.id ?? null;
 
     const analiseAtualizada = await prisma.analiseTecnica.update({
       where: { id },
@@ -106,7 +115,7 @@ export async function PUT(
         destaque: typeof destaque === 'boolean' ? destaque : current.destaque,
         fonte: fonte !== undefined ? fonte : current.fonte,
         slug,
-        autorId: current.autorId ?? session.user.id,
+        ...(nextAutorId ? { autorId: nextAutorId } : {}),
       },
       include: {
         autor: {
