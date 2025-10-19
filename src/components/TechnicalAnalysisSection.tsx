@@ -126,16 +126,50 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
     const images = container.querySelectorAll<HTMLImageElement>('img');
     images.forEach(img => {
       img.style.maxWidth = '100%';
+      img.style.width = '100%';
       img.style.height = 'auto';
       img.style.display = 'block';
       img.style.margin = '16px auto';
       img.style.borderRadius = '12px';
+      img.style.objectFit = 'contain';
     });
 
     const tables = container.querySelectorAll<HTMLTableElement>('table');
     tables.forEach(table => {
       table.style.width = '100%';
       table.style.borderCollapse = 'collapse';
+      table.style.display = 'block';
+      table.style.boxSizing = 'border-box';
+
+      if (table.dataset.taWrapped !== 'true') {
+        const wrapper = document.createElement('div');
+        wrapper.style.overflowX = 'auto';
+        wrapper.style.setProperty('-webkit-overflow-scrolling', 'touch');
+        wrapper.style.margin = isMobile ? '12px 0' : '16px 0';
+        wrapper.style.borderRadius = '12px';
+        wrapper.style.border = '1px solid #e2e8f0';
+        wrapper.style.background = '#ffffff';
+        wrapper.style.padding = isMobile ? '0 8px' : '0 12px';
+        wrapper.style.boxSizing = 'border-box';
+        wrapper.dataset.taWrapper = 'true';
+
+        const parent = table.parentElement;
+        if (parent) {
+          parent.insertBefore(wrapper, table);
+          wrapper.appendChild(table);
+          table.dataset.taWrapped = 'true';
+        }
+      }
+    });
+
+    const iframes = container.querySelectorAll<HTMLIFrameElement>('iframe');
+    iframes.forEach(iframe => {
+      iframe.style.width = '100%';
+      iframe.style.minHeight = isMobile ? '220px' : '320px';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '12px';
+      iframe.style.boxSizing = 'border-box';
+      iframe.setAttribute('allowfullscreen', 'true');
     });
 
     const paragraphs = container.querySelectorAll<HTMLParagraphElement>('p');
@@ -148,13 +182,14 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
         paragraph.style.marginBottom = '1rem';
       }
     });
-  }, [analiseSelecionada, expanded]);
+  }, [analiseSelecionada, expanded, isMobile]);
 
   const headerPadding = isMobile ? '20px 18px' : isTablet ? '24px 24px' : '28px 32px';
-  const containerPadding = isMobile ? '20px 18px' : isTablet ? '24px 24px' : '28px 32px';
+  const containerPadding = isMobile ? '20px 16px' : isTablet ? '24px 24px' : '28px 32px';
   const articlePadding = isMobile ? '18px' : isTablet ? '22px' : '24px';
   const accentBlockPadding = isMobile ? '16px' : '20px';
   const supplementaryPadding = isMobile ? '18px' : '20px';
+  const sectionMaxWidth = isTablet ? '100%' : '960px';
 
   if (!ticker) {
     return null;
@@ -163,13 +198,15 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
   return (
     <section
       style={{
-        marginTop: isMobile ? '16px' : '24px',
-        marginBottom: isMobile ? '24px' : '32px',
+        margin: isMobile ? '16px auto 24px' : '24px auto 32px',
+        width: '100%',
+        maxWidth: sectionMaxWidth,
         borderRadius: isMobile ? '16px' : '18px',
         background: '#ffffff',
         border: '1px solid #e2e8f0',
         boxShadow: '0 12px 32px rgba(15, 23, 42, 0.08)',
         overflow: 'hidden',
+        boxSizing: 'border-box',
       }}
     >
       <header
@@ -507,12 +544,14 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                       WebkitLineClamp: expanded ? 'none' : 6,
                       WebkitBoxOrient: 'vertical',
                       overflowY: expanded ? 'visible' : 'hidden',
-                      overflowX: 'auto',
+                      overflowX: 'hidden',
                       color: '#1e293b',
                       lineHeight: 1.7,
                       fontSize: isMobile ? '14px' : '15px',
                       wordBreak: 'break-word',
+                      overflowWrap: 'anywhere',
                       maxWidth: '100%',
+                      width: '100%',
                       paddingBottom: expanded ? '4px' : '0',
                     }}
                     dangerouslySetInnerHTML={{ __html: analiseSelecionada.conteudo }}
