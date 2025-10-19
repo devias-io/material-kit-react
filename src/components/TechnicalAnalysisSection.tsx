@@ -195,20 +195,20 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
     return null;
   }
 
-  return (
-    <section
-      style={{
-        margin: isMobile ? '16px auto 24px' : '24px auto 32px',
-        width: '100%',
-        maxWidth: sectionMaxWidth,
-        borderRadius: isMobile ? '16px' : '18px',
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 12px 32px rgba(15, 23, 42, 0.08)',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
-      }}
-    >
+return (
+  <section
+    style={{
+      margin: isMobile ? '16px 12px 24px 12px' : '24px auto 32px',
+      width: isMobile ? 'calc(100% - 24px)' : '100%',
+      maxWidth: sectionMaxWidth,
+      borderRadius: isMobile ? '16px' : '18px',
+      background: '#ffffff',
+      border: '1px solid #e2e8f0',
+      boxShadow: '0 12px 32px rgba(15, 23, 42, 0.08)',
+      overflow: 'hidden',
+      boxSizing: 'border-box',
+    }}
+  >
       <header
         style={{
           display: 'flex',
