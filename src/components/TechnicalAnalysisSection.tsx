@@ -435,38 +435,6 @@ export default function TechnicalAnalysisSection({
                     </p>
                   </div>
 
-<div
-                    style={{
-                      borderRadius: isMobile ? '12px' : '14px',
-                      background: '#f8fafc',
-                      border: '1px solid #e2e8f0',
-                      padding: accentBlockPadding,
-                      boxSizing: 'border-box'
-                    }}
-                  >
-                    <div
-                      className="technical-analysis-content"
-                      style={{
-                        display: expanded ? 'block' : '-webkit-box',
-                        WebkitLineClamp: expanded ? 'none' : 6,
-                        WebkitBoxOrient: 'vertical',
-                        overflowY: expanded ? 'visible' : 'hidden',
-                        overflowX: 'hidden',
-                        color: '#1e293b',
-                        lineHeight: 1.7,
-                        fontSize: isMobile ? '14px' : '15px',
-                        wordBreak: 'break-word',
-                        overflowWrap: 'anywhere',
-                        maxWidth: '100%',
-                        width: '100%',
-                        paddingBottom: expanded ? '4px' : '0'
-                      }}
-                      dangerouslySetInnerHTML={{
-                        __html: analiseSelecionada.conteudo
-                      }}
-                    />
-                  </div>
-
                   {analiseSelecionada.conteudo &&
                     analiseSelecionada.conteudo.length > 480 && (
                       <button
@@ -481,11 +449,67 @@ export default function TechnicalAnalysisSection({
                           fontWeight: 600,
                           cursor: 'pointer',
                           fontSize: isMobile ? '12px' : '13px',
-                          width: isMobile ? '100%' : 'auto'
+                          width: isMobile ? '100%' : 'auto',
+                          marginTop: isMobile ? '12px' : '14px'
+                        }}
+                        aria-expanded={expanded}
+                      >
+                        {expanded ? 'Mostrar menos' : 'Mostrar mais'}
+                      </button>
+                    )}
+
+                  {analiseSelecionada.conteudo &&
+                    (expanded || analiseSelecionada.conteudo.length <= 480) && (
+                      <div
+                        style={{
+                          borderRadius: isMobile ? '12px' : '14px',
+                          background: '#f8fafc',
+                          border: '1px solid #e2e8f0',
+                          padding: accentBlockPadding,
+                          boxSizing: 'border-box',
+                          display: 'grid',
+                          gap: isMobile ? '14px' : '16px'
                         }}
                       >
-                        {expanded ? 'Mostrar menos' : 'Ver análise completa'}
-                      </button>
+                        <div
+                          className="technical-analysis-content"
+                          style={{
+                            color: '#1e293b',
+                            lineHeight: 1.7,
+                            fontSize: isMobile ? '14px' : '15px',
+                            wordBreak: 'break-word',
+                            overflowWrap: 'anywhere',
+                            maxWidth: '100%',
+                            width: '100%'
+                          }}
+                          dangerouslySetInnerHTML={{
+                            __html: analiseSelecionada.conteudo
+                          }}
+                        />
+
+                        {expanded &&
+                          analiseSelecionada.conteudo.length > 480 && (
+                            <button
+                              type="button"
+                              onClick={() => setExpanded(false)}
+                              style={{
+                                background: '#0f172a',
+                                color: '#f8fafc',
+                                border: 'none',
+                                borderRadius: '999px',
+                                padding: isMobile ? '10px 16px' : '10px 18px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                fontSize: isMobile ? '12px' : '13px',
+                                width: isMobile ? '100%' : 'auto',
+                                justifySelf: isMobile ? 'stretch' : 'start'
+                              }}
+                              aria-expanded={expanded}
+                            >
+                              Mostrar menos
+                            </button>
+                          )}
+                      </div>
                     )}
                 </div>
               </article>
