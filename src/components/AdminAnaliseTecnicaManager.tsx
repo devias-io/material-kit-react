@@ -28,6 +28,7 @@ import {
 
 import { useAuthAccess } from '@/hooks/use-auth-access';
 import { slugify } from '@/utils/slugify';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 interface AutorInfo {
   id: string;
@@ -196,11 +197,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       <div
         ref={editorRef}
         style={{
-          padding: '20px 22px',
+          padding: 'clamp(16px, 3vw, 20px) clamp(18px, 3.2vw, 22px)',
           minHeight,
           outline: 'none',
           fontSize: '15px',
           lineHeight: 1.7,
+          wordBreak: 'break-word',
         }}
         contentEditable
         onInput={handleInput}
@@ -252,7 +254,7 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   border: '1px solid #d1d5db',
   borderRadius: '12px',
-  padding: '12px 14px',
+  padding: 'clamp(10px, 1.8vw, 12px) clamp(12px, 2vw, 14px)',
   fontSize: '14px',
   transition: 'border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
 };
@@ -289,6 +291,9 @@ export default function AdminAnaliseTecnicaManager() {
   const [success, setSuccess] = useState<string>('');
   const [formState, setFormState] = useState<FormState>(emptyForm);
   const [slugManual, setSlugManual] = useState<boolean>(false);
+
+  const isTablet = useMediaQuery('(max-width: 1024px)');
+  const isMobile = useMediaQuery('(max-width: 640px)');
 
   const isEditando = Boolean(formState.id);
 
@@ -527,6 +532,11 @@ export default function AdminAnaliseTecnicaManager() {
     return [...analises].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
   }, [analises]);
 
+  const pagePadding = isMobile ? '16px' : isTablet ? '24px' : '32px';
+  const headerTitleSize = isMobile ? '26px' : '32px';
+  const actionsGap = isMobile ? '8px' : '12px';
+  const mainGridTemplate = isTablet ? 'minmax(0, 1fr)' : 'minmax(0, 1.2fr) minmax(0, 1fr)';
+
   if (authLoading) {
     return (
       <div style={{ padding: '48px', textAlign: 'center', color: '#475569', display: 'flex', justifyContent: 'center', gap: '12px', alignItems: 'center' }}>
@@ -540,9 +550,9 @@ export default function AdminAnaliseTecnicaManager() {
       <div
         style={{
           maxWidth: '520px',
-          margin: '80px auto',
-          padding: '32px',
-          borderRadius: '18px',
+          margin: isMobile ? '60px auto' : '80px auto',
+          padding: isMobile ? '24px' : '32px',
+          borderRadius: isMobile ? '16px' : '18px',
           background: '#fef2f2',
           border: '1px solid #fecaca',
           color: '#b91c1c',
@@ -561,40 +571,50 @@ export default function AdminAnaliseTecnicaManager() {
   }
 
   return (
-    <div style={{ padding: '32px', background: '#f8fafc', minHeight: '100vh' }}>
+    <div style={{ padding: pagePadding, background: '#f8fafc', minHeight: '100vh' }}>
       <header
         style={{
           display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          gap: '18px',
-          marginBottom: '32px',
+          flexDirection: isTablet ? 'column' : 'row',
+          alignItems: isTablet ? 'stretch' : 'center',
+          justifyContent: isTablet ? 'flex-start' : 'space-between',
+          gap: isMobile ? '16px' : '18px',
+          marginBottom: isMobile ? '24px' : '32px',
         }}
       >
-        <div style={{ display: 'grid', gap: '6px' }}>
+        <div style={{ display: 'grid', gap: isMobile ? '4px' : '6px' }}>
           <span style={{ fontSize: '12px', letterSpacing: '0.1em', color: '#64748b', textTransform: 'uppercase' }}>
             Administração
           </span>
-          <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 700 }}>Gestão de Análises Técnicas</h1>
-          <p style={{ margin: 0, color: '#475569' }}>
+          <h1 style={{ margin: 0, fontSize: headerTitleSize, fontWeight: 700 }}>Gestão de Análises Técnicas</h1>
+          <p style={{ margin: 0, color: '#475569', fontSize: isMobile ? '14px' : '15px' }}>
             Cadastre e publique análises técnicas profissionais para exibição nos detalhes de ativos.
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: actionsGap,
+            flexWrap: 'wrap',
+            justifyContent: isTablet ? 'flex-start' : 'flex-end',
+          }}
+        >
           <button
             type="button"
             onClick={resetForm}
             style={{
               border: '1px solid #cbd5f5',
               borderRadius: '12px',
-              padding: '12px 16px',
+              padding: isMobile ? '10px 14px' : '12px 16px',
               background: '#ffffff',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
               fontWeight: 600,
+              width: isMobile ? '100%' : 'auto',
+              justifyContent: 'center',
             }}
           >
             <PlusCircle size={18} /> Nova análise
@@ -606,7 +626,7 @@ export default function AdminAnaliseTecnicaManager() {
             style={{
               border: '1px solid #0f172a',
               borderRadius: '12px',
-              padding: '12px 16px',
+              padding: isMobile ? '10px 14px' : '12px 16px',
               background: '#0f172a',
               color: '#f8fafc',
               cursor: 'pointer',
@@ -614,6 +634,8 @@ export default function AdminAnaliseTecnicaManager() {
               alignItems: 'center',
               gap: '8px',
               fontWeight: 600,
+              width: isMobile ? '100%' : 'auto',
+              justifyContent: 'center',
             }}
           >
             <RefreshCcw size={18} /> Atualizar lista
@@ -622,7 +644,7 @@ export default function AdminAnaliseTecnicaManager() {
       </header>
 
       {(error || success) && (
-        <div style={{ display: 'grid', gap: '12px', marginBottom: '24px' }}>
+        <div style={{ display: 'grid', gap: '12px', marginBottom: isMobile ? '20px' : '24px' }}>
           {error && (
             <div
               style={{
@@ -662,8 +684,8 @@ export default function AdminAnaliseTecnicaManager() {
       <div
         style={{
           display: 'grid',
-          gap: '24px',
-          gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)',
+          gap: isMobile ? '20px' : '24px',
+          gridTemplateColumns: mainGridTemplate,
           alignItems: 'flex-start',
         }}
       >
@@ -671,15 +693,21 @@ export default function AdminAnaliseTecnicaManager() {
           onSubmit={salvarAnalise}
           style={{
             background: '#ffffff',
-            borderRadius: '20px',
-            padding: '28px',
+            borderRadius: isMobile ? '18px' : '20px',
+            padding: isMobile ? '20px' : '28px',
             border: '1px solid #e2e8f0',
             boxShadow: '0 18px 40px rgba(15, 23, 42, 0.08)',
             display: 'grid',
-            gap: '20px',
+            gap: isMobile ? '18px' : '20px',
           }}
         >
-          <div style={{ display: 'grid', gap: '14px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+          <div
+            style={{
+              display: 'grid',
+              gap: isMobile ? '12px' : '14px',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            }}
+          >
             <div>
               <label style={cardLabelStyle} htmlFor="ticker-input">
                 Ticker*
@@ -740,16 +768,16 @@ export default function AdminAnaliseTecnicaManager() {
             <div
               style={{
                 border: '2px dashed #94a3b8',
-                borderRadius: '16px',
-                padding: '18px',
+                borderRadius: isMobile ? '14px' : '16px',
+                padding: isMobile ? '16px' : '18px',
                 background: '#f8fafc',
                 display: 'grid',
-                gap: '14px',
+                gap: isMobile ? '12px' : '14px',
               }}
             >
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <FileImage size={20} />
-                <span style={{ color: '#475569', fontSize: '14px' }}>
+                <span style={{ color: '#475569', fontSize: isMobile ? '13px' : '14px' }}>
                   Faça upload de uma imagem (JPEG ou PNG) ou cole uma URL abaixo.
                 </span>
               </div>
@@ -761,12 +789,14 @@ export default function AdminAnaliseTecnicaManager() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '8px',
-                    padding: '10px 16px',
+                    padding: isMobile ? '10px 14px' : '10px 16px',
                     borderRadius: '12px',
                     background: '#0f172a',
                     color: '#f8fafc',
                     cursor: 'pointer',
                     fontWeight: 600,
+                    width: isMobile ? '100%' : 'auto',
+                    justifyContent: 'center',
                   }}
                 >
                   <Upload size={16} /> Carregar arquivo
@@ -786,12 +816,14 @@ export default function AdminAnaliseTecnicaManager() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '8px',
-                    padding: '10px 16px',
+                    padding: isMobile ? '10px 14px' : '10px 16px',
                     borderRadius: '12px',
                     border: '1px solid #cbd5f5',
                     background: '#ffffff',
                     cursor: 'pointer',
                     fontWeight: 600,
+                    width: isMobile ? '100%' : 'auto',
+                    justifyContent: 'center',
                   }}
                 >
                   Remover imagem
@@ -811,7 +843,7 @@ export default function AdminAnaliseTecnicaManager() {
                   alt="Pré-visualização da capa"
                   style={{
                     width: '100%',
-                    maxHeight: '220px',
+                    maxHeight: isMobile ? '200px' : '220px',
                     objectFit: 'cover',
                     borderRadius: '12px',
                     border: '1px solid #e2e8f0',
@@ -850,6 +882,8 @@ export default function AdminAnaliseTecnicaManager() {
                 background: formState.publicado ? '#ecfccb' : '#f1f5f9',
                 color: formState.publicado ? '#14532d' : '#475569',
                 border: formState.publicado ? '1px solid #bef264' : '1px solid #cbd5f5',
+                width: isMobile ? '100%' : 'auto',
+                justifyContent: 'center',
               }}
             >
               <Eye size={16} /> {formState.publicado ? 'Publicado' : 'Rascunho'}
@@ -865,13 +899,22 @@ export default function AdminAnaliseTecnicaManager() {
                 background: formState.destaque ? '#fef3c7' : '#f1f5f9',
                 color: formState.destaque ? '#92400e' : '#475569',
                 border: formState.destaque ? '1px solid #f59e0b' : '1px solid #cbd5f5',
+                width: isMobile ? '100%' : 'auto',
+                justifyContent: 'center',
               }}
             >
               <Star size={16} /> {formState.destaque ? 'Em destaque' : 'Marcar destaque'}
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: actionsGap,
+              justifyContent: isTablet ? 'flex-start' : 'flex-end',
+              flexWrap: 'wrap',
+            }}
+          >
             {isEditando && (
               <button
                 type="button"
@@ -886,12 +929,14 @@ export default function AdminAnaliseTecnicaManager() {
                   background: '#fef2f2',
                   color: '#b91c1c',
                   borderRadius: '12px',
-                  padding: '12px 16px',
+                  padding: isMobile ? '10px 14px' : '12px 16px',
                   fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
                   cursor: 'pointer',
+                  width: isMobile ? '100%' : 'auto',
+                  justifyContent: 'center',
                 }}
               >
                 <Trash2 size={18} /> Excluir
@@ -906,12 +951,14 @@ export default function AdminAnaliseTecnicaManager() {
                 background: '#0f172a',
                 color: '#f8fafc',
                 borderRadius: '12px',
-                padding: '12px 24px',
+                padding: isMobile ? '12px 20px' : '12px 24px',
                 fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
                 cursor: 'pointer',
+                width: isMobile ? '100%' : 'auto',
+                justifyContent: 'center',
               }}
             >
               {saving ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={18} />}
@@ -923,19 +970,27 @@ export default function AdminAnaliseTecnicaManager() {
         <aside
           style={{
             background: '#ffffff',
-            borderRadius: '20px',
+            borderRadius: isMobile ? '18px' : '20px',
             border: '1px solid #e2e8f0',
-            padding: '24px',
+            padding: isMobile ? '20px' : '24px',
             boxShadow: '0 18px 40px rgba(15, 23, 42, 0.05)',
             display: 'grid',
-            gap: '18px',
-            maxHeight: '90vh',
-            overflowY: 'auto',
+            gap: isMobile ? '16px' : '18px',
+            maxHeight: isTablet ? 'none' : '90vh',
+            overflowY: isTablet ? 'visible' : 'auto',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ margin: 0, fontSize: '20px' }}>Análises recentes</h2>
-            <span style={{ fontSize: '13px', color: '#64748b' }}>{listaOrdenada.length} itens</span>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: isMobile ? 'flex-start' : 'center',
+              flexWrap: 'wrap',
+              gap: '8px',
+            }}
+          >
+            <h2 style={{ margin: 0, fontSize: isMobile ? '18px' : '20px' }}>Análises recentes</h2>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>{listaOrdenada.length} itens</span>
           </div>
 
           {loading ? (
@@ -975,27 +1030,36 @@ export default function AdminAnaliseTecnicaManager() {
                   key={analise.id}
                   style={{
                     border: '1px solid #e2e8f0',
-                    borderRadius: '16px',
-                    padding: '18px',
+                    borderRadius: isMobile ? '14px' : '16px',
+                    padding: isMobile ? '16px' : '18px',
                     background: '#ffffff',
                     display: 'grid',
-                    gap: '12px',
+                    gap: isMobile ? '10px' : '12px',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
-                    <div style={{ display: 'grid', gap: '6px', flex: 1 }}>
-                      <span style={{ fontSize: '13px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: isMobile ? '10px' : '12px',
+                      flexWrap: 'wrap',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <div style={{ display: 'grid', gap: '6px', flex: 1, minWidth: '220px' }}>
+                      <span style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                         {analise.ticker}
                       </span>
-                      <strong style={{ fontSize: '16px' }}>{analise.titulo}</strong>
+                      <strong style={{ fontSize: isMobile ? '15px' : '16px' }}>{analise.titulo}</strong>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <span
                         style={{
                           ...badgeStyle,
                           background: analise.publicado ? '#ecfccb' : '#f1f5f9',
                           color: analise.publicado ? '#14532d' : '#475569',
                           border: analise.publicado ? '1px solid #bef264' : '1px solid #cbd5f5',
+                          minWidth: isMobile ? 'auto' : 'unset',
                         }}
                       >
                         <Eye size={14} /> {analise.publicado ? 'Publicado' : 'Rascunho'}
@@ -1015,16 +1079,24 @@ export default function AdminAnaliseTecnicaManager() {
                     </div>
                   </div>
 
-                  <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.5 }}>
+                  <p style={{ margin: 0, color: '#475569', fontSize: isMobile ? '13px' : '14px', lineHeight: 1.5 }}>
                     {analise.resumo || analise.conteudo.replace(/<[^>]+>/g, ' ').slice(0, 160)}
                   </p>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: isMobile ? 'flex-start' : 'center',
+                      gap: '12px',
+                      flexWrap: 'wrap',
+                    }}
+                  >
                     <div style={{ fontSize: '12px', color: '#94a3b8' }}>
                       Atualizado em {formatDateTime(analise.updatedAt)}
                     </div>
 
-                    <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: isMobile ? '8px' : '10px', flexWrap: 'wrap' }}>
                       <button
                         type="button"
                         onClick={() => atualizarStatus(analise, { publicado: !analise.publicado })}
@@ -1036,6 +1108,10 @@ export default function AdminAnaliseTecnicaManager() {
                           cursor: 'pointer',
                           fontSize: '12px',
                           fontWeight: 600,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          width: isMobile ? '100%' : 'auto',
+                          justifyContent: 'center',
                         }}
                       >
                         Alternar publicação
@@ -1052,6 +1128,10 @@ export default function AdminAnaliseTecnicaManager() {
                           cursor: 'pointer',
                           fontSize: '12px',
                           fontWeight: 600,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          width: isMobile ? '100%' : 'auto',
+                          justifyContent: 'center',
                         }}
                       >
                         Alternar destaque
@@ -1069,6 +1149,8 @@ export default function AdminAnaliseTecnicaManager() {
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
+                          width: isMobile ? '100%' : 'auto',
+                          justifyContent: 'center',
                         }}
                       >
                         <Edit3 size={14} /> Editar

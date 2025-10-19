@@ -3,6 +3,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BarChart3, ExternalLink, RefreshCcw, ShieldAlert } from 'lucide-react';
 
+import { useMediaQuery } from '@/hooks/use-media-query';
+
 interface AutorInfo {
   id: string;
   firstName: string | null;
@@ -69,6 +71,8 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
   const [error, setError] = useState<string>('');
   const [expanded, setExpanded] = useState<boolean>(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const isTablet = useMediaQuery('(max-width: 1024px)');
+  const isMobile = useMediaQuery('(max-width: 640px)');
 
   const carregarAnalises = useCallback(async () => {
     if (!ticker) {
@@ -146,6 +150,12 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
     return analises.find(item => item.id === selecionadaId) ?? analises[0] ?? null;
   }, [analises, selecionadaId]);
 
+  const headerPadding = isMobile ? '20px 18px' : isTablet ? '24px 24px' : '28px 32px';
+  const containerPadding = isMobile ? '20px 18px' : isTablet ? '24px 24px' : '28px 32px';
+  const articlePadding = isMobile ? '18px' : isTablet ? '22px' : '24px';
+  const accentBlockPadding = isMobile ? '16px' : '20px';
+  const supplementaryPadding = isMobile ? '18px' : '20px';
+
   if (!ticker) {
     return null;
   }
@@ -153,9 +163,9 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
   return (
     <section
       style={{
-        marginTop: '24px',
-        marginBottom: '32px',
-        borderRadius: '18px',
+        marginTop: isMobile ? '16px' : '24px',
+        marginBottom: isMobile ? '24px' : '32px',
+        borderRadius: isMobile ? '16px' : '18px',
         background: '#ffffff',
         border: '1px solid #e2e8f0',
         boxShadow: '0 12px 32px rgba(15, 23, 42, 0.08)',
@@ -165,19 +175,28 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
       <header
         style={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '24px 28px',
+          flexDirection: isTablet ? 'column' : 'row',
+          alignItems: isTablet ? 'stretch' : 'center',
+          justifyContent: isTablet ? 'flex-start' : 'space-between',
+          gap: '18px',
+          padding: headerPadding,
           background: 'linear-gradient(135deg, #111827 0%, #1f2937 60%, #111827 100%)',
           color: '#f8fafc',
         }}
       >
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: isMobile ? '12px' : '16px',
+            alignItems: isMobile ? 'flex-start' : 'center',
+            flexWrap: 'wrap',
+          }}
+        >
           <div
             style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
+              width: isMobile ? '40px' : '48px',
+              height: isMobile ? '40px' : '48px',
+              borderRadius: isMobile ? '10px' : '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -185,13 +204,13 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
               color: '#4dfb01',
             }}
           >
-            <BarChart3 size={26} strokeWidth={1.6} />
+            <BarChart3 size={isMobile ? 22 : 26} strokeWidth={1.6} />
           </div>
           <div>
             <p
               style={{
                 margin: 0,
-                fontSize: '13px',
+                fontSize: isMobile ? '12px' : '13px',
                 textTransform: 'uppercase',
                 letterSpacing: '0.12em',
                 color: 'rgba(248, 250, 252, 0.7)',
@@ -202,8 +221,8 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
             </p>
             <h2
               style={{
-                margin: '4px 0 0 0',
-                fontSize: '28px',
+                margin: isMobile ? '2px 0 0 0' : '4px 0 0 0',
+                fontSize: isMobile ? 'clamp(20px, 6vw, 26px)' : '28px',
                 fontWeight: 700,
                 letterSpacing: '-0.01em',
               }}
@@ -221,26 +240,34 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
             border: '1px solid rgba(248, 250, 252, 0.18)',
             color: '#f8fafc',
             borderRadius: '10px',
-            padding: '10px 16px',
-            fontSize: '13px',
+            padding: isMobile ? '10px 14px' : '10px 16px',
+            fontSize: isMobile ? '12px' : '13px',
             fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
             cursor: 'pointer',
             transition: 'all 0.2s ease-in-out',
+            justifyContent: 'center',
+            width: isTablet ? '100%' : 'auto',
           }}
         >
           <RefreshCcw size={16} /> Atualizar
         </button>
       </header>
 
-      <div style={{ padding: '24px 28px', display: 'grid', gap: '24px' }}>
+      <div
+        style={{
+          padding: containerPadding,
+          display: 'grid',
+          gap: isMobile ? '18px' : '24px',
+        }}
+      >
         {loading ? (
           <div style={{ display: 'grid', gap: '18px' }}>
             <div
               style={{
-                height: '220px',
+                height: isMobile ? '180px' : '220px',
                 borderRadius: '16px',
                 background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%)',
                 backgroundSize: '400% 100%',
@@ -250,7 +277,7 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
             <div
               style={{
                 height: '18px',
-                width: '220px',
+                width: isMobile ? '160px' : '220px',
                 borderRadius: '6px',
                 background: '#e2e8f0',
               }}
@@ -258,7 +285,7 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
             <div
               style={{
                 height: '14px',
-                width: '320px',
+                width: isMobile ? '220px' : '320px',
                 borderRadius: '6px',
                 background: '#e2e8f0',
               }}
@@ -274,9 +301,9 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
               display: 'flex',
               flexDirection: 'column',
               gap: '12px',
-              padding: '24px',
+              padding: isMobile ? '20px' : '24px',
               border: '1px solid #fecaca',
-              borderRadius: '16px',
+              borderRadius: isMobile ? '14px' : '16px',
               background: '#fef2f2',
               color: '#b91c1c',
             }}
@@ -290,9 +317,9 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
         ) : !analiseSelecionada ? (
           <div
             style={{
-              padding: '32px',
+              padding: isMobile ? '24px' : '32px',
               border: '2px dashed #cbd5f5',
-              borderRadius: '16px',
+              borderRadius: isMobile ? '14px' : '16px',
               background: '#f8fafc',
               textAlign: 'center',
               color: '#475569',
@@ -306,10 +333,10 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
             </p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gap: '24px' }}>
+          <div style={{ display: 'grid', gap: isMobile ? '20px' : '24px' }}>
             <article
               style={{
-                borderRadius: '16px',
+                borderRadius: isMobile ? '14px' : '16px',
                 border: '1px solid #e2e8f0',
                 overflow: 'hidden',
               }}
@@ -322,7 +349,7 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                     style={{
                       display: 'block',
                       width: '100%',
-                      maxHeight: '360px',
+                      maxHeight: isMobile ? '220px' : isTablet ? '300px' : '360px',
                       objectFit: 'cover',
                     }}
                   />
@@ -330,13 +357,13 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                     <span
                       style={{
                         position: 'absolute',
-                        top: '18px',
-                        right: '18px',
+                        top: isMobile ? '12px' : '18px',
+                        right: isMobile ? '12px' : '18px',
                         background: 'rgba(77, 251, 1, 0.85)',
                         color: '#0f172a',
-                        padding: '6px 12px',
+                        padding: isMobile ? '5px 10px' : '6px 12px',
                         borderRadius: '999px',
-                        fontSize: '12px',
+                        fontSize: isMobile ? '11px' : '12px',
                         fontWeight: 700,
                         textTransform: 'uppercase',
                         letterSpacing: '0.08em',
@@ -348,8 +375,21 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                 </div>
               )}
 
-              <div style={{ padding: '24px', display: 'grid', gap: '18px' }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+              <div
+                style={{
+                  padding: articlePadding,
+                  display: 'grid',
+                  gap: isMobile ? '16px' : '18px',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: isMobile ? '10px' : '12px',
+                    alignItems: 'center',
+                  }}
+                >
                   <span
                     style={{
                       display: 'inline-flex',
@@ -367,7 +407,7 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                   >
                     {ticker.toUpperCase()}
                   </span>
-                  <span style={{ fontSize: '13px', color: '#64748b' }}>
+                  <span style={{ fontSize: isMobile ? '12px' : '13px', color: '#64748b' }}>
                     Atualizado em {formataData(analiseSelecionada.updatedAt)}
                   </span>
                 </div>
@@ -375,7 +415,7 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                 <div>
                   <h3
                     style={{
-                      fontSize: '24px',
+                      fontSize: isMobile ? 'clamp(20px, 6vw, 24px)' : '24px',
                       lineHeight: 1.3,
                       margin: 0,
                       color: '#0f172a',
@@ -384,7 +424,14 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                   >
                     {analiseSelecionada.titulo}
                   </h3>
-                  <p style={{ margin: '12px 0 0 0', color: '#475569', fontSize: '16px', lineHeight: 1.6 }}>
+                  <p
+                    style={{
+                      margin: '12px 0 0 0',
+                      color: '#475569',
+                      fontSize: isMobile ? '15px' : '16px',
+                      lineHeight: 1.6,
+                    }}
+                  >
                     {analiseSelecionada.resumo || fallbackResumo(analiseSelecionada.conteudo)}
                   </p>
                 </div>
@@ -393,9 +440,9 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                   style={{
                     display: 'flex',
                     flexWrap: 'wrap',
-                    gap: '18px',
+                    gap: isMobile ? '14px' : '18px',
                     color: '#0f172a',
-                    fontSize: '14px',
+                    fontSize: isMobile ? '13px' : '14px',
                   }}
                 >
                   {analiseSelecionada.autor && (
@@ -404,13 +451,18 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                         <img
                           src={analiseSelecionada.autor.avatar}
                           alt={analiseSelecionada.autor.firstName ?? 'Autor da análise'}
-                          style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
+                          style={{
+                            width: isMobile ? '32px' : '36px',
+                            height: isMobile ? '32px' : '36px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                          }}
                         />
                       ) : (
                         <div
                           style={{
-                            width: '36px',
-                            height: '36px',
+                            width: isMobile ? '32px' : '36px',
+                            height: isMobile ? '32px' : '36px',
                             borderRadius: '50%',
                             background: '#e2e8f0',
                             display: 'flex',
@@ -442,10 +494,10 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
 
                 <div
                   style={{
-                    borderRadius: '14px',
+                    borderRadius: isMobile ? '12px' : '14px',
                     background: '#f8fafc',
                     border: '1px solid #e2e8f0',
-                    padding: '20px',
+                    padding: accentBlockPadding,
                   }}
                 >
                   <div
@@ -458,8 +510,10 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                       overflowX: 'auto',
                       color: '#1e293b',
                       lineHeight: 1.7,
-                      fontSize: '15px',
+                      fontSize: isMobile ? '14px' : '15px',
                       wordBreak: 'break-word',
+                      maxWidth: '100%',
+                      paddingBottom: expanded ? '4px' : '0',
                     }}
                     dangerouslySetInnerHTML={{ __html: analiseSelecionada.conteudo }}
                   />
@@ -474,10 +528,11 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                         color: '#f8fafc',
                         border: 'none',
                         borderRadius: '999px',
-                        padding: '10px 18px',
+                        padding: isMobile ? '10px 16px' : '10px 18px',
                         fontWeight: 600,
                         cursor: 'pointer',
-                        fontSize: '13px',
+                        fontSize: isMobile ? '12px' : '13px',
+                        width: isMobile ? '100%' : 'auto',
                       }}
                     >
                       {expanded ? 'Mostrar menos' : 'Ver análise completa'}
@@ -491,22 +546,24 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
               <div
                 style={{
                   display: 'grid',
-                  gap: '16px',
-                  padding: '20px',
-                  borderRadius: '16px',
+                  gap: isMobile ? '14px' : '16px',
+                  padding: supplementaryPadding,
+                  borderRadius: isMobile ? '14px' : '16px',
                   border: '1px solid #e2e8f0',
                   background: '#f8fafc',
                 }}
               >
-                <span style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>
+                <span style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 600, color: '#1e293b' }}>
                   Outras leituras técnicas recentes
                 </span>
 
                 <div
                   style={{
                     display: 'grid',
-                    gap: '12px',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                    gap: isMobile ? '10px' : '12px',
+                    gridTemplateColumns: isMobile
+                      ? '1fr'
+                      : 'repeat(auto-fit, minmax(220px, 1fr))',
                   }}
                 >
                   {analises.map(analise => (
@@ -519,8 +576,8 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                       }}
                       style={{
                         textAlign: 'left',
-                        borderRadius: '14px',
-                        padding: '16px',
+                        borderRadius: isMobile ? '12px' : '14px',
+                        padding: isMobile ? '14px' : '16px',
                         border:
                           analiseSelecionada?.id === analise.id
                             ? '2px solid rgba(77, 251, 1, 0.6)'
@@ -530,16 +587,22 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                         cursor: 'pointer',
                         transition: 'all 0.2s ease-in-out',
                         display: 'grid',
-                        gap: '8px',
+                        gap: isMobile ? '6px' : '8px',
                       }}
                     >
-                      <span style={{ fontSize: '12px', color: '#64748b' }}>
+                      <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#64748b' }}>
                         {formataData(analise.updatedAt)}
                       </span>
-                      <strong style={{ fontSize: '15px', color: '#0f172a', lineHeight: 1.4 }}>
+                      <strong
+                        style={{
+                          fontSize: isMobile ? '14px' : '15px',
+                          color: '#0f172a',
+                          lineHeight: 1.4,
+                        }}
+                      >
                         {analise.titulo}
                       </strong>
-                      <span style={{ fontSize: '13px', color: '#475569' }}>
+                      <span style={{ fontSize: isMobile ? '12px' : '13px', color: '#475569' }}>
                         {analise.resumo || fallbackResumo(analise.conteudo, 120)}
                       </span>
                       <span
@@ -547,7 +610,7 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
-                          fontSize: '12px',
+                          fontSize: isMobile ? '11px' : '12px',
                           color: '#0f172a',
                           fontWeight: 600,
                         }}
