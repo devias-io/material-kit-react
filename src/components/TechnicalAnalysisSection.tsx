@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BarChart3, ExternalLink, RefreshCcw, ShieldAlert } from 'lucide-react';
 
 interface AutorInfo {
@@ -68,6 +68,7 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [expanded, setExpanded] = useState<boolean>(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const carregarAnalises = useCallback(async () => {
     if (!ticker) {
@@ -102,6 +103,40 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
   useEffect(() => {
     carregarAnalises();
   }, [carregarAnalises]);
+
+  useEffect(() => {
+    if (!contentRef.current) {
+      return;
+    }
+
+    const container = contentRef.current;
+
+    const images = container.querySelectorAll<HTMLImageElement>('img');
+    images.forEach(img => {
+      img.style.maxWidth = '100%';
+      img.style.height = 'auto';
+      img.style.display = 'block';
+      img.style.margin = '16px auto';
+      img.style.borderRadius = '12px';
+    });
+
+    const tables = container.querySelectorAll<HTMLTableElement>('table');
+    tables.forEach(table => {
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
+    });
+
+    const paragraphs = container.querySelectorAll<HTMLParagraphElement>('p');
+    paragraphs.forEach(paragraph => {
+      if (!paragraph.style.lineHeight) {
+        paragraph.style.lineHeight = '1.7';
+      }
+
+      if (!paragraph.style.marginBottom) {
+        paragraph.style.marginBottom = '1rem';
+      }
+    });
+  }, [analiseSelecionada, expanded]);
 
   const analiseSelecionada = useMemo(() => {
     if (!selecionadaId) {
@@ -414,14 +449,17 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                   }}
                 >
                   <div
+                    ref={contentRef}
                     style={{
                       display: expanded ? 'block' : '-webkit-box',
                       WebkitLineClamp: expanded ? 'none' : 6,
                       WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
+                      overflowY: expanded ? 'visible' : 'hidden',
+                      overflowX: 'auto',
                       color: '#1e293b',
                       lineHeight: 1.7,
                       fontSize: '15px',
+                      wordBreak: 'break-word',
                     }}
                     dangerouslySetInnerHTML={{ __html: analiseSelecionada.conteudo }}
                   />
