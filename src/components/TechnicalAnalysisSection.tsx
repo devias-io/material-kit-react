@@ -108,6 +108,14 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
     carregarAnalises();
   }, [carregarAnalises]);
 
+  const analiseSelecionada = useMemo(() => {
+    if (!selecionadaId) {
+      return analises[0] ?? null;
+    }
+
+    return analises.find(item => item.id === selecionadaId) ?? analises[0] ?? null;
+  }, [analises, selecionadaId]);
+
   useEffect(() => {
     if (!contentRef.current) {
       return;
@@ -141,14 +149,6 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
       }
     });
   }, [analiseSelecionada, expanded]);
-
-  const analiseSelecionada = useMemo(() => {
-    if (!selecionadaId) {
-      return analises[0] ?? null;
-    }
-
-    return analises.find(item => item.id === selecionadaId) ?? analises[0] ?? null;
-  }, [analises, selecionadaId]);
 
   const headerPadding = isMobile ? '20px 18px' : isTablet ? '24px 24px' : '28px 32px';
   const containerPadding = isMobile ? '20px 18px' : isTablet ? '24px 24px' : '28px 32px';
