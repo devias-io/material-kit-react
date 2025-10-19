@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { BarChart3, ExternalLink, RefreshCcw, ShieldAlert } from 'lucide-react';
-
+import { BarChart3, ExternalLink, ShieldAlert } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 
 interface AutorInfo {
@@ -226,28 +225,6 @@ export default function TechnicalAnalysisSection({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={carregarAnalises}
-            style={{
-              background: 'rgba(248, 250, 252, 0.08)',
-              border: '1px solid rgba(248, 250, 252, 0.18)',
-              color: '#f8fafc',
-              borderRadius: '10px',
-              padding: isMobile ? '10px 14px' : '10px 16px',
-              fontSize: isMobile ? '12px' : '13px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease-in-out',
-              justifyContent: 'center',
-              width: isTablet ? '100%' : 'auto'
-            }}
-          >
-            <RefreshCcw size={16} /> Atualizar
-          </button>
         </header>
         <div
           style={{
