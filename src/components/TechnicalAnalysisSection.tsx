@@ -116,74 +116,93 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
     return analises.find(item => item.id === selecionadaId) ?? analises[0] ?? null;
   }, [analises, selecionadaId]);
 
-  useEffect(() => {
-    if (!contentRef.current) {
-      return;
+useEffect(() => {
+  if (!contentRef.current) {
+    return;
+  }
+
+  const container = contentRef.current;
+
+  const images = container.querySelectorAll<HTMLImageElement>('img');
+  images.forEach(img => {
+    img.style.maxWidth = '100%';
+    img.style.width = '100%';
+    img.style.height = 'auto';
+    img.style.display = 'block';
+    img.style.margin = '16px auto';
+    img.style.borderRadius = '12px';
+    img.style.objectFit = 'contain';
+    img.style.boxSizing = 'border-box';  // ← NOVO
+  });
+
+  const tables = container.querySelectorAll<HTMLTableElement>('table');
+  tables.forEach(table => {
+    table.style.width = '100%';
+    table.style.maxWidth = '100%';  // ← NOVO
+    table.style.borderCollapse = 'collapse';
+    table.style.display = 'block';
+    table.style.boxSizing = 'border-box';
+
+    if (table.dataset.taWrapped !== 'true') {
+      const wrapper = document.createElement('div');
+      wrapper.style.overflowX = 'auto';
+      wrapper.style.setProperty('-webkit-overflow-scrolling', 'touch');
+      wrapper.style.margin = isMobile ? '12px 0' : '16px 0';
+      wrapper.style.borderRadius = '12px';
+      wrapper.style.border = '1px solid #e2e8f0';
+      wrapper.style.background = '#ffffff';
+      wrapper.style.padding = isMobile ? '0 8px' : '0 12px';
+      wrapper.style.boxSizing = 'border-box';
+      wrapper.style.maxWidth = '100%';  // ← NOVO
+      wrapper.dataset.taWrapper = 'true';
+
+      const parent = table.parentElement;
+      if (parent) {
+        parent.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+        table.dataset.taWrapped = 'true';
+      }
+    }
+  });
+
+  const iframes = container.querySelectorAll<HTMLIFrameElement>('iframe');
+  iframes.forEach(iframe => {
+    iframe.style.width = '100%';
+    iframe.style.minHeight = isMobile ? '220px' : '320px';
+    iframe.style.border = 'none';
+    iframe.style.borderRadius = '12px';
+    iframe.style.boxSizing = 'border-box';
+    iframe.setAttribute('allowfullscreen', 'true');
+  });
+
+  const paragraphs = container.querySelectorAll<HTMLParagraphElement>('p');
+  paragraphs.forEach(paragraph => {
+    if (!paragraph.style.lineHeight) {
+      paragraph.style.lineHeight = '1.7';
     }
 
-    const container = contentRef.current;
+    if (!paragraph.style.marginBottom) {
+      paragraph.style.marginBottom = '1rem';
+    }
+    
+    // ← NOVOS estilos para parágrafos
+    paragraph.style.maxWidth = '100%';
+    paragraph.style.overflowWrap = 'break-word';
+    paragraph.style.wordBreak = 'break-word';
+  });
 
-    const images = container.querySelectorAll<HTMLImageElement>('img');
-    images.forEach(img => {
-      img.style.maxWidth = '100%';
-      img.style.width = '100%';
-      img.style.height = 'auto';
-      img.style.display = 'block';
-      img.style.margin = '16px auto';
-      img.style.borderRadius = '12px';
-      img.style.objectFit = 'contain';
-    });
-
-    const tables = container.querySelectorAll<HTMLTableElement>('table');
-    tables.forEach(table => {
-      table.style.width = '100%';
-      table.style.borderCollapse = 'collapse';
-      table.style.display = 'block';
-      table.style.boxSizing = 'border-box';
-
-      if (table.dataset.taWrapped !== 'true') {
-        const wrapper = document.createElement('div');
-        wrapper.style.overflowX = 'auto';
-        wrapper.style.setProperty('-webkit-overflow-scrolling', 'touch');
-        wrapper.style.margin = isMobile ? '12px 0' : '16px 0';
-        wrapper.style.borderRadius = '12px';
-        wrapper.style.border = '1px solid #e2e8f0';
-        wrapper.style.background = '#ffffff';
-        wrapper.style.padding = isMobile ? '0 8px' : '0 12px';
-        wrapper.style.boxSizing = 'border-box';
-        wrapper.dataset.taWrapper = 'true';
-
-        const parent = table.parentElement;
-        if (parent) {
-          parent.insertBefore(wrapper, table);
-          wrapper.appendChild(table);
-          table.dataset.taWrapped = 'true';
-        }
-      }
-    });
-
-    const iframes = container.querySelectorAll<HTMLIFrameElement>('iframe');
-    iframes.forEach(iframe => {
-      iframe.style.width = '100%';
-      iframe.style.minHeight = isMobile ? '220px' : '320px';
-      iframe.style.border = 'none';
-      iframe.style.borderRadius = '12px';
-      iframe.style.boxSizing = 'border-box';
-      iframe.setAttribute('allowfullscreen', 'true');
-    });
-
-    const paragraphs = container.querySelectorAll<HTMLParagraphElement>('p');
-    paragraphs.forEach(paragraph => {
-      if (!paragraph.style.lineHeight) {
-        paragraph.style.lineHeight = '1.7';
-      }
-
-      if (!paragraph.style.marginBottom) {
-        paragraph.style.marginBottom = '1rem';
-      }
-    });
-  }, [analiseSelecionada, expanded, isMobile]);
-
+  // ← NOVO BLOCO: força limites em TODOS os elementos
+  const allElements = container.querySelectorAll<HTMLElement>('*');
+  allElements.forEach(element => {
+    if (!element.style.maxWidth) {
+      element.style.maxWidth = '100%';
+    }
+    if (!element.style.boxSizing) {
+      element.style.boxSizing = 'border-box';
+    }
+  });
+}, [analiseSelecionada, expanded, isMobile]);
+  
   const headerPadding = isMobile ? '20px 18px' : isTablet ? '24px 24px' : '28px 32px';
   const containerPadding = isMobile ? '20px 16px' : isTablet ? '24px 24px' : '28px 32px';
   const articlePadding = isMobile ? '18px' : isTablet ? '22px' : '24px';
