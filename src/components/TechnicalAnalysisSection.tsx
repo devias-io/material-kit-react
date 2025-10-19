@@ -219,6 +219,7 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
           padding: headerPadding,
           background: 'linear-gradient(135deg, #111827 0%, #1f2937 60%, #111827 100%)',
           color: '#f8fafc',
+          boxSizing: 'border-box',
         }}
       >
         <div
@@ -298,6 +299,7 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
           padding: containerPadding,
           display: 'grid',
           gap: isMobile ? '18px' : '24px',
+          boxSizing: 'border-box',
         }}
       >
         {loading ? (
@@ -417,6 +419,7 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                   padding: articlePadding,
                   display: 'grid',
                   gap: isMobile ? '16px' : '18px',
+                  boxSizing: 'border-box',
                 }}
               >
                 <div
@@ -479,6 +482,7 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                     background: '#f8fafc',
                     border: '1px solid #e2e8f0',
                     padding: accentBlockPadding,
+                    boxSizing: 'border-box',
                   }}
                 >
                   <div
@@ -534,6 +538,7 @@ export default function TechnicalAnalysisSection({ ticker }: TechnicalAnalysisSe
                   borderRadius: isMobile ? '14px' : '16px',
                   border: '1px solid #e2e8f0',
                   background: '#f8fafc',
+                  boxSizing: 'border-box',
                 }}
               >
                 <span style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 600, color: '#1e293b' }}>
