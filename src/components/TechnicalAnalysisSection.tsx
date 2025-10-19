@@ -146,7 +146,6 @@ export default function TechnicalAnalysisSection({
   const articlePadding = isMobile ? '18px' : isTablet ? '22px' : '24px';
   const accentBlockPadding = isMobile ? '16px' : '20px';
   const supplementaryPadding = isMobile ? '18px' : '20px';
-  const sectionMaxWidth = isTablet ? '100%' : '960px';
 
   if (!ticker) {
     return null;
@@ -155,9 +154,8 @@ export default function TechnicalAnalysisSection({
     <>
       <section
         style={{
-          margin: isMobile ? '16px 12px 24px 12px' : '24px auto 32px',
-          width: isMobile ? 'calc(100% - 24px)' : '100%',
-          maxWidth: sectionMaxWidth,
+          margin: isMobile ? '16px 0 24px' : '24px 0 32px',
+          width: '100%',
           borderRadius: isMobile ? '16px' : '18px',
           background: '#ffffff',
           border: '1px solid #e2e8f0',
