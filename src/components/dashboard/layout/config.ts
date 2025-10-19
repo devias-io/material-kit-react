@@ -246,6 +246,14 @@ export const navItems = [
         icon: 'chart-line', // ou 'calendar', 'article'
         page: 'admin-analises-trimesestrais'
       },
+      // 🆕 NOVO ITEM: Análises Técnicas
+      {
+        key: 'admin-analise-tecnica',
+        title: 'Análises Técnicas',
+        href: paths.dashboard.adminAnaliseTecnica,
+        icon: 'article',
+        page: 'admin-analise-tecnica'
+      },
       {
         key: 'admin-integracoes-agenda',
         title: 'Agenda Corporativa',

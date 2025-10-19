@@ -76,10 +76,10 @@ export const PLAN_PERMISSIONS = {
       'recursos-exclusivos', 'recursos-dicas', 'recursos-analise', 'recursos-ebooks',
       'recursos-imposto', 'recursos-lives', 'recursos-milhas', 'recursos-planilhas', 'recursos-telegram',
       'recursos-reserva', 'recursos-suporte',
-      
+
       // Páginas administrativas
       'admin', 'admin-dashboard', 'admin-usuarios', 'admin-instagram', 'admin-empresas', 'admin-proventos',
-      'admin-relatorios', 'admin-relatorio-semanal', 'admin-analises-trimesestrais', 'admin-integracoes',
+      'admin-relatorios', 'admin-relatorio-semanal', 'admin-analises-trimesestrais', 'admin-analise-tecnica', 'admin-integracoes',
       'admin-renovacoes', 'admin-settings', 'admin-carteiras', 'admin-central-duvidas'
     ],
     adminPermissions: {
