@@ -199,28 +199,16 @@ export default function TechnicalAnalysisSection({
             >
               <BarChart3 size={isMobile ? 22 : 26} strokeWidth={1.6} />
             </div>
-            <div>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: isMobile ? '12px' : '13px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.12em',
-                  color: 'rgba(248, 250, 252, 0.7)',
-                  fontWeight: 600
-                }}
-              >
-                Análise técnica
-              </p>
+<div>
               <h2
                 style={{
-                  margin: isMobile ? '2px 0 0 0' : '4px 0 0 0',
+                  margin: 0,
                   fontSize: isMobile ? 'clamp(20px, 6vw, 26px)' : '28px',
                   fontWeight: 700,
                   letterSpacing: '-0.01em'
                 }}
               >
-                Insights profissionais para {ticker.toUpperCase()}
+                Análise Técnica {ticker.toUpperCase()}
               </h2>
             </div>
           </div>
