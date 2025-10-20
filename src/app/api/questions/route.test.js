@@ -103,3 +103,29 @@ describe('questions route excludeVirtual filter', () => {
   });
 });
 
+describe('questions route status filter', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('supports filtering by multiple statuses', async () => {
+    const { GET } = loadRoute();
+
+    authMock.auth.mockResolvedValue({ user: { id: '1' } });
+    prismaClientMock.user.findUnique.mockResolvedValue({ id: '1', plan: 'ADMIN' });
+    prismaClientMock.question.findMany.mockResolvedValue([]);
+    prismaClientMock.question.count.mockResolvedValue(0);
+
+    const req = { url: 'http://localhost/api/questions?status=RESPONDIDA,FECHADA' };
+    await GET(req);
+
+    expect(prismaClientMock.question.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: { in: ['RESPONDIDA', 'FECHADA'] },
+        }),
+      }),
+    );
+  });
+});
+

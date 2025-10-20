@@ -81,22 +81,6 @@
   border-color: #a1a1aa;
 }
 
-.successButton {
-  background: #10b981;
-  color: #ffffff;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.successButton:hover {
-  background: #0d9b6d;
-}
-
 .dangerButton {
   background: #dc2626;
   color: #ffffff;
@@ -366,11 +350,6 @@
   color: #16a34a;
 }
 
-.statusClosed {
-  background: #e2e8f0;
-  color: #1f2937;
-}
-
 .questionMeta {
   display: flex;
   flex-wrap: wrap;
@@ -435,15 +414,6 @@
   line-height: 1.6;
 }
 
-.cardFooter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-  padding: 16px 24px 24px;
-  border-top: 1px solid #e2e8f0;
-}
-
 .responsePrompt {
   padding: 16px 24px 0;
 }
@@ -501,11 +471,6 @@
   margin: 0;
   color: #475569;
   font-style: italic;
-}
-
-.mutedText {
-  color: #94a3b8;
-  font-size: 13px;
 }
 
 .pagination {

@@ -4,11 +4,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useUser } from '@/hooks/use-user';
 import styles from './central-duvidas.module.css';
 
+type QuestionStatus = 'NOVA' | 'RESPONDIDA' | 'FECHADA';
+
 interface Question {
   id: string;
   title: string;
   content: string;
-  status: 'NOVA' | 'RESPONDIDA' | 'FECHADA';
+  status: QuestionStatus;
   createdAt: string;
   readByAdmin: boolean;
   user: {
@@ -76,13 +78,13 @@ interface ResponseTemplate {
   createdAt: string;
 }
 
-type StatusFilter = 'ALL' | 'NOVA' | 'RESPONDIDA' | 'FECHADA';
+type StatusFilter = 'ALL' | 'NOVA' | 'RESPONDIDA';
 type SortOption = 'RECENT' | 'OLDER';
 
-const statusLabels: Record<Question['status'], string> = {
+const statusLabels: Record<QuestionStatus, string> = {
   NOVA: 'Nova',
   RESPONDIDA: 'Respondida',
-  FECHADA: 'Fechada',
+  FECHADA: 'Respondida',
 };
 
 const planLabels: Record<string, string> = {
@@ -104,7 +106,6 @@ const statusTabs: { value: StatusFilter; label: string }[] = [
   { value: 'ALL', label: 'Todas' },
   { value: 'NOVA', label: 'Novas' },
   { value: 'RESPONDIDA', label: 'Respondidas' },
-  { value: 'FECHADA', label: 'Fechadas' },
 ];
 
 export default function AdminCentralDuvidas() {
@@ -178,7 +179,9 @@ export default function AdminCentralDuvidas() {
       params.append('page', page.toString());
       params.append('limit', limit.toString());
       if (statusFilter !== 'ALL') {
-        params.append('status', statusFilter);
+        const statusParam =
+          statusFilter === 'RESPONDIDA' ? 'RESPONDIDA,FECHADA' : statusFilter;
+        params.append('status', statusParam);
       }
 
       const response = await fetch(`/api/questions?${params.toString()}`, {
@@ -190,7 +193,11 @@ export default function AdminCentralDuvidas() {
 
       if (response.ok) {
         const data = await response.json();
-        setQuestions(data.questions);
+        const normalizedQuestions = (data.questions || []).map((question: Question) => ({
+          ...question,
+          status: question.status === 'FECHADA' ? 'RESPONDIDA' : question.status,
+        }));
+        setQuestions(normalizedQuestions);
         setCurrentPage(data.pagination.page);
         setTotal(data.pagination.total);
         setError('');
@@ -488,29 +495,6 @@ export default function AdminCentralDuvidas() {
     }
   };
 
-  const handleStatusChange = async (questionId: string, newStatus: Question['status']) => {
-    try {
-      const response = await fetch(`/api/questions/${questionId}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (response.ok) {
-        setSuccess(`Status alterado para ${statusLabels[newStatus]}`);
-        setActiveResponseQuestionId(null);
-        setSelectedQuestion(null);
-        setResponseContent('');
-        loadData();
-      }
-    } catch (err) {
-      setError('Erro ao alterar status');
-    }
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -543,14 +527,13 @@ export default function AdminCentralDuvidas() {
     return formatDate(dateString);
   };
 
-  const getStatusBadgeClass = (status: Question['status']) => {
+  const getStatusBadgeClass = (status: QuestionStatus) => {
     switch (status) {
       case 'NOVA':
         return styles.statusNew;
       case 'RESPONDIDA':
-        return styles.statusAnswered;
       case 'FECHADA':
-        return styles.statusClosed;
+        return styles.statusAnswered;
       default:
         return '';
     }
@@ -561,10 +544,14 @@ export default function AdminCentralDuvidas() {
       questions.reduce(
         (acc, question) => {
           acc.total += 1;
-          acc[question.status] += 1;
+          if (question.status === 'NOVA') {
+            acc.NOVA += 1;
+          } else {
+            acc.RESPONDIDA += 1;
+          }
           return acc;
         },
-        { total: 0, NOVA: 0, RESPONDIDA: 0, FECHADA: 0 } as Record<'total' | Question['status'], number>,
+        { total: 0, NOVA: 0, RESPONDIDA: 0 } as Record<'total' | 'NOVA' | 'RESPONDIDA', number>,
       ),
     [questions],
   );
@@ -879,20 +866,6 @@ export default function AdminCentralDuvidas() {
                       </div>
                     )}
 
-                    <div className={styles.cardFooter}>
-                      {question.status !== 'FECHADA' && (
-                        <button
-                          type="button"
-                          className={styles.successButton}
-                          onClick={() => handleStatusChange(question.id, 'FECHADA')}
-                        >
-                          Marcar como resolvida
-                        </button>
-                      )}
-                      {question.status === 'FECHADA' && (
-                        <span className={styles.mutedText}>Pergunta encerrada</span>
-                      )}
-                    </div>
                   </article>
                 ))
               )}
