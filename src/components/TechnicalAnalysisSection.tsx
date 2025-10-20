@@ -2,7 +2,22 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BarChart3, ExternalLink, ShieldAlert } from 'lucide-react';
-import { useMediaQuery } from '@/hooks/use-media-query';
+
+const useMediaQuery = (query: string) => {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) {
+      setMatches(media.matches);
+    }
+    const listener = () => setMatches(media.matches);
+    media.addListener(listener);
+    return () => media.removeListener(listener);
+  }, [matches, query]);
+
+  return matches;
+};
 
 interface AutorInfo {
   id: string;
@@ -132,11 +147,6 @@ export default function TechnicalAnalysisSection({
     );
   }, [analises, selecionadaId]);
 
-  const headerPadding = isMobile
-    ? '20px 18px'
-    : isTablet
-      ? '24px 24px'
-      : '28px 32px';
   const containerPadding = isMobile
     ? '20px 16px'
     : isTablet
@@ -149,6 +159,7 @@ export default function TechnicalAnalysisSection({
   if (!ticker) {
     return null;
   }
+
   return (
     <>
       <section
@@ -163,57 +174,47 @@ export default function TechnicalAnalysisSection({
           boxSizing: 'border-box'
         }}
       >
+        {/* Header sempre visível */}
         <header
           style={{
             display: 'flex',
-            flexDirection: isTablet ? 'column' : 'row',
-            alignItems: isTablet ? 'stretch' : 'center',
-            justifyContent: isTablet ? 'flex-start' : 'space-between',
-            gap: '18px',
-            padding: headerPadding,
-            background:
-              'linear-gradient(135deg, #111827 0%, #1f2937 60%, #111827 100%)',
-            color: '#f8fafc',
+            alignItems: 'center',
+            gap: isMobile ? '12px' : '16px',
+            padding: containerPadding,
+            borderBottom: '1px solid #e2e8f0',
+            background: '#ffffff',
             boxSizing: 'border-box'
           }}
         >
           <div
             style={{
+              width: isMobile ? '40px' : '48px',
+              height: isMobile ? '40px' : '48px',
+              borderRadius: isMobile ? '10px' : '12px',
               display: 'flex',
-              gap: isMobile ? '12px' : '16px',
-              alignItems: isMobile ? 'flex-start' : 'center',
-              flexWrap: 'wrap'
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(77, 251, 1, 0.12)',
+              color: '#4dfb01',
+              flexShrink: 0
             }}
           >
-            <div
-              style={{
-                width: isMobile ? '40px' : '48px',
-                height: isMobile ? '40px' : '48px',
-                borderRadius: isMobile ? '10px' : '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(77, 251, 1, 0.12)',
-                color: '#4dfb01'
-              }}
-            >
-              <BarChart3 size={isMobile ? 22 : 26} strokeWidth={1.6} />
-            </div>
-<div>
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: isMobile ? 'clamp(20px, 6vw, 26px)' : '28px',
-                  fontWeight: 700,
-                  letterSpacing: '-0.01em'
-                }}
-              >
-                Análise Técnica {ticker.toUpperCase()}
-              </h2>
-            </div>
+            <BarChart3 size={isMobile ? 22 : 26} strokeWidth={1.6} />
           </div>
-
+          <h2
+            style={{
+              margin: 0,
+              fontSize: isMobile ? 'clamp(18px, 5vw, 22px)' : '24px',
+              fontWeight: 700,
+              letterSpacing: '-0.01em',
+              color: '#0f172a'
+            }}
+          >
+            Análise Técnica {ticker.toUpperCase()}
+          </h2>
         </header>
+
+        {/* Conteúdo dinâmico baseado no estado */}
         <div
           style={{
             padding: containerPadding,
@@ -294,7 +295,7 @@ export default function TechnicalAnalysisSection({
             <div
               style={{
                 padding: isMobile ? '24px' : '32px',
-                border: '2px dashed #cbd5f5',
+                border: '2px dashed #cbd5e1',
                 borderRadius: isMobile ? '14px' : '16px',
                 background: '#f8fafc',
                 textAlign: 'center',
@@ -631,6 +632,15 @@ export default function TechnicalAnalysisSection({
         </div>
       </section>
       <style jsx global>{`
+        @keyframes pulse {
+          0%, 100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
+
         .technical-analysis-content {
           width: 100%;
           max-width: 100%;
