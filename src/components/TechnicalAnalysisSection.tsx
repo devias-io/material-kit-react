@@ -152,6 +152,12 @@ export default function TechnicalAnalysisSection({
     : isTablet
       ? '24px 24px'
       : '28px 32px';
+  
+  const contentPadding = isMobile
+    ? '12px 16px 20px'
+    : isTablet
+      ? '16px 24px 24px'
+      : '16px 32px 28px';
   const articlePadding = isMobile ? '18px' : isTablet ? '22px' : '24px';
   const accentBlockPadding = isMobile ? '16px' : '20px';
   const supplementaryPadding = isMobile ? '18px' : '20px';
@@ -185,7 +191,7 @@ export default function TechnicalAnalysisSection({
           <h2
             style={{
               margin: 0,
-              fontSize: isMobile ? 'clamp(18px, 5vw, 22px)' : '20px',
+              fontSize: isMobile ? 'clamp(18px, 5vw, 22px)' : '24px',
               fontWeight: 700,
               letterSpacing: '-0.01em',
               color: '#0f172a'
@@ -198,7 +204,7 @@ export default function TechnicalAnalysisSection({
         {/* Conteúdo dinâmico baseado no estado */}
         <div
           style={{
-            padding: containerPadding,
+            padding: contentPadding,
             display: 'grid',
             gap: isMobile ? '18px' : '24px',
             boxSizing: 'border-box'
