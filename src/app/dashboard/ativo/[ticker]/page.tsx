@@ -2455,6 +2455,8 @@ export default function AtivoPage() {
 
   const ticker = params?.ticker?.toString().toUpperCase();
   const { isMobile, isMobileOrTablet } = useResponsive();
+  // Temporarily disable the company reports card until it's ready to be reused.
+  const mostrarRelatoriosEmpresa = false;
   const carteirasPossiveis = useMemo(
     () => (ticker ? getCarteirasForTicker(ticker, dados) : []),
     [ticker, dados]
@@ -3530,7 +3532,9 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
             <TechnicalAnalysisSection ticker={ticker} />
           </LazyComponent>
 
-          <GerenciadorRelatorios ticker={ticker} />
+          {mostrarRelatoriosEmpresa && (
+            <GerenciadorRelatorios ticker={ticker} />
+          )}
 
           <AgendaCorporativa ticker={ticker} isFII={tipoAtivo.ehFII} />
 
