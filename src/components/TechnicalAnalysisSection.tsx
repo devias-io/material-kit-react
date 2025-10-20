@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { BarChart3, ExternalLink, ShieldAlert } from 'lucide-react';
+import { ExternalLink, ShieldAlert } from 'lucide-react';
 
 const useMediaQuery = (query: string) => {
   const [matches, setMatches] = useState(false);
@@ -177,30 +177,12 @@ export default function TechnicalAnalysisSection({
         {/* Header sempre visível */}
         <header
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: isMobile ? '12px' : '16px',
             padding: containerPadding,
             borderBottom: '1px solid #e2e8f0',
             background: '#ffffff',
             boxSizing: 'border-box'
           }}
         >
-          <div
-            style={{
-              width: isMobile ? '40px' : '48px',
-              height: isMobile ? '40px' : '48px',
-              borderRadius: isMobile ? '10px' : '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(77, 251, 1, 0.12)',
-              color: '#4dfb01',
-              flexShrink: 0
-            }}
-          >
-            <BarChart3 size={isMobile ? 22 : 26} strokeWidth={1.6} />
-          </div>
           <h2
             style={{
               margin: 0,
