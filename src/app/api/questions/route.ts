@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const isAdmin = user.plan === 'ADMIN';
     
     // Filtros opcionais
-    const status = searchParams.get('status');
+    const statusParam = searchParams.get('status');
     const excludeVirtual = searchParams.get('excludeVirtual') === 'true';
 
     // Parse paginação com valores padrão seguros
@@ -51,8 +51,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Filtros adicionais
-    if (status) {
-      whereClause.status = status;
+    if (statusParam) {
+      const statusFilters = statusParam
+        .split(',')
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0);
+
+      if (statusFilters.length === 1) {
+        whereClause.status = statusFilters[0];
+      } else if (statusFilters.length > 1) {
+        whereClause.status = { in: statusFilters };
+      }
     }
     
 
