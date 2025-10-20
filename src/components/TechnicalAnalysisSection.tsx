@@ -154,10 +154,10 @@ export default function TechnicalAnalysisSection({
       : '28px 32px';
   
   const contentPadding = isMobile
-    ? '12px 16px 20px'
+    ? '10px 16px 20px'
     : isTablet
-      ? '16px 24px 24px'
-      : '16px 32px 28px';
+      ? '14px 24px 24px'
+      : '12px 32px 28px';
   const articlePadding = isMobile ? '18px' : isTablet ? '22px' : '24px';
   const accentBlockPadding = isMobile ? '16px' : '20px';
   const supplementaryPadding = isMobile ? '18px' : '20px';
