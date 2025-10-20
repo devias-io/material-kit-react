@@ -178,7 +178,6 @@ export default function TechnicalAnalysisSection({
         <header
           style={{
             padding: containerPadding,
-            borderBottom: '1px solid #e2e8f0',
             background: '#ffffff',
             boxSizing: 'border-box'
           }}
