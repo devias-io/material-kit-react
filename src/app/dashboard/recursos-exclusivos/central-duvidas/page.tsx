@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/use-user';
+import type { User } from '@/types/user';
 
 // Tipos
 interface Comment {
@@ -23,7 +24,12 @@ interface Question {
   answers: Answer[];
   comments: Comment[];
   readByAdmin: boolean;
-  user: { id: string };
+  user: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    plan?: User['plan'] | null;
+  };
 }
 
 interface Answer {
@@ -38,10 +44,20 @@ interface Answer {
   comments: Comment[];
 }
 
-const statusLabels = {
+const statusLabels: Record<Question['status'], string> = {
   'NOVA': 'Aguardando Resposta',
   'RESPONDIDA': 'Respondida',
-  'FECHADA': 'Fechada'
+  'FECHADA': 'Respondida'
+};
+
+const planLabels: Record<NonNullable<User['plan']>, string> = {
+  VIP: 'Close Friends VIP',
+  LITE: 'Close Friends LITE',
+  LITE_V2: 'Close Friends LITE 2.0',
+  RENDA_PASSIVA: 'Projeto Renda Passiva',
+  FIIS: 'Projeto FIIs',
+  AMERICA: 'Projeto América',
+  ADMIN: 'Administrador'
 };
 
 export default function CentralDuvidas() {
@@ -243,10 +259,27 @@ export default function CentralDuvidas() {
       case 'RESPONDIDA':
         return '#10b981';
       case 'FECHADA':
-        return '#6b7280';
+        return '#10b981';
       default:
         return '#6b7280';
     }
+  };
+
+  const getQuestionUserName = (user?: Question['user']) => {
+    if (!user) {
+      return '';
+    }
+
+    const parts = [user.firstName?.trim(), user.lastName?.trim()].filter(Boolean) as string[];
+    return parts.join(' ').trim();
+  };
+
+  const getQuestionUserPlanLabel = (user?: Question['user']) => {
+    if (!user?.plan) {
+      return '';
+    }
+
+    return planLabels[user.plan] ?? user.plan;
   };
 
   const handleAccordionChange = (questionId: string) => (isExpanded: boolean) => {
@@ -464,16 +497,21 @@ export default function CentralDuvidas() {
           </div>
         ) : (
           <div style={{ display: 'grid', gap: '16px' }}>
-            {questions.map((question) => (
-              <div
-                key={question.id}
-                style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '16px',
-                  border: '1px solid #e5e7eb',
-                  overflow: 'hidden'
-                }}
-              >
+            {questions.map((question) => {
+              const questionUserName = getQuestionUserName(question.user);
+              const questionUserPlan = getQuestionUserPlanLabel(question.user);
+              const canMarkAsResolved = currentUser?.plan === 'ADMIN' && currentUser?.id !== question.user.id;
+
+              return (
+                <div
+                  key={question.id}
+                  style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: '16px',
+                    border: '1px solid #e5e7eb',
+                    overflow: 'hidden'
+                  }}
+                >
                 {/* Header da pergunta */}
                 <div 
                   style={{
@@ -545,8 +583,7 @@ export default function CentralDuvidas() {
                       fontWeight: '500'
                     }}>
                       <span>{getStatusIcon(question.status)}</span>
-                      {question.status === 'NOVA' ? 'Fechada' : 
-                       question.status === 'RESPONDIDA' ? 'Respondida' : 'Fechada'}
+                      {statusLabels[question.status]}
                     </div>
                     
                     {hasUnreadAnswers(question) && (
@@ -564,19 +601,24 @@ export default function CentralDuvidas() {
                       </div>
                     )}
                     
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '4px',
-                      color: '#6b7280',
-                      fontSize: '13px'
-                    }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92178 15.4214 5.17163 16.1716C4.42149 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Davi Souza (Close Friends VIP)
-                    </div>
+                    {questionUserName && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        color: '#6b7280',
+                        fontSize: '13px'
+                      }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92178 15.4214 5.17163 16.1716C4.42149 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <span>
+                          {questionUserName}
+                          {questionUserPlan ? ` (${questionUserPlan})` : ''}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -797,7 +839,7 @@ export default function CentralDuvidas() {
                         justifyContent: 'space-between',
                         gap: '12px'
                       }}>
-                        {question.status !== 'FECHADA' && question.answers.length > 0 && (
+                        {canMarkAsResolved && question.status !== 'FECHADA' && question.answers.length > 0 && (
                           <button
                             onClick={() => handleCloseQuestion(question.id)}
                             style={{
@@ -831,7 +873,8 @@ export default function CentralDuvidas() {
                   </div>
                 )}
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
 
