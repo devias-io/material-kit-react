@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useUser } from '@/hooks/use-user';
 import styles from './central-duvidas.module.css';
@@ -616,9 +617,14 @@ export default function AdminCentralDuvidas() {
               Gerencie as dúvidas dos membros, organize respostas da equipe e alimente a base de conhecimento.
             </p>
           </div>
-          <button type="button" className={styles.secondaryButton} onClick={handleRefresh}>
-            Atualizar dados
-          </button>
+          <div className={styles.headerActions}>
+            <Link href="/dashboard/admin/templates" className={styles.secondaryButton}>
+              Gerenciar templates
+            </Link>
+            <button type="button" className={styles.secondaryButton} onClick={handleRefresh}>
+              Atualizar dados
+            </button>
+          </div>
         </header>
 
         <div className={styles.mainTabs}>
