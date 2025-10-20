@@ -390,7 +390,7 @@
 }
 
 .questionContent {
-  padding: 0 24px 20px;
+  padding: 20px 24px;
   border-bottom: 1px solid #e2e8f0;
   color: #334155;
   line-height: 1.6;
@@ -402,6 +402,7 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .answerCard {
@@ -439,6 +440,67 @@
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
+  padding: 16px 24px 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.responsePrompt {
+  padding: 16px 24px 0;
+}
+
+.responseForm {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  margin-top: -1px;
+}
+
+.responseLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.responseTextarea {
+  width: 100%;
+  min-height: 140px;
+  border-radius: 12px;
+  border: 1px solid #cbd5f5;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  background: #ffffff;
+  font-family: inherit;
+  color: #1f2937;
+}
+
+.responseTextarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.responseActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.responseActionButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.emptyAnswers {
+  margin: 0;
+  color: #475569;
+  font-style: italic;
 }
 
 .mutedText {

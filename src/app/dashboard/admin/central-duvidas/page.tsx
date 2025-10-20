@@ -127,7 +127,7 @@ export default function AdminCentralDuvidas() {
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
 
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
-  const [showResponseModal, setShowResponseModal] = useState(false);
+  const [activeResponseQuestionId, setActiveResponseQuestionId] = useState<string | null>(null);
   const [responseContent, setResponseContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -438,6 +438,20 @@ export default function AdminCentralDuvidas() {
     }
   };
 
+  const handleStartResponse = (question: Question) => {
+    setSelectedQuestion(question);
+    setResponseContent('');
+    setActiveResponseQuestionId(question.id);
+    setExpandedQuestion(question.id);
+    loadTemplates();
+  };
+
+  const handleCancelResponse = () => {
+    setActiveResponseQuestionId(null);
+    setResponseContent('');
+    setSelectedQuestion(null);
+  };
+
   const handleSubmitResponse = async () => {
     if (!selectedQuestion || !responseContent.trim()) {
       setError('Resposta é obrigatória');
@@ -459,9 +473,9 @@ export default function AdminCentralDuvidas() {
 
       if (response.ok) {
         setSuccess('Resposta enviada com sucesso!');
-        setShowResponseModal(false);
         setResponseContent('');
         setSelectedQuestion(null);
+        setActiveResponseQuestionId(null);
         loadData();
       } else {
         const data = await response.json();
@@ -487,6 +501,9 @@ export default function AdminCentralDuvidas() {
 
       if (response.ok) {
         setSuccess(`Status alterado para ${statusLabels[newStatus]}`);
+        setActiveResponseQuestionId(null);
+        setSelectedQuestion(null);
+        setResponseContent('');
         loadData();
       }
     } catch (err) {
@@ -769,73 +786,113 @@ export default function AdminCentralDuvidas() {
                       </div>
                     </header>
 
+                    <div className={styles.questionContent}>{question.content}</div>
+
                     {expandedQuestion === question.id && (
-                      <div>
-                        <div className={styles.questionContent}>{question.content}</div>
-
-                        <div className={styles.detailArea}>
-                          {question.answers.length > 0 && (
-                            <div>
-                              <h4>Respostas da equipe</h4>
-                              <div className={styles.listSection}>
-                                {question.answers.map((answer) => (
-                                  <div key={answer.id} className={styles.answerCard}>
-                                    <div className={styles.answerHeader}>
-                                      <div>
-                                        <strong>
-                                          {answer.admin.firstName} {answer.admin.lastName}
-                                        </strong>
-                                        <div>{formatDate(answer.createdAt)}</div>
-                                      </div>
-                                      <div className={styles.answerActions}>
-                                        {answer.isFaq && <span className={`${styles.tag} ${styles.tagNeutral}`}>FAQ</span>}
-                                        <button
-                                          type="button"
-                                          className={styles.secondaryButton}
-                                          onClick={() => handleMarkAsFAQ(answer, question.title)}
-                                        >
-                                          {answer.isFaq ? 'Remover das FAQs' : 'Adicionar às FAQs'}
-                                        </button>
-                                      </div>
+                      <div className={styles.detailArea}>
+                        {question.answers.length > 0 ? (
+                          <div>
+                            <h4>Respostas da equipe</h4>
+                            <div className={styles.listSection}>
+                              {question.answers.map((answer) => (
+                                <div key={answer.id} className={styles.answerCard}>
+                                  <div className={styles.answerHeader}>
+                                    <div>
+                                      <strong>
+                                        {answer.admin.firstName} {answer.admin.lastName}
+                                      </strong>
+                                      <div>{formatDate(answer.createdAt)}</div>
                                     </div>
-                                    <div className={styles.answerContent}>{answer.content}</div>
+                                    <div className={styles.answerActions}>
+                                      {answer.isFaq && <span className={`${styles.tag} ${styles.tagNeutral}`}>FAQ</span>}
+                                      <button
+                                        type="button"
+                                        className={styles.secondaryButton}
+                                        onClick={() => handleMarkAsFAQ(answer, question.title)}
+                                      >
+                                        {answer.isFaq ? 'Remover das FAQs' : 'Adicionar às FAQs'}
+                                      </button>
+                                    </div>
                                   </div>
-                                ))}
-                              </div>
+                                  <div className={styles.answerContent}>{answer.content}</div>
+                                </div>
+                              ))}
                             </div>
-                          )}
+                          </div>
+                        ) : (
+                          <p className={styles.emptyAnswers}>Nenhuma resposta da equipe cadastrada ainda.</p>
+                        )}
+                      </div>
+                    )}
 
-                          <div className={styles.cardFooter}>
-                            {question.status === 'NOVA' && (
-                              <button
-                                type="button"
-                                className={styles.primaryButton}
-                                onClick={() => {
-                                  setSelectedQuestion(question);
-                                  setResponseContent('');
-                                  setShowResponseModal(true);
-                                  loadTemplates();
-                                }}
-                              >
-                                Responder dúvida
-                              </button>
-                            )}
-                            {question.status !== 'FECHADA' && (
-                              <button
-                                type="button"
-                                className={styles.successButton}
-                                onClick={() => handleStatusChange(question.id, 'FECHADA')}
-                              >
-                                Marcar como resolvida
-                              </button>
-                            )}
-                            {question.status === 'FECHADA' && (
-                              <span className={styles.mutedText}>Pergunta encerrada</span>
-                            )}
+                    {question.status === 'NOVA' && activeResponseQuestionId !== question.id && (
+                      <div className={styles.responsePrompt}>
+                        <button
+                          type="button"
+                          className={styles.primaryButton}
+                          onClick={() => handleStartResponse(question)}
+                        >
+                          Responder dúvida
+                        </button>
+                      </div>
+                    )}
+
+                    {activeResponseQuestionId === question.id && (
+                      <div className={styles.responseForm}>
+                        <label htmlFor={`response-${question.id}`} className={styles.responseLabel}>
+                          Responder membro
+                        </label>
+                        <textarea
+                          id={`response-${question.id}`}
+                          className={styles.responseTextarea}
+                          value={responseContent}
+                          onChange={(event) => setResponseContent(event.target.value)}
+                          placeholder="Escreva sua resposta para o membro"
+                        />
+                        <div className={styles.responseActions}>
+                          <button
+                            type="button"
+                            className={styles.secondaryButton}
+                            onClick={() => setShowTemplatesModal(true)}
+                          >
+                            Inserir template
+                          </button>
+                          <div className={styles.responseActionButtons}>
+                            <button
+                              type="button"
+                              className={styles.secondaryButton}
+                              onClick={handleCancelResponse}
+                              disabled={submitting}
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.primaryButton}
+                              onClick={handleSubmitResponse}
+                              disabled={submitting}
+                            >
+                              {submitting ? 'Enviando...' : 'Publicar resposta'}
+                            </button>
                           </div>
                         </div>
                       </div>
                     )}
+
+                    <div className={styles.cardFooter}>
+                      {question.status !== 'FECHADA' && (
+                        <button
+                          type="button"
+                          className={styles.successButton}
+                          onClick={() => handleStatusChange(question.id, 'FECHADA')}
+                        >
+                          Marcar como resolvida
+                        </button>
+                      )}
+                      {question.status === 'FECHADA' && (
+                        <span className={styles.mutedText}>Pergunta encerrada</span>
+                      )}
+                    </div>
                   </article>
                 ))
               )}
@@ -936,62 +993,6 @@ export default function AdminCentralDuvidas() {
           </>
         )}
       </div>
-
-      {showResponseModal && selectedQuestion && (
-        <div className={styles.modalOverlay}>
-          <div className={`${styles.modalContent} ${styles.modalLarge}`}>
-            <div className={styles.modalHeader}>
-              <h2>Responder dúvida</h2>
-              <button type="button" onClick={() => setShowResponseModal(false)} aria-label="Fechar">
-                ×
-              </button>
-            </div>
-            <div className={`${styles.modalBody} ${styles.modalBodyScrollable}`}>
-              <div className={styles.fieldGroup}>
-                <label>Membro</label>
-                <p>
-                  <strong>
-                    {selectedQuestion.user.firstName} {selectedQuestion.user.lastName}
-                  </strong>{' '}
-                  — {selectedQuestion.user.email}
-                </p>
-              </div>
-              <div className={styles.fieldGroup}>
-                <label>Dúvida</label>
-                <p>{selectedQuestion.content}</p>
-              </div>
-              <div className={styles.fieldGroup}>
-                <label>Resposta</label>
-                <textarea
-                  value={responseContent}
-                  onChange={(event) => setResponseContent(event.target.value)}
-                  placeholder="Escreva sua resposta para o membro"
-                />
-              </div>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                onClick={() => setShowTemplatesModal(true)}
-              >
-                Inserir template
-              </button>
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={styles.secondaryButton} onClick={() => setShowResponseModal(false)}>
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className={styles.primaryButton}
-                onClick={handleSubmitResponse}
-                disabled={submitting}
-              >
-                {submitting ? 'Enviando...' : 'Enviar resposta'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showTemplatesModal && (
         <div className={styles.modalOverlay}>
