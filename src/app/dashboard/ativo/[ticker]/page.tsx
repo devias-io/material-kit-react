@@ -3345,7 +3345,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 })()}
                 subtitle={(() => {
                   if (dy12Meses > 0) {
-                    return 'Calculado';
+                    return '';
                   }
                   if (dadosYahoo?.dividendYield && dadosYahoo.dividendYield > 0) {
                     return '';
@@ -3460,7 +3460,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 })()}
                 subtitle={(() => {
                   if (dy12Meses > 0) {
-                    return "Calculado";
+                    return "";
                   }
                   if (dadosYahoo?.dividendYield && dadosYahoo.dividendYield > 0) {
                     return "";
