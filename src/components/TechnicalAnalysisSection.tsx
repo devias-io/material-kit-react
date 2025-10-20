@@ -315,12 +315,21 @@ export default function TechnicalAnalysisSection({
               </p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gap: isMobile ? '20px' : '24px' }}>
+            <div
+              style={{
+                display: 'grid',
+                gap: isMobile ? '20px' : '24px',
+                width: '100%',
+                boxSizing: 'border-box'
+              }}
+            >
               <article
                 style={{
                   borderRadius: isMobile ? '14px' : '16px',
                   border: '1px solid #e2e8f0',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  width: '100%',
+                  boxSizing: 'border-box'
                 }}
               >
                 {analiseSelecionada.imagemCapa && (
@@ -468,7 +477,10 @@ export default function TechnicalAnalysisSection({
                           padding: accentBlockPadding,
                           boxSizing: 'border-box',
                           display: 'grid',
-                          gap: isMobile ? '14px' : '16px'
+                          gap: isMobile ? '14px' : '16px',
+                          width: '100%',
+                          alignSelf: 'stretch',
+                          justifySelf: 'stretch'
                         }}
                       >
                         <div
@@ -634,6 +646,9 @@ export default function TechnicalAnalysisSection({
 
         .technical-analysis-content * {
           box-sizing: border-box;
+          max-width: 100% !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
         }
 
         .technical-analysis-content p {
