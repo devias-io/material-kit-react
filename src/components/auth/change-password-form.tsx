@@ -65,6 +65,7 @@ export function ChangePasswordForm({ userEmail, onSuccess }: ChangePasswordFormP
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            'X-User-Email': userEmail.toLowerCase(),
           },
           body: JSON.stringify(values),
         });
