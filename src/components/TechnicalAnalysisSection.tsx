@@ -185,7 +185,7 @@ export default function TechnicalAnalysisSection({
           <h2
             style={{
               margin: 0,
-              fontSize: isMobile ? 'clamp(18px, 5vw, 22px)' : '24px',
+              fontSize: isMobile ? 'clamp(18px, 5vw, 22px)' : '20px',
               fontWeight: 700,
               letterSpacing: '-0.01em',
               color: '#0f172a'
