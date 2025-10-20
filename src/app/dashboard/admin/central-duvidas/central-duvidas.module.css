@@ -20,6 +20,12 @@
   gap: 16px;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .headerTitle {
   font-size: 32px;
   font-weight: 700;
