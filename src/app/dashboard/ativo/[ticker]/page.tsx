@@ -3345,16 +3345,16 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 })()}
                 subtitle={(() => {
                   if (dy12Meses > 0) {
-                    return fonteDY || 'Calculado';
+                    return 'Calculado';
                   }
                   if (dadosYahoo?.dividendYield && dadosYahoo.dividendYield > 0) {
-                    return 'Yahoo Finance';
+                    return '';
                   }
                   if (dadosFinanceiros?.lastDividendValue && dadosFinanceiros?.regularMarketPrice) {
                     return 'Estimado (último div × 4)';
                   }
                   if (dadosHGBrasil?.dividendYield12m) {
-                    return dadosHGBrasil?.fonte || 'HG Brasil';
+                    return '';
                   }
                   return '';
                 })()}
@@ -3460,10 +3460,10 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 })()}
                 subtitle={(() => {
                   if (dy12Meses > 0) {
-                    return fonteDY || "";
+                    return "Calculado";
                   }
                   if (dadosYahoo?.dividendYield && dadosYahoo.dividendYield > 0) {
-                    return dadosYahoo.fonte || "";
+                    return "";
                   }
                   if (dadosHGBrasil?.dividendYield12m) {
                     return "";
