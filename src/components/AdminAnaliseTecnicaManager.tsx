@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AlignCenter,
   AlignLeft,
   AlignRight,
   Bold,
   CheckCircle2,
-  Edit3,
   Eye,
   FileImage,
   Image as ImageIcon,
@@ -17,7 +17,6 @@ import {
   ListOrdered,
   Loader2,
   PlusCircle,
-  RefreshCcw,
   Save,
   ShieldAlert,
   Star,
@@ -25,6 +24,8 @@ import {
   Underline,
   Upload,
 } from 'lucide-react';
+
+import Link from 'next/link';
 
 import { useAuthAccess } from '@/hooks/use-auth-access';
 import { slugify } from '@/utils/slugify';
@@ -259,38 +260,16 @@ const inputStyle: React.CSSProperties = {
   transition: 'border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
 };
 
-const badgeStyle: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '6px',
-  padding: '6px 12px',
-  borderRadius: '999px',
-  fontSize: '12px',
-  fontWeight: 600,
-  letterSpacing: '0.05em',
-  textTransform: 'uppercase',
-};
-
-const formatDateTime = (value: string) => {
-  try {
-    return new Date(value).toLocaleString('pt-BR');
-  } catch (error) {
-    return value;
-  }
-};
-
-const defaultListPlaceholder =
-  'Nenhuma análise técnica cadastrada ainda. Crie a primeira análise para este ativo.';
-
 export default function AdminAnaliseTecnicaManager() {
   const { planInfo, loading: authLoading } = useAuthAccess();
   const [analises, setAnalises] = useState<AnaliseTecnica[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
   const [formState, setFormState] = useState<FormState>(emptyForm);
   const [slugManual, setSlugManual] = useState<boolean>(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const isTablet = useMediaQuery('(max-width: 1024px)');
   const isMobile = useMediaQuery('(max-width: 640px)');
@@ -302,7 +281,6 @@ export default function AdminAnaliseTecnicaManager() {
       return;
     }
 
-    setLoading(true);
     setError('');
 
     try {
@@ -316,8 +294,6 @@ export default function AdminAnaliseTecnicaManager() {
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'Erro desconhecido ao carregar análises técnicas');
-    } finally {
-      setLoading(false);
     }
   }, [planInfo.isAdmin]);
 
@@ -335,10 +311,24 @@ export default function AdminAnaliseTecnicaManager() {
     return undefined;
   }, [success]);
 
+  const analiseIdFromQuery = searchParams.get('analiseId');
+
+  useEffect(() => {
+    if (!analiseIdFromQuery || analises.length === 0) {
+      return;
+    }
+
+    const analiseSelecionada = analises.find(item => item.id === analiseIdFromQuery);
+    if (analiseSelecionada && formState.id !== analiseSelecionada.id) {
+      handleEdit(analiseSelecionada);
+    }
+  }, [analises, analiseIdFromQuery, formState.id, handleEdit]);
+
   const resetForm = useCallback(() => {
     setFormState(emptyForm);
     setSlugManual(false);
-  }, []);
+    router.replace('/dashboard/admin/analise-tecnica');
+  }, [router]);
 
   const handleEdit = useCallback((analise: AnaliseTecnica) => {
     setFormState({
@@ -500,42 +490,9 @@ export default function AdminAnaliseTecnicaManager() {
     [carregarAnalises, formState, resetForm]
   );
 
-  const atualizarStatus = useCallback(
-    async (analise: AnaliseTecnica, changes: Partial<Pick<AnaliseTecnica, 'publicado' | 'destaque'>>) => {
-      try {
-        const response = await fetch(`/api/analises-tecnicas/${analise.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...changes }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Falha ao atualizar status da análise.');
-        }
-
-        const data = await response.json();
-        if (data?.analise) {
-          setAnalises(prev => prev.map(item => (item.id === analise.id ? data.analise : item)));
-          if (formState.id === analise.id) {
-            setFormState(prev => ({ ...prev, ...changes }));
-          }
-        }
-      } catch (err) {
-        console.error(err);
-        setError(err instanceof Error ? err.message : 'Erro ao atualizar status da análise');
-      }
-    },
-    [formState.id]
-  );
-
-  const listaOrdenada = useMemo(() => {
-    return [...analises].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
-  }, [analises]);
-
   const pagePadding = isMobile ? '16px' : isTablet ? '24px' : '32px';
   const headerTitleSize = isMobile ? '26px' : '32px';
   const actionsGap = isMobile ? '8px' : '12px';
-  const mainGridTemplate = isTablet ? 'minmax(0, 1fr)' : 'minmax(0, 1.2fr) minmax(0, 1fr)';
 
   if (authLoading) {
     return (
@@ -620,26 +577,25 @@ export default function AdminAnaliseTecnicaManager() {
             <PlusCircle size={18} /> Nova análise
           </button>
 
-          <button
-            type="button"
-            onClick={() => void carregarAnalises()}
+          <Link
+            href="/dashboard/admin/analise-tecnica/publicadas"
             style={{
               border: '1px solid #0f172a',
               borderRadius: '12px',
               padding: isMobile ? '10px 14px' : '12px 16px',
               background: '#0f172a',
               color: '#f8fafc',
-              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
               fontWeight: 600,
+              textDecoration: 'none',
               width: isMobile ? '100%' : 'auto',
               justifyContent: 'center',
             }}
           >
-            <RefreshCcw size={18} /> Atualizar lista
-          </button>
+            Ver análises publicadas
+          </Link>
         </div>
       </header>
 
@@ -685,7 +641,7 @@ export default function AdminAnaliseTecnicaManager() {
         style={{
           display: 'grid',
           gap: isMobile ? '20px' : '24px',
-          gridTemplateColumns: mainGridTemplate,
+          gridTemplateColumns: 'minmax(0, 1fr)',
           alignItems: 'flex-start',
         }}
       >
@@ -967,201 +923,6 @@ export default function AdminAnaliseTecnicaManager() {
           </div>
         </form>
 
-        <aside
-          style={{
-            background: '#ffffff',
-            borderRadius: isMobile ? '18px' : '20px',
-            border: '1px solid #e2e8f0',
-            padding: isMobile ? '20px' : '24px',
-            boxShadow: '0 18px 40px rgba(15, 23, 42, 0.05)',
-            display: 'grid',
-            gap: isMobile ? '16px' : '18px',
-            maxHeight: isTablet ? 'none' : '90vh',
-            overflowY: isTablet ? 'visible' : 'auto',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: isMobile ? 'flex-start' : 'center',
-              flexWrap: 'wrap',
-              gap: '8px',
-            }}
-          >
-            <h2 style={{ margin: 0, fontSize: isMobile ? '18px' : '20px' }}>Análises recentes</h2>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>{listaOrdenada.length} itens</span>
-          </div>
-
-          {loading ? (
-            <div style={{ display: 'grid', gap: '12px' }}>
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={index}
-                  style={{
-                    borderRadius: '16px',
-                    border: '1px solid #e2e8f0',
-                    padding: '18px',
-                    background: '#f8fafc',
-                    animation: 'pulse 1.5s ease-in-out infinite',
-                  }}
-                >
-                  <div style={{ height: '16px', background: '#e2e8f0', borderRadius: '6px', marginBottom: '10px' }} />
-                  <div style={{ height: '12px', background: '#e2e8f0', borderRadius: '6px', width: '60%' }} />
-                </div>
-              ))}
-            </div>
-          ) : listaOrdenada.length === 0 ? (
-            <div
-              style={{
-                border: '2px dashed #cbd5f5',
-                borderRadius: '16px',
-                padding: '24px',
-                textAlign: 'center',
-                color: '#475569',
-              }}
-            >
-              {defaultListPlaceholder}
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gap: '16px' }}>
-              {listaOrdenada.map(analise => (
-                <div
-                  key={analise.id}
-                  style={{
-                    border: '1px solid #e2e8f0',
-                    borderRadius: isMobile ? '14px' : '16px',
-                    padding: isMobile ? '16px' : '18px',
-                    background: '#ffffff',
-                    display: 'grid',
-                    gap: isMobile ? '10px' : '12px',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      gap: isMobile ? '10px' : '12px',
-                      flexWrap: 'wrap',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <div style={{ display: 'grid', gap: '6px', flex: 1, minWidth: '220px' }}>
-                      <span style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                        {analise.ticker}
-                      </span>
-                      <strong style={{ fontSize: isMobile ? '15px' : '16px' }}>{analise.titulo}</strong>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <span
-                        style={{
-                          ...badgeStyle,
-                          background: analise.publicado ? '#ecfccb' : '#f1f5f9',
-                          color: analise.publicado ? '#14532d' : '#475569',
-                          border: analise.publicado ? '1px solid #bef264' : '1px solid #cbd5f5',
-                          minWidth: isMobile ? 'auto' : 'unset',
-                        }}
-                      >
-                        <Eye size={14} /> {analise.publicado ? 'Publicado' : 'Rascunho'}
-                      </span>
-                      {analise.destaque && (
-                        <span
-                          style={{
-                            ...badgeStyle,
-                            background: '#fef3c7',
-                            color: '#92400e',
-                            border: '1px solid #f59e0b',
-                          }}
-                        >
-                          <Star size={14} /> Destaque
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <p style={{ margin: 0, color: '#475569', fontSize: isMobile ? '13px' : '14px', lineHeight: 1.5 }}>
-                    {analise.resumo || analise.conteudo.replace(/<[^>]+>/g, ' ').slice(0, 160)}
-                  </p>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: isMobile ? 'flex-start' : 'center',
-                      gap: '12px',
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>
-                      Atualizado em {formatDateTime(analise.updatedAt)}
-                    </div>
-
-                    <div style={{ display: 'flex', gap: isMobile ? '8px' : '10px', flexWrap: 'wrap' }}>
-                      <button
-                        type="button"
-                        onClick={() => atualizarStatus(analise, { publicado: !analise.publicado })}
-                        style={{
-                          border: '1px solid #cbd5f5',
-                          borderRadius: '10px',
-                          padding: '6px 12px',
-                          background: '#ffffff',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          width: isMobile ? '100%' : 'auto',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        Alternar publicação
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => atualizarStatus(analise, { destaque: !analise.destaque })}
-                        style={{
-                          border: '1px solid #fde68a',
-                          borderRadius: '10px',
-                          padding: '6px 12px',
-                          background: analise.destaque ? '#fef3c7' : '#ffffff',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          width: isMobile ? '100%' : 'auto',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        Alternar destaque
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(analise)}
-                        style={{
-                          border: '1px solid #cbd5f5',
-                          borderRadius: '10px',
-                          padding: '6px 12px',
-                          background: '#f1f5f9',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          width: isMobile ? '100%' : 'auto',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Edit3 size={14} /> Editar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </aside>
       </div>
     </div>
   );
