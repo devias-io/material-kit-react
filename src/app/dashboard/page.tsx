@@ -73,6 +73,13 @@ export default function DashboardOverview() {
       href: '/dashboard/recursos-exclusivos',
       permission: 'recursos-exclusivos',
       isNew: true
+    },
+    {
+      title: 'CF Renda Turbinada',
+      description: 'Plano completo de opções com aulas guiadas e carteira mensal',
+      icon: '⚡',
+      href: '/dashboard/cf-renda-turbinada',
+      permission: 'cf-renda-turbinada'
     }
   ];
 

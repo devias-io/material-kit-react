@@ -33,12 +33,35 @@ export const navItems = [
     icon: 'chart-pie',
     page: 'small-caps'
   },
-  { 
-    key: 'settings', 
-    title: 'Fundos Imobiliários', 
-    href: paths.dashboard.settings, 
+  {
+    key: 'settings',
+    title: 'Fundos Imobiliários',
+    href: paths.dashboard.settings,
     icon: 'buildings',
     page: 'fundos-imobiliarios'
+  },
+  {
+    key: 'cf-renda-turbinada',
+    title: 'CF Renda Turbinada',
+    href: paths.dashboard.cfRendaTurbinada,
+    icon: 'star',
+    page: 'cf-renda-turbinada',
+    items: [
+      {
+        key: 'cf-renda-turbinada-aulas',
+        title: 'Aulas',
+        href: paths.dashboard.cfRendaTurbinadaAulas,
+        icon: 'video',
+        page: 'cf-renda-turbinada-aulas'
+      },
+      {
+        key: 'cf-renda-turbinada-carteira',
+        title: 'Carteira Recomendada',
+        href: paths.dashboard.cfRendaTurbinadaCarteira,
+        icon: 'chart-line',
+        page: 'cf-renda-turbinada-carteira'
+      }
+    ]
   },
   {
     key: 'rentabilidades',

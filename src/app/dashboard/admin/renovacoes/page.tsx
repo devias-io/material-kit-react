@@ -86,7 +86,7 @@ interface ApiUser {
   firstName: string;
   lastName: string;
   email: string;
-  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'AMERICA' | 'ADMIN';
+  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'AMERICA' | 'ADMIN';
   status: 'ACTIVE' | 'INACTIVE';
   expirationDate: string | null;
   hotmartCustomerId: string | null;
@@ -352,6 +352,7 @@ export default function RenovacoesDashboard() {
       'LITE_V2': { label: 'Close Friends LITE 2.0', color: '#1d4ed8', emoji: '🌟' },
       'RENDA_PASSIVA': { label: 'Projeto Renda Passiva', color: '#059669', emoji: '💰' },
       'FIIS': { label: 'Projeto FIIs', color: '#D97706', emoji: '🏢' },
+      'RENDA_TURBINADA': { label: 'CF Renda Turbinada', color: '#F97316', emoji: '⚡' },
       'AMERICA': { label: 'Projeto América', color: '#DC2626', emoji: '🇺🇸' },
       'ADMIN': { label: 'Administrador', color: '#4B5563', emoji: '🛡️' }
     };

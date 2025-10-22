@@ -179,6 +179,7 @@ export default function ImportUsuariosPage() {
       'LITE': '#2563EB', 
       'RENDA_PASSIVA': '#059669',
       'FIIS': '#D97706',
+      'RENDA_TURBINADA': '#F97316',
       'AMERICA': '#DC2626'
     };
     return colors[plan] || '#6B7280';

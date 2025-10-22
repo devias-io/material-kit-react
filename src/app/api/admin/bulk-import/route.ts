@@ -354,7 +354,7 @@ export async function GET() {
             firstName: 'string',
             lastName: 'string', 
             email: 'string',
-            plan: 'VIP|LITE|RENDA_PASSIVA|FIIS|AMERICA',
+            plan: 'VIP|LITE|RENDA_PASSIVA|FIIS|RENDA_TURBINADA|AMERICA',
             expirationDate: 'YYYY-MM-DD (opcional)',
             status: 'ACTIVE|INACTIVE|PENDING (opcional)'
           }
