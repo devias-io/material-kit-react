@@ -297,6 +297,28 @@ export default function AdminAnaliseTecnicaManager() {
     }
   }, [planInfo.isAdmin]);
 
+  const resetForm = useCallback(() => {
+    setFormState(emptyForm);
+    setSlugManual(false);
+    router.replace('/dashboard/admin/analise-tecnica');
+  }, [router]);
+
+  const handleEdit = useCallback((analise: AnaliseTecnica) => {
+    setFormState({
+      id: analise.id,
+      ticker: analise.ticker,
+      titulo: analise.titulo,
+      slug: analise.slug,
+      resumo: analise.resumo ?? '',
+      conteudo: analise.conteudo,
+      imagemCapa: analise.imagemCapa ?? '',
+      fonte: analise.fonte ?? '',
+      publicado: analise.publicado,
+      destaque: analise.destaque,
+    });
+    setSlugManual(true);
+  }, []);
+
   useEffect(() => {
     if (!authLoading && planInfo.isAdmin) {
       void carregarAnalises();
@@ -323,28 +345,6 @@ export default function AdminAnaliseTecnicaManager() {
       handleEdit(analiseSelecionada);
     }
   }, [analises, analiseIdFromQuery, formState.id, handleEdit]);
-
-  const resetForm = useCallback(() => {
-    setFormState(emptyForm);
-    setSlugManual(false);
-    router.replace('/dashboard/admin/analise-tecnica');
-  }, [router]);
-
-  const handleEdit = useCallback((analise: AnaliseTecnica) => {
-    setFormState({
-      id: analise.id,
-      ticker: analise.ticker,
-      titulo: analise.titulo,
-      slug: analise.slug,
-      resumo: analise.resumo ?? '',
-      conteudo: analise.conteudo,
-      imagemCapa: analise.imagemCapa ?? '',
-      fonte: analise.fonte ?? '',
-      publicado: analise.publicado,
-      destaque: analise.destaque,
-    });
-    setSlugManual(true);
-  }, []);
 
   const handleDelete = useCallback(
     async (analise: AnaliseTecnica) => {
