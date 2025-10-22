@@ -166,6 +166,7 @@ export default function EduzzPage() {
       'LITE_V2': { label: 'Close Friends LITE 2.0', color: '#1d4ed8', emoji: '🌟' }, // ✅ ADICIONADO
       'RENDA_PASSIVA': { label: 'Projeto Renda Passiva', color: '#059669', emoji: '💰' },
       'FIIS': { label: 'Projeto FIIs', color: '#D97706', emoji: '🏢' },
+      'RENDA_TURBINADA': { label: 'CF Renda Turbinada', color: '#F97316', emoji: '⚡' },
       'AMERICA': { label: 'Projeto América', color: '#DC2626', emoji: '🇺🇸' }
     };
     return planMap[plan] || { label: plan, color: '#6B7280', emoji: '📋' };
@@ -527,6 +528,7 @@ export default function EduzzPage() {
                 <MenuItem value="LITE_V2">🌟 Close Friends LITE 2.0</MenuItem>
                 <MenuItem value="RENDA_PASSIVA">💰 Projeto Renda Passiva</MenuItem>
                 <MenuItem value="FIIS">🏢 Projeto FIIs</MenuItem>
+                <MenuItem value="RENDA_TURBINADA">⚡ CF Renda Turbinada</MenuItem>
                 <MenuItem value="AMERICA">🇺🇸 Projeto América</MenuItem>
               </Select>
             </FormControl>

@@ -106,17 +106,24 @@ export default function NovoUsuarioPage() {
         color: '#059669', 
         emoji: '💰' 
       },
-      'FIIS': { 
-        label: 'Projeto FIIs', 
+      'FIIS': {
+        label: 'Projeto FIIs',
         description: 'Especializado em Fundos Imobiliários',
-        color: '#D97706', 
-        emoji: '🏢' 
+        color: '#D97706',
+        emoji: '🏢'
       },
-      'AMERICA': { 
-        label: 'Projeto América', 
+      'RENDA_TURBINADA': {
+        label: 'CF Renda Turbinada',
+        description: 'Plano focado em estratégias com opções e renda mensal turbinada',
+        color: '#F97316',
+        emoji: '⚡',
+        isNew: true
+      },
+      'AMERICA': {
+        label: 'Projeto América',
         description: 'Investimentos internacionais',
-        color: '#DC2626', 
-        emoji: '🇺🇸' 
+        color: '#DC2626',
+        emoji: '🇺🇸'
       },
       'ADMIN': { 
         label: 'Administrador', 
@@ -300,6 +307,25 @@ export default function NovoUsuarioPage() {
                       <Box display="flex" alignItems="center" gap={1}>
                         <span>🇺🇸</span>
                         <span>Projeto América</span>
+                      </Box>
+                    </MenuItem>
+
+                    <MenuItem value="RENDA_TURBINADA">
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <span>⚡</span>
+                        <span>CF Renda Turbinada</span>
+                        <Chip
+                          label="NOVO"
+                          size="small"
+                          sx={{
+                            bgcolor: '#F97316',
+                            color: 'white',
+                            fontWeight: '700',
+                            fontSize: '10px',
+                            height: '18px',
+                            ml: 1
+                          }}
+                        />
                       </Box>
                     </MenuItem>
                     

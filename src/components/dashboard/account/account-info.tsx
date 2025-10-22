@@ -31,6 +31,7 @@ const PLAN_STYLE_MAP = {
   LITE_V2: { color: '#2563EB', emoji: '⭐' },
   RENDA_PASSIVA: { color: '#10B981', emoji: '💰' },
   FIIS: { color: '#F59E0B', emoji: '🏢' },
+  RENDA_TURBINADA: { color: '#F97316', emoji: '⚡' },
   AMERICA: { color: '#EF4444', emoji: '🇺🇸' },
   ADMIN: { color: '#6B7280', emoji: '🛡️' }
 } as const;
