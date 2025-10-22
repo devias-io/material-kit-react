@@ -485,26 +485,26 @@ export default function TechnicalAnalysisSection({
                   </div>
 
                   {analiseSelecionada.conteudo && conteudoLength > 480 && (
-                      <button
-                        type="button"
-                        onClick={() => setExpanded((prev) => !prev)}
-                        style={{
-                          background: '#0f172a',
-                          color: '#f8fafc',
-                          border: 'none',
-                          borderRadius: '999px',
-                          padding: isMobile ? '10px 16px' : '10px 18px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          fontSize: isMobile ? '12px' : '13px',
-                          width: isMobile ? '100%' : 'auto',
-                          marginTop: isMobile ? '12px' : '14px'
-                        }}
-                        aria-expanded={expanded}
-                      >
-                        {expanded ? 'Mostrar menos' : 'Mostrar mais'}
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setExpanded((prev) => !prev)}
+                      style={{
+                        background: '#0f172a',
+                        color: '#f8fafc',
+                        border: 'none',
+                        borderRadius: '999px',
+                        padding: isMobile ? '10px 16px' : '10px 18px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        fontSize: isMobile ? '12px' : '13px',
+                        width: isMobile ? '100%' : 'auto',
+                        marginTop: isMobile ? '12px' : '14px'
+                      }}
+                      aria-expanded={expanded}
+                    >
+                      {expanded ? 'Mostrar menos' : 'Mostrar mais'}
+                    </button>
+                  )}
 
                   {analiseSelecionada.conteudo &&
                     (expanded || conteudoLength <= 480) && (
@@ -571,27 +571,6 @@ export default function TechnicalAnalysisSection({
                           </div>
                         )}
 
-                        {expanded && conteudoLength > 480 && (
-                          <button
-                            type="button"
-                            onClick={() => setExpanded(false)}
-                            style={{
-                              background: '#0f172a',
-                              color: '#f8fafc',
-                              border: 'none',
-                              borderRadius: '999px',
-                              padding: isMobile ? '10px 16px' : '10px 18px',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              fontSize: isMobile ? '12px' : '13px',
-                              width: isMobile ? '100%' : 'auto',
-                              justifySelf: isMobile ? 'stretch' : 'start'
-                            }}
-                            aria-expanded={expanded}
-                          >
-                            Mostrar menos
-                          </button>
-                        )}
                       </div>
                     )}
                 </div>
