@@ -195,18 +195,38 @@ const TooltipCustomizado = ({ active, payload, label }: any) => {
         <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
           {label}
         </Typography>
-        {payload.map((entry: any, index: number) => (
-          <Typography
-            key={index}
-            variant="body2"
-            sx={{ color: entry.color, fontSize: '0.875rem' }}
-          >
-            {entry.name}: {entry.name.includes('%') ? 
-              `${entry.value}%` : 
-              `R$ ${entry.value.toLocaleString('pt-BR')}`
-            }
-          </Typography>
-        ))}
+        {payload.map((entry: any, index: number) => {
+          const label = typeof entry.name === 'string'
+            ? entry.name
+            : String(entry.name ?? entry.dataKey ?? '');
+
+          const dataKey = typeof entry.dataKey === 'string'
+            ? entry.dataKey.toLowerCase()
+            : '';
+
+          const isPercentual = ['percent', 'rentab', 'benchmark']
+            .some((token) => dataKey.includes(token));
+
+          const valorNumerico = typeof entry.value === 'number'
+            ? entry.value
+            : Number(entry.value);
+
+          const valorFormatado = Number.isFinite(valorNumerico)
+            ? isPercentual
+              ? `${valorNumerico.toFixed(2)}%`
+              : `R$ ${valorNumerico.toLocaleString('pt-BR')}`
+            : entry.value;
+
+          return (
+            <Typography
+              key={index}
+              variant="body2"
+              sx={{ color: entry.color, fontSize: '0.875rem' }}
+            >
+              {label}: {valorFormatado}
+            </Typography>
+          );
+        })}
       </Box>
     );
   }
