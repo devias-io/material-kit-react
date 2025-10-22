@@ -32,7 +32,7 @@ interface User {
   lastName: string;
   email: string;
   avatar?: string;
-  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'AMERICA' | 'ADMIN'; // ✅ ADICIONADO LITE_V2
+  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'AMERICA' | 'ADMIN'; // ✅ ADICIONADO LITE_V2
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING';
   hotmartCustomerId?: string;
   createdAt: string;
@@ -163,6 +163,7 @@ export default function AdminUsersPage() {
       'LITE_V2': { label: 'Close Friends LITE 2.0', color: '#1d4ed8', emoji: '⭐' }, // ✅ ADICIONADO
       'RENDA_PASSIVA': { label: 'Projeto Renda Passiva', color: '#059669', emoji: '💰' },
       'FIIS': { label: 'Projeto FIIs', color: '#D97706', emoji: '🏢' },
+      'RENDA_TURBINADA': { label: 'CF Renda Turbinada', color: '#F97316', emoji: '⚡' },
       'AMERICA': { label: 'Projeto América', color: '#DC2626', emoji: '🗽' },
       'ADMIN': { label: 'Administrador', color: '#4B5563', emoji: '👨‍💼' }
     };
@@ -232,6 +233,7 @@ export default function AdminUsersPage() {
         LITE_V2: users.filter(u => u.plan === 'LITE_V2').length, // ✅ ADICIONADO
         FIIS: users.filter(u => u.plan === 'FIIS').length,
         RENDA_PASSIVA: users.filter(u => u.plan === 'RENDA_PASSIVA').length,
+        RENDA_TURBINADA: users.filter(u => u.plan === 'RENDA_TURBINADA').length,
         AMERICA: users.filter(u => u.plan === 'AMERICA').length,
         ADMIN: users.filter(u => u.plan === 'ADMIN').length
       }
@@ -309,7 +311,7 @@ export default function AdminUsersPage() {
           <Typography variant="caption">
             Debug Info: API: {debugInfo.apiUrl} | Token: {debugInfo.hasToken ? '✅' : '❌'} | Email: {debugInfo.userEmail || 'N/A'} | Users: {debugInfo.usersCount}
             <br />
-            Planos: VIP({planStats.byPlan.VIP}) LITE({planStats.byPlan.LITE}) LITE_V2({planStats.byPlan.LITE_V2}) FIIS({planStats.byPlan.FIIS})
+            Planos: VIP({planStats.byPlan.VIP}) LITE({planStats.byPlan.LITE}) LITE_V2({planStats.byPlan.LITE_V2}) FIIS({planStats.byPlan.FIIS}) RENDA_TURBINADA({planStats.byPlan.RENDA_TURBINADA})
           </Typography>
         </Alert>
       )}
@@ -654,8 +656,21 @@ export default function AdminUsersPage() {
                           <Chip
                             label="NOVO"
                             size="small"
-                            sx={{ 
+                            sx={{
                               backgroundColor: '#1d4ed8',
+                              color: 'white',
+                              fontWeight: '700',
+                              fontSize: '10px',
+                              height: '18px'
+                            }}
+                          />
+                        )}
+                        {user.plan === 'RENDA_TURBINADA' && (
+                          <Chip
+                            label="CF Renda Turbinada"
+                            size="small"
+                            sx={{
+                              backgroundColor: '#F97316',
                               color: 'white',
                               fontWeight: '700',
                               fontSize: '10px',

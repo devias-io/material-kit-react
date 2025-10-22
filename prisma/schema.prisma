@@ -46,6 +46,7 @@ model User {
   etfs                    UserEtfs[]
   exteriorStocks          UserExteriorStocks[]
   fiis                    UserFiis[]
+  rendaTurbinada          UserRendaTurbinada[]
   microCaps               UserMicroCaps[]
   projetoAmerica          UserProjetoAmerica[]
   smallCaps               UserSmallCaps[]
@@ -301,6 +302,30 @@ model UserFiis {
 
   @@unique([userId, ticker])
   @@map("user_fiis")
+}
+
+model UserRendaTurbinada {
+  id                 String   @id @default(cuid())
+  userId             String
+  ticker             String
+  setor              String
+  dataEntrada        String
+  precoEntrada       Float
+  precoTeto          Float?
+  strike             Float?
+  premioEntrada      Float?
+  vencimento         String?
+  tipoOperacao       String?
+  posicaoEncerrada   Boolean  @default(false)
+  dataSaida          String?
+  precoSaida         Float?
+  motivoEncerramento String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  editadoEm          DateTime @default(now())
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_renda_turbinada")
 }
 
 model UserDividendosInternacional {

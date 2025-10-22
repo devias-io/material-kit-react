@@ -93,6 +93,7 @@ const DADOS_INICIAIS = {
     { id: 'fii22', ticker: "IRDM11", dataEntrada: "05/01/2022", precoEntrada: 107.04, precoTeto: 73.20, setor: "Papel" },
     { id: 'fii23', ticker: "MXRF11", dataEntrada: "12/07/2022", precoEntrada: 9.69, precoTeto: 9.40, setor: "Papel" }
   ],
+  cfRendaTurbinada: [],
   dividendosInternacional: [
     { 
       id: 'dint1', 
@@ -205,17 +206,25 @@ const CARTEIRAS_CONFIG = {
     campos: ['ticker', 'setor', 'dataEntrada', 'precoEntrada', 'precoTeto'],
     suportaBDR: false
   },
-  fiis: { 
-    nome: 'FIIs', 
-    icon: '🏢', 
+  fiis: {
+    nome: 'FIIs',
+    icon: '🏢',
     color: '#8b5cf6',
     moeda: 'BRL',
     campos: ['ticker', 'setor', 'dataEntrada', 'precoEntrada', 'precoTeto'],
     suportaBDR: false
   },
-  dividendosInternacional: { 
-    nome: 'Div. Internacional', 
-    icon: '🌎', 
+  cfRendaTurbinada: {
+    nome: 'CF Renda Turbinada',
+    icon: '⚡',
+    color: '#f97316',
+    moeda: 'BRL',
+    campos: ['ticker', 'setor', 'dataEntrada', 'precoEntrada', 'precoTeto'],
+    suportaBDR: false
+  },
+  dividendosInternacional: {
+    nome: 'Div. Internacional',
+    icon: '🌎',
     color: '#ef4444',
     moeda: 'USD',
     campos: ['ticker', 'setor', 'dataEntrada', 'precoEntrada', 'precoTeto', 'precoTetoBDR'],
@@ -518,6 +527,19 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     retry: 1
   });
 
+  const cfRendaTurbinadaQuery = useQuery({
+    queryKey: ['carteira', 'cfRendaTurbinada', user?.id],
+    queryFn: () => api.getCarteira('cfRendaTurbinada'),
+    enabled:
+      !!user?.id &&
+      isAuthenticated &&
+      modoSincronizacao === 'hibrido' &&
+      isCarteiraPermitida('cfRendaTurbinada'),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1
+  });
+
   const dividendosInternacionalQuery = useQuery({
     queryKey: ['carteira', 'dividendosInternacional', user?.id],
     queryFn: () => api.getCarteira('dividendosInternacional'),
@@ -576,6 +598,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     microCaps: microCapsQuery,
     dividendos: dividendosQuery,
     fiis: fiisQuery,
+    cfRendaTurbinada: cfRendaTurbinadaQuery,
     dividendosInternacional: dividendosInternacionalQuery,
     etfs: etfsQuery,
     projetoAmerica: projetoAmericaQuery,

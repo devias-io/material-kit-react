@@ -94,6 +94,7 @@ const planLabels: Record<string, string> = {
   LITE_V2: 'Close Friends LITE 2.0',
   RENDA_PASSIVA: 'Projeto Renda Passiva',
   FIIS: 'Projeto FIIs',
+  RENDA_TURBINADA: 'CF Renda Turbinada',
   AMERICA: 'Projeto América',
   ADMIN: 'Administrador',
 };

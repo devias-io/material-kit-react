@@ -18,6 +18,9 @@ export const paths = {
     integrations: '/dashboard/integrations',
     settings: '/dashboard/settings',
     rentabilidades: '/dashboard/rentabilidades',
+    cfRendaTurbinada: '/dashboard/cf-renda-turbinada',
+    cfRendaTurbinadaAulas: '/dashboard/cf-renda-turbinada/aulas',
+    cfRendaTurbinadaCarteira: '/dashboard/cf-renda-turbinada/carteira-recomendada',
     
     // 🛡️ ROTAS ADMINISTRATIVAS
     admin: '/dashboard/admin',
