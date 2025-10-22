@@ -251,6 +251,18 @@ const cardLabelStyle: React.CSSProperties = {
   textTransform: 'uppercase',
 };
 
+const badgeStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '8px',
+  padding: '10px 14px',
+  borderRadius: '12px',
+  cursor: 'pointer',
+  fontWeight: 600,
+  fontSize: '14px',
+  transition: 'all 0.2s ease-in-out',
+};
+
 const inputStyle: React.CSSProperties = {
   width: '100%',
   border: '1px solid #d1d5db',
