@@ -181,6 +181,8 @@ export default function TechnicalAnalysisSection({
     );
   }, [analises, selecionadaId]);
 
+  const conteudoLength = analiseSelecionada?.conteudo?.length ?? 0;
+
   const disclosureText = useMemo<string | null>(() => {
     if (!analiseSelecionada) {
       return null;
@@ -482,31 +484,30 @@ export default function TechnicalAnalysisSection({
                     </p>
                   </div>
 
-                  {analiseSelecionada.conteudo &&
-                    analiseSelecionada.conteudo.length > 480 && (
-                      <button
-                        type="button"
-                        onClick={() => setExpanded((prev) => !prev)}
-                        style={{
-                          background: '#0f172a',
-                          color: '#f8fafc',
-                          border: 'none',
-                          borderRadius: '999px',
-                          padding: isMobile ? '10px 16px' : '10px 18px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          fontSize: isMobile ? '12px' : '13px',
-                          width: isMobile ? '100%' : 'auto',
-                          marginTop: isMobile ? '12px' : '14px'
-                        }}
-                        aria-expanded={expanded}
-                      >
-                        {expanded ? 'Mostrar menos' : 'Mostrar mais'}
-                      </button>
-                    )}
+                  {analiseSelecionada.conteudo && conteudoLength > 480 && (
+                    <button
+                      type="button"
+                      onClick={() => setExpanded((prev) => !prev)}
+                      style={{
+                        background: '#0f172a',
+                        color: '#f8fafc',
+                        border: 'none',
+                        borderRadius: '999px',
+                        padding: isMobile ? '10px 16px' : '10px 18px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        fontSize: isMobile ? '12px' : '13px',
+                        width: isMobile ? '100%' : 'auto',
+                        marginTop: isMobile ? '12px' : '14px'
+                      }}
+                      aria-expanded={expanded}
+                    >
+                      {expanded ? 'Mostrar menos' : 'Mostrar mais'}
+                    </button>
+                  )}
 
                   {analiseSelecionada.conteudo &&
-                    (expanded || analiseSelecionada.conteudo.length <= 480) && (
+                    (expanded || conteudoLength <= 480) && (
                       <div
                         style={{
                           borderRadius: isMobile ? '12px' : '14px',
@@ -537,65 +538,42 @@ export default function TechnicalAnalysisSection({
                           }}
                         />
 
-                        {expanded &&
-                          analiseSelecionada.conteudo.length > 480 && (
-                            <button
-                              type="button"
-                              onClick={() => setExpanded(false)}
+                        {disclosureText && (expanded || conteudoLength <= 480) && (
+                          <div
+                            style={{
+                              padding: isMobile ? '12px' : '16px',
+                              borderRadius: isMobile ? '12px' : '14px',
+                              background: '#f1f5f9',
+                              border: '1px solid #cbd5e1',
+                              color: '#0f172a',
+                              fontSize: isMobile ? '12px' : '13px',
+                              lineHeight: 1.6,
+                              display: 'grid',
+                              gap: isMobile ? '10px' : '12px',
+                              width: '100%',
+                              boxSizing: 'border-box'
+                            }}
+                          >
+                            <span
                               style={{
-                                background: '#0f172a',
-                                color: '#f8fafc',
-                                border: 'none',
-                                borderRadius: '999px',
-                                padding: isMobile ? '10px 16px' : '10px 18px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
                                 fontSize: isMobile ? '12px' : '13px',
-                                width: isMobile ? '100%' : 'auto',
-                                justifySelf: isMobile ? 'stretch' : 'start'
+                                fontWeight: 700,
+                                letterSpacing: '0.08em',
+                                textTransform: 'uppercase',
+                                color: '#0f172a'
                               }}
-                              aria-expanded={expanded}
                             >
-                              Mostrar menos
-                            </button>
-                          )}
+                              Disclosure
+                            </span>
+                            <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                              {disclosureText}
+                            </p>
+                          </div>
+                        )}
+
                       </div>
                     )}
                 </div>
-
-                {disclosureText && (
-                  <div
-                    style={{
-                      marginTop: isMobile ? '16px' : '20px',
-                      padding: accentBlockPadding,
-                      borderRadius: isMobile ? '12px' : '14px',
-                      background: '#f1f5f9',
-                      border: '1px solid #cbd5e1',
-                      color: '#0f172a',
-                      fontSize: isMobile ? '12px' : '13px',
-                      lineHeight: 1.6,
-                      display: 'grid',
-                      gap: isMobile ? '10px' : '12px',
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      alignSelf: 'stretch',
-                      justifySelf: 'stretch'
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: isMobile ? '12px' : '13px',
-                        fontWeight: 700,
-                        letterSpacing: '0.08em',
-                        textTransform: 'uppercase',
-                        color: '#0f172a'
-                      }}
-                    >
-                      Disclosure
-                    </span>
-                    <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{disclosureText}</p>
-                  </div>
-                )}
               </article>
 
               {analises.length > 1 && (
