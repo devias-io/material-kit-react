@@ -4,7 +4,6 @@
 import * as React from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
-import { GraficosEvolucao } from '@/components/dashboard/rentabilidades/graficos-evolucao';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -1210,57 +1209,6 @@ export default function DividendosPage() {
     };
   }, [ativosAtivos]);
 
-  const carteiraParaGraficos = React.useMemo(() => {
-    if (!ativosAtivos || ativosAtivos.length === 0) {
-      return null;
-    }
-
-    const valorPorAtivo = ativosAtivos.length > 0 ? metricas.valorInicial / ativosAtivos.length : 0;
-
-    const ativosProcessados = ativosAtivos.map((ativo) => {
-      const performanceTotal = typeof ativo.performance === 'number' ? ativo.performance : 0;
-      const valorInvestidoSimulado = Number.isFinite(valorPorAtivo) ? valorPorAtivo : 0;
-      const valorAtualSimulado = valorInvestidoSimulado * (1 + performanceTotal / 100);
-      const dividendosRecebidosSimulados = typeof ativo.proventosAtivo === 'number'
-        ? ativo.proventosAtivo
-        : 0;
-
-      let dyNumero = 0;
-      if (typeof ativo.dy === 'string') {
-        dyNumero = parseFloat(ativo.dy.replace('%', '').replace(',', '.')) || 0;
-      } else if (typeof ativo.dy === 'number') {
-        dyNumero = ativo.dy;
-      }
-
-      return {
-        ...ativo,
-        valorInvestidoSimulado,
-        valorAtualSimulado,
-        dividendosRecebidosSimulados,
-        dyRealizado: dyNumero
-      };
-    });
-
-    const dividendosTotais = ativosProcessados.reduce(
-      (sum, ativo) => sum + (ativo.dividendosRecebidosSimulados || 0),
-      0
-    );
-
-    return {
-      id: 'carteira-dividendos',
-      nome: 'Carteira de Dividendos',
-      descricao: 'Consolidação da carteira com simulação proporcional por ativo.',
-      cor: '#3b82f6',
-      ativos: ativosProcessados,
-      valorInicialTotal: metricas.valorInicial,
-      valorAtualTotal: metricas.valorAtual,
-      dividendosTotais,
-      rentabilidadeTotal: metricas.rentabilidadeTotal,
-      dyMedio: metricas.dyMedio,
-      quantidadeAtivos: ativosProcessados.length
-    };
-  }, [ativosAtivos, metricas]);
-
   // Funções auxiliares memoizadas
   const formatCurrency = React.useCallback((value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -1480,12 +1428,6 @@ export default function DividendosPage() {
           </div>
         </div>
       </div>
-
-      {carteiraParaGraficos && (
-        <div style={{ marginBottom: '32px' }}>
-          <GraficosEvolucao carteira={carteiraParaGraficos} />
-        </div>
-      )}
 
       {/* Posições Ativas */}
       <div style={{
