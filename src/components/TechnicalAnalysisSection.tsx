@@ -47,6 +47,40 @@ interface TechnicalAnalysisSectionProps {
   ticker: string;
 }
 
+const TECHNICAL_ANALYSIS_DISCLOSURE_BASE =
+  [
+    'A análise apresentada foi elaborada pelo analista de valores mobiliários autônomo Marcos Schilling Machado (CNPI nº 7521), nos termos da Resolução CVM Nº20/2021.',
+    'De acordo com a exigência regulatória do artigo 21 previsto na Resolução CVM nº 20, de 25 de fevereiro de 2021, o analista de valores mobiliários, responsável principal por este relatório, declara: (i) que as recomendações contidas neste relatório refletem única e exclusivamente sua opinião pessoal sobre a companhia analisada e seus valores mobiliários e foram elaborados de forma independente e autônoma; (ii) que as informações, opiniões, estimativas e projeções contidas neste documento referem-se à data presente e estão sujeitas a mudanças, não implicando necessariamente na obrigação de qualquer comunicação no sentido de atualização ou revisão com respeito a tal mudança.',
+    'O material produzido é baseado em informações públicas, consideradas fidedignas na data de sua publicação, portanto as estimativas, opiniões e recomendações estão sujeitas a mudanças sem aviso prévio.',
+    'O conteúdo do relatório não pode ser reproduzido ou distribuído, do todo ou em parte dos relatórios, a terceiros, sem prévia e expressa autorização sob nenhuma forma, no todo ou em parte, sob pena da adoção de medidas cíveis e criminais, incluindo a obrigação de reparação de todas as perdas e danos causados, nos termos da Lei nº 9.610/98 e de outras aplicáveis.',
+    'Os relatórios disponibilizados aos seguidores e/ou assinantes da @fatosdabolsa não representam ofertas, negociação de valores mobiliários ou de outros instrumentos financeiros.',
+    'As opiniões e recomendações dos analistas não implicam em quaisquer concessões de crédito e/ou promessa de rendimentos aos clientes.',
+    'A Fatos da Bolsa e os analistas signatários não podem garantir que os investidores obterão lucros.',
+    'Além disso, a Fatos da Bolsa e os analistas não compartilharão quaisquer ganhos de investimento com os investidores, nem assumirão qualquer responsabilidade por perdas incorridas.',
+    'Investimentos envolvem riscos e os investidores devem ser prudentes ao tomar suas decisões de investimento.',
+    'A Fatos da Bolsa e os analistas signatários não possuem obrigações fiduciárias para com os destinatários deste relatório e, ao divulgá-lo, não estão agindo como um fiduciário.',
+    'As decisões de investimentos e estratégias financeiras devem ser realizadas pelos próprios leitores, não sendo de responsabilidade dos analistas eventuais perdas que as recomendações possam gerar aos clientes.',
+    'Mais informações podem ser obtidas na Resolução CVM nº 20/2021, e no Código de Conduta da APIMEC para o Analista de Valores Mobiliários.'
+  ].join(' ');
+
+const formatFontes = (fonte?: string | null) => {
+  if (!fonte) {
+    return 'Fontes: "de acordo com o relatório".';
+  }
+
+  const fontesNormalizadas = fonte
+    .split(/\r?\n|;|\|/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .join('; ');
+
+  if (!fontesNormalizadas) {
+    return 'Fontes: "de acordo com o relatório".';
+  }
+
+  return `Fontes: ${fontesNormalizadas.replace(/[.;\s]+$/, '')}.`;
+};
+
 const formataData = (dataISO: string) => {
   try {
     const data = new Date(dataISO);
@@ -146,6 +180,22 @@ export default function TechnicalAnalysisSection({
       analises.find((item) => item.id === selecionadaId) ?? analises[0] ?? null
     );
   }, [analises, selecionadaId]);
+
+  const disclosureText = useMemo<string | null>(() => {
+    if (!analiseSelecionada) {
+      return null;
+    }
+
+    const dataElaboracao = analiseSelecionada.createdAt
+      ? formataData(analiseSelecionada.createdAt)
+      : '';
+
+    if (dataElaboracao) {
+      return `${TECHNICAL_ANALYSIS_DISCLOSURE_BASE} ${formatFontes(analiseSelecionada.fonte)} Data de elaboração do relatório de análise: ${dataElaboracao}.`;
+    }
+
+    return `${TECHNICAL_ANALYSIS_DISCLOSURE_BASE} ${formatFontes(analiseSelecionada.fonte)} Data de elaboração do relatório de análise: será a data que a análise foi postada.`;
+  }, [analiseSelecionada]);
 
   const containerPadding = isMobile
     ? '20px 16px'
@@ -512,6 +562,40 @@ export default function TechnicalAnalysisSection({
                       </div>
                     )}
                 </div>
+
+                {disclosureText && (
+                  <div
+                    style={{
+                      marginTop: isMobile ? '16px' : '20px',
+                      padding: accentBlockPadding,
+                      borderRadius: isMobile ? '12px' : '14px',
+                      background: '#f1f5f9',
+                      border: '1px solid #cbd5e1',
+                      color: '#0f172a',
+                      fontSize: isMobile ? '12px' : '13px',
+                      lineHeight: 1.6,
+                      display: 'grid',
+                      gap: isMobile ? '10px' : '12px',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      alignSelf: 'stretch',
+                      justifySelf: 'stretch'
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: isMobile ? '12px' : '13px',
+                        fontWeight: 700,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        color: '#0f172a'
+                      }}
+                    >
+                      Disclosure
+                    </span>
+                    <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{disclosureText}</p>
+                  </div>
+                )}
               </article>
 
               {analises.length > 1 && (
