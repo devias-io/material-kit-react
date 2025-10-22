@@ -90,9 +90,9 @@ function verificarPermissaoCarteiraPorPlano(plano: string, carteira: string): bo
     'LITE_V2': ['smallCaps', 'dividendos', 'fiis'], // 🔒 RESTRITO
     'RENDA_PASSIVA': ['dividendos', 'fiis'], // 🔒 MUITO RESTRITO
     'FIIS': ['fiis'], // 🔒 SÓ FIIS
-    'RENDA_TURBINADA': [], // 🔒 Plano focado nas recomendações exclusivas do CF Renda Turbinada
+    'RENDA_TURBINADA': ['cfRendaTurbinada'], // 🔒 Plano focado nas recomendações exclusivas do CF Renda Turbinada
     'AMERICA': ['dividendosInternacional', 'etfs', 'projetoAmerica', 'exteriorStocks'], // 🔒 SÓ INTERNACIONAL
-    'ADMIN': ['smallCaps', 'microCaps', 'dividendos', 'fiis', 'dividendosInternacional', 'etfs', 'projetoAmerica', 'exteriorStocks'] // 🔓 TUDO
+    'ADMIN': ['smallCaps', 'microCaps', 'dividendos', 'fiis', 'cfRendaTurbinada', 'dividendosInternacional', 'etfs', 'projetoAmerica', 'exteriorStocks'] // 🔓 TUDO
   };
   
   const carteirasPermitidas = PERMISSOES_POR_PLANO[plano] || [];
@@ -140,6 +140,10 @@ async function buscarDadosMestres(carteira: string): Promise<any[]> {
       });
     case 'fiis':
       return await prisma.userFiis.findMany({
+        orderBy: { editadoEm: 'asc' }
+      });
+    case 'cfRendaTurbinada':
+      return await prisma.userRendaTurbinada.findMany({
         orderBy: { editadoEm: 'asc' }
       });
     case 'dividendosInternacional':
@@ -314,7 +318,8 @@ export async function GET(
     
     // 2. Validar carteira
     const carteirasValidas = [
-      'microCaps', 'smallCaps', 'dividendos', 'fiis', 
+      'microCaps', 'smallCaps', 'dividendos', 'fiis',
+      'cfRendaTurbinada',
       'dividendosInternacional', 'etfs', 'projetoAmerica', 'exteriorStocks'
     ];
     
@@ -424,7 +429,8 @@ export async function POST(
     
     // 2. Validar carteira
     const carteirasValidas = [
-      'microCaps', 'smallCaps', 'dividendos', 'fiis', 
+      'microCaps', 'smallCaps', 'dividendos', 'fiis',
+      'cfRendaTurbinada',
       'dividendosInternacional', 'etfs', 'projetoAmerica', 'exteriorStocks'
     ];
     
@@ -493,6 +499,11 @@ export async function POST(
         break;
       case 'fiis':
         ativoCriado = await prisma.userFiis.create({
+          data: dadosCreate
+        });
+        break;
+      case 'cfRendaTurbinada':
+        ativoCriado = await prisma.userRendaTurbinada.create({
           data: dadosCreate
         });
         break;
@@ -584,9 +595,10 @@ export async function PUT(request: NextRequest, { params }: { params: { carteira
       
       const CARTEIRA_MODELS = {
         microCaps: 'userMicroCaps',
-        smallCaps: 'userSmallCaps', 
+        smallCaps: 'userSmallCaps',
         dividendos: 'userDividendos',
         fiis: 'userFiis',
+        cfRendaTurbinada: 'userRendaTurbinada',
         dividendosInternacional: 'userDividendosInternacional',
         etfs: 'userEtfs',
         projetoAmerica: 'userProjetoAmerica',
@@ -632,9 +644,10 @@ export async function PUT(request: NextRequest, { params }: { params: { carteira
       
       const CARTEIRA_MODELS = {
         microCaps: 'userMicroCaps',
-        smallCaps: 'userSmallCaps', 
+        smallCaps: 'userSmallCaps',
         dividendos: 'userDividendos',
         fiis: 'userFiis',
+        cfRendaTurbinada: 'userRendaTurbinada',
         dividendosInternacional: 'userDividendosInternacional',
         etfs: 'userEtfs',
         projetoAmerica: 'userProjetoAmerica',
@@ -745,9 +758,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { carte
     
     const CARTEIRA_MODELS = {
       microCaps: 'userMicroCaps',
-      smallCaps: 'userSmallCaps', 
+      smallCaps: 'userSmallCaps',
       dividendos: 'userDividendos',
       fiis: 'userFiis',
+      cfRendaTurbinada: 'userRendaTurbinada',
       dividendosInternacional: 'userDividendosInternacional',
       etfs: 'userEtfs',
       projetoAmerica: 'userProjetoAmerica',

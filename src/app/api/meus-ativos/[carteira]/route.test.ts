@@ -34,6 +34,7 @@ jest.mock('@prisma/client', () => {
     userSmallCaps: { findMany: jest.fn().mockResolvedValue(data) },
     userDividendos: { findMany: jest.fn().mockResolvedValue(data) },
     userFiis: { findMany: jest.fn().mockResolvedValue(data) },
+    userRendaTurbinada: { findMany: jest.fn().mockResolvedValue(data) },
     userDividendosInternacional: { findMany: jest.fn().mockResolvedValue(data) },
     userEtfs: { findMany: jest.fn().mockResolvedValue(data) },
     userProjetoAmerica: { findMany: jest.fn().mockResolvedValue(data) },
