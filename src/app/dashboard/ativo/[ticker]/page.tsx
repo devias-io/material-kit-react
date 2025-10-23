@@ -1357,23 +1357,35 @@ const DadosPosicaoExpandidos = React.memo(({
               }
             </span>
           </div>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            padding: isMobile ? '8px 12px' : '12px', 
-            backgroundColor: dadosFinanceiros?.precoAtual ? '#e8f5e8' : '#f8fafc', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: isMobile ? '8px 12px' : '12px',
+            backgroundColor: dadosFinanceiros?.precoAtual ? '#e8f5e8' : '#f8fafc',
             borderRadius: '8px',
             flexDirection: isMobile ? 'column' : 'row',
             gap: isMobile ? '4px' : '0'
           }}>
             <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Preço Atual</span>
-            <span style={{ 
-              fontSize: isMobile ? '12px' : '14px', 
-              fontWeight: '600', 
-              color: dadosFinanceiros?.precoAtual ? '#22c55e' : 'inherit' 
+            <span style={{
+              fontSize: isMobile ? '12px' : '14px',
+              fontWeight: '600',
+              color: dadosFinanceiros?.precoAtual ? '#22c55e' : 'inherit'
             }}>
               {precoAtualFormatado}
             </span>
+          </div>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: isMobile ? '8px 12px' : '12px',
+            backgroundColor: '#f8fafc',
+            borderRadius: '8px',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? '4px' : '0'
+          }}>
+            <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>% da Carteira</span>
+            <span style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '600' }}>{percentualCarteira || 'N/A'}</span>
           </div>
         </div>
       </div>
@@ -1449,19 +1461,6 @@ const DadosPosicaoExpandidos = React.memo(({
               {viesCalculado.vies}
             </span>
           </div>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            padding: isMobile ? '8px 12px' : '12px', 
-            backgroundColor: '#f8fafc', 
-            borderRadius: '8px',
-            flexDirection: isMobile ? 'column' : 'row',
-            gap: isMobile ? '4px' : '0'
-          }}>
-            <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>% da Carteira</span>
-            <span style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '600' }}>{percentualCarteira || 'N/A'}</span>
-          </div>
-          
           {distanciaPrecoTeto !== null && distanciaPrecoTeto !== undefined && (
             <div style={{ 
               padding: isMobile ? '10px 12px' : '12px', 
