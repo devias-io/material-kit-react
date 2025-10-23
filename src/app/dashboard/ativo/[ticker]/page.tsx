@@ -829,7 +829,7 @@ const CompanyAvatar = React.memo(({ symbol, companyName, size = 120 }) => {
         'COST': 'https://investidor10.com.br/storage/stocks/thumbnails/68b1ff2ada15e.jpg',
         'HD': 'https://investidor10.com.br/storage/stocks/thumbnails/68cabec7da51c.jpg',
         'AMAT': 'https://investidor10.com.br/storage/stocks/thumbnails/68c36de907ad7.jpg',
-        'NNN': 'https://investidor10.com.br/storage/stocks/images/bCjcRXtnrz9lNF5E.jpg
+        'NNN': 'https://investidor10.com.br/storage/stocks/images/bCjcRXtnrz9lNF5E.jpg'
       };
 
       const primaryUrl = knownLogos[normalizedSymbol] || `https://logo.clearbit.com/${normalizedSymbol.toLowerCase()}.com`;
