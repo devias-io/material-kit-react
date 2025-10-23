@@ -989,11 +989,11 @@ const FIISpecificCards = React.memo(({ ticker, dadosFII, loading, isFII }) => {
   if (!ehFII) return null;
 
   const formatarValor = useCallback((valor, tipo = 'currency') => {
-    if (!valor || isNaN(valor)) return 'N/A';
-    
+    if (valor === undefined || valor === null || isNaN(valor)) return 'N/A';
+
     switch (tipo) {
       case 'currency': return `R$ ${valor.toFixed(2).replace('.', ',')}`;
-      case 'percentage': return `${valor.toFixed(2)}%`;
+      case 'percentage': return `${valor.toFixed(1).replace('.', ',')}%`;
       case 'billions': return `R$ ${(valor / 1000000000).toFixed(1)} B`;
       case 'millions': return `R$ ${(valor / 1000000).toFixed(1)} M`;
       case 'number': return valor.toFixed(2).replace('.', ',');
@@ -1043,7 +1043,11 @@ const FIISpecificCards = React.memo(({ ticker, dadosFII, loading, isFII }) => {
         }}>
           <MetricCard
             title="Dividend Yield"
-            value={dadosFII.dividendYield12m ? formatarValor(dadosFII.dividendYield12m, 'percentage') : 'N/A'}
+            value={
+              dadosFII.dividendYield12m !== undefined && dadosFII.dividendYield12m !== null
+                ? formatarValor(dadosFII.dividendYield12m, 'percentage')
+                : 'N/A'
+            }
             loading={false}
           />
           <MetricCard
