@@ -3540,9 +3540,9 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                       return "";
                     }
                   } else if (!ticker.match(/\d$/)) {
-                    if (dadosYahoo?.pl && dadosYahoo.pl > 0 && dadosYahoo.pl < 999) {
-                      return dadosYahoo.fonte || "International";
-                    }
+                  if (dadosYahoo?.pl && dadosYahoo.pl > 0 && dadosYahoo.pl < 999) {
+                    return "";
+                  }
                     if (dadosHGBrasil?.pl && dadosHGBrasil.pl > 0 && dadosHGBrasil.pl < 1000) {
                       return "";
                     }
@@ -3599,7 +3599,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 })()}
                 subtitle={(() => {
                   if (dadosYahoo?.pvp && dadosYahoo.pvp > 0 && dadosYahoo.pvp < 999) {
-                    return dadosYahoo.fonte || "";
+                    return "";
                   }
                   if (dadosHGBrasil?.pvp) {
                     return "";
