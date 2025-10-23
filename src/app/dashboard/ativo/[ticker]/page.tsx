@@ -830,7 +830,9 @@ const CompanyAvatar = React.memo(({ symbol, companyName, size = 120 }) => {
         'HD': 'https://investidor10.com.br/storage/stocks/thumbnails/68cabec7da51c.jpg',
         'AMAT': 'https://investidor10.com.br/storage/stocks/thumbnails/68c36de907ad7.jpg',
         'NNN': 'https://investidor10.com.br/storage/stocks/images/bCjcRXtnrz9lNF5E.jpg',
-        'STX': 'https://static.stocktitan.net/company-logo/stx-sm.webp'
+        'STX': 'https://static.stocktitan.net/company-logo/stx-sm.webp',
+        'PYPL': 'https://g.foolcdn.com/art/companylogos/square/pypl.png',
+        'PEP': 'https://einvestidor.estadao.com.br/wp-content/uploads/2023/02/pepsico-divulgacao_090220231004.jpg'
       };
 
       const primaryUrl = knownLogos[normalizedSymbol] || `https://logo.clearbit.com/${normalizedSymbol.toLowerCase()}.com`;
