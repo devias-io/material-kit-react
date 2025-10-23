@@ -987,11 +987,11 @@ const FIISpecificCards = React.memo(({ ticker, dadosFII, loading, isFII }) => {
   if (!ehFII) return null;
 
   const formatarValor = useCallback((valor, tipo = 'currency') => {
-    if (!valor || isNaN(valor)) return 'N/A';
-    
+    if (valor === undefined || valor === null || isNaN(valor)) return 'N/A';
+
     switch (tipo) {
       case 'currency': return `R$ ${valor.toFixed(2).replace('.', ',')}`;
-      case 'percentage': return `${valor.toFixed(2)}%`;
+      case 'percentage': return `${valor.toFixed(1).replace('.', ',')}%`;
       case 'billions': return `R$ ${(valor / 1000000000).toFixed(1)} B`;
       case 'millions': return `R$ ${(valor / 1000000).toFixed(1)} M`;
       case 'number': return valor.toFixed(2).replace('.', ',');
@@ -1041,7 +1041,11 @@ const FIISpecificCards = React.memo(({ ticker, dadosFII, loading, isFII }) => {
         }}>
           <MetricCard
             title="Dividend Yield"
-            value={dadosFII.dividendYield12m ? formatarValor(dadosFII.dividendYield12m, 'percentage') : 'N/A'}
+            value={
+              dadosFII.dividendYield12m !== undefined && dadosFII.dividendYield12m !== null
+                ? formatarValor(dadosFII.dividendYield12m, 'percentage')
+                : 'N/A'
+            }
             loading={false}
           />
           <MetricCard
@@ -1259,13 +1263,15 @@ const AgendaCorporativa = React.memo(({ ticker, isFII = false }) => {
 
 // Dados da Posição com Memoização
 const DadosPosicaoExpandidos = React.memo(({ 
-  empresa, 
-  dadosFinanceiros, 
+  empresa,
+  dadosFinanceiros,
   precoAtualFormatado,
   isFII = false,
   distanciaPrecoTeto,
-  percentualCarteira, 
-  carteiraConfig
+  percentualCarteira,
+  carteiraConfig,
+  temBDR = false,
+  precoTetoBDR
 }) => {
   const { isMobile, isMobileOrTablet } = useResponsive();
   const precoAtual = dadosFinanceiros?.precoAtual || null;
@@ -1273,6 +1279,34 @@ const DadosPosicaoExpandidos = React.memo(({
   const viesCalculado = useMemo(() => {
     return calcularVies(empresa.precoTeto, precoAtual, empresa.precoEntrada);
   }, [empresa.precoTeto, precoAtual, empresa.precoEntrada]);
+
+  const precoTetoBDRFormatado = useMemo(() => {
+    if (precoTetoBDR === null || precoTetoBDR === undefined) {
+      return null;
+    }
+
+    if (typeof precoTetoBDR === 'number' && !Number.isNaN(precoTetoBDR)) {
+      return formatCurrency(precoTetoBDR, 'BRL');
+    }
+
+    if (typeof precoTetoBDR === 'string') {
+      const valorNumerico = parseFloat(
+        precoTetoBDR
+          .replace('R$', '')
+          .replace(/\./g, '')
+          .replace(',', '.')
+          .trim()
+      );
+
+      if (!Number.isNaN(valorNumerico)) {
+        return formatCurrency(valorNumerico, 'BRL');
+      }
+
+      return precoTetoBDR;
+    }
+
+    return null;
+  }, [precoTetoBDR]);
 
   return (
     <div style={{ 
@@ -1325,23 +1359,35 @@ const DadosPosicaoExpandidos = React.memo(({
               }
             </span>
           </div>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            padding: isMobile ? '8px 12px' : '12px', 
-            backgroundColor: dadosFinanceiros?.precoAtual ? '#e8f5e8' : '#f8fafc', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: isMobile ? '8px 12px' : '12px',
+            backgroundColor: dadosFinanceiros?.precoAtual ? '#e8f5e8' : '#f8fafc',
             borderRadius: '8px',
             flexDirection: isMobile ? 'column' : 'row',
             gap: isMobile ? '4px' : '0'
           }}>
             <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Preço Atual</span>
-            <span style={{ 
-              fontSize: isMobile ? '12px' : '14px', 
-              fontWeight: '600', 
-              color: dadosFinanceiros?.precoAtual ? '#22c55e' : 'inherit' 
+            <span style={{
+              fontSize: isMobile ? '12px' : '14px',
+              fontWeight: '600',
+              color: dadosFinanceiros?.precoAtual ? '#22c55e' : 'inherit'
             }}>
               {precoAtualFormatado}
             </span>
+          </div>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: isMobile ? '8px 12px' : '12px',
+            backgroundColor: '#f8fafc',
+            borderRadius: '8px',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? '4px' : '0'
+          }}>
+            <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>% da Carteira</span>
+            <span style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '600' }}>{percentualCarteira || 'N/A'}</span>
           </div>
         </div>
       </div>
@@ -1361,28 +1407,44 @@ const DadosPosicaoExpandidos = React.memo(({
         Análise de Viés
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '8px' : '12px' }}>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            padding: isMobile ? '8px 12px' : '12px', 
-            backgroundColor: '#f8fafc', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: isMobile ? '8px 12px' : '12px',
+            backgroundColor: '#f8fafc',
             borderRadius: '8px',
             flexDirection: isMobile ? 'column' : 'row',
             gap: isMobile ? '4px' : '0'
           }}>
             <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Preço Teto</span>
             <span style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '600' }}>
-              {typeof empresa.precoTeto === 'number' 
+              {typeof empresa.precoTeto === 'number'
                 ? formatCurrency(empresa.precoTeto, carteiraConfig.moeda)
                 : empresa.precoTeto || 'N/A'
               }
             </span>
           </div>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            padding: isMobile ? '8px 12px' : '12px', 
-            backgroundColor: '#f8fafc', 
+          {temBDR && precoTetoBDRFormatado && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: isMobile ? '8px 12px' : '12px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '8px',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: isMobile ? '4px' : '0'
+            }}>
+              <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Preço Teto BDR</span>
+              <span style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '600' }}>
+                {precoTetoBDRFormatado}
+              </span>
+            </div>
+          )}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: isMobile ? '8px 12px' : '12px',
+            backgroundColor: '#f8fafc',
             borderRadius: '8px',
             flexDirection: isMobile ? 'column' : 'row',
             gap: isMobile ? '4px' : '0',
@@ -1401,19 +1463,6 @@ const DadosPosicaoExpandidos = React.memo(({
               {viesCalculado.vies}
             </span>
           </div>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            padding: isMobile ? '8px 12px' : '12px', 
-            backgroundColor: '#f8fafc', 
-            borderRadius: '8px',
-            flexDirection: isMobile ? 'column' : 'row',
-            gap: isMobile ? '4px' : '0'
-          }}>
-            <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>% da Carteira</span>
-            <span style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '600' }}>{percentualCarteira || 'N/A'}</span>
-          </div>
-          
           {distanciaPrecoTeto !== null && distanciaPrecoTeto !== undefined && (
             <div style={{ 
               padding: isMobile ? '10px 12px' : '12px', 
@@ -3493,9 +3542,9 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                       return "";
                     }
                   } else if (!ticker.match(/\d$/)) {
-                    if (dadosYahoo?.pl && dadosYahoo.pl > 0 && dadosYahoo.pl < 999) {
-                      return dadosYahoo.fonte || "International";
-                    }
+                  if (dadosYahoo?.pl && dadosYahoo.pl > 0 && dadosYahoo.pl < 999) {
+                    return "";
+                  }
                     if (dadosHGBrasil?.pl && dadosHGBrasil.pl > 0 && dadosHGBrasil.pl < 1000) {
                       return "";
                     }
@@ -3552,7 +3601,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 })()}
                 subtitle={(() => {
                   if (dadosYahoo?.pvp && dadosYahoo.pvp > 0 && dadosYahoo.pvp < 999) {
-                    return dadosYahoo.fonte || "";
+                    return "";
                   }
                   if (dadosHGBrasil?.pvp) {
                     return "";
@@ -3617,6 +3666,8 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
             distanciaPrecoTeto={calculatedData.distanciaPrecoTeto}
             percentualCarteira={calculatedData.percentualCarteira}
             carteiraConfig={carteiraConfig}
+            temBDR={tipoAtivo.temBDR}
+            precoTetoBDR={precoTetoBDR}
           />
         </>
       )}
