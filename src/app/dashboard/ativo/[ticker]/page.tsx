@@ -825,7 +825,8 @@ const CompanyAvatar = React.memo(({ symbol, companyName, size = 120 }) => {
         'NVDA': 'https://logo.clearbit.com/nvidia.com',
         'AMZN': 'https://logo.clearbit.com/amazon.com',
         'TSLA': 'https://logo.clearbit.com/tesla.com',
-        'MSFT': 'https://logo.clearbit.com/microsoft.com'
+        'MSFT': 'https://logo.clearbit.com/microsoft.com',
+        'COST': 'https://investidor10.com.br/storage/stocks/thumbnails/68b1ff2ada15e.jpg'
       };
 
       const primaryUrl = knownLogos[normalizedSymbol] || `https://logo.clearbit.com/${normalizedSymbol.toLowerCase()}.com`;
