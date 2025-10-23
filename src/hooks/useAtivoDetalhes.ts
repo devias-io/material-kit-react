@@ -134,8 +134,8 @@ export const BDR_ESTRANGEIRO_MAPPING: Record<string, string> = {
   'UBER': 'UBER34',    // Uber
   'ZOOM': 'ZOOM34',    // Zoom
   'PYPL': 'PYPL34',    // PayPal
-  'SINTX': 'S1TX34',   // SINTX Technologies
-  'STX': 'STXB34',     // Seagate Technology
+  'SINTX': 'STXB34',   // SINTX Technologies
+  'STX': 'S1TX34',     // Seagate Technology
 
   // Financeiros EUA
   'JPM': 'JPMC34',     // JPMorgan Chase
