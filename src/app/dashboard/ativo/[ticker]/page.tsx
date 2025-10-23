@@ -918,12 +918,7 @@ const CompanyAvatar = React.memo(({ symbol, companyName, size = 120 }) => {
 });
 
 // ✅ MAPEAMENTO BDR OTIMIZADO
-const BDR_MAPPING = {
-  'NVDA': 'NVDC34', 'AAPL': 'AAPL34', 'AMZN': 'AMZO34', 'GOOGL': 'GOGL34',
-  'GOOG': 'GOGL34', 'META': 'M1TA34', 'TSLA': 'TSLA34', 'MSFT': 'MSFT34',
-  'AMD': 'A1MD34', 'NFLX': 'NFLX34', 'UBER': 'UBER34', 'PYPL': 'PYPL34',
-  'CRM': 'SSFO34', 'ADBE': 'ADBE34', 'INTC': 'I1NT34', 'ORCL': 'ORCL34'
-};
+const BDR_MAPPING = { ...BDR_ESTRANGEIRO_MAPPING };
 
 function getBDRFromAmericano(tickerAmericano) {
   return BDR_MAPPING[tickerAmericano] || null;
