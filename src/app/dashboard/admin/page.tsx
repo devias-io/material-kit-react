@@ -15,18 +15,19 @@ export default function AdminDashboard() {
   };
 
   const getPageName = (url: string) => {
-    if (url.includes('central-proventos')) return 'Central de Proventos';
-    if (url.includes('central-relatorios')) return 'Central de Relatórios';
-    if (url.includes('instagram-cadastros')) return 'Instagram Close Friends';
-    if (url.includes('renovacoes')) return 'Renovações';
-    if (url.includes('customers')) return 'Gestão de Clientes';
-    if (url.includes('empresa')) return 'Gestão de Empresas';
     if (url.includes('usuarios')) return 'Gestão de Usuários';
+    if (url.includes('instagram-cadastros')) return 'Instagram Close Friends';
     if (url.includes('integracoes')) return 'Integrações';
+    if (url.includes('renovacoes')) return 'Renovações';
+    if (url.includes('gerenciamento') || url.includes('empresa')) return 'Gestão de Empresas';
+    if (url.includes('central-proventos')) return 'Central de Proventos';
+    if (url.includes('central-relatorios')) return 'Gestão de Relatórios';
+    if (url.includes('relatorio-semanal')) return 'Relatório Semanal';
+    if (url.includes('analises-trimesestrais')) return 'Análises Trimestrais';
+    if (url.includes('analise-tecnica')) return 'Análises Técnicas';
     if (url.includes('central-agenda')) return 'Agenda Corporativa';
-    if (url.includes('configuracoes')) return 'Configurações';
-    if (url.includes('carteiras')) return 'Analisar Carteiras'; // 🆕 ALTERADO: logs → carteiras
-    if (url.includes('analytics')) return 'Analytics';
+    if (url.includes('carteiras')) return 'Analisar Carteiras';
+    if (url.includes('central-duvidas')) return 'Central de Dúvidas';
     return 'página solicitada';
   };
 
@@ -54,31 +55,10 @@ export default function AdminDashboard() {
 
   const adminCards = [
     {
-      title: 'Central de Proventos',
-      description: 'Gerencie dividendos, JCP e outros proventos das empresas listadas na bolsa.',
-      icon: '💰',
-      href: '/dashboard/central-proventos',
-      status: 'active'
-    },
-    {
       title: 'Gestão de Usuários',
       description: 'Administre contas de usuários, permissões e níveis de acesso ao sistema.',
       icon: '👥',
       href: '/dashboard/admin/usuarios',
-      status: 'active'
-    },
-    {
-      title: 'Gestão de Clientes',
-      description: 'Administre perfis de clientes, histórico de transações e relacionamento comercial.',
-      icon: '🏢',
-      href: '/dashboard/admin/customers',
-      status: 'active'
-    },
-    {
-      title: 'Gestão de Empresas',
-      description: 'Gerencie cadastro de empresas listadas na bolsa, setores e informações corporativas.',
-      icon: '🏭',
-      href: '/dashboard/admin/empresa',
       status: 'active'
     },
     {
@@ -89,25 +69,59 @@ export default function AdminDashboard() {
       status: 'active'
     },
     {
-      title: 'Renovações',
-      description: 'Controle e monitore renovações de assinaturas, vencimentos e status de pagamentos dos usuários.',
-      icon: '🔄',
-      href: '/dashboard/admin/renovacoes',
-      status: 'active',
-      isNew: true
-    },
-    {
       title: 'Integrações',
-      description: 'Central de gerenciamentos das integrações com APIs externas e sistemas terceiros.',
+      description: 'Central de gerenciamento das integrações com APIs externas e sistemas terceiros.',
       icon: '🔗',
       href: '/dashboard/admin/integracoes',
       status: 'active'
     },
     {
-      title: 'Relatórios',
-      description: 'Gere relatórios detalhados e visualize métricas importantes do sistema.',
-      icon: '📊',
+      title: 'Renovações',
+      description: 'Controle e monitore renovações de assinaturas, vencimentos e status de pagamentos.',
+      icon: '🔄',
+      href: '/dashboard/admin/renovacoes',
+      status: 'active'
+    },
+    {
+      title: 'Gestão de Empresas',
+      description: 'Gerencie cadastro de empresas listadas na bolsa, setores e informações corporativas.',
+      icon: '🏭',
+      href: '/dashboard/gerenciamento',
+      status: 'active'
+    },
+    {
+      title: 'Central de Proventos',
+      description: 'Gerencie dividendos, JCP e outros proventos das empresas listadas na bolsa.',
+      icon: '💰',
+      href: '/dashboard/central-proventos',
+      status: 'active'
+    },
+    {
+      title: 'Gestão de Relatórios',
+      description: 'Centralize publicações, relatórios e materiais estratégicos da plataforma.',
+      icon: '📑',
       href: '/dashboard/central-relatorios',
+      status: 'active'
+    },
+    {
+      title: 'Relatório Semanal',
+      description: 'Produza e publique o relatório semanal com destaques e insights do mercado.',
+      icon: '🗞️',
+      href: '/dashboard/admin/relatorio-semanal',
+      status: 'active'
+    },
+    {
+      title: 'Análises Trimestrais',
+      description: 'Gerencie as análises trimestrais com dados financeiros e comentários estratégicos.',
+      icon: '📆',
+      href: '/dashboard/admin/analises-trimesestrais',
+      status: 'active'
+    },
+    {
+      title: 'Análises Técnicas',
+      description: 'Cadastre e organize estudos técnicos, gráficos e sinais operacionais.',
+      icon: '📈',
+      href: '/dashboard/admin/analise-tecnica',
       status: 'active'
     },
     {
@@ -118,24 +132,17 @@ export default function AdminDashboard() {
       status: 'active'
     },
     {
-      title: 'Analytics',
-      description: 'Monitore performance, métricas de uso e indicadores de crescimento da plataforma.',
-      icon: '📈',
-      href: '/dashboard/admin/analytics',
-      status: 'development'
+      title: 'Analisar Carteiras',
+      description: 'Analise e monitore as carteiras de investimentos dos usuários com ferramentas avançadas.',
+      icon: '🧾',
+      href: '/dashboard/admin/carteiras',
+      status: 'active'
     },
     {
-      title: 'Analisar Carteiras', // 🆕 ALTERADO: Logs do Sistema → Analisar Carteiras
-      description: 'Analise e monitore as carteiras de investimentos dos usuários com ferramentas avançadas de acompanhamento.', // 🆕 NOVA DESCRIÇÃO
-      icon: '📈', // 🆕 ALTERADO: 📝 → 📈 (mais apropriado para análise)
-      href: '/dashboard/admin/carteiras', // 🆕 ALTERADO: /logs → /carteiras
-      status: 'active' // 🆕 ALTERADO: development → active
-    },
-    {
-      title: 'Configurações',
-      description: 'Gerencie configurações do sistema, segurança, backup e preferências gerais.',
-      icon: '⚙️',
-      href: '/dashboard/admin/configuracoes',
+      title: 'Central de Dúvidas',
+      description: 'Gerencie os conteúdos da base de conhecimento e acompanhe as dúvidas recebidas.',
+      icon: '❓',
+      href: '/dashboard/admin/central-duvidas',
       status: 'active'
     }
   ];
