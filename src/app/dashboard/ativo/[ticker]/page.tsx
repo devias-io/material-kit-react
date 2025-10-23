@@ -1261,13 +1261,15 @@ const AgendaCorporativa = React.memo(({ ticker, isFII = false }) => {
 
 // Dados da Posição com Memoização
 const DadosPosicaoExpandidos = React.memo(({ 
-  empresa, 
-  dadosFinanceiros, 
+  empresa,
+  dadosFinanceiros,
   precoAtualFormatado,
   isFII = false,
   distanciaPrecoTeto,
-  percentualCarteira, 
-  carteiraConfig
+  percentualCarteira,
+  carteiraConfig,
+  temBDR = false,
+  precoTetoBDR
 }) => {
   const { isMobile, isMobileOrTablet } = useResponsive();
   const precoAtual = dadosFinanceiros?.precoAtual || null;
@@ -1275,6 +1277,34 @@ const DadosPosicaoExpandidos = React.memo(({
   const viesCalculado = useMemo(() => {
     return calcularVies(empresa.precoTeto, precoAtual, empresa.precoEntrada);
   }, [empresa.precoTeto, precoAtual, empresa.precoEntrada]);
+
+  const precoTetoBDRFormatado = useMemo(() => {
+    if (precoTetoBDR === null || precoTetoBDR === undefined) {
+      return null;
+    }
+
+    if (typeof precoTetoBDR === 'number' && !Number.isNaN(precoTetoBDR)) {
+      return formatCurrency(precoTetoBDR, 'BRL');
+    }
+
+    if (typeof precoTetoBDR === 'string') {
+      const valorNumerico = parseFloat(
+        precoTetoBDR
+          .replace('R$', '')
+          .replace(/\./g, '')
+          .replace(',', '.')
+          .trim()
+      );
+
+      if (!Number.isNaN(valorNumerico)) {
+        return formatCurrency(valorNumerico, 'BRL');
+      }
+
+      return precoTetoBDR;
+    }
+
+    return null;
+  }, [precoTetoBDR]);
 
   return (
     <div style={{ 
@@ -1363,28 +1393,44 @@ const DadosPosicaoExpandidos = React.memo(({
         Análise de Viés
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '8px' : '12px' }}>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            padding: isMobile ? '8px 12px' : '12px', 
-            backgroundColor: '#f8fafc', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: isMobile ? '8px 12px' : '12px',
+            backgroundColor: '#f8fafc',
             borderRadius: '8px',
             flexDirection: isMobile ? 'column' : 'row',
             gap: isMobile ? '4px' : '0'
           }}>
             <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Preço Teto</span>
             <span style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '600' }}>
-              {typeof empresa.precoTeto === 'number' 
+              {typeof empresa.precoTeto === 'number'
                 ? formatCurrency(empresa.precoTeto, carteiraConfig.moeda)
                 : empresa.precoTeto || 'N/A'
               }
             </span>
           </div>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            padding: isMobile ? '8px 12px' : '12px', 
-            backgroundColor: '#f8fafc', 
+          {temBDR && precoTetoBDRFormatado && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: isMobile ? '8px 12px' : '12px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '8px',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: isMobile ? '4px' : '0'
+            }}>
+              <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Preço Teto BDR</span>
+              <span style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '600' }}>
+                {precoTetoBDRFormatado}
+              </span>
+            </div>
+          )}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: isMobile ? '8px 12px' : '12px',
+            backgroundColor: '#f8fafc',
             borderRadius: '8px',
             flexDirection: isMobile ? 'column' : 'row',
             gap: isMobile ? '4px' : '0',
@@ -3619,6 +3665,8 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
             distanciaPrecoTeto={calculatedData.distanciaPrecoTeto}
             percentualCarteira={calculatedData.percentualCarteira}
             carteiraConfig={carteiraConfig}
+            temBDR={tipoAtivo.temBDR}
+            precoTetoBDR={precoTetoBDR}
           />
         </>
       )}
