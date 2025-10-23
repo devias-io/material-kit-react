@@ -1219,9 +1219,9 @@ export function useYahooFinanceInternacional(ticker: string | undefined) {
           // ========================================
           'AAPL': { pl: 29.8, pvp: 39.1, dy: 0.52 },
           'MSFT': { pl: 37.9, pvp: 13.4, dy: 0.75 },
-          'GOOGL': { pl: 26.4, pvp: 5.8, dy: 0.0 },
+          'GOOGL': { pl: 26.4, pvp: 5.8, dy: 0.33 },
           'AMZN': { pl: 42.1, pvp: 8.3, dy: 0.0 },
-          'META': { pl: 24.9, pvp: 7.2, dy: 0.0 },
+          'META': { pl: 24.9, pvp: 7.2, dy: 0.29 },
           'NVDA': { pl: 51.2, pvp: 55.8, dy: 0.09 },
           'AMD': { pl: 68.5, pvp: 3.8, dy: 0.0 },
           'AMAT': { pl: 24.3, pvp: 6.5, dy: 1.0 },
