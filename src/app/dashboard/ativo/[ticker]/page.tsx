@@ -830,7 +830,7 @@ const CompanyAvatar = React.memo(({ symbol, companyName, size = 120 }) => {
         'HD': 'https://investidor10.com.br/storage/stocks/thumbnails/68cabec7da51c.jpg',
         'AMAT': 'https://investidor10.com.br/storage/stocks/thumbnails/68c36de907ad7.jpg',
         'NNN': 'https://investidor10.com.br/storage/stocks/images/bCjcRXtnrz9lNF5E.jpg',
-        'STX': 'https://s3-symbol-logo.tradingview.com/seagate--big.svg'
+        'STX': 'https://portal.financialmodelingprep.com/positions/678a229c454b86e93542a97b.png'
       };
 
       const primaryUrl = knownLogos[normalizedSymbol] || `https://logo.clearbit.com/${normalizedSymbol.toLowerCase()}.com`;
