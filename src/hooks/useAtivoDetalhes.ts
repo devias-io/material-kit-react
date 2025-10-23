@@ -111,21 +111,23 @@ export const BDR_ESTRANGEIRO_MAPPING: Record<string, string> = {
   // Tecnologia EUA
   'AAPL': 'AAPL34',    // Apple
   'MSFT': 'MSFT34',    // Microsoft
-  'GOOGL': 'GOGL34',   // Google Class A
-  'GOOG': 'GOGL35',    // Google Class C
+  'GOOGL': 'GOGL34',   // Alphabet (Class A)
+  'GOOG': 'GOGL35',    // Alphabet (Class C)
   'AMZN': 'AMZO34',    // Amazon
   'TSLA': 'TSLA34',    // Tesla
-  'META': 'META34',    // Meta (Facebook)
+  'META': 'M1TA34',    // Meta (Facebook)
   'NVDA': 'NVDC34',    // Nvidia
   'NFLX': 'NFLX34',    // Netflix
-  'CRM': 'CRMS34',     // Salesforce
+  'CRM': 'SSFO34',     // Salesforce
   'ORCL': 'ORCL34',    // Oracle
   'ADBE': 'ADBE34',    // Adobe
-  'INTC': 'INTC34',    // Intel
-  'AMD': 'AMD34',      // AMD
+  'INTC': 'I1NT34',    // Intel
+  'AMD': 'A1MD34',     // AMD
   'UBER': 'UBER34',    // Uber
   'ZOOM': 'ZOOM34',    // Zoom
-  
+  'PYPL': 'PYPL34',    // PayPal
+  'SINTX': 'S1TX34',   // SINTX Technologies
+
   // Financeiros EUA
   'JPM': 'JPMC34',     // JPMorgan Chase
   'BAC': 'BOAC34',     // Bank of America
@@ -133,34 +135,47 @@ export const BDR_ESTRANGEIRO_MAPPING: Record<string, string> = {
   'GS': 'GSGI34',      // Goldman Sachs
   'V': 'VISA34',       // Visa
   'MA': 'MAST34',      // Mastercard
-  
+  'BRK.B': 'BERK34',   // Berkshire Hathaway (Class B)
+  'UNH': 'UNHH34',     // UnitedHealth Group
+  'XP': 'XPBR31',      // XP Inc.
+
   // Varejo/Consumo EUA
   'WMT': 'WALM34',     // Walmart
   'HD': 'HOME34',      // Home Depot
   'NKE': 'NIKE34',     // Nike
   'MCD': 'MCDC34',     // McDonald's
   'SBUX': 'SBUB34',    // Starbucks
-  'KO': 'COCA34',      // Coca-Cola
+  'KO': 'COWC34',      // Coca-Cola
   'PEP': 'PEPB34',     // PepsiCo
   'PG': 'PROG34',      // Procter & Gamble
   'JNJ': 'JNJB34',     // Johnson & Johnson
   'PFE': 'PFIZ34',     // Pfizer
-  
-  // Industriais EUA
+
+  // Industriais e REITs EUA
   'BA': 'BOIN34',      // Boeing
   'CAT': 'CATG34',     // Caterpillar
   'GE': 'GEOO34',      // General Electric
   'UPS': 'UPSS34',     // UPS
-  
+  'AMT': 'A1MT34',     // American Tower Corporation
+  'PLD': 'P1LD34',     // Prologis
+  'DOC': 'P1EA34',     // Physicians Realty Trust
+  'ARE': 'A1RE34',     // Alexandria Real Estate
+  'SPG': 'SIMN34',     // Simon Property Group
+
   // Energia EUA
   'XOM': 'EXXO34',     // ExxonMobil
   'CVX': 'CHEV34',     // Chevron
-  
+
+  // ETFs e Commodities EUA
+  'IAU': 'GOLD11',     // iShares Gold Trust
+  'TLT': 'BTLT39',     // iShares 20+ Year Treasury Bond
+  'QQQ': 'NASD11',     // Invesco QQQ Trust
+
   // Chinesas (ADRs)
   'BABA': 'BABA34',    // Alibaba
   'JD': 'JDCO34',      // JD.com
   'BIDU': 'BIDU34',    // Baidu
-  
+
   // Outras
   'TSM': 'TSMC34',     // Taiwan Semiconductor
   'ASML': 'ASML34'     // ASML (Holanda)
