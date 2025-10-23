@@ -63,6 +63,14 @@ export interface DadosBDR {
   price: number;
   change: number;
   changePercent: number;
+  previousClose?: number;
+  currency?: string;
+  fonte?: string;
+  updatedAt?: string;
+  priceSource?: 'regular' | 'previousClose' | 'calculado' | 'desconhecido';
+  volume?: number;
+  shortName?: string;
+  longName?: string;
 }
 
 // 🚀 Interface para dados de ações da HG Brasil
@@ -457,11 +465,68 @@ export function useDadosBDR(bdrTicker: string | null) {
         
         if (data?.results?.[0]) {
           const result = data.results[0];
+          const pickNumber = (...values: Array<number | null | undefined>) => {
+            for (const value of values) {
+              if (typeof value === 'number' && !Number.isNaN(value)) {
+                return value;
+              }
+            }
+            return undefined;
+          };
+
+          const price = pickNumber(
+            result.regularMarketPrice,
+            result.currentPrice,
+            result.previousClose,
+            result.regularMarketPreviousClose
+          );
+
+          const previousClose = pickNumber(
+            result.regularMarketPreviousClose,
+            result.previousClose
+          );
+
+          const change = pickNumber(
+            result.regularMarketChange,
+            result.change
+          );
+
+          let changePercent = pickNumber(
+            result.regularMarketChangePercent,
+            result.changePercent
+          );
+
+          if ((changePercent === undefined || changePercent === null) && typeof change === 'number') {
+            const base = pickNumber(previousClose, typeof price === 'number' ? price - change : undefined);
+
+            if (typeof base === 'number' && base !== 0) {
+              changePercent = (change / base) * 100;
+            }
+          }
+
+          const priceSource: DadosBDR['priceSource'] = typeof result.regularMarketPrice === 'number'
+            ? 'regular'
+            : typeof result.regularMarketPreviousClose === 'number' || typeof result.previousClose === 'number'
+            ? 'previousClose'
+            : price !== undefined
+            ? 'calculado'
+            : 'desconhecido';
+
           const bdrInfo: DadosBDR = {
             symbol: result.symbol,
-            price: result.regularMarketPrice || 0,
-            change: result.regularMarketChange || 0,
-            changePercent: result.regularMarketChangePercent || 0
+            price: typeof price === 'number' ? price : 0,
+            change: typeof change === 'number' ? change : 0,
+            changePercent: typeof changePercent === 'number' ? changePercent : 0,
+            previousClose: previousClose,
+            currency: result.currency || 'BRL',
+            fonte: 'brapi',
+            updatedAt: result.updatedAt || new Date().toISOString(),
+            priceSource,
+            volume: typeof result.regularMarketVolume === 'number'
+              ? result.regularMarketVolume
+              : undefined,
+            shortName: result.shortName,
+            longName: result.longName
           };
           
           setBDRData(bdrInfo);

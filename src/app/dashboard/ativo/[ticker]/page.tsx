@@ -1918,10 +1918,72 @@ const BDRAmericanoInfo = React.memo(({
     return null;
   }
 
+  const possuiCotacaoIntradiaria = useMemo(() => {
+    if (!bdrData) return false;
+
+    if (bdrData.priceSource === 'regular' || bdrData.priceSource === 'calculado') {
+      return typeof bdrData.price === 'number' && !Number.isNaN(bdrData.price);
+    }
+
+    return false;
+  }, [bdrData]);
+
+  const precoBDRFormatado = useMemo(() => {
+    if (!bdrData) return 'N/D';
+
+    const valor = possuiCotacaoIntradiaria
+      ? bdrData.price
+      : typeof bdrData.previousClose === 'number'
+      ? bdrData.previousClose
+      : undefined;
+
+    if (typeof valor === 'number' && !Number.isNaN(valor)) {
+      return `R$ ${valor.toFixed(2).replace('.', ',')}`;
+    }
+
+    return 'N/D';
+  }, [bdrData, possuiCotacaoIntradiaria]);
+
+  const variacaoBDRFormatada = useMemo(() => {
+    if (!bdrData || !possuiCotacaoIntradiaria) {
+      return 'N/D';
+    }
+
+    const variacaoPercentual = typeof bdrData.changePercent === 'number'
+      ? bdrData.changePercent
+      : null;
+
+    if (variacaoPercentual === null) {
+      return 'N/D';
+    }
+
+    const prefixo = variacaoPercentual >= 0 ? '+' : '';
+    return `${prefixo}${variacaoPercentual.toFixed(2)}%`;
+  }, [bdrData, possuiCotacaoIntradiaria]);
+
+  const variacaoCor = useMemo(() => {
+    if (!bdrData || !possuiCotacaoIntradiaria || typeof bdrData.changePercent !== 'number') {
+      return '#475569';
+    }
+
+    return bdrData.changePercent >= 0 ? '#22c55e' : '#ef4444';
+  }, [bdrData, possuiCotacaoIntradiaria]);
+
   const viesBDR = useMemo(() => {
-    return precoTetoBDR && bdrData?.price ? 
-      calcularViesBDR(precoTetoBDR, bdrData.price, cotacaoUSD) : null;
-  }, [precoTetoBDR, bdrData?.price, cotacaoUSD]);
+    if (!precoTetoBDR || !bdrData) {
+      return null;
+    }
+
+    const precoParaCalculo = possuiCotacaoIntradiaria
+      ? bdrData.price
+      : typeof bdrData.previousClose === 'number'
+      ? bdrData.previousClose
+      : null;
+
+    return precoParaCalculo
+      ? calcularViesBDR(precoTetoBDR, precoParaCalculo, cotacaoUSD)
+      : null;
+  }, [precoTetoBDR, bdrData, possuiCotacaoIntradiaria, cotacaoUSD]);
 
   return (
     <div style={{
@@ -1969,21 +2031,23 @@ const BDRAmericanoInfo = React.memo(({
           color="#15803d"
         />
 
-        {bdrData && bdrData.price && (
-          <>
-            <MetricCard
-              title="Preço BDR (R$)"
-              value={`R$ ${bdrData.price.toFixed(2).replace('.', ',')}`}
-              color="#22c55e"
-            />
+        <MetricCard
+          title="Preço BDR (R$)"
+          value={precoBDRFormatado}
+          color={possuiCotacaoIntradiaria ? '#22c55e' : '#475569'}
+          subtitle={!possuiCotacaoIntradiaria
+            ? bdrData?.previousClose
+              ? 'Último fechamento conhecido'
+              : 'Cotação indisponível no momento'
+            : undefined}
+        />
 
-            <MetricCard
-              title="Variação BDR"
-              value={`${(bdrData.changePercent || 0) >= 0 ? '+' : ''}${(bdrData.changePercent || 0).toFixed(2)}%`}
-              color={(bdrData.changePercent || 0) >= 0 ? '#22c55e' : '#ef4444'}
-            />
-          </>
-        )}
+        <MetricCard
+          title="Variação BDR"
+          value={variacaoBDRFormatada}
+          color={variacaoCor}
+          subtitle={!possuiCotacaoIntradiaria ? 'Variação intradiária indisponível' : undefined}
+        />
 
         {cotacaoUSD && (
           <MetricCard
@@ -1996,9 +2060,9 @@ const BDRAmericanoInfo = React.memo(({
       </ResponsiveGrid>
 
       {bdrLoading && (
-        <div style={{ 
+        <div style={{
           marginTop: '16px',
-          textAlign: 'center', 
+          textAlign: 'center',
           padding: '16px',
           backgroundColor: '#f0fdf4',
           borderRadius: '8px',
