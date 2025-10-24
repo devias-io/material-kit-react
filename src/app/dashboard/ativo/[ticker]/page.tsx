@@ -1394,39 +1394,22 @@ const DadosPosicaoExpandidos = React.memo(({
         </div>
       </div>
 
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '16px',
-        padding: isMobile ? '20px' : '32px',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-      }}>
-        <h3 style={{ 
-          fontSize: isMobile ? '16px' : '18px', 
-          marginBottom: isMobile ? '16px' : '24px', 
-          fontWeight: '600' 
+      {!tipoAtivo.ehETF && (
+        <div style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '16px',
+          padding: isMobile ? '20px' : '32px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
         }}>
-        Análise de Viés
-        </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '8px' : '12px' }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: isMobile ? '8px 12px' : '12px',
-            backgroundColor: '#f8fafc',
-            borderRadius: '8px',
-            flexDirection: isMobile ? 'column' : 'row',
-            gap: isMobile ? '4px' : '0'
+          <h3 style={{
+            fontSize: isMobile ? '16px' : '18px',
+            marginBottom: isMobile ? '16px' : '24px',
+            fontWeight: '600'
           }}>
-            <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Preço Teto</span>
-            <span style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '600' }}>
-              {typeof empresa.precoTeto === 'number'
-                ? formatCurrency(empresa.precoTeto, carteiraConfig.moeda)
-                : empresa.precoTeto || 'N/A'
-              }
-            </span>
-          </div>
-          {temBDR && precoTetoBDRFormatado && (
+            Análise de Viés
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '8px' : '12px' }}>
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -1436,76 +1419,95 @@ const DadosPosicaoExpandidos = React.memo(({
               flexDirection: isMobile ? 'column' : 'row',
               gap: isMobile ? '4px' : '0'
             }}>
-              <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Preço Teto BDR</span>
+              <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Preço Teto</span>
               <span style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '600' }}>
-                {precoTetoBDRFormatado}
+                {typeof empresa.precoTeto === 'number'
+                  ? formatCurrency(empresa.precoTeto, carteiraConfig.moeda)
+                  : empresa.precoTeto || 'N/A'
+                }
               </span>
             </div>
-          )}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: isMobile ? '8px 12px' : '12px',
-            backgroundColor: '#f8fafc',
-            borderRadius: '8px',
-            flexDirection: isMobile ? 'column' : 'row',
-            gap: isMobile ? '4px' : '0',
-            alignItems: isMobile ? 'flex-start' : 'center'
-          }}>
-            <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Viés Calculado</span>
-            <span style={{
-              backgroundColor: viesCalculado.cor,
-              color: 'white',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              fontSize: isMobile ? '10px' : '12px',
-              fontWeight: '600',
-              alignSelf: isMobile ? 'flex-start' : 'auto'
-            }}>
-              {viesCalculado.vies}
-            </span>
-          </div>
-          {distanciaPrecoTeto !== null && distanciaPrecoTeto !== undefined && (
-            <div style={{ 
-              padding: isMobile ? '10px 12px' : '12px', 
-              backgroundColor: distanciaPrecoTeto > 0 ? '#f0f9ff' : '#fef2f2', 
-              borderRadius: '8px',
-              border: `1px solid ${distanciaPrecoTeto > 0 ? '#bfdbfe' : '#fecaca'}`
-            }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: isMobile ? 'flex-start' : 'center',
+            {temBDR && precoTetoBDRFormatado && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: isMobile ? '8px 12px' : '12px',
+                backgroundColor: '#f8fafc',
+                borderRadius: '8px',
                 flexDirection: isMobile ? 'column' : 'row',
                 gap: isMobile ? '4px' : '0'
               }}>
-                <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#64748b' }}>
-                  Distância do Teto:
-                </span>
-                <span style={{ 
-                  fontSize: isMobile ? '12px' : '14px', 
-                  fontWeight: '600',
-                  color: distanciaPrecoTeto > 0 ? '#1d4ed8' : '#dc2626'
-                }}>
-                  {distanciaPrecoTeto > 0 ? '+' : ''}{distanciaPrecoTeto.toFixed(1)}%
+                <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Preço Teto BDR</span>
+                <span style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '600' }}>
+                  {precoTetoBDRFormatado}
                 </span>
               </div>
-              <p style={{ 
-                fontSize: isMobile ? '10px' : '11px', 
-                color: '#64748b', 
-                margin: '4px 0 0 0',
-                fontStyle: 'italic',
-                lineHeight: '1.3'
+            )}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: isMobile ? '8px 12px' : '12px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '8px',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: isMobile ? '4px' : '0',
+              alignItems: isMobile ? 'flex-start' : 'center'
+            }}>
+              <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Viés Calculado</span>
+              <span style={{
+                backgroundColor: viesCalculado.cor,
+                color: 'white',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                fontSize: isMobile ? '10px' : '12px',
+                fontWeight: '600',
+                alignSelf: isMobile ? 'flex-start' : 'auto'
               }}>
-                {distanciaPrecoTeto > 0 
-                  ? '📈 Preço atual está abaixo do teto - espaço para valorização'
-                  : '🚨 Preço atual atingiu ou superou o teto'
-                }
-              </p>
+                {viesCalculado.vies}
+              </span>
             </div>
-          )}
+            {distanciaPrecoTeto !== null && distanciaPrecoTeto !== undefined && (
+              <div style={{
+                padding: isMobile ? '10px 12px' : '12px',
+                backgroundColor: distanciaPrecoTeto > 0 ? '#f0f9ff' : '#fef2f2',
+                borderRadius: '8px',
+                border: `1px solid ${distanciaPrecoTeto > 0 ? '#bfdbfe' : '#fecaca'}`
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: isMobile ? 'flex-start' : 'center',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: isMobile ? '4px' : '0'
+                }}>
+                  <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#64748b' }}>
+                    Distância do Teto:
+                  </span>
+                  <span style={{
+                    fontSize: isMobile ? '12px' : '14px',
+                    fontWeight: '600',
+                    color: distanciaPrecoTeto > 0 ? '#1d4ed8' : '#dc2626'
+                  }}>
+                    {distanciaPrecoTeto > 0 ? '+' : ''}{distanciaPrecoTeto.toFixed(1)}%
+                  </span>
+                </div>
+                <p style={{
+                  fontSize: isMobile ? '10px' : '11px',
+                  color: '#64748b',
+                  margin: '4px 0 0 0',
+                  fontStyle: 'italic',
+                  lineHeight: '1.3'
+                }}>
+                  {distanciaPrecoTeto > 0
+                    ? '📈 Preço atual está abaixo do teto - espaço para valorização'
+                    : '🚨 Preço atual atingiu ou superou o teto'
+                  }
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 });
