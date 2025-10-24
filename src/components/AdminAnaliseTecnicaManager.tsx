@@ -69,12 +69,212 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 }) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const selectionToolbarRef = useRef<HTMLDivElement>(null);
+  const imageToolbarRef = useRef<HTMLDivElement>(null);
+  const selectedImageRef = useRef<HTMLImageElement | null>(null);
+  const [selectionToolbar, setSelectionToolbar] = useState({
+    visible: false,
+    top: 0,
+    left: 0,
+  });
+  const [imageToolbar, setImageToolbar] = useState({
+    visible: false,
+    top: 0,
+    left: 0,
+    widthPercent: 100,
+  });
+
+  const hideSelectionToolbar = useCallback(() => {
+    setSelectionToolbar(prev => (prev.visible ? { ...prev, visible: false } : prev));
+  }, []);
+
+  const hideImageToolbar = useCallback(() => {
+    selectedImageRef.current = null;
+    setImageToolbar(prev => (prev.visible ? { ...prev, visible: false } : prev));
+  }, []);
+
+  const applyImageEnhancements = useCallback(() => {
+    if (!editorRef.current) return;
+
+    const images = Array.from(editorRef.current.querySelectorAll('img'));
+    images.forEach(img => {
+      img.style.maxWidth = '100%';
+      if (!img.style.borderRadius) {
+        img.style.borderRadius = '12px';
+      }
+      if (!img.style.margin) {
+        img.style.margin = '16px 0';
+      }
+      if (!img.dataset.widthPercent) {
+        if (img.style.width.endsWith('%')) {
+          img.dataset.widthPercent = img.style.width.replace('%', '') || '100';
+        } else {
+          img.dataset.widthPercent = '100';
+          img.style.width = '100%';
+        }
+      }
+      img.setAttribute('data-editor-image', 'true');
+    });
+  }, []);
 
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== value) {
       editorRef.current.innerHTML = value;
+      applyImageEnhancements();
     }
-  }, [value]);
+  }, [value, applyImageEnhancements]);
+
+  const updateSelectionToolbarPosition = useCallback(() => {
+    const selection = window.getSelection();
+    if (!editorRef.current || !selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      hideSelectionToolbar();
+      return;
+    }
+
+    const anchorNode = selection.anchorNode;
+    if (!anchorNode || !editorRef.current.contains(anchorNode)) {
+      hideSelectionToolbar();
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+
+    if (rect.width === 0 && rect.height === 0) {
+      hideSelectionToolbar();
+      return;
+    }
+
+    const top = Math.max(rect.top, 12);
+    const left = rect.left + rect.width / 2;
+
+    setSelectionToolbar({
+      visible: true,
+      top,
+      left,
+    });
+  }, [hideSelectionToolbar]);
+
+  const updateImageToolbarPosition = useCallback(() => {
+    const img = selectedImageRef.current;
+    if (!img) return;
+
+    const rect = img.getBoundingClientRect();
+    const top = Math.max(rect.top, 12);
+    const left = rect.left + rect.width / 2;
+
+    setImageToolbar(prev => ({
+      ...prev,
+      visible: true,
+      top,
+      left,
+    }));
+  }, []);
+
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      updateSelectionToolbarPosition();
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    window.addEventListener('scroll', handleSelectionChange, { passive: true });
+    window.addEventListener('resize', handleSelectionChange);
+
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+      window.removeEventListener('scroll', handleSelectionChange);
+      window.removeEventListener('resize', handleSelectionChange);
+    };
+  }, [updateSelectionToolbarPosition]);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+
+      if (target?.tagName === 'IMG') {
+        const img = target as HTMLImageElement;
+        selectedImageRef.current = img;
+
+        if (!img.dataset.widthPercent) {
+          if (img.style.width.endsWith('%')) {
+            img.dataset.widthPercent = img.style.width.replace('%', '') || '100';
+          } else {
+            img.dataset.widthPercent = '100';
+            img.style.width = '100%';
+          }
+        }
+
+        const rect = img.getBoundingClientRect();
+        const top = Math.max(rect.top, 12);
+        const left = rect.left + rect.width / 2;
+        const widthPercent = parseFloat(img.dataset.widthPercent || '100');
+
+        setImageToolbar({
+          visible: true,
+          top,
+          left,
+          widthPercent: Number.isFinite(widthPercent) ? widthPercent : 100,
+        });
+        return;
+      }
+
+      hideImageToolbar();
+    };
+
+    editor.addEventListener('click', handleClick);
+
+    return () => {
+      editor.removeEventListener('click', handleClick);
+    };
+  }, [hideImageToolbar]);
+
+  useEffect(() => {
+    const handleVisibilityUpdate = () => {
+      if (selectionToolbar.visible) {
+        updateSelectionToolbarPosition();
+      }
+      if (selectedImageRef.current) {
+        updateImageToolbarPosition();
+      }
+    };
+
+    window.addEventListener('scroll', handleVisibilityUpdate, { passive: true });
+    window.addEventListener('resize', handleVisibilityUpdate);
+
+    return () => {
+      window.removeEventListener('scroll', handleVisibilityUpdate);
+      window.removeEventListener('resize', handleVisibilityUpdate);
+    };
+  }, [selectionToolbar.visible, updateImageToolbarPosition, updateSelectionToolbarPosition]);
+
+  useEffect(() => {
+    const handleMouseDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      if (selectionToolbarRef.current?.contains(target) || imageToolbarRef.current?.contains(target)) {
+        return;
+      }
+
+      if (editorRef.current?.contains(target)) {
+        if (!(target instanceof HTMLImageElement)) {
+          hideImageToolbar();
+        }
+        return;
+      }
+
+      hideSelectionToolbar();
+      hideImageToolbar();
+    };
+
+    document.addEventListener('mousedown', handleMouseDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, [hideImageToolbar, hideSelectionToolbar]);
 
   const execCommand = useCallback(
     (command: string, val?: string) => {
@@ -83,8 +283,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       if (editorRef.current) {
         onChange(editorRef.current.innerHTML);
       }
+      updateSelectionToolbarPosition();
     },
-    [onChange]
+    [onChange, updateSelectionToolbarPosition]
   );
 
   const insertLink = useCallback(() => {
@@ -111,6 +312,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         img.style.maxWidth = '100%';
         img.style.borderRadius = '12px';
         img.style.margin = '16px 0';
+        img.style.width = '100%';
+        img.dataset.widthPercent = '100';
 
         const selection = window.getSelection();
         if (selection && selection.rangeCount > 0) {
@@ -124,19 +327,45 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         if (editorRef.current) {
           onChange(editorRef.current.innerHTML);
         }
+        applyImageEnhancements();
       };
 
       reader.readAsDataURL(file);
     };
 
     input.click();
-  }, [onChange]);
+  }, [applyImageEnhancements, onChange]);
 
   const handleInput = useCallback(() => {
     if (editorRef.current) {
       onChange(editorRef.current.innerHTML);
     }
-  }, [onChange]);
+    applyImageEnhancements();
+  }, [applyImageEnhancements, onChange]);
+
+  const handleImageWidthChange = useCallback(
+    (value: number) => {
+      const img = selectedImageRef.current;
+      if (!img) return;
+
+      img.style.width = `${value}%`;
+      img.dataset.widthPercent = String(value);
+
+      setImageToolbar(prev => ({
+        ...prev,
+        widthPercent: value,
+      }));
+
+      if (editorRef.current) {
+        onChange(editorRef.current.innerHTML);
+      }
+
+      requestAnimationFrame(() => {
+        updateImageToolbarPosition();
+      });
+    },
+    [onChange, updateImageToolbarPosition]
+  );
 
   return (
     <div
@@ -211,6 +440,96 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         onBlur={() => setIsFocused(false)}
         data-placeholder={placeholder}
       />
+      {selectionToolbar.visible && (
+        <div
+          ref={selectionToolbarRef}
+          style={{
+            position: 'fixed',
+            top: selectionToolbar.top,
+            left: selectionToolbar.left,
+            transform: 'translate(-50%, calc(-100% - 12px))',
+            background: '#0f172a',
+            color: '#ffffff',
+            borderRadius: '9999px',
+            padding: '8px 12px',
+            display: 'flex',
+            gap: '8px',
+            boxShadow: '0 10px 25px rgba(15, 23, 42, 0.18)',
+            zIndex: 1000,
+            border: '1px solid rgba(148, 163, 184, 0.35)',
+          }}
+          onMouseDown={event => event.preventDefault()}
+        >
+          <button type="button" onClick={() => execCommand('bold')} style={floatingButtonStyle}>
+            <Bold size={15} />
+          </button>
+          <button type="button" onClick={() => execCommand('italic')} style={floatingButtonStyle}>
+            <Italic size={15} />
+          </button>
+          <button type="button" onClick={() => execCommand('underline')} style={floatingButtonStyle}>
+            <Underline size={15} />
+          </button>
+          <span style={{ width: '1px', background: 'rgba(148, 163, 184, 0.45)' }} />
+          <button
+            type="button"
+            onClick={() => execCommand('insertUnorderedList')}
+            style={floatingButtonStyle}
+          >
+            <List size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={() => execCommand('insertOrderedList')}
+            style={floatingButtonStyle}
+          >
+            <ListOrdered size={15} />
+          </button>
+          <span style={{ width: '1px', background: 'rgba(148, 163, 184, 0.45)' }} />
+          <button type="button" onClick={insertLink} style={floatingButtonStyle}>
+            <LinkIcon size={15} />
+          </button>
+        </div>
+      )}
+      {imageToolbar.visible && (
+        <div
+          ref={imageToolbarRef}
+          style={{
+            position: 'fixed',
+            top: imageToolbar.top,
+            left: imageToolbar.left,
+            transform: 'translate(-50%, calc(-100% - 12px))',
+            background: '#0f172a',
+            color: '#ffffff',
+            borderRadius: '16px',
+            padding: '12px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            boxShadow: '0 10px 25px rgba(15, 23, 42, 0.18)',
+            zIndex: 1000,
+            border: '1px solid rgba(148, 163, 184, 0.35)',
+            minWidth: '220px',
+          }}
+          onMouseDown={event => {
+            if ((event.target as HTMLElement)?.tagName !== 'INPUT') {
+              event.preventDefault();
+            }
+          }}
+        >
+          <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '0.04em' }}>
+            Ajustar tamanho
+          </span>
+          <input
+            type="range"
+            min={20}
+            max={100}
+            step={5}
+            value={imageToolbar.widthPercent}
+            onChange={event => handleImageWidthChange(Number(event.target.value))}
+            style={{ cursor: 'pointer' }}
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -225,6 +544,19 @@ const toolbarButtonStyle: React.CSSProperties = {
   justifyContent: 'center',
   color: '#1e293b',
   cursor: 'pointer',
+};
+
+const floatingButtonStyle: React.CSSProperties = {
+  border: 'none',
+  background: 'transparent',
+  color: '#ffffff',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '28px',
+  height: '28px',
+  borderRadius: '8px',
 };
 
 const emptyForm = {
