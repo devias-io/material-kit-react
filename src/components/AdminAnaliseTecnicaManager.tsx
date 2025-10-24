@@ -510,7 +510,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             border: '1px solid rgba(148, 163, 184, 0.35)',
             minWidth: '220px',
           }}
-          onMouseDown={event => event.preventDefault()}
+          onMouseDown={event => {
+            if ((event.target as HTMLElement)?.tagName !== 'INPUT') {
+              event.preventDefault();
+            }
+          }}
         >
           <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '0.04em' }}>
             Ajustar tamanho
