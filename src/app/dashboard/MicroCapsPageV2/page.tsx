@@ -9,6 +9,7 @@ import { useMarketData, useIbovespaPeriodo } from '@/hooks/micro-caps/useMarketD
 
 // 🧮 UTILITÁRIOS
 import { calcularMetricasCarteira, formatCurrency, formatPercentage } from '@/utils/micro-caps/calculationUtils';
+import { getViesBadgePalette } from '@/utils/vies';
 
 // 🎨 ESTILOS RESPONSIVOS
 const styles = {
@@ -156,19 +157,22 @@ const MetricCard: React.FC<{
 );
 
 // 🏷️ COMPONENTE: Asset Card (Mobile)
-const AssetCard: React.FC<{ ativo: any; index: number }> = ({ ativo, index }) => (
-  <div
-    key={ativo.id || index}
-    style={{
-      backgroundColor: '#ffffff',
-      border: '1px solid #e2e8f0',
-      borderRadius: '12px',
-      padding: '16px',
-      marginBottom: '12px',
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
-    }}
-    className="card-hover"
-  >
+const AssetCard: React.FC<{ ativo: any; index: number }> = ({ ativo, index }) => {
+  const viesPalette = getViesBadgePalette(ativo.vies);
+
+  return (
+    <div
+      key={ativo.id || index}
+      style={{
+        backgroundColor: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '12px',
+        padding: '16px',
+        marginBottom: '12px',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
+      }}
+      className="card-hover"
+    >
     {/* Header do Card */}
     <div style={{
       display: 'flex',
@@ -261,15 +265,16 @@ const AssetCard: React.FC<{ ativo: any; index: number }> = ({ ativo, index }) =>
           borderRadius: '8px',
           fontSize: '12px',
           fontWeight: '600',
-          backgroundColor: ativo.vies === 'Compra' ? '#dcfce7' : '#fef3c7',
-          color: ativo.vies === 'Compra' ? '#065f46' : '#92400e'
+          backgroundColor: viesPalette.backgroundColor,
+          color: viesPalette.textColor
         }}>
           {ativo.vies}
         </span>
       </div>
     </div>
   </div>
-);
+  );
+};
 
 // 🏷️ COMPONENTE PRINCIPAL DA PÁGINA
 export default function MicroCapsV2Page() {
@@ -694,20 +699,23 @@ export default function MicroCapsV2Page() {
                 </tr>
               </thead>
               <tbody>
-                {ativosAtualizados.map((ativo, index) => (
-                  <tr 
-                    key={ativo.id || index}
-                    style={{ 
-                      borderBottom: '1px solid #f1f5f9',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#f8fafc';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                  >
+                {ativosAtualizados.map((ativo, index) => {
+                  const viesPalette = getViesBadgePalette(ativo.vies);
+
+                  return (
+                    <tr
+                      key={ativo.id || index}
+                      style={{
+                        borderBottom: '1px solid #f1f5f9',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8fafc';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
                     <td style={{ padding: '16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div style={{
@@ -778,14 +786,15 @@ export default function MicroCapsV2Page() {
                         borderRadius: '12px',
                         fontSize: '12px',
                         fontWeight: '700',
-                        backgroundColor: ativo.vies === 'Compra' ? '#dcfce7' : '#fef3c7',
-                        color: ativo.vies === 'Compra' ? '#065f46' : '#92400e'
+                        backgroundColor: viesPalette.backgroundColor,
+                        color: viesPalette.textColor
                       }}>
                         {ativo.vies}
                       </span>
                     </td>
-                  </tr>
-                ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

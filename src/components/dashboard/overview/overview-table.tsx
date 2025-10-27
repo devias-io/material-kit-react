@@ -25,7 +25,7 @@ import { UsersThree as UsersThreeIcon } from '@phosphor-icons/react/dist/ssr/Use
 import { TrendUp, TrendDown } from '@phosphor-icons/react/dist/ssr';
 
 import { useSelection } from '@/hooks/use-selection';
-import { aplicarViesOverride } from '@/utils/vies';
+import { aplicarViesOverride, getViesBadgePalette } from '@/utils/vies';
 
 function noop(): void {
   // Função vazia para props obrigatórias
@@ -437,6 +437,7 @@ export function OverviewTable({
                 };
 
                 const viesCalculado = calcularVies(row.precoTeto, row.precoAtual, row.viesOverride);
+                const viesPalette = getViesBadgePalette(viesCalculado);
                 
                 const precoEntradaNum = parseFloat(row.precoEntrada.replace('R$ ', '').replace(',', '.'));
                 const precoAtualNum = parseFloat(row.precoAtual.replace('R$ ', '').replace(',', '.'));
@@ -555,12 +556,12 @@ export function OverviewTable({
                         label={viesCalculado}
                         size="medium"
                         sx={{
-                          backgroundColor: viesCalculado === 'Compra' ? '#dcfce7' : '#fef3c7',
-                          color: viesCalculado === 'Compra' ? '#059669' : '#d97706',
+                          backgroundColor: viesPalette.backgroundColor,
+                          color: viesPalette.textColor,
                           fontWeight: 700,
                           fontSize: '0.8rem',
                           border: '1px solid',
-                          borderColor: viesCalculado === 'Compra' ? '#bbf7d0' : '#fde68a',
+                          borderColor: viesPalette.borderColor,
                           textTransform: 'uppercase',
                           letterSpacing: '0.05em'
                         }}

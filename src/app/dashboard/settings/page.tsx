@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
-import { aplicarViesOverride, type ViesOverride } from '@/utils/vies';
+import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 import { useProventosPorAtivo } from '@/hooks/useProventosPorAtivo';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
@@ -1480,6 +1480,7 @@ export default function FiisPage() {
               <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {ativosAtivos.map((ativo, index) => {
                   const temCotacaoReal = ativo.statusApi === 'success';
+                  const viesPalette = getViesBadgePalette(ativo.vies);
                   
                   return (
                     <div 
@@ -1588,8 +1589,8 @@ export default function FiisPage() {
                           borderRadius: '8px',
                           fontSize: '10px',
                           fontWeight: '700',
-                          backgroundColor: ativo.vies === 'Compra' ? '#dcfce7' : '#fef3c7',
-                          color: ativo.vies === 'Compra' ? '#065f46' : '#92400e'
+                          backgroundColor: viesPalette.backgroundColor,
+                          color: viesPalette.textColor
                         }}>
                           {ativo.vies}
                         </div>
@@ -1709,6 +1710,7 @@ export default function FiisPage() {
                   <tbody>
                     {ativosAtivos.map((ativo, index) => {
                       const temCotacaoReal = ativo.statusApi === 'success';
+                      const viesPalette = getViesBadgePalette(ativo.vies);
                       
                       return (
                         <tr 
@@ -1845,8 +1847,8 @@ export default function FiisPage() {
                               borderRadius: '12px',
                               fontSize: '12px',
                               fontWeight: '700',
-                              backgroundColor: ativo.vies === 'Compra' ? '#dcfce7' : '#fef3c7',
-                              color: ativo.vies === 'Compra' ? '#065f46' : '#92400e'
+                              backgroundColor: viesPalette.backgroundColor,
+                              color: viesPalette.textColor
                             }}>
                               {ativo.vies}
                             </span>
