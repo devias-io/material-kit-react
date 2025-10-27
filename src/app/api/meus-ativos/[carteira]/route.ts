@@ -3,10 +3,13 @@
 
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ViesOverride } from '@prisma/client';
 import { auth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
+
+const normalizarViesOverrideValor = (valor: unknown): ViesOverride =>
+  valor === 'MANTER' ? 'MANTER' : 'AUTO';
 
 // 🔍 SISTEMA DE AUDITORIA E CACHE PARA 4 MIL USUÁRIOS
 interface AuditLog {
@@ -465,9 +468,10 @@ export async function POST(
       setor: body.setor,
       dataEntrada: body.dataEntrada,
       precoEntrada: parseFloat(body.precoEntrada),
-      editadoEm: new Date()
+      editadoEm: new Date(),
+      viesOverride: normalizarViesOverrideValor(body.viesOverride)
     };
-    
+
     // Campos opcionais
     if (body.precoTeto) dadosCreate.precoTeto = parseFloat(body.precoTeto);
     if (body.precoTetoBDR) dadosCreate.precoTetoBDR = parseFloat(body.precoTetoBDR);
@@ -699,7 +703,10 @@ export async function PUT(request: NextRequest, { params }: { params: { carteira
       if (dadosAtualizacao.motivoEncerramento) {
         dadosUpdate.motivoEncerramento = dadosAtualizacao.motivoEncerramento;
       }
-      
+      if (dadosAtualizacao.viesOverride !== undefined) {
+        dadosUpdate.viesOverride = normalizarViesOverrideValor(dadosAtualizacao.viesOverride);
+      }
+
       console.log('✏️ Dados para atualizar:', dadosUpdate);
       
       // Atualizar no banco (SEM filtro de userId para permitir edição de qualquer registro)

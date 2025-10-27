@@ -4,6 +4,7 @@
 import * as React from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
+import { aplicarViesOverride, type ViesOverride } from '@/utils/vies';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -264,25 +265,26 @@ function useIndicesInternacionaisRealTime() {
 }
 
 // 🔥 FUNÇÃO PARA CALCULAR O VIÉS AUTOMATICAMENTE (ESPECÍFICA PARA DIVIDENDOS)
-function calcularViesAutomatico(precoTeto: number | undefined, precoAtual: string): string {
+function calcularViesAutomatico(
+  precoTeto: number | undefined,
+  precoAtual: string,
+  override?: ViesOverride | null
+): string {
   if (!precoTeto || precoAtual === 'N/A') {
-    return 'Aguardar';
+    return aplicarViesOverride(override, 'Aguardar');
   }
-  
+
   const precoAtualNum = parseFloat(precoAtual.replace('US$', '').replace(',', '.'));
-  
+
   if (isNaN(precoAtualNum)) {
-    return 'Aguardar';
+    return aplicarViesOverride(override, 'Aguardar');
   }
-  
+
   // 🎯 LÓGICA PARA DIVIDENDOS INTERNACIONAIS: Se preço atual está pelo menos 5% abaixo do teto, é COMPRA
   const percentualDoTeto = (precoAtualNum / precoTeto) * 100;
-  
-  if (percentualDoTeto <= 95) {
-    return 'Compra';
-  } else {
-    return 'Aguardar';
-  }
+
+  const viesAutomatico = percentualDoTeto <= 95 ? 'Compra' : 'Aguardar';
+  return aplicarViesOverride(override, viesAutomatico);
 }
 
 // 🚀 FUNÇÃO OTIMIZADA PARA BUSCAR COTAÇÕES - ESTRATÉGIA MOBILE/DESKTOP
@@ -659,7 +661,11 @@ function useDividendosInternacionaisIntegradas() {
             variacao: 0,
             variacaoPercent: 0,
             volume: 0,
-            vies: calcularViesAutomatico(ativo.precoTeto, `US$ ${ativo.precoEntrada.toFixed(2)}`),
+            vies: calcularViesAutomatico(
+              ativo.precoTeto,
+              `US$ ${ativo.precoEntrada.toFixed(2)}`,
+              ativo.viesOverride
+            ),
             dy: dyAPI,
             statusApi: 'suspicious_price',
             nomeCompleto: cotacao.nome,
@@ -679,7 +685,11 @@ function useDividendosInternacionaisIntegradas() {
           variacao: cotacao.variacao,
           variacaoPercent: cotacao.variacaoPercent,
           volume: cotacao.volume,
-          vies: calcularViesAutomatico(ativo.precoTeto, `US$ ${precoAtualNum.toFixed(2)}`),
+          vies: calcularViesAutomatico(
+            ativo.precoTeto,
+            `US$ ${precoAtualNum.toFixed(2)}`,
+            ativo.viesOverride
+          ),
           dy: dyAPI,
           statusApi: 'success',
           nomeCompleto: cotacao.nome,
@@ -697,7 +707,11 @@ function useDividendosInternacionaisIntegradas() {
           variacao: 0,
           variacaoPercent: 0,
           volume: 0,
-          vies: calcularViesAutomatico(ativo.precoTeto, `US$ ${ativo.precoEntrada.toFixed(2)}`),
+          vies: calcularViesAutomatico(
+            ativo.precoTeto,
+            `US$ ${ativo.precoEntrada.toFixed(2)}`,
+            ativo.viesOverride
+          ),
           dy: dyAPI,
           statusApi: 'not_found',
           nomeCompleto: ativo.ticker,

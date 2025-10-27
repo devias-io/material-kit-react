@@ -3,6 +3,7 @@ import { useDataStore } from '@/hooks/useDataStore';
 import { useResponsive } from './useResponsive';
 import { useApiStrategy } from './useApiStrategy';
 import { calcularViesAutomatico, calcularProventosAtivo } from '@/utils/micro-caps/calculationUtils';
+import { aplicarViesOverride } from '@/utils/vies';
 import type { Ativo, Cotacao } from '@/types/microCaps';
 
 // 🚀 HOOK PRINCIPAL PARA DADOS DE MICRO CAPS
@@ -72,7 +73,10 @@ export function useMicroCapsData() {
             variacao: cotacao.variacao,
             variacaoPercent: cotacao.variacaoPercent,
             volume: cotacao.volume,
-            vies: calcularViesAutomatico(ativo.precoTeto, `R$ ${precoAtual.toFixed(2).replace('.', ',')}`),
+            vies: aplicarViesOverride(
+              ativo.viesOverride,
+              calcularViesAutomatico(ativo.precoTeto, `R$ ${precoAtual.toFixed(2).replace('.', ',')}`)
+            ),
             dy: dyAPI,
             statusApi: 'success' as const,
             nomeCompleto: cotacao.nome,
@@ -96,7 +100,10 @@ export function useMicroCapsData() {
             variacao: 0,
             variacaoPercent: 0,
             volume: 0,
-            vies: calcularViesAutomatico(ativo.precoTeto, `R$ ${ativo.precoEntrada.toFixed(2).replace('.', ',')}`),
+            vies: aplicarViesOverride(
+              ativo.viesOverride,
+              calcularViesAutomatico(ativo.precoTeto, `R$ ${ativo.precoEntrada.toFixed(2).replace('.', ',')}`)
+            ),
             dy: dyAPI,
             statusApi: 'success' as const,
             nomeCompleto: ativo.ticker,
@@ -145,7 +152,10 @@ export function useMicroCapsData() {
           variacao: 0,
           variacaoPercent: 0,
           volume: 0,
-          vies: calcularViesAutomatico(ativo.precoTeto, `R$ ${ativo.precoEntrada.toFixed(2).replace('.', ',')}`),
+          vies: aplicarViesOverride(
+            ativo.viesOverride,
+            calcularViesAutomatico(ativo.precoTeto, `R$ ${ativo.precoEntrada.toFixed(2).replace('.', ',')}`)
+          ),
           dy: '0,00%',
           statusApi: 'error' as const,
           nomeCompleto: ativo.ticker,

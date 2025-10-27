@@ -4,6 +4,7 @@
 import * as React from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
+import { aplicarViesOverride, type ViesOverride } from '@/utils/vies';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -270,18 +271,23 @@ function useIndicesInternacionaisRealTime() {
 }
 
 // 🔥 FUNÇÃO PARA CALCULAR O VIÉS AUTOMATICAMENTE
-function calcularViesAutomatico(precoTeto: number | undefined, precoAtual: string): string {
+function calcularViesAutomatico(
+  precoTeto: number | undefined,
+  precoAtual: string,
+  override?: ViesOverride | null
+): string {
   if (!precoTeto || precoAtual === 'N/A' || precoTeto === 0) {
-    return 'Aguardar';
+    return aplicarViesOverride(override, 'Aguardar');
   }
-  
+
   const precoAtualNum = parseFloat(precoAtual.replace('US$', '').replace(',', '.'));
-  
+
   if (isNaN(precoAtualNum)) {
-    return 'Aguardar';
+    return aplicarViesOverride(override, 'Aguardar');
   }
-  
-  return precoAtualNum < precoTeto ? 'Compra' : 'Aguardar';
+
+  const viesAutomatico = precoAtualNum < precoTeto ? 'Compra' : 'Aguardar';
+  return aplicarViesOverride(override, viesAutomatico);
 }
 
 // 🚀 FUNÇÃO OTIMIZADA PARA BUSCAR COTAÇÕES - ESTRATÉGIA MOBILE/DESKTOP
@@ -658,7 +664,11 @@ function useExteriorStocksIntegradas() {
             variacao: 0,
             variacaoPercent: 0,
             volume: 0,
-            vies: calcularViesAutomatico(ativo.precoTeto, `US$ ${ativo.precoEntrada.toFixed(2)}`),
+            vies: calcularViesAutomatico(
+              ativo.precoTeto,
+              `US$ ${ativo.precoEntrada.toFixed(2)}`,
+              ativo.viesOverride
+            ),
             dy: dyAPI,
             statusApi: 'suspicious_price',
             nomeCompleto: cotacao.nome,
@@ -678,7 +688,11 @@ function useExteriorStocksIntegradas() {
           variacao: cotacao.variacao,
           variacaoPercent: cotacao.variacaoPercent,
           volume: cotacao.volume,
-          vies: calcularViesAutomatico(ativo.precoTeto, `US$ ${precoAtualNum.toFixed(2)}`),
+          vies: calcularViesAutomatico(
+            ativo.precoTeto,
+            `US$ ${precoAtualNum.toFixed(2)}`,
+            ativo.viesOverride
+          ),
           dy: dyAPI,
           statusApi: 'success',
           nomeCompleto: cotacao.nome,
@@ -696,7 +710,11 @@ function useExteriorStocksIntegradas() {
           variacao: 0,
           variacaoPercent: 0,
           volume: 0,
-          vies: calcularViesAutomatico(ativo.precoTeto, `US$ ${ativo.precoEntrada.toFixed(2)}`),
+          vies: calcularViesAutomatico(
+            ativo.precoTeto,
+            `US$ ${ativo.precoEntrada.toFixed(2)}`,
+            ativo.viesOverride
+          ),
           dy: dyAPI,
           statusApi: 'not_found',
           nomeCompleto: 'N/A',

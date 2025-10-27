@@ -16,6 +16,7 @@ import { ArrowUp as ArrowUpIcon } from '@phosphor-icons/react/dist/ssr/ArrowUp';
 import { ArrowDown as ArrowDownIcon } from '@phosphor-icons/react/dist/ssr/ArrowDown';
 import { CurrencyDollar as CurrencyDollarIcon } from '@phosphor-icons/react/dist/ssr/CurrencyDollar';
 import { Buildings as BuildingsIcon } from '@phosphor-icons/react/dist/ssr/Buildings';
+import { aplicarViesOverride } from '@/utils/vies';
 
 interface FII {
   id: string;
@@ -28,6 +29,7 @@ interface FII {
   dy: string;
   precoTeto: string;
   vies: string;
+  viesOverride?: 'AUTO' | 'MANTER';
 }
 
 interface CardsData {
@@ -494,6 +496,10 @@ export function SettingsTable({ count, rows, cardsData, ibovespaReal, ifixReal }
                 try {
                   const performance = calculatePerformance(row.precoEntrada || '', row.precoAtual || '');
                   const globalIndex = index + 1;
+                  const viesCalculado = aplicarViesOverride(
+                    (row.viesOverride as 'AUTO' | 'MANTER' | undefined),
+                    row.vies || 'Aguardar'
+                  );
 
                   return (
 <TableRow 
@@ -608,15 +614,15 @@ export function SettingsTable({ count, rows, cardsData, ibovespaReal, ifixReal }
                       </TableCell>
                       <TableCell sx={{ textAlign: 'center' }}>
                         <Chip
-                          label={row.vies || 'Aguardar'}
+                          label={viesCalculado}
                           size="medium"
                           sx={{
-                            backgroundColor: (row.vies === 'Compra') ? '#dcfce7' : '#fef3c7',
-                            color: (row.vies === 'Compra') ? '#059669' : '#d97706',
+                            backgroundColor: (viesCalculado === 'Compra') ? '#dcfce7' : '#fef3c7',
+                            color: (viesCalculado === 'Compra') ? '#059669' : '#d97706',
                             fontWeight: 700,
                             fontSize: '0.8rem',
                             border: '1px solid',
-                            borderColor: (row.vies === 'Compra') ? '#bbf7d0' : '#fde68a',
+                            borderColor: (viesCalculado === 'Compra') ? '#bbf7d0' : '#fde68a',
                             textTransform: 'uppercase',
                             letterSpacing: '0.05em'
                           }}

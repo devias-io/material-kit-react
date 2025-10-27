@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import { useFiisCotacoesBrapi } from '@/hooks/useFiisCotacoesBrapi';
+import { aplicarViesOverride } from '@/utils/vies';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS E EVITAR CORS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -667,7 +668,10 @@ export function useFiisIntegradas() {
           variacao: cotacao.variacao,
           variacaoPercent: cotacao.variacaoPercent,
           volume: cotacao.volume,
-          vies: calcularViesAutomaticoFII(fii.precoTeto, precoAtualNum),
+          vies: aplicarViesOverride(
+            fii.viesOverride,
+            calcularViesAutomaticoFII(fii.precoTeto, precoAtualNum)
+          ),
           dy: dyAPI || fii.dy || '-',
           statusApi: 'success',
           nomeCompleto: cotacao.nome,
@@ -692,7 +696,10 @@ export function useFiisIntegradas() {
           variacao: 0,
           variacaoPercent: 0,
           volume: 0,
-          vies: calcularViesAutomaticoFII(fii.precoTeto, precoEntradaNum),
+          vies: aplicarViesOverride(
+            fii.viesOverride,
+            calcularViesAutomaticoFII(fii.precoTeto, precoEntradaNum)
+          ),
           dy: dyAPI || fii.dy || '-',
           statusApi: 'not_found',
           nomeCompleto: 'N/A',

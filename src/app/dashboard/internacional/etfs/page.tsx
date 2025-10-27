@@ -4,6 +4,7 @@
 import * as React from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
+import { aplicarViesOverride, type ViesOverride } from '@/utils/vies';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -274,25 +275,26 @@ function useIndicesInternacionaisRealTime() {
 }
 
 // 🔥 FUNÇÃO PARA CALCULAR O VIÉS AUTOMATICAMENTE (ESPECÍFICA PARA ETFs)
-function calcularViesAutomatico(precoTeto: number | undefined, precoAtual: string): string {
+function calcularViesAutomatico(
+  precoTeto: number | undefined,
+  precoAtual: string,
+  override?: ViesOverride | null
+): string {
   if (!precoTeto || precoAtual === 'N/A') {
-    return 'Compra'; // ✅ Para ETFs, sem preço teto é sempre COMPRA
+    return aplicarViesOverride(override, 'Compra'); // ✅ Para ETFs, sem preço teto é sempre COMPRA
   }
-  
+
   const precoAtualNum = parseFloat(precoAtual.replace('US$', '').replace(',', '.'));
-  
+
   if (isNaN(precoAtualNum)) {
-    return 'Compra';
+    return aplicarViesOverride(override, 'Compra');
   }
-  
+
   // 🎯 LÓGICA PARA ETFs: Se preço atual está pelo menos 5% abaixo do teto, é COMPRA
   const percentualDoTeto = (precoAtualNum / precoTeto) * 100;
-  
-  if (percentualDoTeto <= 95) {
-    return 'Compra';
-  } else {
-    return 'Aguardar';
-  }
+
+  const viesAutomatico = percentualDoTeto <= 95 ? 'Compra' : 'Aguardar';
+  return aplicarViesOverride(override, viesAutomatico);
 }
 
 // 🚀 FUNÇÃO OTIMIZADA PARA BUSCAR COTAÇÕES - ESTRATÉGIA MOBILE/DESKTOP
@@ -603,7 +605,11 @@ function useETFsInternacionaisIntegradas() {
             variacao: 0,
             variacaoPercent: 0,
             volume: 0,
-            vies: calcularViesAutomatico(ativo.precoTeto, `US$ ${ativo.precoEntrada.toFixed(2)}`),
+            vies: calcularViesAutomatico(
+              ativo.precoTeto,
+              `US$ ${ativo.precoEntrada.toFixed(2)}`,
+              ativo.viesOverride
+            ),
             dy: dyAPI,
             statusApi: 'suspicious_price',
             nomeCompleto: cotacao.nome,
@@ -623,7 +629,11 @@ function useETFsInternacionaisIntegradas() {
           variacao: cotacao.variacao,
           variacaoPercent: cotacao.variacaoPercent,
           volume: cotacao.volume,
-          vies: calcularViesAutomatico(ativo.precoTeto, `US$ ${precoAtualNum.toFixed(2)}`),
+          vies: calcularViesAutomatico(
+            ativo.precoTeto,
+            `US$ ${precoAtualNum.toFixed(2)}`,
+            ativo.viesOverride
+          ),
           dy: dyAPI,
           statusApi: 'success',
           nomeCompleto: cotacao.nome,
@@ -641,7 +651,11 @@ function useETFsInternacionaisIntegradas() {
           variacao: 0,
           variacaoPercent: 0,
           volume: 0,
-          vies: calcularViesAutomatico(ativo.precoTeto, `US$ ${ativo.precoEntrada.toFixed(2)}`),
+          vies: calcularViesAutomatico(
+            ativo.precoTeto,
+            `US$ ${ativo.precoEntrada.toFixed(2)}`,
+            ativo.viesOverride
+          ),
           dy: dyAPI,
           statusApi: 'not_found',
           nomeCompleto: ativo.ticker,

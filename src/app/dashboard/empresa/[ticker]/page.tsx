@@ -39,6 +39,7 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
+import { aplicarViesOverride, normalizeViesOverride } from '@/utils/vies';
 
 // ========================================
 // ÍCONES MOCK
@@ -86,6 +87,7 @@ interface EmpresaCompleta {
   precoIniciou: string;
   precoTeto: string;
   viesAtual: string;
+  viesOverride?: 'AUTO' | 'MANTER';
   ibovespaEpoca: string;
   percentualCarteira: string;
   tipo?: 'FII';
@@ -137,7 +139,7 @@ interface DadosFII {
 // ========================================
 // DADOS DE FALLBACK
 // ========================================
-const dadosFallback: { [key: string]: EmpresaCompleta } = {
+const rawDadosFallback: Record<string, Omit<EmpresaCompleta, 'viesOverride'> & Record<string, unknown>> = {
   // ========================================
   // AGRICULTURA (2 ativos)
   // ========================================
@@ -1290,20 +1292,36 @@ const dadosFallback: { [key: string]: EmpresaCompleta } = {
   dyEsperado: '13.35%'
 }
 };
+
+const dadosFallback: Record<string, EmpresaCompleta> = Object.fromEntries(
+  Object.entries(rawDadosFallback).map(([ticker, empresa]) => {
+    const empresaComOverride: EmpresaCompleta = {
+      ...empresa,
+      viesOverride: 'AUTO'
+    };
+
+    return [ticker, empresaComOverride];
+  })
+);
 // ========================================
 // FUNÇÕES UTILITÁRIAS
 // ========================================
-function calcularViesSimplificado(precoTeto: string, precoAtual: number): string {
+function calcularViesSimplificado(
+  precoTeto: string,
+  precoAtual: number,
+  override?: 'AUTO' | 'MANTER' | null
+): string {
   try {
     const precoTetoNum = parseFloat(precoTeto.replace('R$ ', '').replace('.', '').replace(',', '.'));
-    
+
     if (isNaN(precoTetoNum) || precoAtual <= 0) {
-      return 'Aguardar';
+      return aplicarViesOverride(override, 'Aguardar');
     }
-    
-    return precoAtual < precoTetoNum ? 'Compra' : 'Aguardar';
+
+    const viesAutomatico = precoAtual < precoTetoNum ? 'Compra' : 'Aguardar';
+    return aplicarViesOverride(override, viesAutomatico);
   } catch {
-    return 'Aguardar';
+    return aplicarViesOverride(override, 'Aguardar');
   }
 }
 
@@ -3597,13 +3615,18 @@ export default function EmpresaDetalhes() {
       try {
         if (typeof window !== 'undefined') {
           const dadosAdmin = localStorage.getItem('portfolioDataAdmin');
-          
+
           if (dadosAdmin) {
             const ativos = JSON.parse(dadosAdmin);
             const ativoEncontrado = ativos.find((a: any) => a.ticker === ticker);
-            
+
             if (ativoEncontrado) {
-              setEmpresa(ativoEncontrado);
+              const ativoNormalizado: EmpresaCompleta = {
+                ...ativoEncontrado,
+                viesOverride: normalizeViesOverride(ativoEncontrado.viesOverride)
+              };
+
+              setEmpresa(ativoNormalizado);
               setDataSource('admin');
               return;
             }
@@ -3612,7 +3635,12 @@ export default function EmpresaDetalhes() {
 
         const ativoFallback = dadosFallback[ticker];
         if (ativoFallback) {
-          setEmpresa(ativoFallback);
+          const ativoNormalizado: EmpresaCompleta = {
+            ...ativoFallback,
+            viesOverride: normalizeViesOverride(ativoFallback.viesOverride)
+          };
+
+          setEmpresa(ativoNormalizado);
           setDataSource('fallback');
           return;
         }
@@ -3629,22 +3657,35 @@ export default function EmpresaDetalhes() {
 
   const empresaCompleta = React.useMemo(() => {
     if (!empresa) return null;
-    
-    let empresaAtualizada = { ...empresa };
-    
+
+    const overrideNormalizado = normalizeViesOverride(empresa.viesOverride);
+
     if (dadosFinanceiros && dadosFinanceiros.precoAtual > 0) {
-      empresaAtualizada = {
-        ...empresaAtualizada,
+      return {
+        ...empresa,
         dadosFinanceiros,
-        viesAtual: calcularViesSimplificado(empresa.precoTeto, dadosFinanceiros.precoAtual),
+        viesOverride: overrideNormalizado,
+        viesAtual: calcularViesSimplificado(
+          empresa.precoTeto,
+          dadosFinanceiros.precoAtual,
+          overrideNormalizado
+        ),
         statusApi: 'success',
         ultimaAtualizacao
       };
-    } else {
-      empresaAtualizada.statusApi = 'error';
     }
-    
-    return empresaAtualizada;
+
+    const viesComOverride = aplicarViesOverride(
+      overrideNormalizado,
+      empresa.viesAtual || 'Aguardar'
+    );
+
+    return {
+      ...empresa,
+      viesOverride: overrideNormalizado,
+      viesAtual: viesComOverride,
+      statusApi: empresa.statusApi ?? 'error'
+    };
   }, [empresa, dadosFinanceiros, ultimaAtualizacao]);
   // Identificar se é FII
 
