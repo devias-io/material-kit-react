@@ -1237,10 +1237,20 @@ export default function FiisPage() {
     return ((ativo.precoSaida - ativo.precoEntrada) / ativo.precoEntrada) * 100;
   }, []);
 
+  const compositionColors = React.useMemo(
+    () => [
+      '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+      '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1',
+      '#14b8a6', '#eab308', '#dc2626', '#7c3aed', '#0891b2',
+      '#65a30d', '#ea580c', '#db2777', '#4f46e5', '#0d9488'
+    ],
+    []
+  );
+
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f5f5f5', 
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#f5f5f5',
       padding: isMobile ? '16px' : '24px'
     }}>
       {/* Header Responsivo */}
@@ -1864,8 +1874,410 @@ export default function FiisPage() {
         )}
       </div>
 
-      {/* Posições Encerradas - Similar implementation continues... */}
-      
+      {/* Posições Encerradas */}
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+          overflow: 'hidden'
+        }}
+      >
+        <div
+          style={{
+            padding: isMobile ? '16px' : '24px',
+            borderBottom: '1px solid #e2e8f0',
+            backgroundColor: '#f8fafc'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: '12px',
+              justifyContent: 'space-between',
+              alignItems: isMobile ? 'flex-start' : 'center'
+            }}
+          >
+            <div>
+              <h3
+                style={{
+                  fontSize: isMobile ? '20px' : '24px',
+                  fontWeight: '700',
+                  color: '#1e293b',
+                  margin: '0 0 8px 0'
+                }}
+              >
+                Posições Encerradas
+              </h3>
+              <p
+                style={{
+                  color: '#64748b',
+                  fontSize: isMobile ? '14px' : '16px',
+                  margin: '0'
+                }}
+              >
+                Histórico de operações concluídas com performance consolidada
+              </p>
+            </div>
+            <div
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#eff6ff',
+                color: '#2563eb',
+                fontWeight: '700',
+                fontSize: '12px',
+                borderRadius: '9999px'
+              }}
+            >
+              {ativosEncerrados.length} posições encerradas
+            </div>
+          </div>
+        </div>
+
+        {ativosEncerrados.length === 0 ? (
+          <div
+            style={{
+              padding: isMobile ? '24px' : '48px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#64748b'
+            }}
+          >
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '16px',
+                backgroundColor: '#f1f5f9',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              📈
+            </div>
+            <div
+              style={{
+                fontWeight: '700',
+                fontSize: isMobile ? '16px' : '18px',
+                textAlign: 'center'
+              }}
+            >
+              Nenhuma posição encerrada ainda
+            </div>
+            <p
+              style={{
+                margin: 0,
+                textAlign: 'center',
+                fontSize: isMobile ? '14px' : '15px'
+              }}
+            >
+              Quando ativos forem encerrados você verá os resultados consolidados aqui.
+            </p>
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table
+              style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                minWidth: '960px'
+              }}
+            >
+              <thead>
+                <tr style={{ backgroundColor: '#f8fafc' }}>
+                  {[
+                    'Ticker',
+                    'Nome',
+                    'Entrada',
+                    'Saída',
+                    'Preço Entrada',
+                    'Preço Saída',
+                    'Performance',
+                    'Motivo'
+                  ].map(coluna => (
+                    <th
+                      key={coluna}
+                      style={{
+                        padding: '16px',
+                        textAlign: 'left',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        color: '#94a3b8'
+                      }}
+                    >
+                      {coluna}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {ativosEncerrados.map((ativo, index) => {
+                  const performance = calcularPerformanceEncerrada(ativo);
+                  return (
+                    <tr
+                      key={ativo.id || index}
+                      style={{
+                        borderTop: '1px solid #e2e8f0',
+                        transition: 'background-color 0.2s'
+                      }}
+                    >
+                      <td style={{ padding: '16px', fontWeight: '700', color: '#1e293b' }}>
+                        {ativo.ticker}
+                      </td>
+                      <td style={{ padding: '16px', color: '#475569', fontWeight: '600' }}>
+                        {ativo.nome}
+                      </td>
+                      <td style={{ padding: '16px', color: '#64748b', fontWeight: '600' }}>
+                        {ativo.dataEntrada}
+                      </td>
+                      <td style={{ padding: '16px', color: '#64748b', fontWeight: '600' }}>
+                        {ativo.dataSaida}
+                      </td>
+                      <td style={{ padding: '16px', textAlign: 'center', fontWeight: '600', color: '#64748b' }}>
+                        {formatCurrency(ativo.precoEntrada)}
+                      </td>
+                      <td style={{ padding: '16px', textAlign: 'center', fontWeight: '600', color: '#64748b' }}>
+                        {formatCurrency(ativo.precoSaida)}
+                      </td>
+                      <td
+                        style={{
+                          padding: '16px',
+                          textAlign: 'center',
+                          fontWeight: '800',
+                          fontSize: '16px',
+                          color: performance >= 0 ? '#059669' : '#dc2626'
+                        }}
+                      >
+                        {formatPercentage(performance)}
+                      </td>
+                      <td
+                        style={{
+                          padding: '16px',
+                          textAlign: 'center',
+                          fontSize: '12px',
+                          color: '#64748b'
+                        }}
+                      >
+                        {ativo.motivoEncerramento}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Gráfico de Composição */}
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden'
+        }}
+      >
+        <div
+          style={{
+            padding: isMobile ? '16px' : '24px',
+            borderBottom: '1px solid #e2e8f0',
+            backgroundColor: '#f8fafc'
+          }}
+        >
+          <h3
+            style={{
+              fontSize: isMobile ? '20px' : '24px',
+              fontWeight: '700',
+              color: '#1e293b',
+              margin: '0 0 8px 0'
+            }}
+          >
+            Composição por Ativos Ativos
+          </h3>
+          <p
+            style={{
+              color: '#64748b',
+              fontSize: isMobile ? '14px' : '16px',
+              margin: '0'
+            }}
+          >
+            Distribuição percentual da carteira - {ativosAtivos.length} ativos ativos
+          </p>
+        </div>
+
+        <div
+          style={{
+            padding: isMobile ? '16px' : '32px',
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? '16px' : '32px',
+            alignItems: 'center'
+          }}
+        >
+          <div
+            style={{
+              flex: isMobile ? '1' : '0 0 400px',
+              height: isMobile ? '300px' : '400px',
+              position: 'relative'
+            }}
+          >
+            {(() => {
+              const cores = compositionColors;
+
+              const chartSize = isMobile ? 300 : 400;
+              const radius = isMobile ? 120 : 150;
+              const innerRadius = isMobile ? 60 : 75;
+              const centerX = chartSize / 2;
+              const centerY = chartSize / 2;
+              const totalAtivos = ativosAtivos.length;
+
+              if (totalAtivos === 0) {
+                return (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '100%',
+                      color: '#64748b',
+                      fontSize: '16px'
+                    }}
+                  >
+                    Nenhum ativo ativo para exibir
+                  </div>
+                );
+              }
+
+              const anglePerSlice = (2 * Math.PI) / totalAtivos;
+
+              const createPath = (startAngle: number, endAngle: number) => {
+                const x1 = centerX + radius * Math.cos(startAngle);
+                const y1 = centerY + radius * Math.sin(startAngle);
+                const x2 = centerX + radius * Math.cos(endAngle);
+                const y2 = centerY + radius * Math.sin(endAngle);
+
+                const x3 = centerX + innerRadius * Math.cos(endAngle);
+                const y3 = centerY + innerRadius * Math.sin(endAngle);
+                const x4 = centerX + innerRadius * Math.cos(startAngle);
+                const y4 = centerY + innerRadius * Math.sin(startAngle);
+
+                const largeArcFlag = endAngle - startAngle <= Math.PI ? '0' : '1';
+
+                return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4} Z`;
+              };
+
+              let currentAngle = -Math.PI / 2;
+
+              return (
+                <svg width={chartSize} height={chartSize} viewBox={`0 0 ${chartSize} ${chartSize}`}>
+                  <circle
+                    cx={centerX}
+                    cy={centerY}
+                    r={innerRadius - 10}
+                    fill="#ffffff"
+                    stroke="#e2e8f0"
+                    strokeWidth="1"
+                  />
+                  {ativosAtivos.map((ativo, index) => {
+                    const startAngle = currentAngle;
+                    const endAngle = startAngle + anglePerSlice;
+                    currentAngle = endAngle;
+
+                    return (
+                      <path
+                        key={ativo.id || index}
+                        d={createPath(startAngle, endAngle)}
+                        fill={cores[index % cores.length]}
+                        stroke="#ffffff"
+                        strokeWidth="2"
+                      >
+                        <title>{`${ativo.ticker} - ${ativo.percentualParticipacao}%`}</title>
+                      </path>
+                    );
+                  })}
+                  <text
+                    x={centerX}
+                    y={centerY - 10}
+                    textAnchor="middle"
+                    fontSize={isMobile ? '18' : '20'}
+                    fontWeight="700"
+                    fill="#1e293b"
+                  >
+                    {ativosAtivos.length}
+                  </text>
+                  <text
+                    x={centerX}
+                    y={centerY + 12}
+                    textAnchor="middle"
+                    fontSize="12"
+                    fill="#64748b"
+                  >
+                    Ativos
+                  </text>
+                </svg>
+              );
+            })()}
+          </div>
+
+          <div
+            style={{
+              flex: '1',
+              display: 'grid',
+              gridTemplateColumns: isMobile
+                ? 'repeat(2, minmax(0, 1fr))'
+                : 'repeat(3, minmax(0, 1fr))',
+              gap: '12px',
+              width: '100%'
+            }}
+          >
+            {ativosAtivos.map((ativo, index) => (
+              <div
+                key={ativo.id || index}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  backgroundColor: '#f8fafc',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0'
+                }}
+              >
+                <div
+                  style={{
+                    width: '12px',
+                    height: '12px',
+                    borderRadius: '9999px',
+                    backgroundColor: compositionColors[index % compositionColors.length]
+                  }}
+                />
+                <div style={{ flex: '1' }}>
+                  <div style={{ fontWeight: '700', color: '#1e293b' }}>{ativo.ticker}</div>
+                  <div style={{ color: '#64748b', fontSize: '12px' }}>{ativo.nome}</div>
+                </div>
+                <div
+                  style={{
+                    fontWeight: '700',
+                    color: '#1e293b'
+                  }}
+                >
+                  {ativo.percentualParticipacao}%
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Animações CSS */}
       <style jsx>{`
         /* Spinner de Loading Unificado */
