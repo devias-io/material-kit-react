@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
-import { aplicarViesOverride, type ViesOverride } from '@/utils/vies';
+import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -1085,6 +1085,7 @@ export default function ExteriorStocksPage() {
                   const temCotacaoReal = ativo.statusApi === 'success';
                   const ticker = (ativo.ticker ?? '').toUpperCase();
                   const logoSrc = CUSTOM_LOGO_URLS[ticker] ?? `https://financialmodelingprep.com/image-stock/${ticker}.png`;
+                  const viesPalette = getViesBadgePalette(ativo.vies);
 
                   return (
                     <div
@@ -1200,8 +1201,8 @@ export default function ExteriorStocksPage() {
                           borderRadius: '8px',
                           fontSize: '10px',
                           fontWeight: '700',
-                          backgroundColor: ativo.vies === 'Compra' ? '#dcfce7' : '#fef3c7',
-                          color: ativo.vies === 'Compra' ? '#065f46' : '#92400e'
+                          backgroundColor: viesPalette.backgroundColor,
+                          color: viesPalette.textColor
                         }}>
                           {ativo.vies}
                         </div>
@@ -1305,6 +1306,7 @@ export default function ExteriorStocksPage() {
                       const temCotacaoReal = ativo.statusApi === 'success';
                       const ticker = (ativo.ticker ?? '').toUpperCase();
                       const logoSrc = CUSTOM_LOGO_URLS[ticker] ?? `https://financialmodelingprep.com/image-stock/${ticker}.png`;
+                      const viesPalette = getViesBadgePalette(ativo.vies);
 
                       return (
                         <tr
@@ -1453,8 +1455,8 @@ export default function ExteriorStocksPage() {
                               borderRadius: '12px',
                               fontSize: '12px',
                               fontWeight: '700',
-                              backgroundColor: ativo.vies === 'Compra' ? '#dcfce7' : '#fef3c7',
-                              color: ativo.vies === 'Compra' ? '#065f46' : '#92400e'
+                              backgroundColor: viesPalette.backgroundColor,
+                              color: viesPalette.textColor
                             }}>
                               {ativo.vies}
                             </span>

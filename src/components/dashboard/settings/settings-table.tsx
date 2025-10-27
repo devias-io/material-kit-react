@@ -16,7 +16,7 @@ import { ArrowUp as ArrowUpIcon } from '@phosphor-icons/react/dist/ssr/ArrowUp';
 import { ArrowDown as ArrowDownIcon } from '@phosphor-icons/react/dist/ssr/ArrowDown';
 import { CurrencyDollar as CurrencyDollarIcon } from '@phosphor-icons/react/dist/ssr/CurrencyDollar';
 import { Buildings as BuildingsIcon } from '@phosphor-icons/react/dist/ssr/Buildings';
-import { aplicarViesOverride } from '@/utils/vies';
+import { aplicarViesOverride, getViesBadgePalette } from '@/utils/vies';
 
 interface FII {
   id: string;
@@ -500,6 +500,7 @@ export function SettingsTable({ count, rows, cardsData, ibovespaReal, ifixReal }
                     (row.viesOverride as 'AUTO' | 'MANTER' | undefined),
                     row.vies || 'Aguardar'
                   );
+                  const viesPalette = getViesBadgePalette(viesCalculado);
 
                   return (
 <TableRow 
@@ -617,15 +618,15 @@ export function SettingsTable({ count, rows, cardsData, ibovespaReal, ifixReal }
                           label={viesCalculado}
                           size="medium"
                           sx={{
-                            backgroundColor: (viesCalculado === 'Compra') ? '#dcfce7' : '#fef3c7',
-                            color: (viesCalculado === 'Compra') ? '#059669' : '#d97706',
-                            fontWeight: 700,
-                            fontSize: '0.8rem',
-                            border: '1px solid',
-                            borderColor: (viesCalculado === 'Compra') ? '#bbf7d0' : '#fde68a',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
-                          }}
+                          backgroundColor: viesPalette.backgroundColor,
+                          color: viesPalette.textColor,
+                          fontWeight: 700,
+                          fontSize: '0.8rem',
+                          border: '1px solid',
+                          borderColor: viesPalette.borderColor,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em'
+                        }}
                         />
                       </TableCell>
                     </TableRow>

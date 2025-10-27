@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
-import { aplicarViesOverride, type ViesOverride } from '@/utils/vies';
+import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 import { useProventosPorAtivo } from '@/hooks/useProventosPorAtivo';
 import { useAuthAccess } from '@/hooks/use-auth-access';
 
@@ -1590,6 +1590,7 @@ const calcularPerformanceEncerrada = React.useCallback((ativo: any) => {
               <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {ativosAtivos.map((ativo, index) => {
                   const temCotacaoReal = ativo.statusApi === 'success';
+                  const viesPalette = getViesBadgePalette(ativo.vies);
                   
                   return (
                     <div 
@@ -1698,8 +1699,8 @@ const calcularPerformanceEncerrada = React.useCallback((ativo: any) => {
                           borderRadius: '8px',
                           fontSize: '10px',
                           fontWeight: '700',
-                          backgroundColor: ativo.vies === 'Compra' ? '#dcfce7' : '#fef3c7',
-                          color: ativo.vies === 'Compra' ? '#065f46' : '#92400e'
+                          backgroundColor: viesPalette.backgroundColor,
+                          color: viesPalette.textColor
                         }}>
                           {ativo.vies}
                         </div>
@@ -1819,6 +1820,7 @@ const calcularPerformanceEncerrada = React.useCallback((ativo: any) => {
                   <tbody>
                     {ativosAtivos.map((ativo, index) => {
                       const temCotacaoReal = ativo.statusApi === 'success';
+                      const viesPalette = getViesBadgePalette(ativo.vies);
                       
                       return (
                         <tr 
@@ -1955,8 +1957,8 @@ const calcularPerformanceEncerrada = React.useCallback((ativo: any) => {
                               borderRadius: '12px',
                               fontSize: '12px',
                               fontWeight: '700',
-                              backgroundColor: ativo.vies === 'Compra' ? '#dcfce7' : '#fef3c7',
-                              color: ativo.vies === 'Compra' ? '#065f46' : '#92400e'
+                              backgroundColor: viesPalette.backgroundColor,
+                              color: viesPalette.textColor
                             }}>
                               {ativo.vies}
                             </span>

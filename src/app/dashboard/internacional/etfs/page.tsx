@@ -1026,7 +1026,8 @@ export default function ETFsInternacionaisPage() {
   const temCotacaoReal = ativo.statusApi === 'success';
   const ticker = (ativo.ticker ?? '').toUpperCase();
   const logoSrc = CUSTOM_LOGO_URLS[ticker] ?? `https://financialmodelingprep.com/image-stock/${ticker}.png`;
-  
+  const viesPalette = getViesBadgePalette(ativo.vies);
+
   return (
                     <div 
                       key={ativo.id || index}
@@ -1140,8 +1141,8 @@ export default function ETFsInternacionaisPage() {
                           borderRadius: '8px',
                           fontSize: '10px',
                           fontWeight: '700',
-                          backgroundColor: ativo.vies === 'Compra' ? '#dcfce7' : '#fef3c7',
-                          color: ativo.vies === 'Compra' ? '#065f46' : '#92400e'
+                          backgroundColor: viesPalette.backgroundColor,
+                          color: viesPalette.textColor
                         }}>
                           {ativo.vies}
                         </div>
@@ -1242,7 +1243,8 @@ export default function ETFsInternacionaisPage() {
   const temCotacaoReal = ativo.statusApi === 'success';
   const ticker = (ativo.ticker ?? '').toUpperCase();
   const logoSrc = CUSTOM_LOGO_URLS[ticker] ?? `https://financialmodelingprep.com/image-stock/${ticker}.png`;
-  
+  const viesPalette = getViesBadgePalette(ativo.vies);
+
   return (
                         <tr 
                           key={ativo.id || index} 
@@ -1379,8 +1381,8 @@ export default function ETFsInternacionaisPage() {
                               borderRadius: '12px',
                               fontSize: '12px',
                               fontWeight: '700',
-                              backgroundColor: ativo.vies === 'Compra' ? '#dcfce7' : '#fef3c7',
-                              color: ativo.vies === 'Compra' ? '#065f46' : '#92400e'
+                              backgroundColor: viesPalette.backgroundColor,
+                              color: viesPalette.textColor
                             }}>
                               {ativo.vies}
                             </span>
