@@ -1269,6 +1269,7 @@ const DadosPosicaoExpandidos = React.memo(({
   dadosFinanceiros,
   precoAtualFormatado,
   isFII = false,
+  isETF = false,
   distanciaPrecoTeto,
   percentualCarteira,
   carteiraConfig,
@@ -1394,7 +1395,7 @@ const DadosPosicaoExpandidos = React.memo(({
         </div>
       </div>
 
-      {!tipoAtivo.ehETF && (
+      {!isETF && (
         <div style={{
           backgroundColor: '#ffffff',
           borderRadius: '16px',
@@ -3667,6 +3668,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
             dadosFinanceiros={dadosFinanceiros}
             precoAtualFormatado={calculatedData.precoAtualFormatado}
             isFII={tipoAtivo.ehFII}
+            isETF={tipoAtivo.ehETF}
             distanciaPrecoTeto={calculatedData.distanciaPrecoTeto}
             percentualCarteira={calculatedData.percentualCarteira}
             carteiraConfig={carteiraConfig}
