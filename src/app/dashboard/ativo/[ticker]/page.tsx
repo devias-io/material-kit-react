@@ -23,6 +23,12 @@ import { useRelatoriosEstatisticas } from '@/hooks/useRelatoriosAPI';
 import { useAuthAccess } from '@/hooks/use-auth-access';
 import { aplicarViesOverride, getViesBadgePalette, normalizeViesOverride } from '@/utils/vies';
 import {
+  aplicarViesOverride,
+  getViesBadgePalette,
+  normalizeViesOverride,
+  type ViesOverride
+} from '@/utils/vies';
+import {
   CARTEIRA_PERMISSION_MAP,
   getCarteirasForTicker,
   type CarteiraKey
@@ -2878,6 +2884,9 @@ export default function AtivoPage() {
     const buscarDadosAtivo = () => {
       // Cache para dados do ativo
       const cached = cacheUtils.get(`ativo_${ticker}`);
+      let cacheValido:
+        | { ativo: Record<string, unknown> & { viesOverride?: ViesOverride | null }; carteira: CarteiraKey }
+        | null = null;
 
       if (cached) {
         const carteiraCache = cached.carteira as CarteiraKey;
@@ -2889,10 +2898,10 @@ export default function AtivoPage() {
         if (carteiraValida && planInfo?.pages && !podeAcessarCarteira(carteiraCache)) {
           cacheUtils.clear(`ativo_${ticker}`);
         } else {
-          setAtivo(cached.ativo);
-          setCarteira(cached.carteira);
-          setLoading(false);
-          return;
+          cacheValido = {
+            ativo: cached.ativo as Record<string, unknown> & { viesOverride?: ViesOverride | null },
+            carteira: carteiraCache
+          };
         }
       }
 
@@ -2927,7 +2936,7 @@ export default function AtivoPage() {
           ativoEncontrado.multiplePortfolios = true;
           ativoEncontrado.portfoliosList = carteirasComAtivo.map(c => c.nome);
           ativoEncontrado.portfoliosData = dadosDetalhados;
-          
+
           const prioridades = {
             'internacional': 1,
             'acoes': 2,
@@ -2935,31 +2944,52 @@ export default function AtivoPage() {
             'cripto': 4,
             'renda_fixa': 5
           };
-          
+
           carteirasComAtivo.sort((a, b) => {
             const prioA = prioridades[a.nome] || 99;
             const prioB = prioridades[b.nome] || 99;
             return prioA - prioB;
           });
-          
+
           const carteiraPrincipal = carteirasComAtivo[0];
           carteiraEncontrada = carteiraPrincipal.nome;
-          
+
         } else {
           ativoEncontrado.multiplePortfolios = false;
           ativoEncontrado.portfoliosList = [carteiraEncontrada];
         }
 
-        setAtivo(ativoEncontrado);
-        setCarteira(carteiraEncontrada);
-        
-        // Cache os dados encontrados
-        const cacheData = {
-          ativo: ativoEncontrado,
-          carteira: carteiraEncontrada
-        };
-        
-        cacheUtils.set(`ativo_${ticker}`, cacheData);
+        const overrideAtual = normalizeViesOverride(ativoEncontrado?.viesOverride);
+        const overrideCache = cacheValido
+          ? normalizeViesOverride(cacheValido.ativo?.viesOverride)
+          : null;
+
+        const dadosMudaram =
+          !cacheValido ||
+          cacheValido.carteira !== carteiraEncontrada ||
+          overrideAtual !== overrideCache;
+
+        if (dadosMudaram) {
+          setAtivo(ativoEncontrado);
+          setCarteira(carteiraEncontrada);
+
+          // Cache os dados encontrados
+          const cacheData = {
+            ativo: ativoEncontrado,
+            carteira: carteiraEncontrada
+          };
+
+          cacheUtils.set(`ativo_${ticker}`, cacheData);
+        } else {
+          setAtivo(cacheValido.ativo);
+          setCarteira(cacheValido.carteira);
+        }
+      } else if (cacheValido) {
+        setAtivo(cacheValido.ativo);
+        setCarteira(cacheValido.carteira);
+      } else {
+        setAtivo(null);
+        setCarteira(null);
       }
 
       setLoading(false);
