@@ -168,11 +168,15 @@ const isETF = (ticker) => {
   if (!ticker) return false;
   const normalizedTicker = ticker.toUpperCase();
 
+  if (ETF_LIST.has(normalizedTicker)) {
+    return true;
+  }
+
   if (EQUITY_OVERRIDE_TICKERS.has(normalizedTicker)) {
     return false;
   }
 
-  return ETF_LIST.has(normalizedTicker);
+  return false;
 };
 
 const isREIT = (ticker) => {
