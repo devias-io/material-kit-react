@@ -12,9 +12,35 @@ import {
   resolveCarteirasPermitidas,
   sanitizeCarteirasData
 } from '@/utils/carteira-access';
+import { normalizeViesOverride, type ViesOverride } from '@/utils/vies';
+
+type AtivoComVies<T> = T & { viesOverride: ViesOverride };
+
+const normalizarAtivo = <T extends { viesOverride?: ViesOverride | null }>(ativo: T): AtivoComVies<T> => ({
+  ...ativo,
+  viesOverride: normalizeViesOverride(ativo.viesOverride)
+});
+
+const normalizarCarteira = <T extends { viesOverride?: ViesOverride | null }>(ativos: T[] | undefined) => {
+  if (!Array.isArray(ativos)) {
+    return [] as AtivoComVies<T>[];
+  }
+
+  return ativos.map(normalizarAtivo) as AtivoComVies<T>[];
+};
+
+const normalizarDadosCarteiras = (dados: Record<string, any> | undefined) => {
+  const resultado: Record<string, any[]> = {};
+
+  ALL_CARTEIRA_KEYS.forEach(carteira => {
+    resultado[carteira] = normalizarCarteira(dados?.[carteira]);
+  });
+
+  return resultado;
+};
 
 // 🎯 DADOS INICIAIS DAS CARTEIRAS (mantidos iguais)
-const DADOS_INICIAIS = {
+const DADOS_INICIAIS_BASE = {
   smallCaps: [
     { id: 'sc1', ticker: "ALOS3", dataEntrada: "15/01/2021", precoEntrada: 26.68, precoTeto: 23.76, setor: "Shoppings" },
     { id: 'sc2', ticker: "TUPY3", dataEntrada: "04/11/2020", precoEntrada: 20.36, precoTeto: 31.50, setor: "Industrial" },
@@ -180,6 +206,8 @@ const DADOS_INICIAIS = {
   ]
 };
 
+const DADOS_INICIAIS = normalizarDadosCarteiras(DADOS_INICIAIS_BASE);
+
 // 🎯 CONFIGURAÇÕES DAS CARTEIRAS (mantidas iguais)
 const CARTEIRAS_CONFIG = {
   smallCaps: { 
@@ -279,7 +307,12 @@ const api = {
       }
       
       const data = await response.json();
-      console.log(`✅ API: ${carteira} retornou ${data.length} itens`);
+      if (Array.isArray(data)) {
+        console.log(`✅ API: ${carteira} retornou ${data.length} itens`);
+        return normalizarCarteira(data);
+      }
+
+      console.log(`⚠️ API: resposta inesperada para ${carteira}`);
       return data;
     } catch (error) {
       console.error(`❌ API: Erro na requisição ${carteira}:`, error);
@@ -304,7 +337,11 @@ const api = {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      return response.json();
+      const result = await response.json();
+      if (result?.ativo) {
+        return { ...result, ativo: normalizarAtivo(result.ativo) };
+      }
+      return result;
     } catch (error) {
       console.error('❌ API: Erro ao adicionar:', error);
       throw error;
@@ -328,7 +365,11 @@ const api = {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      return response.json();
+      const result = await response.json();
+      if (result?.ativo) {
+        return { ...result, ativo: normalizarAtivo(result.ativo) };
+      }
+      return result;
     } catch (error) {
       console.error('❌ API: Erro ao editar:', error);
       throw error;
@@ -352,7 +393,11 @@ const api = {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      return response.json();
+      const result = await response.json();
+      if (Array.isArray(result?.ativos)) {
+        return { ...result, ativos: normalizarCarteira(result.ativos) };
+      }
+      return result;
     } catch (error) {
       console.error('❌ API: Erro ao remover:', error);
       throw error;
@@ -362,7 +407,7 @@ const api = {
   reordenarAtivos: async (carteira: string, novosAtivos: any[]) => {
     try {
       if (typeof window === 'undefined') throw new Error('Server-side não suportado');
-      
+
       const response = await fetch(`/api/meus-ativos/${carteira}/reorder`, {
         method: 'POST',
         credentials: 'include',
@@ -379,6 +424,43 @@ const api = {
       return response.json();
     } catch (error) {
       console.error('❌ API: Erro ao reordenar:', error);
+      throw error;
+    }
+  },
+
+  atualizarViesOverride: async (ticker: string, carteira: string, viesOverride: ViesOverride) => {
+    try {
+      if (typeof window === 'undefined') throw new Error('Server-side não suportado');
+
+      const response = await fetch(`/api/vies/${encodeURIComponent(ticker)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ carteira, viesOverride })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (Array.isArray(result?.ativosAtualizados)) {
+        return {
+          ...result,
+          ativosAtualizados: normalizarCarteira(result.ativosAtualizados)
+        };
+      }
+
+      if (result?.ativo) {
+        return { ...result, ativo: normalizarAtivo(result.ativo) };
+      }
+
+      return result;
+    } catch (error) {
+      console.error('❌ API: Erro ao atualizar viés manual:', error);
       throw error;
     }
   }
@@ -429,7 +511,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       
       const dadosParsed = JSON.parse(dadosString);
       console.log('✅ Dados carregados do localStorage');
-      return dadosParsed;
+      return normalizarDadosCarteiras(dadosParsed);
     } catch (error) {
       console.error('❌ Erro ao ler localStorage:', error);
       return DADOS_INICIAIS;
@@ -479,7 +561,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   useEffect(() => {
     if (!user?.id) return;
 
-    setDados(prevDados => sanitizeCarteirasData(prevDados, allowedCarteiras));
+    setDados(prevDados => normalizarDadosCarteiras(sanitizeCarteirasData(prevDados, allowedCarteiras)));
   }, [allowedCarteiras, user?.id]);
 
   // 🔥 REACT QUERIES SIMPLIFICADAS COM ENABLED CORRETO
@@ -629,10 +711,12 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       setDados(prevDados => {
         const novosDados = {
           ...prevDados,
-          [carteira]: prevDados[carteira].map((item: any) => 
-            item.id.toString() === id.toString() 
-              ? { ...item, ...dados, editadoEm: new Date().toISOString() }
-              : item
+          [carteira]: normalizarCarteira(
+            prevDados[carteira]?.map((item: any) =>
+              item.id.toString() === id.toString()
+                ? normalizarAtivo({ ...item, ...dados, editadoEm: new Date().toISOString() })
+                : item
+            )
           )
         };
         
@@ -662,22 +746,25 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       
       // 🔥 FORÇAR ATUALIZAÇÃO DO CACHE
       if (result?.ativo) {
+        const ativoNormalizado = normalizarAtivo(result.ativo);
         // Atualizar cache React Query
         const currentData = queryClient.getQueryData(['carteira', carteira, user?.id]);
         if (Array.isArray(currentData)) {
-          const updatedData = currentData.map((item: any) => 
-            item.id.toString() === id.toString() ? result.ativo : item
+          const updatedData = currentData.map((item: any) =>
+            item.id.toString() === id.toString() ? ativoNormalizado : item
           );
           queryClient.setQueryData(['carteira', carteira, user?.id], updatedData);
         }
-        
+
         // 🔥 FORÇAR ATUALIZAÇÃO DO ESTADO LOCAL TAMBÉM
         setDados(prevDados => ({
           ...prevDados,
-          [carteira]: prevDados[carteira].map((item: any) => 
-            item.id.toString() === id.toString() 
-              ? { ...result.ativo, editadoEm: new Date().toISOString() }
-              : item
+          [carteira]: normalizarCarteira(
+            prevDados[carteira]?.map((item: any) =>
+              item.id.toString() === id.toString()
+                ? normalizarAtivo({ ...ativoNormalizado, editadoEm: new Date().toISOString() })
+                : item
+            )
           )
         }));
       }
@@ -714,20 +801,22 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   });
 
   const reordenarMutation = useMutation({
-    mutationFn: ({ carteira, novosAtivos }: { carteira: string, novosAtivos: any[] }) => 
+    mutationFn: ({ carteira, novosAtivos }: { carteira: string, novosAtivos: any[] }) =>
       api.reordenarAtivos(carteira, novosAtivos),
     
     // 🔥 OPTIMISTIC UPDATE - Atualiza ordem IMEDIATAMENTE
     onMutate: async ({ carteira, novosAtivos }) => {
       console.log(`🔄 REORDENAÇÃO OPTIMISTIC: ${carteira}`, novosAtivos.length, 'ativos');
-      
+
       // 🔥 ATUALIZAR ESTADO LOCAL IMEDIATAMENTE
-      const ativosComOrdem = novosAtivos.map((ativo, index) => ({
-        ...ativo,
-        ordem: index,
-        editadoEm: new Date().toISOString()
-      }));
-      
+      const ativosComOrdem = normalizarCarteira(
+        novosAtivos.map((ativo, index) => ({
+          ...ativo,
+          ordem: index,
+          editadoEm: new Date().toISOString()
+        }))
+      );
+
       setDados(prevDados => {
         const novosDados = {
           ...prevDados,
@@ -749,27 +838,29 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
 
       // Backup
       const previousData = queryClient.getQueryData(['carteira', carteira, user?.id]);
-      
+
       // 🔥 ATUALIZAR CACHE IMEDIATAMENTE
       queryClient.setQueryData(['carteira', carteira, user?.id], ativosComOrdem);
 
       return { previousData, carteira };
     },
-    
+
     // 🔥 SUCESSO
     onSuccess: (result, { carteira, novosAtivos }) => {
       console.log(`✅ REORDENAÇÃO SUCESSO: ${carteira}`);
-      
+
       // 🔥 GARANTIR QUE ORDEM FOI SALVA
-      const ativosComOrdem = novosAtivos.map((ativo, index) => ({
-        ...ativo,
-        ordem: index,
-        editadoEm: new Date().toISOString()
-      }));
-      
+      const ativosComOrdem = normalizarCarteira(
+        novosAtivos.map((ativo, index) => ({
+          ...ativo,
+          ordem: index,
+          editadoEm: new Date().toISOString()
+        }))
+      );
+
       // Atualizar cache final
       queryClient.setQueryData(['carteira', carteira, user?.id], ativosComOrdem);
-      
+
       // Atualizar estado local final
       setDados(prevDados => ({
         ...prevDados,
@@ -785,11 +876,123 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       
       // Rollback completo
       if (context?.previousData) {
-        queryClient.setQueryData(['carteira', carteira, user?.id], context.previousData);
-        
+        const dadosRestaurados = normalizarCarteira(context.previousData as any[]);
+        queryClient.setQueryData(['carteira', carteira, user?.id], dadosRestaurados);
+
         setDados(prevDados => ({
           ...prevDados,
-          [carteira]: context.previousData || prevDados[carteira]
+          [carteira]: dadosRestaurados.length > 0 ? dadosRestaurados : prevDados[carteira]
+        }));
+      }
+    }
+  });
+
+  const atualizarViesMutation = useMutation({
+    mutationFn: ({ ticker, carteira, viesOverride }: { ticker: string; carteira: string; viesOverride: ViesOverride }) =>
+      api.atualizarViesOverride(ticker, carteira, viesOverride),
+    onMutate: async ({ ticker, carteira, viesOverride }) => {
+      await queryClient.cancelQueries({
+        queryKey: ['carteira', carteira, user?.id]
+      });
+
+      const previousQueryData = queryClient.getQueryData(['carteira', carteira, user?.id]);
+      const previousState = dados[carteira];
+
+      const overrideNormalizado = normalizeViesOverride(viesOverride);
+
+      setDados(prevDados => ({
+        ...prevDados,
+        [carteira]: normalizarCarteira(
+          prevDados[carteira]?.map((ativo: any) =>
+            ativo.ticker === ticker
+              ? normalizarAtivo({ ...ativo, viesOverride: overrideNormalizado, editadoEm: new Date().toISOString() })
+              : ativo
+          )
+        )
+      }));
+
+      queryClient.setQueryData(['carteira', carteira, user?.id], (oldData: any) => {
+        if (!Array.isArray(oldData)) return oldData;
+        return normalizarCarteira(
+          oldData.map((ativo: any) =>
+            ativo.ticker === ticker
+              ? normalizarAtivo({ ...ativo, viesOverride: overrideNormalizado, editadoEm: new Date().toISOString() })
+              : ativo
+          )
+        );
+      });
+
+      return { previousQueryData, previousState };
+    },
+    onSuccess: (result, { ticker, carteira, viesOverride }) => {
+      const overrideNormalizado = normalizeViesOverride(result?.viesOverride ?? viesOverride);
+
+      if (Array.isArray(result?.ativosAtualizados)) {
+        const ativosNormalizados = normalizarCarteira(result.ativosAtualizados);
+        queryClient.setQueryData(['carteira', carteira, user?.id], ativosNormalizados);
+        setDados(prevDados => ({
+          ...prevDados,
+          [carteira]: ativosNormalizados
+        }));
+        return;
+      }
+
+      if (result?.ativo) {
+        const ativoNormalizado = normalizarAtivo({ ...result.ativo, viesOverride: overrideNormalizado });
+        queryClient.setQueryData(['carteira', carteira, user?.id], (oldData: any) => {
+          if (!Array.isArray(oldData)) return oldData;
+          return normalizarCarteira(
+            oldData.map((ativo: any) =>
+              ativo.ticker === ticker ? ativoNormalizado : ativo
+            )
+          );
+        });
+
+        setDados(prevDados => ({
+          ...prevDados,
+          [carteira]: normalizarCarteira(
+            prevDados[carteira]?.map((ativo: any) =>
+              ativo.ticker === ticker
+                ? normalizarAtivo({ ...ativoNormalizado, editadoEm: new Date().toISOString() })
+                : ativo
+            )
+          )
+        }));
+        return;
+      }
+
+      // Fallback para atualizar apenas pelo ticker
+      queryClient.setQueryData(['carteira', carteira, user?.id], (oldData: any) => {
+        if (!Array.isArray(oldData)) return oldData;
+        return normalizarCarteira(
+          oldData.map((ativo: any) =>
+            ativo.ticker === ticker
+              ? normalizarAtivo({ ...ativo, viesOverride: overrideNormalizado, editadoEm: new Date().toISOString() })
+              : ativo
+          )
+        );
+      });
+
+      setDados(prevDados => ({
+        ...prevDados,
+        [carteira]: normalizarCarteira(
+          prevDados[carteira]?.map((ativo: any) =>
+            ativo.ticker === ticker
+              ? normalizarAtivo({ ...ativo, viesOverride: overrideNormalizado, editadoEm: new Date().toISOString() })
+              : ativo
+          )
+        )
+      }));
+    },
+    onError: (_error, { carteira }, context) => {
+      if (context?.previousQueryData) {
+        queryClient.setQueryData(['carteira', carteira, user?.id], context.previousQueryData);
+      }
+
+      if (context?.previousState) {
+        setDados(prevDados => ({
+          ...prevDados,
+          [carteira]: normalizarCarteira(context.previousState as any[])
         }));
       }
     }
@@ -810,7 +1013,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       console.log('❌ Usuário não autenticado - MODO LOCALSTORAGE');
       setModoSincronizacao('localStorage');
       const dadosIniciais = lerDados();
-      setDados(dadosIniciais);
+      setDados(normalizarDadosCarteiras(dadosIniciais));
     }
     
     setIsInitialized(true);
@@ -940,17 +1143,17 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   // 🔥 FUNÇÕES CRUD HÍBRIDAS CORRIGIDAS
   const adicionarAtivo = useCallback((carteira: string, novoAtivo: any) => {
     const id = `${carteira.slice(0,3)}${Date.now()}`;
-    const ativoComId = {
+    const ativoComId = normalizarAtivo({
       ...novoAtivo,
       id,
       criadoEm: new Date().toISOString(),
       editadoEm: new Date().toISOString()
-    };
+    });
 
     // Salvar local imediatamente
     const novosDados = {
       ...dados,
-      [carteira]: [...(dados[carteira] || []), ativoComId]
+      [carteira]: normalizarCarteira([...(dados[carteira] || []), ativoComId])
     };
 
     setDados(novosDados);
@@ -972,10 +1175,12 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   const editarAtivo = useCallback((carteira: string, id: string, dadosAtualizados: any) => {
     const novosDados = {
       ...dados,
-      [carteira]: dados[carteira].map((item: any) => 
-        item.id === id 
-          ? { ...item, ...dadosAtualizados, editadoEm: new Date().toISOString() }
-          : item
+      [carteira]: normalizarCarteira(
+        dados[carteira]?.map((item: any) =>
+          item.id === id
+            ? normalizarAtivo({ ...item, ...dadosAtualizados, editadoEm: new Date().toISOString() })
+            : item
+        )
       )
     };
 
@@ -993,7 +1198,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   const removerAtivo = useCallback((carteira: string, ativoId: string) => {
     const novosDados = {
       ...dados,
-      [carteira]: dados[carteira].filter((ativo: any) => ativo.id !== ativoId)
+      [carteira]: normalizarCarteira(dados[carteira]?.filter((ativo: any) => ativo.id !== ativoId))
     };
 
     setDados(novosDados);
@@ -1011,11 +1216,13 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     console.log(`🔄 INICIANDO REORDENAÇÃO ${carteira}:`, novosAtivos.length, 'ativos');
     
     // 🔥 PREPARAR ATIVOS COM ORDEM EXPLÍCITA
-    const ativosComOrdem = novosAtivos.map((ativo, index) => ({
-      ...ativo,
-      ordem: index,
-      editadoEm: new Date().toISOString()
-    }));
+    const ativosComOrdem = normalizarCarteira(
+      novosAtivos.map((ativo, index) => ({
+        ...ativo,
+        ordem: index,
+        editadoEm: new Date().toISOString()
+      }))
+    );
 
     console.log('📋 Nova ordem:', ativosComOrdem.map(a => `${a.ticker} (pos: ${a.ordem})`));
 
@@ -1048,6 +1255,13 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       salvarDados(novosDados);
     }
   }, [dados, setDados, salvarDados, reordenarMutation, modoSincronizacao, user?.id, isAuthenticated]);
+
+  const atualizarViesOverride = useCallback(
+    async ({ ticker, carteira, viesOverride }: { ticker: string; carteira: string; viesOverride: ViesOverride }) => {
+      return atualizarViesMutation.mutateAsync({ ticker, carteira, viesOverride });
+    },
+    [atualizarViesMutation]
+  );
 
   // 🔥 OUTRAS FUNÇÕES MANTIDAS
   const atualizarTodasCotacoes = useCallback(async () => {
@@ -1083,16 +1297,18 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       return false;
     }
     
-    const ativosAtualizados = ativosCarteira.map((ativo: any) => {
-      if (ativo.precoTeto && !ativo.precoTetoBDR) {
-        return {
-          ...ativo,
-          precoTetoBDR: parseFloat((ativo.precoTeto * cotacaoUsada).toFixed(2)),
-          editadoEm: new Date().toISOString()
-        };
-      }
-      return ativo;
-    });
+    const ativosAtualizados = normalizarCarteira(
+      ativosCarteira.map((ativo: any) => {
+        if (ativo.precoTeto && !ativo.precoTetoBDR) {
+          return normalizarAtivo({
+            ...ativo,
+            precoTetoBDR: parseFloat((ativo.precoTeto * cotacaoUsada).toFixed(2)),
+            editadoEm: new Date().toISOString()
+          });
+        }
+        return normalizarAtivo(ativo);
+      })
+    );
     
     const novosDados = {
       ...dados,
@@ -1208,26 +1424,65 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   }
 
   // 🔥 VALUE OBJECT ESTÁVEL
-  const contextValue = {
-    // Dados
-    dados: dadosFinais,
+  const contextValue = useMemo(() => {
+    const queriesArray = Object.values(carteirasQueries) as any[];
+
+    return {
+      // Dados
+      dados: dadosFinais,
+      cotacoes,
+      cotacaoUSD,
+      loading,
+      isInitialized,
+      modoSincronizacao,
+      isAuthenticated,
+
+      // Configurações
+      CARTEIRAS_CONFIG,
+
+      // Métodos
+      setDados,
+      obterCarteira,
+      adicionarAtivo,
+      editarAtivo,
+      removerAtivo,
+      reordenarAtivos,
+      atualizarViesOverride,
+      buscarCotacoes,
+      buscarCotacaoUSD,
+      atualizarTodasCotacoes,
+      converterUSDparaBRL,
+      obterEstatisticas,
+      debug,
+      debugReordenacao,
+      isCarteiraPermitida,
+
+      // Estados React Query
+      isLoading: queriesArray.some((q: any) => q.isLoading),
+      isError: queriesArray.some((q: any) => q.isError),
+      isMutating:
+        reordenarMutation.isPending ||
+        adicionarMutation.isPending ||
+        editarMutation.isPending ||
+        removerMutation.isPending ||
+        atualizarViesMutation.isPending // 🔥 NOVO
+    };
+  }, [
+    dadosFinais,
     cotacoes,
     cotacaoUSD,
     loading,
     isInitialized,
     modoSincronizacao,
     isAuthenticated,
-    
-    // Configurações
     CARTEIRAS_CONFIG,
-    
-    // Métodos
     setDados,
     obterCarteira,
     adicionarAtivo,
     editarAtivo,
     removerAtivo,
     reordenarAtivos,
+    atualizarViesOverride,
     buscarCotacoes,
     buscarCotacaoUSD,
     atualizarTodasCotacoes,
@@ -1236,12 +1491,13 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     debug,
     debugReordenacao,
     isCarteiraPermitida,
-
-    // Estados React Query
-    isLoading: Object.values(carteirasQueries).some((q: any) => q.isLoading),
-    isError: Object.values(carteirasQueries).some((q: any) => q.isError),
-    isMutating: reordenarMutation.isPending || adicionarMutation.isPending || editarMutation.isPending || removerMutation.isPending // 🔥 NOVO
-  };
+    carteirasQueries,
+    reordenarMutation.isPending,
+    adicionarMutation.isPending,
+    editarMutation.isPending,
+    removerMutation.isPending,
+    atualizarViesMutation.isPending
+  ]);
 
   return (
     <DataStoreContext.Provider value={contextValue}>

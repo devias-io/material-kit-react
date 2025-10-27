@@ -144,10 +144,11 @@ export default function GerenciamentoPage() {
     CARTEIRAS_CONFIG, 
     adicionarAtivo, 
     editarAtivo, 
-    removerAtivo,        
-    reordenarAtivos,     
-    obterEstatisticas, 
-    setDados 
+    removerAtivo,
+    reordenarAtivos,
+    atualizarViesOverride,
+    obterEstatisticas,
+    setDados
   } = useDataStore();
   
   const [carteiraAtiva, setCarteiraAtiva] = useState('smallCaps');
@@ -159,6 +160,8 @@ export default function GerenciamentoPage() {
   const [dadosCSV, setDadosCSV] = useState([]);
   const [previewCSV, setPreviewCSV] = useState([]);
   const [relatorioImportacao, setRelatorioImportacao] = useState(null);
+
+  const [viesOverridesEmProcesso, setViesOverridesEmProcesso] = useState<Record<string, boolean>>({});
   
   // 🔥 NOVO ESTADO PARA CONTROLAR MOEDA DO PREÇO TETO
   const [moedaPrecoTeto, setMoedaPrecoTeto] = useState('BRL');
@@ -174,6 +177,28 @@ export default function GerenciamentoPage() {
     precoSaida: '',
     motivoEncerramento: ''
   });
+
+  const handleAtualizarViesManual = async (
+    ativoId: string,
+    ticker: string,
+    novoValor: string
+  ) => {
+    const valorNormalizado = (novoValor === 'MANTER' ? 'MANTER' : 'AUTO') as 'AUTO' | 'MANTER';
+
+    setViesOverridesEmProcesso(prev => ({ ...prev, [ativoId]: true }));
+
+    try {
+      await atualizarViesOverride({
+        carteira: carteiraAtiva,
+        ticker,
+        viesOverride: valorNormalizado
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar viés manual:', error);
+    } finally {
+      setViesOverridesEmProcesso(prev => ({ ...prev, [ativoId]: false }));
+    }
+  };
 
   const carteiraConfig = CARTEIRAS_CONFIG[carteiraAtiva];
   const ativos = dados[carteiraAtiva] || [];
@@ -1721,6 +1746,26 @@ export default function GerenciamentoPage() {
         )}
 
         {/* Lista de Ativos Ativos */}
+        <div
+          style={{
+            margin: '0 24px 16px 24px',
+            backgroundColor: '#ecfeff',
+            border: '1px solid #67e8f9',
+            borderRadius: '12px',
+            padding: '16px',
+            color: '#0f172a',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}
+        >
+          <strong style={{ fontSize: '14px' }}>⚙️ Controle de viés manual</strong>
+          <span style={{ fontSize: '13px', lineHeight: 1.5 }}>
+            Use o seletor abaixo para alternar entre o cálculo automático e o modo <em>Manter</em> para cada ativo.
+            Alterações são aplicadas imediatamente e podem ser revertidas escolhendo <em>Automático</em> novamente.
+          </span>
+        </div>
+
         <div style={{ padding: '24px' }}>
           <h3 style={{
             fontSize: '20px',
@@ -1790,6 +1835,9 @@ export default function GerenciamentoPage() {
                         )}
                       </>
                     ) : null}
+                    <th style={{ padding: '12px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
+                      VIÉS MANUAL
+                    </th>
                     <th style={{ padding: '12px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
                       AÇÕES
                     </th>
@@ -1999,6 +2047,34 @@ export default function GerenciamentoPage() {
                           )}
                         </>
                       ) : null}
+                      <td style={{ padding: '16px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
+                          <select
+                            value={ativo.viesOverride || 'AUTO'}
+                            onChange={(e) => handleAtualizarViesManual(ativo.id, ativo.ticker, e.target.value)}
+                            disabled={!!viesOverridesEmProcesso[ativo.id]}
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              border: '1px solid #cbd5f5',
+                              fontWeight: '600',
+                              backgroundColor: '#ffffff',
+                              color: '#1e293b',
+                              cursor: viesOverridesEmProcesso[ativo.id] ? 'wait' : 'pointer'
+                            }}
+                          >
+                            <option value="AUTO">Automático</option>
+                            <option value="MANTER">Manter</option>
+                          </select>
+                          <span style={{ fontSize: '11px', color: '#64748b' }}>
+                            {viesOverridesEmProcesso[ativo.id]
+                              ? 'Salvando...'
+                              : ativo.viesOverride === 'MANTER'
+                                ? 'Viés fixado em “Manter”'
+                                : 'Usando cálculo automático'}
+                          </span>
+                        </div>
+                      </td>
                       <td style={{ padding: '16px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
                           <button

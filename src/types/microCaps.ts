@@ -14,7 +14,8 @@ export interface Ativo {
   variacao: number;
   variacaoPercent: number;
   volume: number;
-  vies: 'Compra' | 'Aguardar';
+  vies: 'Compra' | 'Aguardar' | 'Manter';
+  viesOverride: 'AUTO' | 'MANTER';
   dy: string;
   statusApi: 'success' | 'error' | 'loading';
   nomeCompleto: string;

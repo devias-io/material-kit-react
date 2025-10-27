@@ -25,6 +25,7 @@ import { UsersThree as UsersThreeIcon } from '@phosphor-icons/react/dist/ssr/Use
 import { TrendUp, TrendDown } from '@phosphor-icons/react/dist/ssr';
 
 import { useSelection } from '@/hooks/use-selection';
+import { aplicarViesOverride } from '@/utils/vies';
 
 function noop(): void {
   // Função vazia para props obrigatórias
@@ -185,6 +186,7 @@ export interface OverviewData {
   dy: string;
   precoTeto: string;
   vies: string;
+  viesOverride?: 'AUTO' | 'MANTER';
 }
 
 interface OverviewTableProps {
@@ -416,18 +418,25 @@ export function OverviewTable({
             </TableHead>
             <TableBody>
               {rows.map((row, index) => {
-                const calcularVies = (precoTeto: string, precoAtual: string) => {
+                const calcularVies = (precoTeto: string, precoAtual: string, override?: string) => {
+                  const overrideValor = override as 'AUTO' | 'MANTER' | undefined;
+
+                  if (precoAtual === 'N/A') {
+                    return aplicarViesOverride(overrideValor, 'Aguardar');
+                  }
+
                   const precoTetoNum = parseFloat(precoTeto.replace('R$ ', '').replace(',', '.'));
                   const precoAtualNum = parseFloat(precoAtual.replace('R$ ', '').replace(',', '.'));
-                  
+
                   if (isNaN(precoTetoNum) || isNaN(precoAtualNum)) {
-                    return 'Aguardar';
+                    return aplicarViesOverride(overrideValor, 'Aguardar');
                   }
-                  
-                  return precoAtualNum < precoTetoNum ? 'Compra' : 'Aguardar';
+
+                  const viesAutomatico = precoAtualNum < precoTetoNum ? 'Compra' : 'Aguardar';
+                  return aplicarViesOverride(overrideValor, viesAutomatico);
                 };
-                
-                const viesCalculado = calcularVies(row.precoTeto, row.precoAtual);
+
+                const viesCalculado = calcularVies(row.precoTeto, row.precoAtual, row.viesOverride);
                 
                 const precoEntradaNum = parseFloat(row.precoEntrada.replace('R$ ', '').replace(',', '.'));
                 const precoAtualNum = parseFloat(row.precoAtual.replace('R$ ', '').replace(',', '.'));

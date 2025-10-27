@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useDataStore } from '@/hooks/useDataStore';
+import { aplicarViesOverride } from '@/utils/vies';
 
 export interface FII {
   id: string;
@@ -15,6 +16,7 @@ export interface FII {
   dy: string;
   precoTeto: string;
   vies: string;
+  viesOverride?: 'AUTO' | 'MANTER';
   performance?: number;
   variacao?: number;
   variacaoPercent?: number;
@@ -350,7 +352,10 @@ export function useFiisCotacoesBrapi() {
               variacao: 0,
               variacaoPercent: 0,
               volume: 0,
-              vies: calcularViesAutomatico(fii.precoTeto, `R$ ${fii.precoEntrada.toFixed(2).replace('.', ',')}`),
+              vies: aplicarViesOverride(
+                fii.viesOverride,
+                calcularViesAutomatico(fii.precoTeto, `R$ ${fii.precoEntrada.toFixed(2).replace('.', ',')}`)
+              ),
               dy: '0,00%',
               statusApi: 'suspicious_price',
               nomeCompleto: cotacao.nome
@@ -372,7 +377,10 @@ export function useFiisCotacoesBrapi() {
             variacao: cotacao.variacao,
             variacaoPercent: cotacao.variacaoPercent,
             volume: cotacao.volume,
-            vies: calcularViesAutomatico(fii.precoTeto, precoAtualFormatado),
+            vies: aplicarViesOverride(
+              fii.viesOverride,
+              calcularViesAutomatico(fii.precoTeto, precoAtualFormatado)
+            ),
             dy: calcularDY12Meses(fii.ticker, precoAtualNum),
             statusApi: 'success',
             nomeCompleto: cotacao.nome
@@ -395,7 +403,10 @@ export function useFiisCotacoesBrapi() {
             variacao: 0,
             variacaoPercent: 0,
             volume: 0,
-            vies: calcularViesAutomatico(fii.precoTeto, precoEntradaFormatado),
+            vies: aplicarViesOverride(
+              fii.viesOverride,
+              calcularViesAutomatico(fii.precoTeto, precoEntradaFormatado)
+            ),
             dy: calcularDY12Meses(fii.ticker, fii.precoEntrada),
             statusApi: 'not_found',
             nomeCompleto: 'N/A'
@@ -443,7 +454,10 @@ export function useFiisCotacoesBrapi() {
         variacao: 0,
         variacaoPercent: 0,
         volume: 0,
-        vies: calcularViesAutomatico(fii.precoTeto, `R$ ${fii.precoEntrada.toFixed(2).replace('.', ',')}`),
+        vies: aplicarViesOverride(
+          fii.viesOverride,
+          calcularViesAutomatico(fii.precoTeto, `R$ ${fii.precoEntrada.toFixed(2).replace('.', ',')}`)
+        ),
         dy: calcularDY12Meses(fii.ticker, fii.precoEntrada),
         statusApi: 'error',
         nomeCompleto: 'Erro'

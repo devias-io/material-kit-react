@@ -4,6 +4,7 @@
 import * as React from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
+import { aplicarViesOverride, type ViesOverride } from '@/utils/vies';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -631,13 +632,22 @@ function useIbovespaPeriodo(ativosAtualizados: any[]) {
 }
 
 // 🔥 FUNÇÃO OTIMIZADA PARA CALCULAR VIÉS
-function calcularViesAutomatico(precoTeto: number | undefined, precoAtual: string): string {
-  if (!precoTeto || precoAtual === 'N/A') return 'Aguardar';
-  
+function calcularViesAutomatico(
+  precoTeto: number | undefined,
+  precoAtual: string,
+  override?: ViesOverride | null
+): string {
+  if (!precoTeto || precoAtual === 'N/A') {
+    return aplicarViesOverride(override, 'Aguardar');
+  }
+
   const precoAtualNum = parseFloat(precoAtual.replace('R$ ', '').replace(',', '.'));
-  if (isNaN(precoAtualNum)) return 'Aguardar';
-  
-  return precoAtualNum < precoTeto ? 'Compra' : 'Aguardar';
+  if (isNaN(precoAtualNum)) {
+    return aplicarViesOverride(override, 'Aguardar');
+  }
+
+  const viesAutomatico = precoAtualNum < precoTeto ? 'Compra' : 'Aguardar';
+  return aplicarViesOverride(override, viesAutomatico);
 }
 
 // 🚀 FUNÇÃO OTIMIZADA PARA BUSCAR COTAÇÕES - SEMPRE ESTRATÉGIA MOBILE (IGUAL AO CÓDIGO 1)
@@ -1044,7 +1054,11 @@ function useDividendosIntegradas() {
           variacao: cotacao.variacao,
           variacaoPercent: cotacao.variacaoPercent,
           volume: cotacao.volume,
-          vies: calcularViesAutomatico(ativo.precoTeto, `R$ ${precoAtualNum.toFixed(2).replace('.', ',')}`),
+          vies: calcularViesAutomatico(
+            ativo.precoTeto,
+            `R$ ${precoAtualNum.toFixed(2).replace('.', ',')}`,
+            ativo.viesOverride
+          ),
           dy: dyAPI,
           statusApi: 'success',
           nomeCompleto: cotacao.nome,
@@ -1068,7 +1082,11 @@ function useDividendosIntegradas() {
           variacao: 0,
           variacaoPercent: 0,
           volume: 0,
-          vies: calcularViesAutomatico(ativo.precoTeto, `R$ ${ativo.precoEntrada.toFixed(2).replace('.', ',')}`),
+          vies: calcularViesAutomatico(
+            ativo.precoTeto,
+            `R$ ${ativo.precoEntrada.toFixed(2).replace('.', ',')}`,
+            ativo.viesOverride
+          ),
           dy: dyAPI,
           statusApi: 'not_found',
           nomeCompleto: 'N/A',

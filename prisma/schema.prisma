@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ViesOverride {
+  AUTO
+  MANTER
+}
+
 model User {
   id                      String                        @id @default(cuid())
   firstName               String
@@ -228,6 +233,7 @@ model UserMicroCaps {
   precoEntrada       Float
   precoTeto          Float?
   precoTetoBDR       Float?
+  viesOverride       ViesOverride? @default(AUTO)
   posicaoEncerrada   Boolean  @default(false)
   dataSaida          String?
   precoSaida         Float?
@@ -249,6 +255,7 @@ model UserSmallCaps {
   dataEntrada        String
   precoEntrada       Float
   precoTeto          Float?
+  viesOverride       ViesOverride? @default(AUTO)
   posicaoEncerrada   Boolean  @default(false)
   dataSaida          String?
   precoSaida         Float?
@@ -270,6 +277,7 @@ model UserDividendos {
   dataEntrada        String
   precoEntrada       Float
   precoTeto          Float?
+  viesOverride       ViesOverride? @default(AUTO)
   posicaoEncerrada   Boolean  @default(false)
   dataSaida          String?
   precoSaida         Float?
@@ -291,6 +299,7 @@ model UserFiis {
   dataEntrada        String
   precoEntrada       Float
   precoTeto          Float?
+  viesOverride       ViesOverride? @default(AUTO)
   posicaoEncerrada   Boolean  @default(false)
   dataSaida          String?
   precoSaida         Float?
@@ -312,6 +321,7 @@ model UserRendaTurbinada {
   dataEntrada        String
   precoEntrada       Float
   precoTeto          Float?
+  viesOverride       ViesOverride? @default(AUTO)
   strike             Float?
   premioEntrada      Float?
   vencimento         String?
@@ -337,6 +347,7 @@ model UserDividendosInternacional {
   precoEntrada       Float
   precoTeto          Float?
   precoTetoBDR       Float?
+  viesOverride       ViesOverride? @default(AUTO)
   posicaoEncerrada   Boolean  @default(false)
   dataSaida          String?
   precoSaida         Float?
@@ -357,6 +368,7 @@ model UserEtfs {
   setor              String
   dataEntrada        String
   precoEntrada       Float
+  viesOverride       ViesOverride? @default(AUTO)
   posicaoEncerrada   Boolean  @default(false)
   dataSaida          String?
   precoSaida         Float?
@@ -379,6 +391,7 @@ model UserProjetoAmerica {
   precoEntrada       Float
   precoTeto          Float?
   precoTetoBDR       Float?
+  viesOverride       ViesOverride? @default(AUTO)
   posicaoEncerrada   Boolean  @default(false)
   dataSaida          String?
   precoSaida         Float?
@@ -401,6 +414,7 @@ model UserExteriorStocks {
   precoEntrada       Float
   precoTeto          Float?
   precoTetoBDR       Float?
+  viesOverride       ViesOverride? @default(AUTO)
   posicaoEncerrada   Boolean  @default(false)
   dataSaida          String?
   precoSaida         Float?
