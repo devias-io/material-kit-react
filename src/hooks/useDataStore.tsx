@@ -1415,16 +1415,12 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     }
   }, [debug, debugReordenacao, isInitialized]);
 
-  if (!isInitialized) {
-    return (
-      <DataStoreContext.Provider value={null}>
-        {children}
-      </DataStoreContext.Provider>
-    );
-  }
-
   // 🔥 VALUE OBJECT ESTÁVEL
   const contextValue = useMemo(() => {
+    if (!isInitialized) {
+      return null;
+    }
+
     const queriesArray = Object.values(carteirasQueries) as any[];
 
     return {
