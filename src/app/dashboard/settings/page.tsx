@@ -1134,7 +1134,7 @@ function useFiisIntegradas() {
 // 🎯 COMPONENTE PRINCIPAL OTIMIZADO
 export default function FiisPage() {
   const { dados } = useDataStore();
-  const { 
+  const {
     ativosAtualizados, 
     cotacoesAtualizadas, 
     setCotacoesAtualizadas, 
@@ -1150,6 +1150,11 @@ export default function FiisPage() {
   
   // ✅ PASSAR ifixData para useIfixPeriodo (evita busca duplicada)
   const { ifixPeriodo } = useIfixPeriodo(ativosAtualizados, ifixData);
+
+  const getLogoSrc = React.useCallback((ticker: string) => {
+    const sanitized = ticker.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    return `/logos-fiis/${sanitized}.png`;
+  }, []);
 
   // Separar ativos com memoização
   const { ativosAtivos, ativosEncerrados } = React.useMemo(() => {
@@ -1578,7 +1583,7 @@ export default function FiisPage() {
                           border: '1px solid #e2e8f0'
                         }}>
 <img
-  src={`/logos-fiis/${ativo.ticker.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}.png`}
+  src={getLogoSrc(ativo.ticker)}
   alt={`Logo ${ativo.ticker}`}
                             style={{
                               width: '28px',
@@ -1807,7 +1812,7 @@ export default function FiisPage() {
                                 border: '1px solid #e2e8f0'
                               }}>
 <img
-  src={`/logos-fiis/${ativo.ticker.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}.png`}
+  src={getLogoSrc(ativo.ticker)}
   alt={`Logo ${ativo.ticker}`}
                                   style={{
                                     width: '32px',
@@ -2057,7 +2062,7 @@ export default function FiisPage() {
                         }}
                       >
 <img
-  src={`/logos-fiis/${ativo.ticker.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}.png`}
+  src={getLogoSrc(ativo.ticker)}
   alt={`Logo ${ativo.ticker}`}
                           style={{
                             width: '28px',
@@ -2237,7 +2242,49 @@ export default function FiisPage() {
                           transition: 'background-color 0.2s'
                         }}
                       >
-                        <td style={{ padding: '16px', fontWeight: '700', color: '#1e293b' }}>{ativo.ticker}</td>
+                        <td style={{ padding: '16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div
+                              style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                backgroundColor: '#f8fafc',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1px solid #e2e8f0'
+                              }}
+                            >
+<img
+  src={getLogoSrc(ativo.ticker)}
+  alt={`Logo ${ativo.ticker}`}
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  objectFit: 'contain'
+                                }}
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    parent.style.backgroundColor = '#f8fafc';
+                                    parent.style.color = '#64748b';
+                                    parent.style.fontWeight = '700';
+                                    parent.style.fontSize = '14px';
+                                    parent.textContent = ativo.ticker.slice(0, 2);
+                                  }
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '16px' }}>{ativo.ticker}</div>
+                              <div style={{ color: '#64748b', fontSize: '14px' }}>{ativo.setor}</div>
+                            </div>
+                          </div>
+                        </td>
                         <td style={{ padding: '16px', textAlign: 'center', color: '#64748b', fontWeight: '600' }}>
                           {ativo.dataEntrada}
                         </td>
