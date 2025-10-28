@@ -1577,9 +1577,9 @@ export default function FiisPage() {
                           justifyContent: 'center',
                           border: '1px solid #e2e8f0'
                         }}>
-                          <img 
-                            src={`https://www.ivalor.com.br/media/emp/logos/${ativo.ticker.replace(/\d+$/, '')}.png`}
-                            alt={`Logo ${ativo.ticker}`}
+<img
+  src={`/logos-fiis/${ativo.ticker.replace(/\d+$/, '')}.png`}
+  alt={`Logo ${ativo.ticker}`}
                             style={{
                               width: '28px',
                               height: '28px',
@@ -1806,9 +1806,9 @@ export default function FiisPage() {
                                 justifyContent: 'center',
                                 border: '1px solid #e2e8f0'
                               }}>
-                                <img 
-                                  src={`https://www.ivalor.com.br/media/emp/logos/${ativo.ticker.replace(/\d+$/, '')}.png`}
-                                  alt={`Logo ${ativo.ticker}`}
+<img
+  src={`/logos-fiis/${ativo.ticker.replace(/\d+$/, '')}.png`}
+  alt={`Logo ${ativo.ticker}`}
                                   style={{
                                     width: '32px',
                                     height: '32px',
@@ -2056,9 +2056,9 @@ export default function FiisPage() {
                           border: '1px solid #e2e8f0'
                         }}
                       >
-                        <img
-                          src={`https://www.ivalor.com.br/media/emp/logos/${ativo.ticker.replace(/\d+$/, '')}.png`}
-                          alt={`Logo ${ativo.ticker}`}
+<img
+  src={`/logos-fiis/${ativo.ticker.replace(/\d+$/, '')}.png`}
+  alt={`Logo ${ativo.ticker}`}
                           style={{
                             width: '28px',
                             height: '28px',
