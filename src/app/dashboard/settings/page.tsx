@@ -1578,7 +1578,7 @@ export default function FiisPage() {
                           border: '1px solid #e2e8f0'
                         }}>
 <img
-  src={`/logos-fiis/${ativo.ticker.replace(/\d+$/, '')}.png`}
+  src={`/logos-fiis/${ativo.ticker.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}.png`}
   alt={`Logo ${ativo.ticker}`}
                             style={{
                               width: '28px',
@@ -1807,7 +1807,7 @@ export default function FiisPage() {
                                 border: '1px solid #e2e8f0'
                               }}>
 <img
-  src={`/logos-fiis/${ativo.ticker.replace(/\d+$/, '')}.png`}
+  src={`/logos-fiis/${ativo.ticker.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}.png`}
   alt={`Logo ${ativo.ticker}`}
                                   style={{
                                     width: '32px',
@@ -2057,7 +2057,7 @@ export default function FiisPage() {
                         }}
                       >
 <img
-  src={`/logos-fiis/${ativo.ticker.replace(/\d+$/, '')}.png`}
+  src={`/logos-fiis/${ativo.ticker.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}.png`}
   alt={`Logo ${ativo.ticker}`}
                           style={{
                             width: '28px',
