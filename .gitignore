@@ -29,3 +29,4 @@ yarn-error.log*
 ".yarn/install-state.gz" 
 ".yarnrc.yml"   
 "yarn.lock" 
+.env*.local
