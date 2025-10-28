@@ -22,6 +22,12 @@ import { useBRAPIETF } from '@/hooks/useBRAPIETF';
 import { useRelatoriosEstatisticas } from '@/hooks/useRelatoriosAPI';
 import { useAuthAccess } from '@/hooks/use-auth-access';
 import {
+  aplicarViesOverride,
+  getViesBadgePalette,
+  normalizeViesOverride
+} from '@/utils/vies';
+import type { ViesOverride } from '@/utils/vies';
+import {
   CARTEIRA_PERMISSION_MAP,
   getCarteirasForTicker,
   type CarteiraKey
@@ -931,55 +937,95 @@ function getBDRFromAmericano(tickerAmericano) {
 }
 
 // ✅ FUNÇÕES DE CÁLCULO OTIMIZADAS
-const calcularVies = (precoTeto, precoAtual, precoEntrada) => {
-  const teto = typeof precoTeto === 'string' ? 
-    parseFloat(precoTeto.replace(',', '.').replace('R$', '').trim()) : 
-    precoTeto;
-  
-  const entrada = typeof precoEntrada === 'string' ? 
-    parseFloat(precoEntrada.replace(',', '.').replace('R$', '').trim()) : 
-    precoEntrada;
-  
-  const precoReferencia = precoAtual || entrada;
-  
-  if (!teto || !precoReferencia || isNaN(teto) || isNaN(precoReferencia)) {
-    return { vies: 'N/A', cor: '#6b7280' };
+const parseNumero = (valor) => {
+  if (typeof valor === 'number') {
+    return Number.isFinite(valor) ? valor : null;
   }
-  
-  if (precoReferencia >= teto) {
-    return { vies: 'AGUARDAR', cor: '#f59e0b' };
-  } else {
-    return { vies: 'COMPRA', cor: '#22c55e' };
+
+  if (typeof valor === 'string') {
+    const trimmed = valor.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    const semMoeda = trimmed
+      .replace(/R\$|\$/gi, '')
+      .replace(/\s/g, '');
+
+    const usaVirgula = semMoeda.includes(',');
+    const normalizado = usaVirgula
+      ? semMoeda.replace(/\./g, '').replace(',', '.')
+      : semMoeda;
+
+    const numero = Number(normalizado);
+    return Number.isFinite(numero) ? numero : null;
   }
+
+  return null;
 };
 
-const calcularViesBDR = (precoTetoBDR, precoBDR, cotacaoUSD) => {
-  if (!precoTetoBDR || !precoBDR) {
-    return { vies: 'N/A', cor: '#6b7280', explicacao: 'Dados insuficientes' };
+const calcularVies = (precoTeto, precoAtual, precoEntrada, override) => {
+  const teto = parseNumero(precoTeto);
+  const precoAtualNumero = parseNumero(precoAtual);
+  const precoEntradaNumero = parseNumero(precoEntrada);
+  const precoReferencia = typeof precoAtualNumero === 'number' ? precoAtualNumero : precoEntradaNumero;
+
+  const overrideNormalizado = normalizeViesOverride(override);
+  const isManual = overrideNormalizado === 'MANTER';
+
+  let viesAutomatico = 'Aguardar';
+
+  if (typeof teto === 'number' && typeof precoReferencia === 'number') {
+    viesAutomatico = precoReferencia < teto ? 'Compra' : 'Aguardar';
   }
 
-  const tetoNumerico = typeof precoTetoBDR === 'string' ? 
-    parseFloat(precoTetoBDR.replace(',', '.').replace('R$', '').trim()) : 
-    precoTetoBDR;
+  const viesFinal = aplicarViesOverride(overrideNormalizado, viesAutomatico);
+  const palette = getViesBadgePalette(viesFinal);
 
-  if (isNaN(tetoNumerico) || tetoNumerico <= 0) {
-    return { vies: 'N/A', cor: '#6b7280', explicacao: 'Preço teto inválido' };
-  }
+  return {
+    vies: viesFinal,
+    palette,
+    isManual
+  };
+};
 
-  if (precoBDR >= tetoNumerico) {
-    return { 
-      vies: 'AGUARDAR', 
-      cor: '#f59e0b', 
-      explicacao: 'BDR atingiu ou superou o preço teto' 
+const calcularViesBDR = (precoTetoBDR, precoBDR, cotacaoUSD, override) => {
+  const tetoNumerico = parseNumero(precoTetoBDR);
+  const precoBDRNumerico = parseNumero(precoBDR);
+  const overrideNormalizado = normalizeViesOverride(override);
+  const isManual = overrideNormalizado === 'MANTER';
+
+  if (typeof tetoNumerico !== 'number' || typeof precoBDRNumerico !== 'number') {
+    const viesFallback = aplicarViesOverride(overrideNormalizado, 'Aguardar');
+    return {
+      vies: viesFallback,
+      palette: getViesBadgePalette(viesFallback),
+      isManual,
+      explicacao: isManual ? 'Viés ajustado manualmente para "Manter".' : 'Dados insuficientes'
     };
+  }
+
+  const viesAutomatico = precoBDRNumerico >= tetoNumerico ? 'Aguardar' : 'Compra';
+  const viesFinal = aplicarViesOverride(overrideNormalizado, viesAutomatico);
+  const palette = getViesBadgePalette(viesFinal);
+
+  let explicacao;
+
+  if (isManual) {
+    explicacao = 'Viés ajustado manualmente para "Manter".';
+  } else if (viesAutomatico === 'Aguardar') {
+    explicacao = 'BDR atingiu ou superou o preço teto';
   } else {
-    const percentualParaTeto = ((tetoNumerico - precoBDR) / precoBDR) * 100;
-    return { 
-      vies: 'COMPRA', 
-      cor: '#22c55e', 
-      explicacao: `${percentualParaTeto.toFixed(1)}% de espaço até o teto` 
-    };
+    const percentualParaTeto = ((tetoNumerico - precoBDRNumerico) / precoBDRNumerico) * 100;
+    explicacao = `${percentualParaTeto.toFixed(1)}% de espaço até o teto`;
   }
+
+  return {
+    vies: viesFinal,
+    palette,
+    isManual,
+    explicacao
+  };
 };
 
 // ✅ COMPONENTES ESPECÍFICOS (COM LAZY LOADING INTERNO)
@@ -1284,8 +1330,17 @@ const DadosPosicaoExpandidos = React.memo(({
   const precoAtual = dadosFinanceiros?.precoAtual || null;
 
   const viesCalculado = useMemo(() => {
-    return calcularVies(empresa.precoTeto, precoAtual, empresa.precoEntrada);
-  }, [empresa.precoTeto, precoAtual, empresa.precoEntrada]);
+    return calcularVies(
+      empresa.precoTeto,
+      precoAtual,
+      empresa.precoEntrada,
+      empresa.viesOverride
+    );
+  }, [empresa.precoTeto, precoAtual, empresa.precoEntrada, empresa.viesOverride]);
+
+  const viesPalette = useMemo(() => {
+    return viesCalculado?.palette || getViesBadgePalette(viesCalculado?.vies);
+  }, [viesCalculado]);
 
   const precoTetoBDRFormatado = useMemo(() => {
     if (precoTetoBDR === null || precoTetoBDR === undefined) {
@@ -1460,10 +1515,11 @@ const DadosPosicaoExpandidos = React.memo(({
             }}>
               <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Viés Calculado</span>
               <span style={{
-                backgroundColor: viesCalculado.cor,
-                color: 'white',
-                padding: '4px 8px',
-                borderRadius: '4px',
+                backgroundColor: viesPalette.backgroundColor,
+                color: viesPalette.textColor,
+                border: `1px solid ${viesPalette.borderColor}`,
+                padding: '4px 10px',
+                borderRadius: '9999px',
                 fontSize: isMobile ? '10px' : '12px',
                 fontWeight: '600',
                 alignSelf: isMobile ? 'flex-start' : 'auto'
@@ -1471,6 +1527,15 @@ const DadosPosicaoExpandidos = React.memo(({
                 {viesCalculado.vies}
               </span>
             </div>
+            {viesCalculado.isManual && (
+              <p style={{
+                fontSize: isMobile ? '10px' : '11px',
+                color: '#475569',
+                margin: isMobile ? '4px 0 0 0' : '8px 0 0 0'
+              }}>
+                Viés ajustado manualmente para "Manter".
+              </p>
+            )}
             {distanciaPrecoTeto !== null && distanciaPrecoTeto !== undefined && (
               <div style={{
                 padding: isMobile ? '10px 12px' : '12px',
@@ -1959,17 +2024,18 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
 });
 
 // BDR Americano Info com Lazy Loading
-const BDRAmericanoInfo = React.memo(({ 
-  ticker, 
-  bdrCorrespondente, 
-  temBDR, 
-  bdrData, 
+const BDRAmericanoInfo = React.memo(({
+  ticker,
+  bdrCorrespondente,
+  temBDR,
+  bdrData,
   bdrLoading,
   precoTetoBDR,
   cotacaoUSD,
   loadingUSD = false,
   atualizacaoUSD,
-  refetchUSD
+  refetchUSD,
+  viesOverride
 }) => {
   
   if (!temBDR || !bdrCorrespondente) {
@@ -2039,9 +2105,9 @@ const BDRAmericanoInfo = React.memo(({
       : null;
 
     return precoParaCalculo
-      ? calcularViesBDR(precoTetoBDR, precoParaCalculo, cotacaoUSD)
+      ? calcularViesBDR(precoTetoBDR, precoParaCalculo, cotacaoUSD, viesOverride)
       : null;
-  }, [precoTetoBDR, bdrData, possuiCotacaoIntradiaria, cotacaoUSD]);
+  }, [precoTetoBDR, bdrData, possuiCotacaoIntradiaria, cotacaoUSD, viesOverride]);
 
   return (
     <div style={{
@@ -2116,6 +2182,51 @@ const BDRAmericanoInfo = React.memo(({
           />
         )}
       </ResponsiveGrid>
+
+      {viesBDR && (
+        <div style={{
+          marginTop: '16px',
+          backgroundColor: '#f8fafc',
+          borderRadius: '12px',
+          border: '1px solid #e2e8f0',
+          padding: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '8px'
+          }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>
+              Viés para o BDR
+            </span>
+            <span style={{
+              backgroundColor: viesBDR.palette.backgroundColor,
+              color: viesBDR.palette.textColor,
+              border: `1px solid ${viesBDR.palette.borderColor}`,
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              fontSize: '11px',
+              fontWeight: 600
+            }}>
+              {viesBDR.vies}
+            </span>
+          </div>
+          {viesBDR.explicacao && (
+            <p style={{
+              margin: 0,
+              fontSize: '12px',
+              color: '#475569'
+            }}>
+              {viesBDR.explicacao}
+            </p>
+          )}
+        </div>
+      )}
 
       {bdrLoading && (
         <div style={{
@@ -2772,6 +2883,9 @@ export default function AtivoPage() {
     const buscarDadosAtivo = () => {
       // Cache para dados do ativo
       const cached = cacheUtils.get(`ativo_${ticker}`);
+      let cacheValido:
+        | { ativo: Record<string, unknown> & { viesOverride?: ViesOverride | null }; carteira: CarteiraKey }
+        | null = null;
 
       if (cached) {
         const carteiraCache = cached.carteira as CarteiraKey;
@@ -2783,10 +2897,10 @@ export default function AtivoPage() {
         if (carteiraValida && planInfo?.pages && !podeAcessarCarteira(carteiraCache)) {
           cacheUtils.clear(`ativo_${ticker}`);
         } else {
-          setAtivo(cached.ativo);
-          setCarteira(cached.carteira);
-          setLoading(false);
-          return;
+          cacheValido = {
+            ativo: cached.ativo as Record<string, unknown> & { viesOverride?: ViesOverride | null },
+            carteira: carteiraCache
+          };
         }
       }
 
@@ -2821,7 +2935,7 @@ export default function AtivoPage() {
           ativoEncontrado.multiplePortfolios = true;
           ativoEncontrado.portfoliosList = carteirasComAtivo.map(c => c.nome);
           ativoEncontrado.portfoliosData = dadosDetalhados;
-          
+
           const prioridades = {
             'internacional': 1,
             'acoes': 2,
@@ -2829,31 +2943,52 @@ export default function AtivoPage() {
             'cripto': 4,
             'renda_fixa': 5
           };
-          
+
           carteirasComAtivo.sort((a, b) => {
             const prioA = prioridades[a.nome] || 99;
             const prioB = prioridades[b.nome] || 99;
             return prioA - prioB;
           });
-          
+
           const carteiraPrincipal = carteirasComAtivo[0];
           carteiraEncontrada = carteiraPrincipal.nome;
-          
+
         } else {
           ativoEncontrado.multiplePortfolios = false;
           ativoEncontrado.portfoliosList = [carteiraEncontrada];
         }
 
-        setAtivo(ativoEncontrado);
-        setCarteira(carteiraEncontrada);
-        
-        // Cache os dados encontrados
-        const cacheData = {
-          ativo: ativoEncontrado,
-          carteira: carteiraEncontrada
-        };
-        
-        cacheUtils.set(`ativo_${ticker}`, cacheData);
+        const overrideAtual = normalizeViesOverride(ativoEncontrado?.viesOverride);
+        const overrideCache = cacheValido
+          ? normalizeViesOverride(cacheValido.ativo?.viesOverride)
+          : null;
+
+        const dadosMudaram =
+          !cacheValido ||
+          cacheValido.carteira !== carteiraEncontrada ||
+          overrideAtual !== overrideCache;
+
+        if (dadosMudaram) {
+          setAtivo(ativoEncontrado);
+          setCarteira(carteiraEncontrada);
+
+          // Cache os dados encontrados
+          const cacheData = {
+            ativo: ativoEncontrado,
+            carteira: carteiraEncontrada
+          };
+
+          cacheUtils.set(`ativo_${ticker}`, cacheData);
+        } else {
+          setAtivo(cacheValido.ativo);
+          setCarteira(cacheValido.carteira);
+        }
+      } else if (cacheValido) {
+        setAtivo(cacheValido.ativo);
+        setCarteira(cacheValido.carteira);
+      } else {
+        setAtivo(null);
+        setCarteira(null);
       }
 
       setLoading(false);
@@ -3365,6 +3500,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
               loadingUSD={loadingUSD}
               atualizacaoUSD={atualizacaoUSD}
               refetchUSD={refetchUSD}
+              viesOverride={ativo?.viesOverride}
             />
           )}
 
