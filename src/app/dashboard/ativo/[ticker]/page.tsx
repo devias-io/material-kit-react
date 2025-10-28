@@ -29,6 +29,12 @@ import {
   type ViesOverride
 } from '@/utils/vies';
 import {
+  aplicarViesOverride,
+  getViesBadgePalette,
+  normalizeViesOverride
+} from '@/utils/vies';
+import type { ViesOverride } from '@/utils/vies';
+import {
   CARTEIRA_PERMISSION_MAP,
   getCarteirasForTicker,
   type CarteiraKey
