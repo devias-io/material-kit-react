@@ -4,8 +4,7 @@
 import * as React from 'react';
 import { useFiisCotacoesBrapi } from '@/hooks/useFiisCotacoesBrapi';
 import { aplicarViesOverride } from '@/utils/vies';
-
-const DY_MODULES = 'defaultKeyStatistics,summaryDetail';
+import { extrairNumeroBrApi, calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS E EVITAR CORS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -48,111 +47,29 @@ function getFrequenciaDividendosFII(): number {
   return 12;
 }
 
-function extrairNumeroBrApi(valor: any): number | null {
-  if (valor === null || valor === undefined) {
-    return null;
-  }
-
-  if (typeof valor === 'number' && Number.isFinite(valor)) {
-    return valor;
-  }
-
-  if (typeof valor === 'object') {
-    if (typeof valor.raw === 'number' && Number.isFinite(valor.raw)) {
-      return valor.raw;
-    }
-
-    if (typeof valor.fmt === 'string') {
-      return extrairNumeroBrApi(valor.fmt);
-    }
-  }
-
-  if (typeof valor === 'string') {
-    const cleaned = valor.trim();
-    if (!cleaned) {
-      return null;
-    }
-
-    const isPercent = cleaned.includes('%');
-    const numericOnly = cleaned
-      .replace(/[^0-9.,%-]/g, '')
-      .replace(/%/g, '')
-      .replace(/\s+/g, '');
-
-    let normalizado = numericOnly;
-    const possuiVirgula = normalizado.includes(',');
-    const possuiPonto = normalizado.includes('.');
-
-    if (possuiVirgula && possuiPonto) {
-      if (normalizado.lastIndexOf('.') > normalizado.lastIndexOf(',')) {
-        normalizado = normalizado.replace(/,/g, '');
-      } else {
-        normalizado = normalizado.replace(/\./g, '').replace(',', '.');
-      }
-    } else if (possuiVirgula) {
-      normalizado = normalizado.replace(/,/g, '.');
-    }
-
-    const parsed = Number.parseFloat(normalizado);
-    if (!Number.isFinite(parsed)) {
-      return null;
-    }
-
-    return isPercent ? parsed / 100 : parsed;
-  }
-
-  return null;
-}
-
-function formatarDy(valor: number): string {
-  const percentual = Number.isFinite(valor) ? valor * 100 : 0;
-  return `${percentual.toFixed(2).replace('.', ',')}%`;
-}
-
-function calcularDyFII(result: any): { valor: number | null; origem: string } {
-  if (!result) {
-    return { valor: null, origem: 'sem_resultado' };
-  }
-
-  const fontesDiretas = [
-    { valor: result.defaultKeyStatistics?.yield, origem: 'defaultKeyStatistics.yield' },
-    { valor: result.summaryDetail?.yield, origem: 'summaryDetail.yield' },
-    { valor: result.defaultKeyStatistics?.dividendYield, origem: 'defaultKeyStatistics.dividendYield' },
-    { valor: result.summaryDetail?.dividendYield, origem: 'summaryDetail.dividendYield' },
-    { valor: result.summaryDetail?.trailingAnnualDividendYield, origem: 'summaryDetail.trailingAnnualDividendYield' }
-  ];
-
-  for (const fonte of fontesDiretas) {
-    const numero = extrairNumeroBrApi(fonte.valor);
-    if (numero && numero > 0) {
-      return { valor: numero, origem: fonte.origem };
-    }
+function calcularDyFII(result: any, ticker: string): { valor: number | null; origem: string } {
+  const base = calcularDyAPartirDoResultado(result, ticker);
+  if (base.valor && base.valor > 0) {
+    return base;
   }
 
   const precoAtual = extrairNumeroBrApi(
-    result.regularMarketPrice ?? result.price?.regularMarketPrice ?? result.summaryDetail?.regularMarketPreviousClose
+    result?.regularMarketPrice ??
+      result?.price?.regularMarketPrice ??
+      result?.regularMarketPreviousClose ??
+      result?.price?.regularMarketPreviousClose
   );
+
   if (!precoAtual || precoAtual <= 0) {
-    return { valor: null, origem: 'sem_preco' };
-  }
-
-  const fontesAnuais = [
-    { valor: result.summaryDetail?.dividendRate, origem: 'summaryDetail.dividendRate' },
-    { valor: result.summaryDetail?.trailingAnnualDividendRate, origem: 'summaryDetail.trailingAnnualDividendRate' }
-  ];
-
-  for (const fonte of fontesAnuais) {
-    const dividendoAnual = extrairNumeroBrApi(fonte.valor);
-    if (dividendoAnual && dividendoAnual > 0) {
-      const dyCalculado = dividendoAnual / precoAtual;
-      if (dyCalculado > 0) {
-        return { valor: dyCalculado, origem: fonte.origem };
-      }
-    }
+    return { valor: null, origem: base.origem ?? 'sem_preco' };
   }
 
   const ultimoDividendo = extrairNumeroBrApi(
-    result.defaultKeyStatistics?.lastDividendValue ?? result.summaryDetail?.lastDividendValue
+    result?.dividendsData?.cashDividends?.[0]?.rate ??
+      result?.cashDividends?.[0]?.rate ??
+      result?.lastDividends?.[0]?.value ??
+      result?.lastDividendValue ??
+      null
   );
 
   if (ultimoDividendo && ultimoDividendo > 0) {
@@ -160,11 +77,11 @@ function calcularDyFII(result: any): { valor: number | null; origem: string } {
     const dyCalculado = dividendoAnual / precoAtual;
 
     if (dyCalculado > 0) {
-      return { valor: dyCalculado, origem: 'calc:lastDividendValue' };
+      return { valor: dyCalculado, origem: 'calc:fii:lastDividendValue' };
     }
   }
 
-  return { valor: null, origem: 'nao_encontrado' };
+  return { valor: null, origem: base.origem ?? 'nao_encontrado' };
 }
 
 // 🚀 FUNÇÃO OTIMIZADA PARA BUSCAR COTAÇÕES DE FIIs EM PARALELO (CORS RESOLVIDO)
@@ -402,7 +319,7 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000); // ✅ TIMEOUT MAIOR
         
-        const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
+        const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -417,7 +334,7 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
         if (response.ok) {
           const data = await response.json();
           const result = data.results?.[0];
-          const { valor, origem } = calcularDyFII(result);
+          const { valor, origem } = calcularDyFII(result, ticker);
 
           if (valor && valor > 0) {
             dadosDy = formatarDy(valor);
@@ -438,7 +355,7 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
         try {
           console.log(`📱🔄 [DY-FII] ${ticker}: Fallback 1 - Sem User-Agent`);
           
-          const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
+          const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
             method: 'GET',
             headers: {
               'Accept': 'application/json'
@@ -448,7 +365,7 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
           if (response.ok) {
             const data = await response.json();
             const result = data.results?.[0];
-            const { valor, origem } = calcularDyFII(result);
+            const { valor, origem } = calcularDyFII(result, ticker);
 
             if (valor && valor > 0) {
               dadosDy = formatarDy(valor);
@@ -470,7 +387,7 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
         try {
           console.log(`📱🔄 [DY-FII] ${ticker}: Fallback 2 - URL simplificada`);
           
-          const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}&range=1d`, {
+          const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true&range=1d`, {
             method: 'GET',
             mode: 'cors'
           });
@@ -478,7 +395,7 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
           if (response.ok) {
             const data = await response.json();
             const result = data.results?.[0];
-            const { valor, origem } = calcularDyFII(result);
+            const { valor, origem } = calcularDyFII(result, ticker);
 
             if (valor && valor > 0) {
               dadosDy = formatarDy(valor);
@@ -510,7 +427,7 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
     console.log('🖥️ [DY-FII-DESKTOP] Buscando DY em lote no desktop');
     
     try {
-      const url = `https://brapi.dev/api/quote/${tickers.join(',')}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`;
+      const url = `https://brapi.dev/api/quote/${tickers.join(',')}?token=${BRAPI_TOKEN}&dividends=true`;
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000); // ✅ TIMEOUT MAIOR PARA FIIs
@@ -532,7 +449,7 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
         
         data.results?.forEach((result: any) => {
           const ticker = result.symbol;
-          const { valor, origem } = calcularDyFII(result);
+          const { valor, origem } = calcularDyFII(result, ticker);
 
           if (valor && valor > 0) {
             const dyFormatado = formatarDy(valor);

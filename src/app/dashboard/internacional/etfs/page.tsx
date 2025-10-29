@@ -5,6 +5,7 @@ import * as React from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
 import { aplicarViesOverride, type ViesOverride } from '@/utils/vies';
+import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -21,8 +22,6 @@ const getCachedData = (key: string) => {
 const setCachedData = (key: string, data: any) => {
   globalCache.set(key, { data, timestamp: Date.now() });
 };
-
-const DY_MODULES = 'defaultKeyStatistics,summaryDetail';
 
 const WHITE_LOGO_TICKERS = ['XP', 'UNH', 'QQQ', 'ARE','SOXX','MCHI'];
 
@@ -378,95 +377,18 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
   return cotacoesMap;
 }
 
-function extrairNumeroBrApi(valor: any): number | null {
-  if (valor === null || valor === undefined) {
-    return null;
-  }
+  function registrarDyETF(result: any, ticker: string, dyMap: Map<string, string>): void {
+    const { valor, origem } = calcularDyAPartirDoResultado(result, ticker);
 
-  if (typeof valor === 'number' && Number.isFinite(valor)) {
-    return valor;
-  }
-
-  if (typeof valor === 'object') {
-    if (typeof valor.raw === 'number' && Number.isFinite(valor.raw)) {
-      return valor.raw;
-    }
-
-    if (typeof valor.fmt === 'string') {
-      return extrairNumeroBrApi(valor.fmt);
-    }
-  }
-
-  if (typeof valor === 'string') {
-    const cleaned = valor.trim();
-    if (!cleaned) {
-      return null;
-    }
-
-    const isPercent = cleaned.includes('%');
-    const numericOnly = cleaned
-      .replace(/[^0-9.,%-]/g, '')
-      .replace(/%/g, '')
-      .replace(/\s+/g, '');
-
-    let normalizado = numericOnly;
-    const possuiVirgula = normalizado.includes(',');
-    const possuiPonto = normalizado.includes('.');
-
-    if (possuiVirgula && possuiPonto) {
-      if (normalizado.lastIndexOf('.') > normalizado.lastIndexOf(',')) {
-        normalizado = normalizado.replace(/,/g, '');
-      } else {
-        normalizado = normalizado.replace(/\./g, '').replace(',', '.');
-      }
-    } else if (possuiVirgula) {
-      normalizado = normalizado.replace(/,/g, '.');
-    }
-
-    const parsed = Number.parseFloat(normalizado);
-    if (!Number.isFinite(parsed)) {
-      return null;
-    }
-
-    return isPercent ? parsed / 100 : parsed;
-  }
-
-  return null;
-}
-
-function formatarDy(valor: number): string {
-  const percentual = Number.isFinite(valor) ? valor * 100 : 0;
-  return `${percentual.toFixed(2).replace('.', ',')}%`;
-}
-
-function registrarDyETF(result: any, ticker: string, dyMap: Map<string, string>): void {
-  if (!result) {
-    dyMap.set(ticker, '0,00%');
-    console.log(`❌ [ETF] ${ticker}: Dados indisponíveis`);
-    return;
-  }
-
-  const fontes = [
-    { valor: result.defaultKeyStatistics?.yield, origem: 'defaultKeyStatistics.yield' },
-    { valor: result.summaryDetail?.yield, origem: 'summaryDetail.yield' },
-    { valor: result.defaultKeyStatistics?.dividendYield, origem: 'defaultKeyStatistics.dividendYield' },
-    { valor: result.summaryDetail?.dividendYield, origem: 'summaryDetail.dividendYield' },
-    { valor: result.summaryDetail?.trailingAnnualDividendYield, origem: 'summaryDetail.trailingAnnualDividendYield' }
-  ];
-
-  for (const fonte of fontes) {
-    const numero = extrairNumeroBrApi(fonte.valor);
-    if (numero && numero > 0) {
-      const dyFormatado = formatarDy(numero);
+    if (valor && valor > 0) {
+      const dyFormatado = formatarDy(valor);
       dyMap.set(ticker, dyFormatado);
-      console.log(`✅ [ETF] ${ticker}: ${dyFormatado} (${fonte.origem})`);
-      return;
+      console.log(`✅ [ETF] ${ticker}: ${dyFormatado} (${origem})`);
+    } else {
+      dyMap.set(ticker, '0,00%');
+      console.log(`❌ [ETF] ${ticker}: Yield não disponível (${origem})`);
     }
   }
-
-  dyMap.set(ticker, '0,00%');
-  console.log(`❌ [ETF] ${ticker}: Yield não disponível`);
-}
 
 // 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO OTIMIZADA PARA ETFs
 async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
@@ -477,7 +399,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
 
   // ✅ BATCH REQUEST PRIMEIRO
   try {
-    const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`;
+      const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?token=${BRAPI_TOKEN}&dividends=true`;
     const response = await Promise.race([
       fetch(batchUrl),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY batch timeout')), 6000))
@@ -504,7 +426,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   const promises = tickers.map(async (ticker) => {
     try {
       const response = await Promise.race([
-        fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
+          fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
           headers: { 'Accept': 'application/json' }
         }),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY timeout')), 4000))
