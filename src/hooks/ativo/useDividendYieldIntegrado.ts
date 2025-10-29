@@ -1,5 +1,141 @@
 import { useState, useEffect, useCallback } from 'react';
 
+const DY_MODULES = 'defaultKeyStatistics,summaryDetail';
+
+function getFrequenciaDividendos(ticker: string): number {
+  const tickerUpper = ticker.toUpperCase();
+
+  const empresasAnuais = ['XP', 'NU', 'PAGS', 'STNE', 'ARCO', 'BRFS'];
+  if (empresasAnuais.includes(tickerUpper)) {
+    return 1;
+  }
+
+  const empresasSemestrais = ['VALE', 'ITUB', 'BBD'];
+  if (empresasSemestrais.includes(tickerUpper)) {
+    return 2;
+  }
+
+  return 4;
+}
+
+function extrairNumeroBrApi(valor: any): number | null {
+  if (valor === null || valor === undefined) {
+    return null;
+  }
+
+  if (typeof valor === 'number' && Number.isFinite(valor)) {
+    return valor;
+  }
+
+  if (typeof valor === 'object') {
+    if (typeof valor.raw === 'number' && Number.isFinite(valor.raw)) {
+      return valor.raw;
+    }
+
+    if (typeof valor.fmt === 'string') {
+      return extrairNumeroBrApi(valor.fmt);
+    }
+  }
+
+  if (typeof valor === 'string') {
+    const cleaned = valor.trim();
+    if (!cleaned) {
+      return null;
+    }
+
+    const isPercent = cleaned.includes('%');
+    const numericOnly = cleaned
+      .replace(/[^0-9.,%-]/g, '')
+      .replace(/%/g, '')
+      .replace(/\s+/g, '');
+
+    let normalizado = numericOnly;
+    const possuiVirgula = normalizado.includes(',');
+    const possuiPonto = normalizado.includes('.');
+
+    if (possuiVirgula && possuiPonto) {
+      if (normalizado.lastIndexOf('.') > normalizado.lastIndexOf(',')) {
+        normalizado = normalizado.replace(/,/g, '');
+      } else {
+        normalizado = normalizado.replace(/\./g, '').replace(',', '.');
+      }
+    } else if (possuiVirgula) {
+      normalizado = normalizado.replace(/,/g, '.');
+    }
+
+    const parsed = Number.parseFloat(normalizado);
+    if (!Number.isFinite(parsed)) {
+      return null;
+    }
+
+    return isPercent ? parsed / 100 : parsed;
+  }
+
+  return null;
+}
+
+function formatarDy(valor: number): string {
+  const percentual = Number.isFinite(valor) ? valor * 100 : 0;
+  return `${percentual.toFixed(2).replace('.', ',')}%`;
+}
+
+function calcularDyAPartirDoResultado(result: any, ticker: string): { valor: number | null; origem: string } {
+  if (!result) {
+    return { valor: null, origem: 'sem_resultado' };
+  }
+
+  const fontesDiretas = [
+    { valor: result.defaultKeyStatistics?.yield, origem: 'defaultKeyStatistics.yield' },
+    { valor: result.summaryDetail?.yield, origem: 'summaryDetail.yield' },
+    { valor: result.defaultKeyStatistics?.dividendYield, origem: 'defaultKeyStatistics.dividendYield' },
+    { valor: result.summaryDetail?.dividendYield, origem: 'summaryDetail.dividendYield' },
+    { valor: result.summaryDetail?.trailingAnnualDividendYield, origem: 'summaryDetail.trailingAnnualDividendYield' }
+  ];
+
+  for (const fonte of fontesDiretas) {
+    const numero = extrairNumeroBrApi(fonte.valor);
+    if (numero && numero > 0) {
+      return { valor: numero, origem: fonte.origem };
+    }
+  }
+
+  const precoAtual = extrairNumeroBrApi(result.regularMarketPrice ?? result.price?.regularMarketPrice);
+  if (!precoAtual || precoAtual <= 0) {
+    return { valor: null, origem: 'sem_preco' };
+  }
+
+  const fontesAnuais = [
+    { valor: result.summaryDetail?.dividendRate, origem: 'summaryDetail.dividendRate' },
+    { valor: result.summaryDetail?.trailingAnnualDividendRate, origem: 'summaryDetail.trailingAnnualDividendRate' }
+  ];
+
+  for (const fonte of fontesAnuais) {
+    const dividendoAnual = extrairNumeroBrApi(fonte.valor);
+    if (dividendoAnual && dividendoAnual > 0) {
+      const dyCalculado = dividendoAnual / precoAtual;
+      if (dyCalculado > 0) {
+        return { valor: dyCalculado, origem: fonte.origem };
+      }
+    }
+  }
+
+  const ultimoDividendo = extrairNumeroBrApi(
+    result.defaultKeyStatistics?.lastDividendValue ?? result.summaryDetail?.lastDividendValue
+  );
+
+  if (ultimoDividendo && ultimoDividendo > 0) {
+    const frequencia = getFrequenciaDividendos(ticker);
+    const dividendoAnual = ultimoDividendo * frequencia;
+    const dyCalculado = dividendoAnual / precoAtual;
+
+    if (dyCalculado > 0) {
+      return { valor: dyCalculado, origem: 'calc:lastDividendValue' };
+    }
+  }
+
+  return { valor: null, origem: 'nao_encontrado' };
+}
+
 // 🔥 HOOK INTEGRADO PARA DY - EXTRAÍDO DO CÓDIGO ORIGINAL
 export function useDividendYieldIntegrado(ticker: string) {
   const [dyData, setDyData] = useState<{
@@ -60,7 +196,7 @@ export function useDividendYieldIntegrado(ticker: string) {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000);
             
-            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=defaultKeyStatistics&token=${BRAPI_TOKEN}`, {
+            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
               method: 'GET',
               headers: {
                 'Accept': 'application/json',
@@ -75,17 +211,17 @@ export function useDividendYieldIntegrado(ticker: string) {
 
             if (response.ok) {
               const data = await response.json();
-              const dy = data.results?.[0]?.defaultKeyStatistics?.dividendYield;
-              
-              if (dy && dy > 0) {
-                dyValue = dy;
-                fonte = 'BRAPI-Mobile-UA-Desktop';
+              const result = data.results?.[0];
+              const { valor, origem } = calcularDyAPartirDoResultado(result, ticker);
+
+              if (valor && valor > 0) {
+                dyValue = valor;
+                fonte = `BRAPI-Mobile-UA-Desktop | ${origem}`;
                 dyObtido = true;
-                console.log(`📱✅ [DY] ${ticker}: ${dy.toFixed(2)}% (Desktop UA)`);
+                console.log(`📱✅ [DY] ${ticker}: ${formatarDy(valor)} (Desktop UA | ${origem})`);
               } else {
-                dyValue = 0;
-                fonte = 'BRAPI-Mobile-UA-Desktop-Zero';
-                dyObtido = true;
+                fonte = `BRAPI-Mobile-UA-Desktop-Zero | ${origem}`;
+                console.log(`📱⚠️ [DY] ${ticker}: Sem dividendos (Desktop UA | ${origem})`);
               }
             }
           } catch (error: any) {
@@ -106,7 +242,7 @@ export function useDividendYieldIntegrado(ticker: string) {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000);
             
-            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=defaultKeyStatistics&token=${BRAPI_TOKEN}`, {
+            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
               method: 'GET',
               headers: {
                 'Accept': 'application/json'
@@ -118,17 +254,17 @@ export function useDividendYieldIntegrado(ticker: string) {
 
             if (response.ok) {
               const data = await response.json();
-              const dy = data.results?.[0]?.defaultKeyStatistics?.dividendYield;
-              
-              if (dy && dy > 0) {
-                dyValue = dy;
-                fonte = 'BRAPI-Mobile-Sem-UA';
+              const result = data.results?.[0];
+              const { valor, origem } = calcularDyAPartirDoResultado(result, ticker);
+
+              if (valor && valor > 0) {
+                dyValue = valor;
+                fonte = `BRAPI-Mobile-Sem-UA | ${origem}`;
                 dyObtido = true;
-                console.log(`📱✅ [DY] ${ticker}: ${dy.toFixed(2)}% (Sem UA)`);
+                console.log(`📱✅ [DY] ${ticker}: ${formatarDy(valor)} (Sem UA | ${origem})`);
               } else {
-                dyValue = 0;
-                fonte = 'BRAPI-Mobile-Sem-UA-Zero';
-                dyObtido = true;
+                fonte = `BRAPI-Mobile-Sem-UA-Zero | ${origem}`;
+                console.log(`📱⚠️ [DY] ${ticker}: Sem dividendos (Sem UA | ${origem})`);
               }
             }
           } catch (error: any) {
@@ -146,24 +282,24 @@ export function useDividendYieldIntegrado(ticker: string) {
           try {
             console.log(`📱🔄 [DY] ${ticker}: Tentativa 3 - URL simplificada`);
             
-            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=defaultKeyStatistics&token=${BRAPI_TOKEN}&range=1d`, {
+            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}&range=1d`, {
               method: 'GET',
               mode: 'cors'
             });
 
             if (response.ok) {
               const data = await response.json();
-              const dy = data.results?.[0]?.defaultKeyStatistics?.dividendYield;
-              
-              if (dy && dy > 0) {
-                dyValue = dy;
-                fonte = 'BRAPI-Mobile-URL-Simples';
+              const result = data.results?.[0];
+              const { valor, origem } = calcularDyAPartirDoResultado(result, ticker);
+
+              if (valor && valor > 0) {
+                dyValue = valor;
+                fonte = `BRAPI-Mobile-URL-Simples | ${origem}`;
                 dyObtido = true;
-                console.log(`📱✅ [DY] ${ticker}: ${dy.toFixed(2)}% (URL simples)`);
+                console.log(`📱✅ [DY] ${ticker}: ${formatarDy(valor)} (URL simples | ${origem})`);
               } else {
-                dyValue = 0;
-                fonte = 'BRAPI-Mobile-URL-Simples-Zero';
-                dyObtido = true;
+                fonte = `BRAPI-Mobile-URL-Simples-Zero | ${origem}`;
+                console.log(`📱⚠️ [DY] ${ticker}: Sem dividendos (URL simples | ${origem})`);
               }
             }
           } catch (error: any) {
@@ -185,7 +321,7 @@ export function useDividendYieldIntegrado(ticker: string) {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 5000);
           
-          const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=defaultKeyStatistics&token=${BRAPI_TOKEN}`, {
+          const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
             method: 'GET',
             headers: {
               'Accept': 'application/json',
@@ -193,20 +329,21 @@ export function useDividendYieldIntegrado(ticker: string) {
             },
             signal: controller.signal
           });
-          
+
           clearTimeout(timeoutId);
-          
+
           if (response.ok) {
             const data = await response.json();
-            const dy = data.results?.[0]?.defaultKeyStatistics?.dividendYield;
-            
-            if (dy && dy > 0) {
-              dyValue = dy;
-              fonte = 'BRAPI-Desktop';
-              console.log(`🖥️✅ [DY] ${ticker}: ${dy.toFixed(2)}% (Desktop)`);
+            const result = data.results?.[0];
+            const { valor, origem } = calcularDyAPartirDoResultado(result, ticker);
+
+            if (valor && valor > 0) {
+              dyValue = valor;
+              fonte = `BRAPI-Desktop | ${origem}`;
+              console.log(`🖥️✅ [DY] ${ticker}: ${formatarDy(valor)} (Desktop | ${origem})`);
             } else {
-              dyValue = 0;
-              fonte = 'BRAPI-Desktop-Zero';
+              fonte = `BRAPI-Desktop-Zero | ${origem}`;
+              console.log(`🖥️⚠️ [DY] ${ticker}: Sem dividendos (Desktop | ${origem})`);
             }
           }
         } catch (error: any) {
@@ -219,13 +356,13 @@ export function useDividendYieldIntegrado(ticker: string) {
       // ✅ ATUALIZAR ESTADO FINAL
       setDyData({
         dy12Meses: dyValue,
-        dyFormatado: dyValue > 0 ? `${dyValue.toFixed(2).replace('.', ',')}%` : '0,00%',
+        dyFormatado: dyValue > 0 ? formatarDy(dyValue) : '0,00%',
         fonte: fonte
       });
 
       console.log(`✅ DY FINAL ${ticker}:`, {
         valor: dyValue,
-        formatado: dyValue > 0 ? `${dyValue.toFixed(2).replace('.', ',')}%` : '0,00%',
+        formatado: dyValue > 0 ? formatarDy(dyValue) : '0,00%',
         fonte: fonte,
         dispositivo: isMobile ? 'mobile' : 'desktop'
       });

@@ -22,6 +22,8 @@ const setCachedData = (key: string, data: any) => {
   globalCache.set(key, { data, timestamp: Date.now() });
 };
 
+const DY_MODULES = 'defaultKeyStatistics,summaryDetail';
+
 const WHITE_LOGO_TICKERS = ['XP', 'UNH', 'QQQ', 'ARE','SOXX','MCHI'];
 
 const CUSTOM_LOGO_URLS: Record<string, string> = {
@@ -376,16 +378,106 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
   return cotacoesMap;
 }
 
+function extrairNumeroBrApi(valor: any): number | null {
+  if (valor === null || valor === undefined) {
+    return null;
+  }
+
+  if (typeof valor === 'number' && Number.isFinite(valor)) {
+    return valor;
+  }
+
+  if (typeof valor === 'object') {
+    if (typeof valor.raw === 'number' && Number.isFinite(valor.raw)) {
+      return valor.raw;
+    }
+
+    if (typeof valor.fmt === 'string') {
+      return extrairNumeroBrApi(valor.fmt);
+    }
+  }
+
+  if (typeof valor === 'string') {
+    const cleaned = valor.trim();
+    if (!cleaned) {
+      return null;
+    }
+
+    const isPercent = cleaned.includes('%');
+    const numericOnly = cleaned
+      .replace(/[^0-9.,%-]/g, '')
+      .replace(/%/g, '')
+      .replace(/\s+/g, '');
+
+    let normalizado = numericOnly;
+    const possuiVirgula = normalizado.includes(',');
+    const possuiPonto = normalizado.includes('.');
+
+    if (possuiVirgula && possuiPonto) {
+      if (normalizado.lastIndexOf('.') > normalizado.lastIndexOf(',')) {
+        normalizado = normalizado.replace(/,/g, '');
+      } else {
+        normalizado = normalizado.replace(/\./g, '').replace(',', '.');
+      }
+    } else if (possuiVirgula) {
+      normalizado = normalizado.replace(/,/g, '.');
+    }
+
+    const parsed = Number.parseFloat(normalizado);
+    if (!Number.isFinite(parsed)) {
+      return null;
+    }
+
+    return isPercent ? parsed / 100 : parsed;
+  }
+
+  return null;
+}
+
+function formatarDy(valor: number): string {
+  const percentual = Number.isFinite(valor) ? valor * 100 : 0;
+  return `${percentual.toFixed(2).replace('.', ',')}%`;
+}
+
+function registrarDyETF(result: any, ticker: string, dyMap: Map<string, string>): void {
+  if (!result) {
+    dyMap.set(ticker, '0,00%');
+    console.log(`❌ [ETF] ${ticker}: Dados indisponíveis`);
+    return;
+  }
+
+  const fontes = [
+    { valor: result.defaultKeyStatistics?.yield, origem: 'defaultKeyStatistics.yield' },
+    { valor: result.summaryDetail?.yield, origem: 'summaryDetail.yield' },
+    { valor: result.defaultKeyStatistics?.dividendYield, origem: 'defaultKeyStatistics.dividendYield' },
+    { valor: result.summaryDetail?.dividendYield, origem: 'summaryDetail.dividendYield' },
+    { valor: result.summaryDetail?.trailingAnnualDividendYield, origem: 'summaryDetail.trailingAnnualDividendYield' }
+  ];
+
+  for (const fonte of fontes) {
+    const numero = extrairNumeroBrApi(fonte.valor);
+    if (numero && numero > 0) {
+      const dyFormatado = formatarDy(numero);
+      dyMap.set(ticker, dyFormatado);
+      console.log(`✅ [ETF] ${ticker}: ${dyFormatado} (${fonte.origem})`);
+      return;
+    }
+  }
+
+  dyMap.set(ticker, '0,00%');
+  console.log(`❌ [ETF] ${ticker}: Yield não disponível`);
+}
+
 // 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO OTIMIZADA PARA ETFs
 async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
   const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
-  
+
   console.log('📈 [ETFs] Buscando DY para', tickers.length, 'ETFs EM PARALELO...');
-  
+
   // ✅ BATCH REQUEST PRIMEIRO
   try {
-    const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?modules=defaultKeyStatistics&token=${BRAPI_TOKEN}`;
+    const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`;
     const response = await Promise.race([
       fetch(batchUrl),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY batch timeout')), 6000))
@@ -398,19 +490,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
         
         data.results.forEach((result: any) => {
           const ticker = result.symbol;
-          
-          // 🎯 Para ETFs, usar o campo "yield" que já vem em %
-          const etfYield = result.defaultKeyStatistics?.yield;
-          
-          if (etfYield && etfYield > 0) {
-            const dyPercentual = (etfYield * 100).toFixed(2).replace('.', ',');
-            dyMap.set(ticker, `${dyPercentual}%`);
-            
-            console.log(`📊 [ETF] ${ticker}: ${dyPercentual}%`);
-          } else {
-            dyMap.set(ticker, '0,00%');
-            console.log(`❌ [ETF] ${ticker}: Yield não disponível`);
-          }
+          registrarDyETF(result, ticker, dyMap);
         });
         
         return dyMap;
@@ -424,7 +504,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   const promises = tickers.map(async (ticker) => {
     try {
       const response = await Promise.race([
-        fetch(`https://brapi.dev/api/quote/${ticker}?modules=defaultKeyStatistics&token=${BRAPI_TOKEN}`, {
+        fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
           headers: { 'Accept': 'application/json' }
         }),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY timeout')), 4000))
@@ -434,18 +514,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
         const data = await response.json();
         const result = data.results?.[0];
         
-        // 🎯 Para ETFs, usar o campo "yield" que já vem em %
-        const etfYield = result?.defaultKeyStatistics?.yield;
-        
-        if (etfYield && etfYield > 0) {
-          const dyPercentual = (etfYield * 100).toFixed(2).replace('.', ',');
-          dyMap.set(ticker, `${dyPercentual}%`);
-          
-          console.log(`📊 [ETF] ${ticker}: ${dyPercentual}%`);
-        } else {
-          dyMap.set(ticker, '0,00%');
-          console.log(`❌ [ETF] ${ticker}: Yield não disponível`);
-        }
+        registrarDyETF(result, ticker, dyMap);
       }
     } catch (error) {
       console.log(`❌ [ETF-${ticker}]:`, error instanceof Error ? error.message : 'Erro desconhecido');
