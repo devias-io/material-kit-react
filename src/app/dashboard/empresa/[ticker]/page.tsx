@@ -63,6 +63,7 @@ const PictureAsPdfIconCustom = () => <span>📄</span>;
 // CONSTANTES E CONFIGURAÇÕES
 // ========================================
 const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
+const DY_MODULES = 'defaultKeyStatistics,summaryDetail';
 
 // ========================================
 // INTERFACES E TIPOS
@@ -1526,6 +1527,135 @@ function useDividendYield(ticker: string, dataEntrada: string, precoAtual?: numb
 
   return dyData;
 }
+function getFrequenciaDividendos(ticker: string): number {
+  const tickerUpper = ticker.toUpperCase();
+
+  const empresasAnuais = ['XP', 'NU', 'PAGS', 'STNE', 'ARCO', 'BRFS'];
+  if (empresasAnuais.includes(tickerUpper)) {
+    return 1;
+  }
+
+  const empresasSemestrais = ['VALE', 'ITUB', 'BBD'];
+  if (empresasSemestrais.includes(tickerUpper)) {
+    return 2;
+  }
+
+  return 4;
+}
+
+function extrairNumeroBrApi(valor: any): number | null {
+  if (valor === null || valor === undefined) {
+    return null;
+  }
+
+  if (typeof valor === 'number' && Number.isFinite(valor)) {
+    return valor;
+  }
+
+  if (typeof valor === 'object') {
+    if (typeof valor.raw === 'number' && Number.isFinite(valor.raw)) {
+      return valor.raw;
+    }
+
+    if (typeof valor.fmt === 'string') {
+      return extrairNumeroBrApi(valor.fmt);
+    }
+  }
+
+  if (typeof valor === 'string') {
+    const cleaned = valor.trim();
+    if (!cleaned) {
+      return null;
+    }
+
+    const isPercent = cleaned.includes('%');
+    const numericOnly = cleaned
+      .replace(/[^0-9.,%-]/g, '')
+      .replace(/%/g, '')
+      .replace(/\s+/g, '');
+
+    let normalizado = numericOnly;
+    const possuiVirgula = normalizado.includes(',');
+    const possuiPonto = normalizado.includes('.');
+
+    if (possuiVirgula && possuiPonto) {
+      if (normalizado.lastIndexOf('.') > normalizado.lastIndexOf(',')) {
+        normalizado = normalizado.replace(/,/g, '');
+      } else {
+        normalizado = normalizado.replace(/\./g, '').replace(',', '.');
+      }
+    } else if (possuiVirgula) {
+      normalizado = normalizado.replace(/,/g, '.');
+    }
+
+    const parsed = Number.parseFloat(normalizado);
+    if (!Number.isFinite(parsed)) {
+      return null;
+    }
+
+    return isPercent ? parsed / 100 : parsed;
+  }
+
+  return null;
+}
+
+function calcularDyAPartirDoResultado(result: any, ticker: string): { valor: number | null; origem: string } {
+  if (!result) {
+    return { valor: null, origem: 'sem_resultado' };
+  }
+
+  const fontesDiretas = [
+    { valor: result.defaultKeyStatistics?.yield, origem: 'defaultKeyStatistics.yield' },
+    { valor: result.summaryDetail?.yield, origem: 'summaryDetail.yield' },
+    { valor: result.defaultKeyStatistics?.dividendYield, origem: 'defaultKeyStatistics.dividendYield' },
+    { valor: result.summaryDetail?.dividendYield, origem: 'summaryDetail.dividendYield' },
+    { valor: result.summaryDetail?.trailingAnnualDividendYield, origem: 'summaryDetail.trailingAnnualDividendYield' }
+  ];
+
+  for (const fonte of fontesDiretas) {
+    const numero = extrairNumeroBrApi(fonte.valor);
+    if (numero && numero > 0) {
+      return { valor: numero, origem: fonte.origem };
+    }
+  }
+
+  const precoAtual = extrairNumeroBrApi(result.regularMarketPrice ?? result.price?.regularMarketPrice);
+  if (!precoAtual || precoAtual <= 0) {
+    return { valor: null, origem: 'sem_preco' };
+  }
+
+  const fontesAnuais = [
+    { valor: result.summaryDetail?.dividendRate, origem: 'summaryDetail.dividendRate' },
+    { valor: result.summaryDetail?.trailingAnnualDividendRate, origem: 'summaryDetail.trailingAnnualDividendRate' }
+  ];
+
+  for (const fonte of fontesAnuais) {
+    const dividendoAnual = extrairNumeroBrApi(fonte.valor);
+    if (dividendoAnual && dividendoAnual > 0) {
+      const dyCalculado = dividendoAnual / precoAtual;
+      if (dyCalculado > 0) {
+        return { valor: dyCalculado, origem: fonte.origem };
+      }
+    }
+  }
+
+  const ultimoDividendo = extrairNumeroBrApi(
+    result.defaultKeyStatistics?.lastDividendValue ?? result.summaryDetail?.lastDividendValue
+  );
+
+  if (ultimoDividendo && ultimoDividendo > 0) {
+    const frequencia = getFrequenciaDividendos(ticker);
+    const dividendoAnual = ultimoDividendo * frequencia;
+    const dyCalculado = dividendoAnual / precoAtual;
+
+    if (dyCalculado > 0) {
+      return { valor: dyCalculado, origem: 'calc:lastDividendValue' };
+    }
+  }
+
+  return { valor: null, origem: 'nao_encontrado' };
+}
+
 function useDadosFII(ticker: string, dadosFinanceiros?: DadosFinanceiros) {
   const [dadosFII, setDadosFII] = useState<DadosFII | null>(null);
   const [loading, setLoading] = useState(false);
@@ -1569,7 +1699,7 @@ function useDadosFII(ticker: string, dadosFinanceiros?: DadosFinanceiros) {
             logMobile(`⏱️ Timeout API FII`);
           }, 1500); // 1.5s apenas
 
-          const url = `https://brapi.dev/api/quote/${ticker}?modules=defaultKeyStatistics&token=${BRAPI_TOKEN}`;
+          const url = `https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`;
           
           const response = await fetch(url, {
             method: 'GET',
@@ -1757,7 +1887,7 @@ function useDadosFinanceiros(ticker: string) {
             logMobile(`⏱️ Timeout de API (${isMobile() ? '2s' : '8s'})`);
           }, isMobile() ? 2000 : 8000);
 
-          const quoteUrl = `https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`;
+          const quoteUrl = `https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`;
           logMobile(`🌐 Tentando API: ${ticker}`);
           
           const response = await fetch(quoteUrl, {
@@ -1778,13 +1908,21 @@ function useDadosFinanceiros(ticker: string) {
 
             if (data.results && data.results.length > 0) {
               const quote = data.results[0];
-              
+              const { valor: dyCalculado, origem: origemDy } = calcularDyAPartirDoResultado(quote, ticker);
+              const dyPercentual = dyCalculado && dyCalculado > 0 ? dyCalculado * 100 : 0;
+
+              if (dyPercentual > 0) {
+                logMobile(`✅ [DY] ${ticker}: ${dyPercentual.toFixed(2)}% (${origemDy})`);
+              } else {
+                logMobile(`❌ [DY] ${ticker}: Sem dividendos (${origemDy})`);
+              }
+
               const dadosProcessados: DadosFinanceiros = {
                 precoAtual: quote.regularMarketPrice || quote.currentPrice || 0,
                 variacao: quote.regularMarketChange || 0,
                 variacaoPercent: quote.regularMarketChangePercent || 0,
                 volume: quote.regularMarketVolume || 0,
-                dy: quote.dividendYield || 0,
+                dy: dyPercentual,
                 marketCap: quote.marketCap,
                 pl: quote.priceEarnings
               };

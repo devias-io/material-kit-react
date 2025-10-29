@@ -28,6 +28,8 @@ const CUSTOM_LOGO_URLS: Record<string, string> = {
   UNH: 'https://logo.clearbit.com/unitedhealthgroup.com'
 };
 
+const DY_MODULES = 'defaultKeyStatistics,summaryDetail';
+
 // 🔥 DETECÇÃO DE DISPOSITIVO SIMPLIFICADA E OTIMIZADA
 const useDeviceDetection = () => {
   const [isMobile, setIsMobile] = React.useState(() => {
@@ -372,21 +374,162 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
 // 🔄 FUNÇÃO PARA DETERMINAR FREQUÊNCIA DE DIVIDENDOS
 function getFrequenciaDividendos(ticker: string): number {
   const tickerUpper = ticker.toUpperCase();
-  
+
   // 📊 Empresas que pagam ANUALMENTE (1x por ano)
   const empresasAnuais = ['XP', 'NU', 'PAGS', 'STNE', 'ARCO', 'BRFS'];
   if (empresasAnuais.includes(tickerUpper)) {
     return 1;
   }
-  
+
   // 📊 Empresas que pagam SEMESTRALMENTE (2x por ano)
   const empresasSemestrais = ['VALE', 'ITUB', 'BBD'];
   if (empresasSemestrais.includes(tickerUpper)) {
     return 2;
   }
-  
+
   // 📊 Default: empresas americanas pagam TRIMESTRAL (4x por ano)
   return 4;
+}
+
+function extrairNumeroBrApi(valor: any): number | null {
+  if (valor === null || valor === undefined) {
+    return null;
+  }
+
+  if (typeof valor === 'number' && Number.isFinite(valor)) {
+    return valor;
+  }
+
+  if (typeof valor === 'object') {
+    if (typeof valor.raw === 'number' && Number.isFinite(valor.raw)) {
+      return valor.raw;
+    }
+
+    if (typeof valor.fmt === 'string') {
+      return extrairNumeroBrApi(valor.fmt);
+    }
+  }
+
+  if (typeof valor === 'string') {
+    const cleaned = valor.trim();
+    if (!cleaned) {
+      return null;
+    }
+
+    const isPercent = cleaned.includes('%');
+    const numericOnly = cleaned
+      .replace(/[^0-9.,%-]/g, '')
+      .replace(/%/g, '')
+      .replace(/\s+/g, '');
+
+    let normalizado = numericOnly;
+    const possuiVirgula = normalizado.includes(',');
+    const possuiPonto = normalizado.includes('.');
+
+    if (possuiVirgula && possuiPonto) {
+      if (normalizado.lastIndexOf('.') > normalizado.lastIndexOf(',')) {
+        normalizado = normalizado.replace(/,/g, '');
+      } else {
+        normalizado = normalizado.replace(/\./g, '').replace(',', '.');
+      }
+    } else if (possuiVirgula) {
+      normalizado = normalizado.replace(/,/g, '.');
+    }
+
+    const parsed = Number.parseFloat(normalizado);
+    if (!Number.isFinite(parsed)) {
+      return null;
+    }
+
+    return isPercent ? parsed / 100 : parsed;
+  }
+
+  return null;
+}
+
+function formatarDy(valor: number): string {
+  const percentual = Number.isFinite(valor) ? valor * 100 : 0;
+  return `${percentual.toFixed(2).replace('.', ',')}%`;
+}
+
+function calcularDyAPartirDoResultado(result: any, ticker: string): { valor: number | null; origem: string } {
+  if (!result) {
+    return { valor: null, origem: 'sem_resultado' };
+  }
+
+  const fontesDiretas = [
+    { valor: result.defaultKeyStatistics?.yield, origem: 'defaultKeyStatistics.yield' },
+    { valor: result.summaryDetail?.yield, origem: 'summaryDetail.yield' },
+    { valor: result.defaultKeyStatistics?.dividendYield, origem: 'defaultKeyStatistics.dividendYield' },
+    { valor: result.summaryDetail?.dividendYield, origem: 'summaryDetail.dividendYield' },
+    { valor: result.summaryDetail?.trailingAnnualDividendYield, origem: 'summaryDetail.trailingAnnualDividendYield' }
+  ];
+
+  for (const fonte of fontesDiretas) {
+    const numero = extrairNumeroBrApi(fonte.valor);
+    if (numero && numero > 0) {
+      return { valor: numero, origem: fonte.origem };
+    }
+  }
+
+  const precoAtual = extrairNumeroBrApi(result.regularMarketPrice ?? result.price?.regularMarketPrice);
+  if (!precoAtual || precoAtual <= 0) {
+    return { valor: null, origem: 'sem_preco' };
+  }
+
+  const fontesAnuais = [
+    { valor: result.summaryDetail?.dividendRate, origem: 'summaryDetail.dividendRate' },
+    { valor: result.summaryDetail?.trailingAnnualDividendRate, origem: 'summaryDetail.trailingAnnualDividendRate' }
+  ];
+
+  for (const fonte of fontesAnuais) {
+    const dividendoAnual = extrairNumeroBrApi(fonte.valor);
+    if (dividendoAnual && dividendoAnual > 0) {
+      const dyCalculado = dividendoAnual / precoAtual;
+      if (dyCalculado > 0) {
+        return { valor: dyCalculado, origem: fonte.origem };
+      }
+    }
+  }
+
+  const ultimoDividendo = extrairNumeroBrApi(
+    result.defaultKeyStatistics?.lastDividendValue ?? result.summaryDetail?.lastDividendValue
+  );
+
+  if (ultimoDividendo && ultimoDividendo > 0) {
+    const frequencia = getFrequenciaDividendos(ticker);
+    const dividendoAnual = ultimoDividendo * frequencia;
+    const dyCalculado = dividendoAnual / precoAtual;
+
+    if (dyCalculado > 0) {
+      const frequenciaTexto =
+        frequencia === 1 ? 'ANUAL' : frequencia === 2 ? 'SEMESTRAL' : 'TRIMESTRAL';
+
+      console.log(`💡 [DY-CALC] ${ticker}: Calculado (${frequenciaTexto})`);
+      console.log(`   - Último dividendo: $${ultimoDividendo.toFixed(2)}`);
+      console.log(`   - Frequência: ${frequencia}x ao ano`);
+      console.log(`   - Dividendo anual: $${dividendoAnual.toFixed(2)}`);
+      console.log(`   - Preço atual: $${precoAtual.toFixed(2)}`);
+      console.log(`   - DY calculado: ${(dyCalculado * 100).toFixed(2)}%`);
+
+      return { valor: dyCalculado, origem: 'calc:lastDividendValue' };
+    }
+  }
+
+  return { valor: null, origem: 'nao_encontrado' };
+}
+
+function registrarDyNoMapa(result: any, ticker: string, dyMap: Map<string, string>): void {
+  const { valor, origem } = calcularDyAPartirDoResultado(result, ticker);
+
+  if (valor && valor > 0) {
+    const dyFormatado = formatarDy(valor);
+    dyMap.set(ticker, dyFormatado);
+    console.log(`✅ [DY] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
+  } else {
+    dyMap.set(ticker, '0,00%');
+    console.log(`❌ [DY] ${ticker}: Sem dividendos (${origem})`);
+  }
 }
 
 // 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO FINAL CORRIGIDA
@@ -398,57 +541,22 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   
   // ✅ BATCH REQUEST PRIMEIRO
   try {
-    const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?modules=defaultKeyStatistics&token=${BRAPI_TOKEN}`;
+    const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`;
     const response = await Promise.race([
       fetch(batchUrl),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY batch timeout')), 6000))
     ]);
-    
+
     if (response.ok) {
       const data = await response.json();
       if (data.results && data.results.length > 0) {
         console.log('✅ DY BATCH SUCCESS:', data.results.length, 'DYs em 1 só request');
-        
+
         data.results.forEach((result: any) => {
           const ticker = result.symbol;
-          
-          // 🎯 ESTRATÉGIA 1: Tentar usar dividendYield da API
-          let dy = result.defaultKeyStatistics?.dividendYield;
-          
-          // 🎯 ESTRATÉGIA 2: Calcular manualmente se não houver dividendYield
-          if (!dy || dy <= 0) {
-            const lastDividendValue = result.defaultKeyStatistics?.lastDividendValue;
-            const regularMarketPrice = result.regularMarketPrice;
-            
-            if (lastDividendValue && regularMarketPrice && regularMarketPrice > 0) {
-              // 🎯 Determinar frequência baseado no ticker
-              const frequencia = getFrequenciaDividendos(ticker);
-              
-              // Calcular DY: (Dividendo Anual / Preço Atual)
-              const dividendoAnual = lastDividendValue * frequencia;
-              dy = dividendoAnual / regularMarketPrice;
-              
-              const frequenciaTexto = frequencia === 1 ? 'ANUAL' : 
-                                     frequencia === 2 ? 'SEMESTRAL' : 'TRIMESTRAL';
-              
-              console.log(`💡 [DY-CALC] ${ticker}: Calculado (${frequenciaTexto})`);
-              console.log(`   - Último dividendo: $${lastDividendValue.toFixed(2)}`);
-              console.log(`   - Frequência: ${frequencia}x ao ano`);
-              console.log(`   - Dividendo anual: $${dividendoAnual.toFixed(2)}`);
-              console.log(`   - Preço atual: $${regularMarketPrice.toFixed(2)}`);
-              console.log(`   - DY calculado: ${(dy * 100).toFixed(2)}%`);
-            }
-          }
-          
-          if (dy && dy > 0) {
-            dyMap.set(ticker, `${(dy * 100).toFixed(2).replace('.', ',')}%`);
-            console.log(`✅ [DY] ${ticker}: ${(dy * 100).toFixed(2)}%`);
-          } else {
-            dyMap.set(ticker, '0,00%');
-            console.log(`❌ [DY] ${ticker}: Sem dividendos`);
-          }
+          registrarDyNoMapa(result, ticker, dyMap);
         });
-        
+
         return dyMap;
       }
     }
@@ -460,7 +568,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   const promises = tickers.map(async (ticker) => {
     try {
       const response = await Promise.race([
-        fetch(`https://brapi.dev/api/quote/${ticker}?modules=defaultKeyStatistics&token=${BRAPI_TOKEN}`, {
+        fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
           headers: { 'Accept': 'application/json' }
         }),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY timeout')), 4000))
@@ -469,42 +577,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
       if (response.ok) {
         const data = await response.json();
         const result = data.results?.[0];
-        
-        // 🎯 ESTRATÉGIA 1: Tentar usar dividendYield da API
-        let dy = result?.defaultKeyStatistics?.dividendYield;
-        
-        // 🎯 ESTRATÉGIA 2: Calcular manualmente se não houver dividendYield
-        if (!dy || dy <= 0) {
-          const lastDividendValue = result?.defaultKeyStatistics?.lastDividendValue;
-          const regularMarketPrice = result?.regularMarketPrice;
-          
-          if (lastDividendValue && regularMarketPrice && regularMarketPrice > 0) {
-            // 🎯 Determinar frequência baseado no ticker
-            const frequencia = getFrequenciaDividendos(ticker);
-            
-            // Calcular DY: (Dividendo Anual / Preço Atual)
-            const dividendoAnual = lastDividendValue * frequencia;
-            dy = dividendoAnual / regularMarketPrice;
-            
-            const frequenciaTexto = frequencia === 1 ? 'ANUAL' : 
-                                   frequencia === 2 ? 'SEMESTRAL' : 'TRIMESTRAL';
-            
-            console.log(`💡 [DY-CALC] ${ticker}: Calculado (${frequenciaTexto})`);
-            console.log(`   - Último dividendo: $${lastDividendValue.toFixed(2)}`);
-            console.log(`   - Frequência: ${frequencia}x ao ano`);
-            console.log(`   - Dividendo anual: $${dividendoAnual.toFixed(2)}`);
-            console.log(`   - Preço atual: $${regularMarketPrice.toFixed(2)}`);
-            console.log(`   - DY calculado: ${(dy * 100).toFixed(2)}%`);
-          }
-        }
-        
-        if (dy && dy > 0) {
-          dyMap.set(ticker, `${(dy * 100).toFixed(2).replace('.', ',')}%`);
-          console.log(`✅ [DY] ${ticker}: ${(dy * 100).toFixed(2)}%`);
-        } else {
-          dyMap.set(ticker, '0,00%');
-          console.log(`❌ [DY] ${ticker}: Sem dividendos`);
-        }
+        registrarDyNoMapa(result, ticker, dyMap);
       }
     } catch (error) {
       console.log(`❌ [DY-${ticker}]:`, error instanceof Error ? error.message : 'Erro desconhecido');
