@@ -902,6 +902,21 @@ export default function ProjetoAmericaPage() {
     return signal + value.toFixed(2) + '%';
   }, []);
 
+  const isETFAtivo = React.useCallback((ativo: any) => {
+    const setorNormalizado = (ativo?.setor || '').toString().toUpperCase();
+    return setorNormalizado.includes('ETF');
+  }, []);
+
+  const ativosETF = React.useMemo(
+    () => ativosAtualizados.filter((ativo) => isETFAtivo(ativo)),
+    [ativosAtualizados, isETFAtivo]
+  );
+
+  const ativosNaoETF = React.useMemo(
+    () => ativosAtualizados.filter((ativo) => !isETFAtivo(ativo)),
+    [ativosAtualizados, isETFAtivo]
+  );
+
   return (
     <div style={{ 
       minHeight: '100vh', 
@@ -1105,7 +1120,7 @@ export default function ProjetoAmericaPage() {
             color: '#1e293b',
             margin: '0 0 8px 0'
           }}>
-            Projeto América • Performance Individual ({ativosAtualizados.length})
+            Projeto América • Performance Individual ({ativosNaoETF.length})
           </h3>
           <p style={{
             color: '#64748b',
@@ -1135,7 +1150,7 @@ export default function ProjetoAmericaPage() {
             {isMobile ? (
               // 📱 MOBILE: Cards verticais
               <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {ativosAtualizados.map((ativo, index) => {
+                {ativosNaoETF.map((ativo, index) => {
                   const temCotacaoReal = ativo.statusApi === 'success';
                   const viesPalette = getViesBadgePalette(ativo.vies);
                   const ticker = (ativo.ticker ?? '').toUpperCase();
@@ -1355,7 +1370,445 @@ export default function ProjetoAmericaPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {ativosAtualizados.map((ativo, index) => {
+                    {ativosNaoETF.map((ativo, index) => {
+                      const temCotacaoReal = ativo.statusApi === 'success';
+                      const viesPalette = getViesBadgePalette(ativo.vies);
+                      const ticker = (ativo.ticker ?? '').toUpperCase();
+                      const logoSrc = CUSTOM_LOGO_URLS[ticker] ?? `https://financialmodelingprep.com/image-stock/${ticker}.png`;
+                      
+                      return (
+                        <tr 
+                          key={ativo.id || index} 
+                          style={{ 
+                            borderBottom: '1px solid #f1f5f9',
+                            transition: 'background-color 0.2s',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => {
+                            window.location.href = `/dashboard/ativo/${ativo.ticker}`;
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor =e.currentTarget.style.backgroundColor = '#f8fafc';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          {/* Posição */}
+                          <td style={{ padding: '16px', textAlign: 'center' }}>
+                            <div style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              backgroundColor: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: '700',
+                              fontSize: '14px',
+                              color: '#64748b',
+                              margin: '0 auto'
+                            }}>
+                              {ativo.posicaoExibicao}
+                            </div>
+                          </td>
+                          {/* Ativo */}
+                          <td style={{ padding: '16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                backgroundColor: WHITE_LOGO_TICKERS.includes(ticker)
+                                  ? '#f1f5f9'
+                                  : '#ffffff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1px solid #e2e8f0',
+                                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                                padding: '6px',
+                                flexShrink: 0
+                              }}>
+                                <img 
+                                  src={logoSrc}
+                                  alt={`Logo ${ticker}`}
+                                  style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    objectFit: 'cover',
+                                    borderRadius: '2px',
+                                    flexShrink: 0
+                                  }}
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                      parent.style.backgroundColor = ativo.performance >= 0 ? '#dcfce7' : '#fee2e2';
+                                      parent.style.color = ativo.performance >= 0 ? '#065f46' : '#991b1b';
+                                      parent.style.fontWeight = '700';
+                                      parent.style.fontSize = '14px';
+                                      parent.style.letterSpacing = '0.5px';
+                                      parent.textContent = ticker.slice(0, 2);
+                                    }
+                                  }}
+                                />
+                              </div>
+                              <div>
+                                <div style={{ 
+                                  fontWeight: '700', 
+                                  color: '#1e293b', 
+                                  fontSize: '16px'
+                                }}>
+                                  {ativo.ticker}
+                                  {!temCotacaoReal && (
+                                    <span style={{ 
+                                      marginLeft: '8px', 
+                                      fontSize: '12px', 
+                                      color: '#f59e0b',
+                                      backgroundColor: '#fef3c7',
+                                      padding: '2px 6px',
+                                      borderRadius: '4px'
+                                    }}>
+                                      SIM
+                                    </span>
+                                  )}
+                                </div>
+                                <div style={{ color: '#64748b', fontSize: '14px' }}>
+                                  {ativo.nomeCompleto || 'N/A'}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td style={{ padding: '16px', textAlign: 'center', color: '#64748b' }}>
+                            {ativo.setor}
+                          </td>
+                          <td style={{ padding: '16px', textAlign: 'center', color: '#64748b' }}>
+                            {ativo.dataEntrada}
+                          </td>
+                          <td style={{ padding: '16px', textAlign: 'center', fontWeight: '600', color: '#374151' }}>
+                            {formatCurrency(ativo.precoEntrada)}
+                          </td>
+                          <td style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#1e293b' }}>
+                            {formatCurrency(ativo.precoAtual)}
+                          </td>
+                          <td style={{ padding: '16px', textAlign: 'center', fontWeight: '600', color: '#1e293b' }}>
+                            {ativo.precoTeto ? formatCurrency(ativo.precoTeto) : '-'}
+                          </td>
+                          <td style={{ 
+                            padding: '16px', 
+                            textAlign: 'center', 
+                            fontWeight: '800',
+                            fontSize: '16px',
+                            color: ativo.performance >= 0 ? '#10b981' : '#ef4444'
+                          }}>
+                            {formatPercentage(ativo.performance)}
+                          </td>
+                          <td style={{ 
+                            padding: '16px', 
+                            textAlign: 'center',
+                            fontWeight: '700',
+                            color: '#1e293b'
+                          }}>
+                            {loadingDY ? '...' : ativo.dy}
+                          </td>
+                          <td style={{ padding: '16px', textAlign: 'center' }}>
+                            <span style={{
+                              padding: '4px 12px',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              fontWeight: '700',
+                              backgroundColor: viesPalette.backgroundColor,
+                              color: viesPalette.textColor
+                            }}>
+                              {ativo.vies}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Tabela de ETFs */}
+      <div style={{
+        backgroundColor: '#ffffff',
+        borderRadius: '16px',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+        overflow: 'hidden',
+        marginBottom: '32px'
+      }}>
+        <div style={{
+          padding: isMobile ? '16px' : '24px',
+          borderBottom: '1px solid #e2e8f0',
+          backgroundColor: '#f8fafc'
+        }}>
+          <h3 style={{
+            fontSize: isMobile ? '20px' : '24px',
+            fontWeight: '700',
+            color: '#1e293b',
+            margin: '0 0 8px 0'
+          }}>
+            Projeto América • ETFs ({ativosETF.length})
+          </h3>
+          <p style={{
+            color: '#64748b',
+            fontSize: isMobile ? '14px' : '16px',
+            margin: '0'
+          }}>
+            Fundos de índice internacionais monitorados em tempo real
+          </p>
+        </div>
+
+        {/* Skeleton Loading */}
+        {loading && ativosAtualizados.length === 0 ? (
+          <div style={{ padding: '24px' }}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} style={{
+                height: '60px',
+                backgroundColor: '#f1f5f9',
+                borderRadius: '8px',
+                marginBottom: '12px',
+                animation: 'pulse 1.5s ease-in-out infinite'
+              }} />
+            ))}
+          </div>
+        ) : (
+          // Conteúdo principal
+          <>
+            {isMobile ? (
+              // 📱 MOBILE: Cards verticais
+              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {ativosETF.map((ativo, index) => {
+                  const temCotacaoReal = ativo.statusApi === 'success';
+                  const viesPalette = getViesBadgePalette(ativo.vies);
+                  const ticker = (ativo.ticker ?? '').toUpperCase();
+                  const logoSrc = CUSTOM_LOGO_URLS[ticker] ?? `https://financialmodelingprep.com/image-stock/${ticker}.png`;
+                  
+                  return (
+                    <div 
+                      key={ativo.id || index}
+                      style={{
+                        backgroundColor: '#f8fafc',
+                        borderRadius: '8px',
+                        padding: '16px',
+                        border: '1px solid #e2e8f0',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onClick={() => {
+                        window.location.href = `/dashboard/ativo/${ativo.ticker}`;
+                      }}
+                      onTouchStart={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f1f5f9';
+                      }}
+                      onTouchEnd={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8fafc';
+                      }}
+                    >
+                      {/* Header do Card */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                        {/* Posição */}
+                        <div style={{
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          backgroundColor: '#f1f5f9',
+                          border: '1px solid #e2e8f0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: '700',
+                          fontSize: '12px',
+                          color: '#64748b'
+                        }}>
+                          {ativo.posicaoExibicao}
+                        </div>
+
+                        {/* Logo do Ativo */}
+                        <div style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '6px',
+                          overflow: 'hidden',
+                          backgroundColor: WHITE_LOGO_TICKERS.includes(ticker)
+                            ? '#f1f5f9'
+                            : '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '1px solid #e2e8f0',
+                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                          padding: '4px'
+                        }}>
+                          <img 
+                            src={logoSrc}
+                            alt={`Logo ${ticker}`}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'contain',
+                              borderRadius: '2px'
+                            }}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent) {
+                                parent.style.backgroundColor = ativo.performance >= 0 ? '#dcfce7' : '#fee2e2';
+                                parent.style.color = ativo.performance >= 0 ? '#065f46' : '#dc2626';
+                                parent.style.fontWeight = '700';
+                                parent.style.fontSize = '12px';
+                                parent.style.letterSpacing = '0.5px';
+                                parent.textContent = ticker.slice(0, 2);
+                              }
+                            }}
+                          />
+                        </div>
+
+                        {/* Nome e Setor */}
+                        <div style={{ flex: '1' }}>
+                          <div style={{ 
+                            fontWeight: '700', 
+                            color: '#1e293b', 
+                            fontSize: '16px'
+                          }}>
+                            {ativo.ticker}
+                            {!temCotacaoReal && (
+                              <span style={{ 
+                                marginLeft: '8px', 
+                                fontSize: '10px', 
+                                color: '#f59e0b',
+                                backgroundColor: '#fef3c7',
+                                padding: '2px 4px',
+                                borderRadius: '3px'
+                              }}>
+                                SIM
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ color: '#64748b', fontSize: '12px' }}>
+                            {ativo.setor}
+                          </div>
+                        </div>
+
+                        {/* Viés */}
+                        <div style={{
+                          padding: '4px 8px',
+                          borderRadius: '8px',
+                          fontSize: '10px',
+                          fontWeight: '700',
+                          backgroundColor: viesPalette.backgroundColor,
+                          color: viesPalette.textColor
+                        }}>
+                          {ativo.vies}
+                        </div>
+                      </div>
+                      
+                      {/* Dados em Grid */}
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: '1fr 1fr', 
+                        gap: '8px', 
+                        fontSize: '14px',
+                        marginBottom: '12px'
+                      }}>
+                        <div style={{ color: '#64748b' }}>
+                          <span style={{ fontWeight: '500' }}>Entrada:</span><br />
+                          <span style={{ fontWeight: '600', color: '#1e293b' }}>{ativo.dataEntrada}</span>
+                        </div>
+                        <div style={{ color: '#64748b' }}>
+                          <span style={{ fontWeight: '500' }}>DY 12M:</span><br />
+                          <span style={{ fontWeight: '700', color: '#1e293b' }}>
+                            {loading && !todosOsDadosProntos ? '--' : ativo.dy}
+                          </span>
+                        </div>
+                        <div style={{ color: '#64748b' }}>
+                          <span style={{ fontWeight: '500' }}>Preço Atual:</span><br />
+                          <span style={{ fontWeight: '700', color: '#1e293b' }}>
+                            {formatCurrency(ativo.precoAtual)}
+                          </span>
+                        </div>
+                        <div style={{ color: '#64748b' }}>
+                          <span style={{ fontWeight: '500' }}>Preço Teto:</span><br />
+                          <span style={{ fontWeight: '700', color: '#1e293b' }}>
+                            {ativo.precoTeto ? formatCurrency(ativo.precoTeto) : '-'}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Performance em destaque */}
+                      <div style={{
+                        textAlign: 'center',
+                        padding: '8px',
+                        backgroundColor: '#ffffff',
+                        borderRadius: '6px',
+                        border: '1px solid #e2e8f0'
+                      }}>
+                        <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
+                          Performance
+                        </div>
+                        <div style={{ 
+                          fontSize: '18px', 
+                          fontWeight: '800',
+                          color: ativo.performance >= 0 ? '#10b981' : '#ef4444'
+                        }}>
+                          {formatPercentage(ativo.performance)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              // 🖥️ DESKTOP: Tabela completa
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f1f5f9' }}>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
+                        #
+                      </th>
+                      <th style={{ padding: '16px', textAlign: 'left', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
+                        ATIVO
+                      </th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
+                        SETOR
+                      </th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
+                        ENTRADA
+                      </th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
+                        PREÇO INICIAL
+                      </th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
+                        PREÇO ATUAL
+                      </th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
+                        PREÇO TETO
+                      </th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
+                        PERFORMANCE
+                      </th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
+                        DY 12M
+                      </th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
+                        VIÉS
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ativosETF.map((ativo, index) => {
                       const temCotacaoReal = ativo.statusApi === 'success';
                       const viesPalette = getViesBadgePalette(ativo.vies);
                       const ticker = (ativo.ticker ?? '').toUpperCase();
