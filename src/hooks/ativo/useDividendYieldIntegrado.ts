@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
 
-const DY_MODULES = 'defaultKeyStatistics,summaryDetail';
 const REQUEST_INTERVAL_MS = 1200;
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_RETRY_DELAY_MS = 1500;
@@ -111,140 +111,6 @@ async function rateLimitedFetch(
   return response;
 }
 
-function getFrequenciaDividendos(ticker: string): number {
-  const tickerUpper = ticker.toUpperCase();
-
-  const empresasAnuais = ['XP', 'NU', 'PAGS', 'STNE', 'ARCO', 'BRFS'];
-  if (empresasAnuais.includes(tickerUpper)) {
-    return 1;
-  }
-
-  const empresasSemestrais = ['VALE', 'ITUB', 'BBD'];
-  if (empresasSemestrais.includes(tickerUpper)) {
-    return 2;
-  }
-
-  return 4;
-}
-
-function extrairNumeroBrApi(valor: any): number | null {
-  if (valor === null || valor === undefined) {
-    return null;
-  }
-
-  if (typeof valor === 'number' && Number.isFinite(valor)) {
-    return valor;
-  }
-
-  if (typeof valor === 'object') {
-    if (typeof valor.raw === 'number' && Number.isFinite(valor.raw)) {
-      return valor.raw;
-    }
-
-    if (typeof valor.fmt === 'string') {
-      return extrairNumeroBrApi(valor.fmt);
-    }
-  }
-
-  if (typeof valor === 'string') {
-    const cleaned = valor.trim();
-    if (!cleaned) {
-      return null;
-    }
-
-    const isPercent = cleaned.includes('%');
-    const numericOnly = cleaned
-      .replace(/[^0-9.,%-]/g, '')
-      .replace(/%/g, '')
-      .replace(/\s+/g, '');
-
-    let normalizado = numericOnly;
-    const possuiVirgula = normalizado.includes(',');
-    const possuiPonto = normalizado.includes('.');
-
-    if (possuiVirgula && possuiPonto) {
-      if (normalizado.lastIndexOf('.') > normalizado.lastIndexOf(',')) {
-        normalizado = normalizado.replace(/,/g, '');
-      } else {
-        normalizado = normalizado.replace(/\./g, '').replace(',', '.');
-      }
-    } else if (possuiVirgula) {
-      normalizado = normalizado.replace(/,/g, '.');
-    }
-
-    const parsed = Number.parseFloat(normalizado);
-    if (!Number.isFinite(parsed)) {
-      return null;
-    }
-
-    return isPercent ? parsed / 100 : parsed;
-  }
-
-  return null;
-}
-
-function formatarDy(valor: number): string {
-  const percentual = Number.isFinite(valor) ? valor * 100 : 0;
-  return `${percentual.toFixed(2).replace('.', ',')}%`;
-}
-
-function calcularDyAPartirDoResultado(result: any, ticker: string): { valor: number | null; origem: string } {
-  if (!result) {
-    return { valor: null, origem: 'sem_resultado' };
-  }
-
-  const fontesDiretas = [
-    { valor: result.defaultKeyStatistics?.yield, origem: 'defaultKeyStatistics.yield' },
-    { valor: result.summaryDetail?.yield, origem: 'summaryDetail.yield' },
-    { valor: result.defaultKeyStatistics?.dividendYield, origem: 'defaultKeyStatistics.dividendYield' },
-    { valor: result.summaryDetail?.dividendYield, origem: 'summaryDetail.dividendYield' },
-    { valor: result.summaryDetail?.trailingAnnualDividendYield, origem: 'summaryDetail.trailingAnnualDividendYield' }
-  ];
-
-  for (const fonte of fontesDiretas) {
-    const numero = extrairNumeroBrApi(fonte.valor);
-    if (numero && numero > 0) {
-      return { valor: numero, origem: fonte.origem };
-    }
-  }
-
-  const precoAtual = extrairNumeroBrApi(result.regularMarketPrice ?? result.price?.regularMarketPrice);
-  if (!precoAtual || precoAtual <= 0) {
-    return { valor: null, origem: 'sem_preco' };
-  }
-
-  const fontesAnuais = [
-    { valor: result.summaryDetail?.dividendRate, origem: 'summaryDetail.dividendRate' },
-    { valor: result.summaryDetail?.trailingAnnualDividendRate, origem: 'summaryDetail.trailingAnnualDividendRate' }
-  ];
-
-  for (const fonte of fontesAnuais) {
-    const dividendoAnual = extrairNumeroBrApi(fonte.valor);
-    if (dividendoAnual && dividendoAnual > 0) {
-      const dyCalculado = dividendoAnual / precoAtual;
-      if (dyCalculado > 0) {
-        return { valor: dyCalculado, origem: fonte.origem };
-      }
-    }
-  }
-
-  const ultimoDividendo = extrairNumeroBrApi(
-    result.defaultKeyStatistics?.lastDividendValue ?? result.summaryDetail?.lastDividendValue
-  );
-
-  if (ultimoDividendo && ultimoDividendo > 0) {
-    const frequencia = getFrequenciaDividendos(ticker);
-    const dividendoAnual = ultimoDividendo * frequencia;
-    const dyCalculado = dividendoAnual / precoAtual;
-
-    if (dyCalculado > 0) {
-      return { valor: dyCalculado, origem: 'calc:lastDividendValue' };
-    }
-  }
-
-  return { valor: null, origem: 'nao_encontrado' };
-}
-
 // 🔥 HOOK INTEGRADO PARA DY - EXTRAÍDO DO CÓDIGO ORIGINAL
 export function useDividendYieldIntegrado(ticker: string) {
   const [dyData, setDyData] = useState<{
@@ -289,6 +155,7 @@ export function useDividendYieldIntegrado(ticker: string) {
       console.log('📱 Device Info:', { isMobile, deviceDetected });
 
       const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
+      const quoteUrl = `https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`;
       let dyObtido = false;
       let dyValue = 0;
       let fonte = 'BRAPI-Estratégia';
@@ -302,7 +169,7 @@ export function useDividendYieldIntegrado(ticker: string) {
           try {
             console.log(`📱🔄 [DY] ${ticker}: Tentativa 1 - User-Agent Desktop`);
             
-            const response = await rateLimitedFetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
+            const response = await rateLimitedFetch(quoteUrl, {
               method: 'GET',
               headers: {
                 'Accept': 'application/json',
@@ -343,7 +210,7 @@ export function useDividendYieldIntegrado(ticker: string) {
           try {
             console.log(`📱🔄 [DY] ${ticker}: Tentativa 2 - Sem User-Agent`);
             
-            const response = await rateLimitedFetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
+            const response = await rateLimitedFetch(quoteUrl, {
               method: 'GET',
               headers: {
                 'Accept': 'application/json'
@@ -381,7 +248,7 @@ export function useDividendYieldIntegrado(ticker: string) {
           try {
             console.log(`📱🔄 [DY] ${ticker}: Tentativa 3 - URL simplificada`);
             
-            const response = await rateLimitedFetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}&range=1d`, {
+            const response = await rateLimitedFetch(quoteUrl, {
               method: 'GET',
               mode: 'cors',
               timeoutMs: 8000
@@ -418,7 +285,7 @@ export function useDividendYieldIntegrado(ticker: string) {
         console.log('🖥️ [DY-DESKTOP] Estratégia desktop padrão');
         
         try {
-          const response = await rateLimitedFetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
+          const response = await rateLimitedFetch(quoteUrl, {
             method: 'GET',
             headers: {
               'Accept': 'application/json',

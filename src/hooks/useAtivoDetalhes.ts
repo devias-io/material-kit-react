@@ -5,6 +5,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { extrairNumeroBrApi, calcularDyAPartirDoResultado } from '@/utils/dividendYield';
 
 // ========================================
 // INTERFACES E TIPOS
@@ -112,7 +113,6 @@ export interface Relatorio {
 // CONSTANTES
 // ========================================
 const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
-const DY_MODULES = 'defaultKeyStatistics,summaryDetail';
 const HG_BRASIL_KEY = 'a666e15c';
 
 function getFrequenciaDividendos(ticker: string): number {
@@ -129,119 +129,6 @@ function getFrequenciaDividendos(ticker: string): number {
   }
 
   return 4;
-}
-
-function extrairNumeroBrApi(valor: any): number | null {
-  if (valor === null || valor === undefined) {
-    return null;
-  }
-
-  if (typeof valor === 'number' && Number.isFinite(valor)) {
-    return valor;
-  }
-
-  if (typeof valor === 'object') {
-    if (typeof valor.raw === 'number' && Number.isFinite(valor.raw)) {
-      return valor.raw;
-    }
-
-    if (typeof valor.fmt === 'string') {
-      return extrairNumeroBrApi(valor.fmt);
-    }
-  }
-
-  if (typeof valor === 'string') {
-    const cleaned = valor.trim();
-    if (!cleaned) {
-      return null;
-    }
-
-    const isPercent = cleaned.includes('%');
-    const numericOnly = cleaned
-      .replace(/[^0-9.,%-]/g, '')
-      .replace(/%/g, '')
-      .replace(/\s+/g, '');
-
-    let normalizado = numericOnly;
-    const possuiVirgula = normalizado.includes(',');
-    const possuiPonto = normalizado.includes('.');
-
-    if (possuiVirgula && possuiPonto) {
-      if (normalizado.lastIndexOf('.') > normalizado.lastIndexOf(',')) {
-        normalizado = normalizado.replace(/,/g, '');
-      } else {
-        normalizado = normalizado.replace(/\./g, '').replace(',', '.');
-      }
-    } else if (possuiVirgula) {
-      normalizado = normalizado.replace(/,/g, '.');
-    }
-
-    const parsed = Number.parseFloat(normalizado);
-    if (!Number.isFinite(parsed)) {
-      return null;
-    }
-
-    return isPercent ? parsed / 100 : parsed;
-  }
-
-  return null;
-}
-
-function calcularDyAPartirDoResultado(result: any, ticker: string): { valor: number | null; origem: string } {
-  if (!result) {
-    return { valor: null, origem: 'sem_resultado' };
-  }
-
-  const fontesDiretas = [
-    { valor: result.defaultKeyStatistics?.yield, origem: 'defaultKeyStatistics.yield' },
-    { valor: result.summaryDetail?.yield, origem: 'summaryDetail.yield' },
-    { valor: result.defaultKeyStatistics?.dividendYield, origem: 'defaultKeyStatistics.dividendYield' },
-    { valor: result.summaryDetail?.dividendYield, origem: 'summaryDetail.dividendYield' },
-    { valor: result.summaryDetail?.trailingAnnualDividendYield, origem: 'summaryDetail.trailingAnnualDividendYield' }
-  ];
-
-  for (const fonte of fontesDiretas) {
-    const numero = extrairNumeroBrApi(fonte.valor);
-    if (numero && numero > 0) {
-      return { valor: numero, origem: fonte.origem };
-    }
-  }
-
-  const precoAtual = extrairNumeroBrApi(result.regularMarketPrice ?? result.price?.regularMarketPrice);
-  if (!precoAtual || precoAtual <= 0) {
-    return { valor: null, origem: 'sem_preco' };
-  }
-
-  const fontesAnuais = [
-    { valor: result.summaryDetail?.dividendRate, origem: 'summaryDetail.dividendRate' },
-    { valor: result.summaryDetail?.trailingAnnualDividendRate, origem: 'summaryDetail.trailingAnnualDividendRate' }
-  ];
-
-  for (const fonte of fontesAnuais) {
-    const dividendoAnual = extrairNumeroBrApi(fonte.valor);
-    if (dividendoAnual && dividendoAnual > 0) {
-      const dyCalculado = dividendoAnual / precoAtual;
-      if (dyCalculado > 0) {
-        return { valor: dyCalculado, origem: fonte.origem };
-      }
-    }
-  }
-
-  const ultimoDividendo = extrairNumeroBrApi(
-    result.defaultKeyStatistics?.lastDividendValue ?? result.summaryDetail?.lastDividendValue
-  );
-
-  if (ultimoDividendo && ultimoDividendo > 0) {
-    const frequencia = getFrequenciaDividendos(ticker);
-    const dividendoAnual = ultimoDividendo * frequencia;
-    const dyCalculado = dividendoAnual / precoAtual;
-
-    if (dyCalculado > 0) {
-      return { valor: dyCalculado, origem: 'calc:lastDividendValue' };
-    }
-  }
-
-  return { valor: null, origem: 'nao_encontrado' };
 }
 
 // 🌍 MAPEAMENTO BDR PARA ATIVOS ESTRANGEIROS (SUBSTITUÍDO)
@@ -470,7 +357,7 @@ if (parsed.timestamp && (Date.now() - parsed.timestamp) < 6 * 60 * 60 * 1000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-      const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
+      const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -485,7 +372,6 @@ if (parsed.timestamp && (Date.now() - parsed.timestamp) < 6 * 60 * 60 * 1000) {
         const data = await response.json();
         if (data.results && data.results.length > 0) {
           const quote = data.results[0];
-          const stats = quote?.defaultKeyStatistics || {};
 
           const { valor: dyCalculado, origem: origemDy } = calcularDyAPartirDoResultado(quote, ticker);
           const dyPercentual = dyCalculado && dyCalculado > 0 ? dyCalculado * 100 : 0;
@@ -495,6 +381,20 @@ if (parsed.timestamp && (Date.now() - parsed.timestamp) < 6 * 60 * 60 * 1000) {
           } else {
             console.log(`❌ [DY] ${ticker}: Sem dividendos (${origemDy})`);
           }
+
+          const ultimoDividendo = extrairNumeroBrApi(
+            quote.dividendsData?.cashDividends?.[0]?.rate ??
+              quote.lastDividends?.[0]?.value ??
+              quote.lastDividendValue ??
+              null
+          );
+
+          const dataUltimoDividendo =
+            quote.dividendsData?.cashDividends?.[0]?.paymentDate ??
+            quote.lastDividends?.[0]?.paymentDate ??
+            quote.lastDividends?.[0]?.date ??
+            quote.lastDividendDate ??
+            null;
 
           const dadosProcessados: DadosFinanceiros = {
             precoAtual: quote.regularMarketPrice || quote.currentPrice || 0,
@@ -507,8 +407,8 @@ if (parsed.timestamp && (Date.now() - parsed.timestamp) < 6 * 60 * 60 * 1000) {
             regularMarketPrice: quote.regularMarketPrice || quote.currentPrice || 0,
             fiftyTwoWeekHigh: quote.fiftyTwoWeekHigh,
             fiftyTwoWeekLow: quote.fiftyTwoWeekLow,
-            lastDividendValue: stats.lastDividendValue || quote.lastDividendValue,
-            lastDividendDate: stats.lastDividendDate || quote.lastDividendDate
+            lastDividendValue: ultimoDividendo ?? undefined,
+            lastDividendDate: dataUltimoDividendo ?? undefined
           };
 
           setDadosFinanceiros(dadosProcessados);
@@ -790,7 +690,7 @@ export function useHGBrasilAcoes(ticker: string | undefined) {
       // 🎯 ESTRATÉGIA CORRIGIDA: BRAPI PRIMEIRO PARA P/L (MOBILE E DESKTOP)
       console.log(`🎯 PRIORIDADE 1: Buscando P/L via BRAPI com módulo correto...`);
 
-      const brapiBaseUrl = `https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`;
+      const brapiBaseUrl = `https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`;
       const brapiHeaders: Record<string, string> = {
         'Accept': 'application/json'
       };
@@ -800,7 +700,7 @@ export function useHGBrasilAcoes(ticker: string | undefined) {
       }
 
       const brapiStrategies = [
-        { nome: 'default-key-statistics', url: `${brapiBaseUrl}&modules=${DY_MODULES}` },
+        { nome: 'default-key-statistics', url: brapiBaseUrl },
         { nome: 'quote-basic', url: brapiBaseUrl },
         { nome: 'quote-range', url: `${brapiBaseUrl}&range=1d` }
       ];
@@ -829,12 +729,10 @@ export function useHGBrasilAcoes(ticker: string | undefined) {
             continue;
           }
 
-          const estatisticas = resultado.defaultKeyStatistics || {};
-
           const plValor = pickMetric(
             [
-              estatisticas.trailingPE,
-              estatisticas.forwardPE,
+              resultado.trailingPE,
+              resultado.forwardPE,
               resultado.priceEarnings,
               resultado.priceEarningsRatio
             ],
@@ -849,8 +747,6 @@ export function useHGBrasilAcoes(ticker: string | undefined) {
 
           const pvpValor = pickMetric(
             [
-              estatisticas.priceToBook,
-              estatisticas.priceToBookMRQ,
               resultado.priceToBook,
               resultado.priceBookValueRatio
             ],
@@ -1260,7 +1156,7 @@ export function useYahooFinanceInternacional(ticker: string | undefined) {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000);
             
-            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
+            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
               method: 'GET',
               headers: {
                 'Accept': 'application/json'
@@ -1276,16 +1172,18 @@ export function useYahooFinanceInternacional(ticker: string | undefined) {
 
               if (data.results?.[0]) {
                 const result = data.results[0];
-                
+                const { valor: dyCalculado, origem: origemDy } = calcularDyAPartirDoResultado(result, ticker);
+
                 dadosColetados = {
                   ...dadosColetados,
-                  pl: result.summaryDetail?.trailingPE || result.defaultKeyStatistics?.trailingPE,
-                  pvp: result.defaultKeyStatistics?.priceToBook,
-                  dividendYield: result.summaryDetail?.dividendYield || result.defaultKeyStatistics?.dividendYield,
-                  marketCap: result.marketCap,
-                  volume: result.regularMarketVolume,
-                  fiftyTwoWeekHigh: result.fiftyTwoWeekHigh || result.summaryDetail?.fiftyTwoWeekHigh,
-                  fiftyTwoWeekLow: result.fiftyTwoWeekLow || result.summaryDetail?.fiftyTwoWeekLow,
+                  pl: extrairNumeroBrApi(result.trailingPE ?? result.priceEarnings) ?? dadosColetados.pl,
+                  pvp: extrairNumeroBrApi(result.priceToBook) ?? dadosColetados.pvp,
+                  dividendYield: dyCalculado ?? dadosColetados.dividendYield,
+                  marketCap: result.marketCap ?? dadosColetados.marketCap,
+                  volume: result.regularMarketVolume ?? dadosColetados.volume,
+                  fiftyTwoWeekHigh: result.fiftyTwoWeekHigh ?? dadosColetados.fiftyTwoWeekHigh,
+                  fiftyTwoWeekLow: result.fiftyTwoWeekLow ?? dadosColetados.fiftyTwoWeekLow,
+                  dyFonte: origemDy,
                   fonte: 'brapi-internacional-mobile'
                 };
 
@@ -1630,7 +1528,7 @@ export function useDadosFII(ticker: string, dadosFinanceiros?: DadosFinanceiros 
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-          const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
+          const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
             method: 'GET',
             headers: { 'Accept': 'application/json' },
             signal: controller.signal
@@ -1641,15 +1539,29 @@ export function useDadosFII(ticker: string, dadosFinanceiros?: DadosFinanceiros 
           if (response.ok) {
             const data = await response.json();
             if (data.results && data.results.length > 0) {
-              const fii = data.results[0];
-              const stats = fii.defaultKeyStatistics || {};
-              
-              const dadosAPI = {
-                valorPatrimonial: stats.bookValue,
-                pvp: stats.priceToBook,
-                numeroCotas: stats.sharesOutstanding,
-                ultimoRendimento: stats.lastDividendValue,
-                dataUltimoRendimento: stats.lastDividendDate,
+              const fii = data.results[0] || {};
+
+              const ultimoDividendo = extrairNumeroBrApi(
+                fii.dividendsData?.cashDividends?.[0]?.rate ??
+                  fii.cashDividends?.[0]?.rate ??
+                  fii.lastDividends?.[0]?.value ??
+                  fii.lastDividendValue ??
+                  null
+              );
+
+              const dataUltimoDividendo =
+                fii.dividendsData?.cashDividends?.[0]?.paymentDate ??
+                fii.lastDividends?.[0]?.paymentDate ??
+                fii.lastDividends?.[0]?.date ??
+                fii.lastDividendDate ??
+                null;
+
+              const dadosAPI: any = {
+                valorPatrimonial: extrairNumeroBrApi(fii.bookValue ?? fii.netAssetValue),
+                pvp: extrairNumeroBrApi(fii.priceToBook ?? fii.priceBook),
+                numeroCotas: extrairNumeroBrApi(fii.sharesOutstanding ?? fii.totalShares),
+                ultimoRendimento: ultimoDividendo,
+                dataUltimoRendimento: dataUltimoDividendo,
                 ultimaAtualizacao: new Date().toLocaleString('pt-BR')
               };
 
