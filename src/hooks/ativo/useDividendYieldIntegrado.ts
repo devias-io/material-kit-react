@@ -1,6 +1,115 @@
 import { useState, useEffect, useCallback } from 'react';
 
 const DY_MODULES = 'defaultKeyStatistics,summaryDetail';
+const REQUEST_INTERVAL_MS = 1200;
+const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_RETRY_DELAY_MS = 1500;
+const RETRYABLE_STATUS_CODES = new Set([408, 425, 429, 500, 502, 503, 504]);
+const RETRY_JITTER_FACTOR = 0.25;
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+type QueueItem = {
+  fn: () => Promise<Response>;
+  resolve: (value: Response) => void;
+  reject: (reason: unknown) => void;
+};
+
+class RateLimiter {
+  private readonly interval: number;
+  private readonly queue: QueueItem[] = [];
+  private processing = false;
+  private lastExecution = 0;
+
+  constructor(interval: number) {
+    this.interval = interval;
+  }
+
+  schedule(fn: () => Promise<Response>): Promise<Response> {
+    return new Promise((resolve, reject) => {
+      this.queue.push({ fn, resolve, reject });
+      this.processQueue();
+    });
+  }
+
+  private async processQueue(): Promise<void> {
+    if (this.processing) {
+      return;
+    }
+
+    this.processing = true;
+
+    while (this.queue.length > 0) {
+      const item = this.queue.shift();
+
+      if (!item) {
+        continue;
+      }
+
+      const now = Date.now();
+      const waitTime = Math.max(0, this.lastExecution + this.interval - now);
+
+      if (waitTime > 0) {
+        await delay(waitTime);
+      }
+
+      this.lastExecution = Date.now();
+
+      try {
+        const result = await item.fn();
+        item.resolve(result);
+      } catch (error) {
+        item.reject(error);
+      }
+    }
+
+    this.processing = false;
+  }
+}
+
+const requestRateLimiter = new RateLimiter(REQUEST_INTERVAL_MS);
+
+type RateLimitedFetchOptions = Omit<RequestInit, 'signal'> & {
+  timeoutMs?: number;
+  maxRetries?: number;
+  retryDelayMs?: number;
+};
+
+async function rateLimitedFetch(
+  url: string,
+  options: RateLimitedFetchOptions = {},
+  attempt = 0
+): Promise<Response> {
+  const {
+    timeoutMs,
+    maxRetries = DEFAULT_MAX_RETRIES,
+    retryDelayMs = DEFAULT_RETRY_DELAY_MS,
+    ...fetchOptions
+  } = options;
+
+  const response = await requestRateLimiter.schedule(async () => {
+    const controller = new AbortController();
+    const timeoutId = timeoutMs ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
+
+    try {
+      return await fetch(url, { ...fetchOptions, signal: controller.signal });
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
+  });
+
+  if (!response.ok && RETRYABLE_STATUS_CODES.has(response.status) && attempt < maxRetries) {
+    response.body?.cancel();
+    const exponentialDelay = retryDelayMs * Math.pow(2, attempt);
+    const jitter = exponentialDelay * RETRY_JITTER_FACTOR * Math.random();
+    await delay(exponentialDelay + jitter);
+    return rateLimitedFetch(url, { ...fetchOptions, timeoutMs, maxRetries, retryDelayMs }, attempt + 1);
+  }
+
+  return response;
+}
 
 function getFrequenciaDividendos(ticker: string): number {
   const tickerUpper = ticker.toUpperCase();
@@ -193,10 +302,7 @@ export function useDividendYieldIntegrado(ticker: string) {
           try {
             console.log(`📱🔄 [DY] ${ticker}: Tentativa 1 - User-Agent Desktop`);
             
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
-            
-            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
+            const response = await rateLimitedFetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
               method: 'GET',
               headers: {
                 'Accept': 'application/json',
@@ -204,10 +310,8 @@ export function useDividendYieldIntegrado(ticker: string) {
                 'Cache-Control': 'no-cache',
                 'Pragma': 'no-cache'
               },
-              signal: controller.signal
+              timeoutMs: 10000
             });
-
-            clearTimeout(timeoutId);
 
             if (response.ok) {
               const data = await response.json();
@@ -231,7 +335,7 @@ export function useDividendYieldIntegrado(ticker: string) {
         
         // Delay entre tentativas
         if (!dyObtido) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await delay(500);
         }
 
         // ESTRATÉGIA 2: Sem User-Agent
@@ -239,18 +343,13 @@ export function useDividendYieldIntegrado(ticker: string) {
           try {
             console.log(`📱🔄 [DY] ${ticker}: Tentativa 2 - Sem User-Agent`);
             
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000);
-            
-            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
+            const response = await rateLimitedFetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
               method: 'GET',
               headers: {
                 'Accept': 'application/json'
               },
-              signal: controller.signal
+              timeoutMs: 8000
             });
-
-            clearTimeout(timeoutId);
 
             if (response.ok) {
               const data = await response.json();
@@ -274,7 +373,7 @@ export function useDividendYieldIntegrado(ticker: string) {
 
         // Delay entre tentativas
         if (!dyObtido) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await delay(500);
         }
 
         // ESTRATÉGIA 3: URL simplificada
@@ -282,9 +381,10 @@ export function useDividendYieldIntegrado(ticker: string) {
           try {
             console.log(`📱🔄 [DY] ${ticker}: Tentativa 3 - URL simplificada`);
             
-            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}&range=1d`, {
+            const response = await rateLimitedFetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}&range=1d`, {
               method: 'GET',
-              mode: 'cors'
+              mode: 'cors',
+              timeoutMs: 8000
             });
 
             if (response.ok) {
@@ -318,19 +418,14 @@ export function useDividendYieldIntegrado(ticker: string) {
         console.log('🖥️ [DY-DESKTOP] Estratégia desktop padrão');
         
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-          
-          const response = await fetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
+          const response = await rateLimitedFetch(`https://brapi.dev/api/quote/${ticker}?modules=${DY_MODULES}&token=${BRAPI_TOKEN}`, {
             method: 'GET',
             headers: {
               'Accept': 'application/json',
               'User-Agent': 'DY-Desktop-App'
             },
-            signal: controller.signal
+            timeoutMs: 5000
           });
-
-          clearTimeout(timeoutId);
 
           if (response.ok) {
             const data = await response.json();
