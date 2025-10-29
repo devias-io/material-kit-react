@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 
 const DY_MODULES = 'defaultKeyStatistics,summaryDetail';
-const REQUEST_INTERVAL_MS = 600;
+const REQUEST_INTERVAL_MS = 1200;
+const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_RETRY_DELAY_MS = 1500;
+const RETRYABLE_STATUS_CODES = new Set([408, 425, 429, 500, 502, 503, 504]);
+const RETRY_JITTER_FACTOR = 0.25;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -65,12 +69,25 @@ class RateLimiter {
 
 const requestRateLimiter = new RateLimiter(REQUEST_INTERVAL_MS);
 
-type RateLimitedFetchOptions = Omit<RequestInit, 'signal'> & { timeoutMs?: number };
+type RateLimitedFetchOptions = Omit<RequestInit, 'signal'> & {
+  timeoutMs?: number;
+  maxRetries?: number;
+  retryDelayMs?: number;
+};
 
-async function rateLimitedFetch(url: string, options: RateLimitedFetchOptions = {}) {
-  const { timeoutMs, ...fetchOptions } = options;
+async function rateLimitedFetch(
+  url: string,
+  options: RateLimitedFetchOptions = {},
+  attempt = 0
+): Promise<Response> {
+  const {
+    timeoutMs,
+    maxRetries = DEFAULT_MAX_RETRIES,
+    retryDelayMs = DEFAULT_RETRY_DELAY_MS,
+    ...fetchOptions
+  } = options;
 
-  return requestRateLimiter.schedule(async () => {
+  const response = await requestRateLimiter.schedule(async () => {
     const controller = new AbortController();
     const timeoutId = timeoutMs ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
 
@@ -82,6 +99,16 @@ async function rateLimitedFetch(url: string, options: RateLimitedFetchOptions = 
       }
     }
   });
+
+  if (!response.ok && RETRYABLE_STATUS_CODES.has(response.status) && attempt < maxRetries) {
+    response.body?.cancel();
+    const exponentialDelay = retryDelayMs * Math.pow(2, attempt);
+    const jitter = exponentialDelay * RETRY_JITTER_FACTOR * Math.random();
+    await delay(exponentialDelay + jitter);
+    return rateLimitedFetch(url, { ...fetchOptions, timeoutMs, maxRetries, retryDelayMs }, attempt + 1);
+  }
+
+  return response;
 }
 
 function getFrequenciaDividendos(ticker: string): number {
