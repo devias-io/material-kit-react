@@ -78,6 +78,17 @@ async function fetchWithFallback(tickersString: string): Promise<any> {
       if (response.ok) {
         const data = await response.json();
         
+        // LOG DETALHADO: Ver o que veio
+        console.log(`📊 [BRAPI-DEBUG] Estratégia ${strategy.name} retornou:`, {
+          temResults: !!data?.results,
+          qtdResults: data?.results?.length || 0,
+          primeiroTicker: data?.results?.[0]?.symbol,
+          temDividendYield: !!data?.results?.[0]?.dividendYield,
+          temDividendsData: !!data?.results?.[0]?.dividendsData,
+          dividendYieldValue: data?.results?.[0]?.dividendYield,
+          campos: data?.results?.[0] ? Object.keys(data.results[0]) : []
+        });
+        
         // Verificar se retornou dados válidos
         if (data?.results && Array.isArray(data.results) && data.results.length > 0) {
           console.log(`✅ [BRAPI] Sucesso com estratégia: ${strategy.name}`);
@@ -146,10 +157,21 @@ async function fetchBatchFromBrapi(tickers: string[]): Promise<Record<string, Di
           return;
         }
 
+        // LOG: Ver o que estamos processando
+        console.log(`🔍 [DY-CALC] Processando ${symbolNormalizado}:`, {
+          temDividendYield: !!quote?.dividendYield,
+          dividendYieldValue: quote?.dividendYield,
+          temDividendsData: !!quote?.dividendsData,
+          qtdDividendos: quote?.dividendsData?.length || 0,
+          regularMarketPrice: quote?.regularMarketPrice
+        });
+
         const requestInfo = requestMap.get(symbolNormalizado);
         const { valor, origem } = calcularDyAPartirDoResultado(quote, symbolNormalizado);
         const dy12Meses = valor && valor > 0 ? valor : 0;
         const dyFormatado = dy12Meses > 0 ? formatarDy(dy12Meses) : '0,00%';
+
+        console.log(`📈 [DY-CALC] ${symbolNormalizado} calculado: DY=${dy12Meses} origem=${origem}`);
 
         const result: DividendYieldResult = {
           dy12Meses,
