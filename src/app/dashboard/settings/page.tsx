@@ -707,43 +707,94 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
 async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
 
+  if (tickers.length === 0) {
+    return dyMap;
+  }
+
   console.log('📈 [OTIMIZADO] Buscando DY para', tickers.length, 'tickers com estratégia integrada...');
 
-  const resultados = await Promise.all(
-    tickers.map(async (ticker) => {
-      try {
-        const resultado = await fetchDividendYieldIntegrado(ticker, isMobile);
-        return { ticker, resultado };
-      } catch (error) {
-        console.log(`❌ [DY-${ticker}]:`, error instanceof Error ? error.message : 'Erro desconhecido');
-        return {
-          ticker,
-          resultado: {
-            dy12Meses: 0,
-            dyFormatado: '0,00%',
-            fonte: 'erro'
-          }
-        };
-      }
-    })
-  );
+  const preencherMapComResultado = (
+    chavePrincipal: string,
+    valorFormatado: string,
+    resultado: { symbol?: string | null; requested?: string | null }
+  ) => {
+    const chaveUpper = chavePrincipal.toUpperCase();
+    const chaveNormalizada = normalizarTicker(chavePrincipal) || chaveUpper;
 
-  resultados.forEach(({ ticker, resultado }) => {
-    const valorFormatado = resultado.dyFormatado || '0,00%';
-    const tickerUpper = ticker.toUpperCase();
-    const tickerNormalizado = normalizarTicker(ticker) || tickerUpper;
-
-    dyMap.set(tickerUpper, valorFormatado);
-    dyMap.set(tickerNormalizado, valorFormatado);
+    dyMap.set(chaveUpper, valorFormatado);
+    dyMap.set(chaveNormalizada, valorFormatado);
 
     if (resultado.symbol) {
       const symbolUpper = resultado.symbol.toUpperCase();
       const symbolNormalizado = normalizarTicker(resultado.symbol) || symbolUpper;
-
       dyMap.set(symbolUpper, valorFormatado);
       dyMap.set(symbolNormalizado, valorFormatado);
     }
+
+    if (resultado.requested) {
+      const requestedUpper = resultado.requested.toUpperCase();
+      const requestedNormalizada = normalizarTicker(resultado.requested) || requestedUpper;
+      dyMap.set(requestedUpper, valorFormatado);
+      dyMap.set(requestedNormalizada, valorFormatado);
+    }
+  };
+
+  try {
+    const response = await fetch('/api/dividend-yield/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tickers })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const resultadosBatch = data?.results || {};
+
+      Object.entries(resultadosBatch).forEach(([ticker, resultado]: [string, any]) => {
+        const valorFormatado = resultado?.dyFormatado || '0,00%';
+        preencherMapComResultado(ticker, valorFormatado, resultado || {});
+      });
+
+      console.log('✅ [DY-BATCH] Concluído via API:', dyMap.size, 'registros atualizados');
+    } else {
+      console.log('⚠️ [DY-BATCH] Falha na API batch:', response.status, response.statusText);
+    }
+  } catch (error) {
+    console.log('⚠️ [DY-BATCH] Erro ao buscar batch:', error instanceof Error ? error.message : 'Erro desconhecido');
+  }
+
+  const faltantes = tickers.filter((ticker) => {
+    const chaveNormalizada = normalizarTicker(ticker) || ticker.toUpperCase();
+    return !dyMap.has(chaveNormalizada);
   });
+
+  if (faltantes.length > 0) {
+    console.log('🔄 [DY-FALLBACK] Buscando DY individual para', faltantes.length, 'tickers');
+
+    const resultadosFallback = await Promise.all(
+      faltantes.map(async (ticker) => {
+        try {
+          const resultado = await fetchDividendYieldIntegrado(ticker, isMobile);
+          return { ticker, resultado };
+        } catch (error) {
+          console.log(`❌ [DY-${ticker}]:`, error instanceof Error ? error.message : 'Erro desconhecido');
+          return {
+            ticker,
+            resultado: {
+              dy12Meses: 0,
+              dyFormatado: '0,00%',
+              fonte: 'erro'
+            }
+          };
+        }
+      })
+    );
+
+    resultadosFallback.forEach(({ ticker, resultado }) => {
+      const valorFormatado = resultado.dyFormatado || '0,00%';
+      preencherMapComResultado(ticker, valorFormatado, resultado || {});
+    });
+  }
 
   console.log('✅ [DY-INTEGRADO] Concluído:', dyMap.size, 'registros atualizados');
   return dyMap;
