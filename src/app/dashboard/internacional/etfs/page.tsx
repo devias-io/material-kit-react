@@ -4,7 +4,8 @@
 import * as React from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
-import { aplicarViesOverride, type ViesOverride } from '@/utils/vies';
+import { aplicarViesOverride, getViesBadgePalette } from '@/utils/vies';
+import type { ViesOverride } from '@/utils/vies';
 import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
