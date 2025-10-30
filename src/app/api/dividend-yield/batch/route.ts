@@ -41,21 +41,38 @@ const chunkArray = <T,>(items: T[], size: number) => {
  * Tenta buscar dados da BRAPI com múltiplas estratégias de fallback
  */
 async function fetchWithFallback(tickersString: string): Promise<any> {
-  const strategies = [
-    // Estratégia 1: Sem parâmetros extras (mais confiável)
+  type Strategy = {
+    name: string;
+    url: string;
+    useAuthHeader?: boolean;
+  };
+  
+  const strategies: Strategy[] = [
+    // Estratégia 1: Token no query param com dividends
     {
-      name: 'basica',
-      url: `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}`
+      name: 'dividends_query',
+      url: `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}&dividends=true`
     },
-    // Estratégia 2: Com fundamental (pode incluir dividendos)
+    // Estratégia 2: Token no header com dividends
+    {
+      name: 'dividends_header',
+      url: `https://brapi.dev/api/quote/${tickersString}?dividends=true`,
+      useAuthHeader: true
+    },
+    // Estratégia 3: Com fundamental (pode incluir defaultKeyStatistics com dividend yield)
     {
       name: 'fundamental',
       url: `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}&fundamental=true`
     },
-    // Estratégia 3: Com range de 1 ano
+    // Estratégia 4: Módulo defaultKeyStatistics (inclui dividendYield)
     {
-      name: 'range_1y',
-      url: `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}&range=1y`
+      name: 'modules_keyStats',
+      url: `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}&modules=defaultKeyStatistics`
+    },
+    // Estratégia 5: Básica (fallback final)
+    {
+      name: 'basica',
+      url: `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}`
     }
   ];
 
@@ -65,13 +82,20 @@ async function fetchWithFallback(tickersString: string): Promise<any> {
     try {
       console.log(`🔍 [BRAPI] Tentando estratégia: ${strategy.name}`);
       
+      const headers: Record<string, string> = {
+        Accept: 'application/json',
+        'User-Agent': 'MembrosFatosdaBolsa/1.0',
+        'Cache-Control': 'no-cache'
+      };
+
+      // Se a estratégia usar auth header, adicionar
+      if (strategy.useAuthHeader) {
+        headers['Authorization'] = `Bearer ${BRAPI_TOKEN}`;
+      }
+      
       const response = await fetch(strategy.url, {
         method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'User-Agent': 'MembrosFatosdaBolsa/1.0',
-          'Cache-Control': 'no-cache'
-        },
+        headers,
         cache: 'no-store'
       });
 
@@ -86,6 +110,8 @@ async function fetchWithFallback(tickersString: string): Promise<any> {
           temDividendYield: !!data?.results?.[0]?.dividendYield,
           temDividendsData: !!data?.results?.[0]?.dividendsData,
           dividendYieldValue: data?.results?.[0]?.dividendYield,
+          temDefaultKeyStatistics: !!data?.results?.[0]?.defaultKeyStatistics,
+          defaultKeyStatsDividendYield: data?.results?.[0]?.defaultKeyStatistics?.dividendYield,
           campos: data?.results?.[0] ? Object.keys(data.results[0]) : []
         });
         
@@ -95,7 +121,8 @@ async function fetchWithFallback(tickersString: string): Promise<any> {
           return { data, strategy: strategy.name };
         }
       } else {
-        console.warn(`⚠️ [BRAPI] Estratégia ${strategy.name} retornou ${response.status}`);
+        const errorText = await response.text().catch(() => 'N/A');
+        console.warn(`⚠️ [BRAPI] Estratégia ${strategy.name} retornou ${response.status}: ${errorText.substring(0, 100)}`);
       }
     } catch (error) {
       lastError = error as Error;
