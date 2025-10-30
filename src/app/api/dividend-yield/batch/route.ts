@@ -37,6 +37,65 @@ const chunkArray = <T,>(items: T[], size: number) => {
   return chunks;
 };
 
+/**
+ * Tenta buscar dados da BRAPI com múltiplas estratégias de fallback
+ */
+async function fetchWithFallback(tickersString: string): Promise<any> {
+  const strategies = [
+    // Estratégia 1: Sem parâmetros extras (mais confiável)
+    {
+      name: 'basica',
+      url: `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}`
+    },
+    // Estratégia 2: Com fundamental (pode incluir dividendos)
+    {
+      name: 'fundamental',
+      url: `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}&fundamental=true`
+    },
+    // Estratégia 3: Com range de 1 ano
+    {
+      name: 'range_1y',
+      url: `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}&range=1y`
+    }
+  ];
+
+  let lastError: Error | null = null;
+
+  for (const strategy of strategies) {
+    try {
+      console.log(`🔍 [BRAPI] Tentando estratégia: ${strategy.name}`);
+      
+      const response = await fetch(strategy.url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': 'MembrosFatosdaBolsa/1.0',
+          'Cache-Control': 'no-cache'
+        },
+        cache: 'no-store'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Verificar se retornou dados válidos
+        if (data?.results && Array.isArray(data.results) && data.results.length > 0) {
+          console.log(`✅ [BRAPI] Sucesso com estratégia: ${strategy.name}`);
+          return { data, strategy: strategy.name };
+        }
+      } else {
+        console.warn(`⚠️ [BRAPI] Estratégia ${strategy.name} retornou ${response.status}`);
+      }
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`❌ [BRAPI] Erro na estratégia ${strategy.name}:`, error);
+    }
+  }
+
+  // Se todas as estratégias falharam, lançar erro
+  throw lastError || new Error('Todas as estratégias de busca falharam');
+}
+
 async function fetchBatchFromBrapi(tickers: string[]): Promise<Record<string, DividendYieldResult>> {
   const results: Record<string, DividendYieldResult> = {};
   if (tickers.length === 0) {
@@ -46,6 +105,7 @@ async function fetchBatchFromBrapi(tickers: string[]): Promise<Record<string, Di
   const now = Date.now();
   const pendingTickers: string[] = [];
 
+  // Verificar cache primeiro
   tickers.forEach((ticker) => {
     const normalized = normalizarTicker(ticker);
     const cached = cache.get(normalized);
@@ -73,25 +133,9 @@ async function fetchBatchFromBrapi(tickers: string[]): Promise<Record<string, Di
       }
     });
 
-    const url = `https://brapi.dev/api/quote/${chunkUpper.join(',')}?token=${BRAPI_TOKEN}&dividends=true`;
-
     try {
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'User-Agent': 'MembrosFatosdaBolsa/1.0',
-          'Cache-Control': 'no-cache'
-        },
-        cache: 'no-store'
-      });
-
-      if (!response.ok) {
-        console.error(`❌ BRAPI batch ${chunk.join(', ')} retornou ${response.status}`);
-        continue;
-      }
-
-      const data = await response.json();
+      // Usar a nova função com fallback
+      const { data, strategy } = await fetchWithFallback(chunkUpper.join(','));
       const quotes = Array.isArray(data?.results) ? data.results : [];
 
       const processed = new Set<string>();
@@ -110,7 +154,7 @@ async function fetchBatchFromBrapi(tickers: string[]): Promise<Record<string, Di
         const result: DividendYieldResult = {
           dy12Meses,
           dyFormatado,
-          fonte: `brapi_batch | ${origem}`,
+          fonte: `brapi_${strategy} | ${origem}`,
           symbol: quote?.symbol ? String(quote.symbol).toUpperCase() : requestInfo?.original || symbolNormalizado,
           requested: requestInfo?.original || symbolNormalizado
         };
@@ -120,12 +164,13 @@ async function fetchBatchFromBrapi(tickers: string[]): Promise<Record<string, Di
         processed.add(symbolNormalizado);
       });
 
+      // Marcar como não encontrado os que não vieram na resposta
       requestMap.forEach(({ original, normalized }) => {
         if (!processed.has(normalized)) {
           const fallback: DividendYieldResult = {
             dy12Meses: 0,
             dyFormatado: '0,00%',
-            fonte: 'brapi_batch | nao_encontrado',
+            fonte: `brapi_${strategy} | nao_encontrado`,
             symbol: original,
             requested: original
           };
@@ -135,6 +180,19 @@ async function fetchBatchFromBrapi(tickers: string[]): Promise<Record<string, Di
       });
     } catch (error) {
       console.error(`❌ Erro ao buscar DY batch ${chunk.join(', ')}:`, error);
+      
+      // Em caso de erro total, marcar todos como não encontrados
+      requestMap.forEach(({ original, normalized }) => {
+        const fallback: DividendYieldResult = {
+          dy12Meses: 0,
+          dyFormatado: '0,00%',
+          fonte: 'brapi_batch | erro_api',
+          symbol: original,
+          requested: original
+        };
+        results[normalized] = fallback;
+        cache.set(normalized, { result: fallback, timestamp: Date.now() });
+      });
     }
   }
 
