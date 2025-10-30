@@ -1,0 +1,149 @@
+import { useState, useEffect, useCallback } from 'react';
+
+// 🔥 HOOK OTIMIZADO PARA HG BRASIL API - DADOS DE AÇÕES BRASILEIRAS
+export function useHGBrasilAcoes(ticker: string) {
+  const [dadosHGBrasil, setDadosHGBrasil] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDadosAcaoHGBrasil = useCallback(async () => {
+    // Validar se é ação brasileira (termina com número, mas não é FII)
+    if (!ticker || !ticker.match(/\d$/) || ticker.includes('11') || ticker.endsWith('11')) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log(`📈 Buscando ação ${ticker} no HG Brasil...`);
+
+      // MÉTODO 1: Proxy via AllOrigins
+      try {
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(
+          `https://api.hgbrasil.com/finance/stock_price?key=a666e15c&symbol=${ticker}`
+        )}`;
+        
+        console.log(`📡 Tentando HG Brasil via proxy para ${ticker}...`);
+        
+        const proxyResponse = await fetch(proxyUrl);
+        
+        if (proxyResponse.ok) {
+          const proxyData = await proxyResponse.json();
+          const hgData = JSON.parse(proxyData.contents);
+          
+          if (hgData.results && hgData.results[ticker]) {
+            const result = hgData.results[ticker];
+            console.log(`✅ Dados HG Brasil para ${ticker}:`, result);
+            
+            const dadosProcessados = {
+              ticker: result.symbol,
+              nome: result.name,
+              nomeCompleto: result.company_name,
+              precoAtual: result.price,
+              
+              // 🎯 P/VP - O dado que você precisa!
+              pvp: result.financials?.price_to_book_ratio,
+              
+              // P/L
+              pl: result.financials?.price_earnings_ratio,
+              
+              // Dividend Yield 12 meses
+              dividendYield12m: result.financials?.dividends?.yield_12m,
+              
+              // Valor Patrimonial por Ação
+              valorPatrimonialAcao: result.financials?.equity_per_share,
+              
+              // Lucro por Ação
+              lucroAcao: result.financials?.earnings_per_share,
+              
+              // Market Cap
+              valorMercado: result.market_cap ? result.market_cap * 1000000 : null,
+              
+              // Dados adicionais
+              setor: result.sector,
+              variacaoPercent: result.change_percent,
+              volume: result.volume,
+              minimo52Semanas: result.low_52_weeks,
+              maximo52Semanas: result.high_52_weeks,
+              
+              ultimaAtualizacao: result.updated_at || new Date().toISOString(),
+              fonte: 'hg-brasil-proxy'
+            };
+
+            setDadosHGBrasil(dadosProcessados);
+            console.log(`✅ ${ticker} carregado via HG Brasil (proxy)`);
+            console.log(`📊 P/VP: ${dadosProcessados.pvp || 'N/A'}`);
+            return;
+          }
+        }
+      } catch (proxyError) {
+        console.warn(`⚠️ Proxy HG Brasil falhou para ${ticker}:`, proxyError);
+      }
+
+      // MÉTODO 2: Fallback para BRAPI
+      try {
+        const brapiUrl = `https://brapi.dev/api/quote/${ticker}?modules=summaryProfile&token=jJrMYVy9MATGEicx3GxBp8`;
+        console.log(`📡 Tentando BRAPI como fallback para ${ticker}...`);
+        
+        const brapiResponse = await fetch(brapiUrl);
+        
+        if (brapiResponse.ok) {
+          const brapiData = await brapiResponse.json();
+          
+          if (brapiData.results && brapiData.results[0]) {
+            const result = brapiData.results[0];
+            
+            const dadosBrapi = {
+              ticker: result.symbol,
+              nome: result.shortName || result.longName,
+              nomeCompleto: result.longName,
+              precoAtual: result.regularMarketPrice,
+              
+              // BRAPI tem P/L mas geralmente não tem P/VP
+              pl: result.priceEarnings,
+              pvp: null, // BRAPI geralmente não fornece
+              
+              variacaoPercent: result.regularMarketChangePercent,
+              volume: result.regularMarketVolume,
+              valorMercado: result.marketCap,
+              
+              setor: result.summaryProfile?.sector || 'N/A',
+              
+              ultimaAtualizacao: new Date().toISOString(),
+              fonte: 'brapi-fallback'
+            };
+
+            setDadosHGBrasil(dadosBrapi);
+            console.log(`✅ ${ticker} carregado via BRAPI (sem P/VP)`);
+            return;
+          }
+        }
+      } catch (brapiError) {
+        console.warn(`⚠️ BRAPI também falhou para ${ticker}:`, brapiError);
+      }
+
+      // Se tudo falhar, retornar null
+      setDadosHGBrasil(null);
+      console.log(`❌ Nenhuma fonte disponível para ${ticker}`);
+
+    } catch (err: any) {
+      console.error(`❌ Erro ao buscar ${ticker}:`, err);
+      setError(`Erro ao carregar dados: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [ticker]);
+
+  useEffect(() => {
+    fetchDadosAcaoHGBrasil();
+  }, [fetchDadosAcaoHGBrasil]);
+
+  return { 
+    dadosHGBrasil, 
+    loading, 
+    error, 
+    refetch: fetchDadosAcaoHGBrasil 
+  };
+}
