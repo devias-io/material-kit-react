@@ -38,6 +38,56 @@ const chunkArray = <T,>(items: T[], size: number) => {
 };
 
 /**
+ * Calcula DY a partir dos proventos da API interna
+ */
+async function calcularDyDeProventos(ticker: string, precoAtual: number): Promise<number | null> {
+  try {
+    // Buscar proventos dos últimos 12 meses da API interna
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/proventos/${ticker}`, {
+      headers: {
+        'Cache-Control': 'no-cache'
+      }
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const proventos = await response.json();
+    
+    if (!Array.isArray(proventos) || proventos.length === 0) {
+      return null;
+    }
+
+    // Somar dividendos dos últimos 12 meses
+    const limite = new Date();
+    limite.setFullYear(limite.getFullYear() - 1);
+
+    const somaDividendos = proventos.reduce((total, provento) => {
+      const dataPagamento = new Date(provento.dataPagamento || provento.dataEx);
+      const valor = parseFloat(provento.valor || 0);
+
+      if (dataPagamento >= limite && valor > 0) {
+        return total + valor;
+      }
+      return total;
+    }, 0);
+
+    if (somaDividendos > 0 && precoAtual > 0) {
+      const dy = somaDividendos / precoAtual;
+      console.log(`📊 [PROVENTOS-API] ${ticker}: DY calculado = ${(dy * 100).toFixed(2)}% (soma=${somaDividendos.toFixed(2)}, preço=${precoAtual.toFixed(2)})`);
+      return dy;
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`❌ [PROVENTOS-API] Erro ao buscar proventos de ${ticker}:`, error);
+    return null;
+  }
+}
+
+/**
  * Tenta buscar dados da BRAPI com múltiplas estratégias de fallback
  */
 async function fetchWithFallback(tickersString: string): Promise<any> {
@@ -102,19 +152,6 @@ async function fetchWithFallback(tickersString: string): Promise<any> {
       if (response.ok) {
         const data = await response.json();
         
-        // LOG DETALHADO: Ver o que veio
-        console.log(`📊 [BRAPI-DEBUG] Estratégia ${strategy.name} retornou:`, {
-          temResults: !!data?.results,
-          qtdResults: data?.results?.length || 0,
-          primeiroTicker: data?.results?.[0]?.symbol,
-          temDividendYield: !!data?.results?.[0]?.dividendYield,
-          temDividendsData: !!data?.results?.[0]?.dividendsData,
-          dividendYieldValue: data?.results?.[0]?.dividendYield,
-          temDefaultKeyStatistics: !!data?.results?.[0]?.defaultKeyStatistics,
-          defaultKeyStatsDividendYield: data?.results?.[0]?.defaultKeyStatistics?.dividendYield,
-          campos: data?.results?.[0] ? Object.keys(data.results[0]) : []
-        });
-        
         // Verificar se retornou dados válidos
         if (data?.results && Array.isArray(data.results) && data.results.length > 0) {
           console.log(`✅ [BRAPI] Sucesso com estratégia: ${strategy.name}`);
@@ -178,32 +215,42 @@ async function fetchBatchFromBrapi(tickers: string[]): Promise<Record<string, Di
 
       const processed = new Set<string>();
 
-      quotes.forEach((quote: any) => {
+      for (const quote of quotes) {
         const symbolNormalizado = normalizarTicker(quote?.symbol);
         if (!symbolNormalizado) {
-          return;
+          continue;
         }
 
-        // LOG: Ver o que estamos processando
-        console.log(`🔍 [DY-CALC] Processando ${symbolNormalizado}:`, {
-          temDividendYield: !!quote?.dividendYield,
-          dividendYieldValue: quote?.dividendYield,
-          temDividendsData: !!quote?.dividendsData,
-          qtdDividendos: quote?.dividendsData?.length || 0,
-          regularMarketPrice: quote?.regularMarketPrice
-        });
-
         const requestInfo = requestMap.get(symbolNormalizado);
-        const { valor, origem } = calcularDyAPartirDoResultado(quote, symbolNormalizado);
-        const dy12Meses = valor && valor > 0 ? valor : 0;
-        const dyFormatado = dy12Meses > 0 ? formatarDy(dy12Meses) : '0,00%';
+        
+        // Primeiro, tentar calcular com dados da BRAPI
+        const { valor: valorBrapi, origem: origemBrapi } = calcularDyAPartirDoResultado(quote, symbolNormalizado);
+        
+        let dy12Meses = valorBrapi && valorBrapi > 0 ? valorBrapi : 0;
+        let fonte = `brapi_${strategy} | ${origemBrapi}`;
 
-        console.log(`📈 [DY-CALC] ${symbolNormalizado} calculado: DY=${dy12Meses} origem=${origem}`);
+        // Se BRAPI não retornou DY, tentar API de proventos interna
+        if (dy12Meses === 0 || origemBrapi === 'nao_encontrado') {
+          const precoAtual = quote?.regularMarketPrice || quote?.regularMarketPreviousClose || 0;
+          
+          if (precoAtual > 0) {
+            console.log(`🔄 [FALLBACK] Tentando calcular DY de ${symbolNormalizado} via API de proventos...`);
+            const dyProventos = await calcularDyDeProventos(symbolNormalizado, precoAtual);
+            
+            if (dyProventos && dyProventos > 0) {
+              dy12Meses = dyProventos;
+              fonte = 'proventos_api | calc:12m';
+              console.log(`✅ [FALLBACK] ${symbolNormalizado}: DY encontrado via proventos = ${(dyProventos * 100).toFixed(2)}%`);
+            }
+          }
+        }
+
+        const dyFormatado = dy12Meses > 0 ? formatarDy(dy12Meses) : '0,00%';
 
         const result: DividendYieldResult = {
           dy12Meses,
           dyFormatado,
-          fonte: `brapi_${strategy} | ${origem}`,
+          fonte,
           symbol: quote?.symbol ? String(quote.symbol).toUpperCase() : requestInfo?.original || symbolNormalizado,
           requested: requestInfo?.original || symbolNormalizado
         };
@@ -211,7 +258,7 @@ async function fetchBatchFromBrapi(tickers: string[]): Promise<Record<string, Di
         results[symbolNormalizado] = result;
         cache.set(symbolNormalizado, { result, timestamp: Date.now() });
         processed.add(symbolNormalizado);
-      });
+      }
 
       // Marcar como não encontrado os que não vieram na resposta
       requestMap.forEach(({ original, normalized }) => {
