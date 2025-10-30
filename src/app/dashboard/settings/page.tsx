@@ -6,7 +6,7 @@ import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 import { useProventosPorAtivo } from '@/hooks/useProventosPorAtivo';
-import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
+import { fetchDividendYieldIntegrado } from '@/utils/fetchDividendYieldIntegrado';
 
 type PercentualParticipacao = {
   bruto: unknown;
@@ -703,115 +703,49 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
   return cotacoesMap;
 }
 
-function registrarDyNoMapa(result: any, ticker: string, dyMap: Map<string, string>): void {
-  const { valor, origem } = calcularDyAPartirDoResultado(result, ticker);
-
-  if (valor && valor > 0) {
-    const dyFormatado = formatarDy(valor);
-    dyMap.set(ticker, dyFormatado);
-    console.log(`✅ [DY] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
-  } else {
-    dyMap.set(ticker, '0,00%');
-    console.log(`❌ [DY] ${ticker}: Sem dividendos (${origem})`);
-  }
-}
-
-function registrarDyComAliases(result: any, chavePrincipal: string, tickerOriginal: string | undefined, dyMap: Map<string, string>): void {
-  const { valor, origem } = calcularDyAPartirDoResultado(result, chavePrincipal);
-
-  if (valor && valor > 0) {
-    const dyFormatado = formatarDy(valor);
-    dyMap.set(chavePrincipal, dyFormatado);
-    if (tickerOriginal && tickerOriginal.toUpperCase() !== chavePrincipal) {
-      dyMap.set(tickerOriginal.toUpperCase(), dyFormatado);
-    }
-    console.log(`✅ [DY] ${chavePrincipal}: ${(valor * 100).toFixed(2)}% (${origem})`);
-  } else {
-    dyMap.set(chavePrincipal, '0,00%');
-    if (tickerOriginal && tickerOriginal.toUpperCase() !== chavePrincipal) {
-      dyMap.set(tickerOriginal.toUpperCase(), '0,00%');
-    }
-    console.log(`❌ [DY] ${chavePrincipal}: Sem dividendos (${origem})`);
-  }
-}
-
-// 🔄 FUNÇÃO PARA BUSCAR DY COM CÁLCULO MANUAL - ESTRATÉGIA MOBILE/DESKTOP
+// 🔄 FUNÇÃO PARA BUSCAR DY COM A MESMA ESTRATÉGIA DO DETALHE DO ATIVO
 async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
-  const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
-  
-  console.log('📈 [OTIMIZADO] Buscando DY para', tickers.length, 'tickers EM PARALELO...');
-  
-  // ✅ BATCH REQUEST para DY também
-  try {
-    const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?token=${BRAPI_TOKEN}&dividends=true`;
-    const response = await Promise.race([
-      fetch(batchUrl),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY batch timeout')), 6000))
-    ]);
 
-    if (response.ok) {
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        console.log('✅ DY BATCH SUCCESS:', data.results.length, 'DYs em 1 só request');
-        
-        data.results.forEach((ativo: any) => {
-          const tickerNormalizado = normalizarTicker(ativo.symbol);
-          const chavePrincipal = tickerNormalizado || (ativo.symbol ? ativo.symbol.toUpperCase() : '');
+  console.log('📈 [OTIMIZADO] Buscando DY para', tickers.length, 'tickers com estratégia integrada...');
 
-          if (!chavePrincipal) {
-            return;
+  const resultados = await Promise.all(
+    tickers.map(async (ticker) => {
+      try {
+        const resultado = await fetchDividendYieldIntegrado(ticker, isMobile);
+        return { ticker, resultado };
+      } catch (error) {
+        console.log(`❌ [DY-${ticker}]:`, error instanceof Error ? error.message : 'Erro desconhecido');
+        return {
+          ticker,
+          resultado: {
+            dy12Meses: 0,
+            dyFormatado: '0,00%',
+            fonte: 'erro'
           }
-
-          registrarDyComAliases(ativo, chavePrincipal, ativo.symbol, dyMap);
-        });
-        
-        return dyMap;
+        };
       }
-    }
-  } catch (error) {
-    console.log('❌ DY Batch falhou, usando paralelo individual');
-  }
-  
-  // ✅ PARALELO INDIVIDUAL para DY (SEM DELAYS!)
-  const promises = tickers.map(async (ticker) => {
-    try {
-      const response = await Promise.race([
-        fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
-          headers: { 'Accept': 'application/json' }
-        }),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY timeout')), 4000))
-      ]);
+    })
+  );
 
-      if (response.ok) {
-        const data = await response.json();
-        const ativo = data.results?.[0];
-        const tickerNormalizado = normalizarTicker(ativo?.symbol) || ticker;
-        const chavePrincipal = tickerNormalizado || ticker;
+  resultados.forEach(({ ticker, resultado }) => {
+    const valorFormatado = resultado.dyFormatado || '0,00%';
+    const tickerUpper = ticker.toUpperCase();
+    const tickerNormalizado = normalizarTicker(ticker) || tickerUpper;
 
-        registrarDyComAliases(ativo, chavePrincipal, ativo?.symbol, dyMap);
-      }
-    } catch (error) {
-      console.log(`❌ [DY-${ticker}]:`, error instanceof Error ? error.message : 'Erro desconhecido');
+    dyMap.set(tickerUpper, valorFormatado);
+    dyMap.set(tickerNormalizado, valorFormatado);
+
+    if (resultado.symbol) {
+      const symbolUpper = resultado.symbol.toUpperCase();
+      const symbolNormalizado = normalizarTicker(resultado.symbol) || symbolUpper;
+
+      dyMap.set(symbolUpper, valorFormatado);
+      dyMap.set(symbolNormalizado, valorFormatado);
     }
   });
-  
-  await Promise.allSettled(promises);
-  
-  // Garantir que todos os tickers tenham DY
-  tickers.forEach(ticker => {
-    const tickerNormalizado = normalizarTicker(ticker) || ticker;
 
-    if (!dyMap.has(tickerNormalizado)) {
-      dyMap.set(tickerNormalizado, '0,00%');
-    }
-
-    if (tickerNormalizado !== ticker && !dyMap.has(ticker)) {
-      dyMap.set(ticker, dyMap.get(tickerNormalizado) || '0,00%');
-    }
-  });
-  
-  console.log('✅ [DY-PARALELO] Concluído:', dyMap.size, 'de', tickers.length);
+  console.log('✅ [DY-INTEGRADO] Concluído:', dyMap.size, 'registros atualizados');
   return dyMap;
 }
 
