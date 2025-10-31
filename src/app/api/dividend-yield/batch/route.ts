@@ -7,6 +7,7 @@ export const runtime = 'nodejs';
 
 const BRAPI_TOKEN = process.env.BRAPI_TOKEN?.trim() || 'jJrMYVy9MATGEicx3GxBp8';
 const CACHE_DURATION = 5 * 60 * 1000;
+const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
 
 type DividendYieldResult = {
   dy12Meses: number;
@@ -39,15 +40,20 @@ const chunkArray = <T,>(items: T[], size: number) => {
 
 /**
  * Calcula DY a partir dos proventos da API interna
+ * ATENÇÃO: Só funciona em desenvolvimento (localhost)
  */
 async function calcularDyDeProventos(ticker: string, precoAtual: number): Promise<number | null> {
+  // Só tentar em desenvolvimento
+  if (!IS_DEVELOPMENT) {
+    return null;
+  }
+
   try {
-    // Buscar proventos dos últimos 12 meses da API interna
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/proventos/${ticker}`, {
+    const response = await fetch(`http://localhost:3000/api/proventos/${ticker}`, {
       headers: {
         'Cache-Control': 'no-cache'
-      }
+      },
+      signal: AbortSignal.timeout(3000) // Timeout de 3 segundos
     });
 
     if (!response.ok) {
@@ -82,7 +88,10 @@ async function calcularDyDeProventos(ticker: string, precoAtual: number): Promis
 
     return null;
   } catch (error) {
-    console.error(`❌ [PROVENTOS-API] Erro ao buscar proventos de ${ticker}:`, error);
+    // Silenciar erros em produção
+    if (IS_DEVELOPMENT) {
+      console.error(`❌ [PROVENTOS-API] Erro ao buscar proventos de ${ticker}:`, error);
+    }
     return null;
   }
 }
@@ -103,23 +112,17 @@ async function fetchWithFallback(tickersString: string): Promise<any> {
       name: 'dividends_query',
       url: `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}&dividends=true`
     },
-    // Estratégia 2: Token no header com dividends
-    {
-      name: 'dividends_header',
-      url: `https://brapi.dev/api/quote/${tickersString}?dividends=true`,
-      useAuthHeader: true
-    },
-    // Estratégia 3: Com fundamental (pode incluir defaultKeyStatistics com dividend yield)
+    // Estratégia 2: Com fundamental (pode incluir defaultKeyStatistics com dividend yield)
     {
       name: 'fundamental',
       url: `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}&fundamental=true`
     },
-    // Estratégia 4: Módulo defaultKeyStatistics (inclui dividendYield)
+    // Estratégia 3: Módulo defaultKeyStatistics (inclui dividendYield)
     {
       name: 'modules_keyStats',
       url: `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}&modules=defaultKeyStatistics`
     },
-    // Estratégia 5: Básica (fallback final)
+    // Estratégia 4: Básica (fallback final)
     {
       name: 'basica',
       url: `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}`
@@ -130,8 +133,6 @@ async function fetchWithFallback(tickersString: string): Promise<any> {
 
   for (const strategy of strategies) {
     try {
-      console.log(`🔍 [BRAPI] Tentando estratégia: ${strategy.name}`);
-      
       const headers: Record<string, string> = {
         Accept: 'application/json',
         'User-Agent': 'MembrosFatosdaBolsa/1.0',
@@ -154,16 +155,11 @@ async function fetchWithFallback(tickersString: string): Promise<any> {
         
         // Verificar se retornou dados válidos
         if (data?.results && Array.isArray(data.results) && data.results.length > 0) {
-          console.log(`✅ [BRAPI] Sucesso com estratégia: ${strategy.name}`);
           return { data, strategy: strategy.name };
         }
-      } else {
-        const errorText = await response.text().catch(() => 'N/A');
-        console.warn(`⚠️ [BRAPI] Estratégia ${strategy.name} retornou ${response.status}: ${errorText.substring(0, 100)}`);
       }
     } catch (error) {
       lastError = error as Error;
-      console.error(`❌ [BRAPI] Erro na estratégia ${strategy.name}:`, error);
     }
   }
 
@@ -209,7 +205,6 @@ async function fetchBatchFromBrapi(tickers: string[]): Promise<Record<string, Di
     });
 
     try {
-      // Usar a nova função com fallback
       const { data, strategy } = await fetchWithFallback(chunkUpper.join(','));
       const quotes = Array.isArray(data?.results) ? data.results : [];
 
@@ -229,18 +224,16 @@ async function fetchBatchFromBrapi(tickers: string[]): Promise<Record<string, Di
         let dy12Meses = valorBrapi && valorBrapi > 0 ? valorBrapi : 0;
         let fonte = `brapi_${strategy} | ${origemBrapi}`;
 
-        // Se BRAPI não retornou DY, tentar API de proventos interna
-        if (dy12Meses === 0 || origemBrapi === 'nao_encontrado') {
+        // Se BRAPI não retornou DY E estamos em desenvolvimento, tentar API de proventos interna
+        if ((dy12Meses === 0 || origemBrapi === 'nao_encontrado') && IS_DEVELOPMENT) {
           const precoAtual = quote?.regularMarketPrice || quote?.regularMarketPreviousClose || 0;
           
           if (precoAtual > 0) {
-            console.log(`🔄 [FALLBACK] Tentando calcular DY de ${symbolNormalizado} via API de proventos...`);
             const dyProventos = await calcularDyDeProventos(symbolNormalizado, precoAtual);
             
             if (dyProventos && dyProventos > 0) {
               dy12Meses = dyProventos;
               fonte = 'proventos_api | calc:12m';
-              console.log(`✅ [FALLBACK] ${symbolNormalizado}: DY encontrado via proventos = ${(dyProventos * 100).toFixed(2)}%`);
             }
           }
         }
