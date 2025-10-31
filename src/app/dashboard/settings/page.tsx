@@ -739,6 +739,33 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
     }
   };
 
+  const tickersComDadosIncompletos = new Set<string>();
+
+  const marcarTickerComoIncompleto = (ticker?: string | null) => {
+    if (!ticker) return;
+    const chaveUpper = ticker.toUpperCase();
+    const chaveNormalizada = normalizarTicker(ticker) || chaveUpper;
+
+    tickersComDadosIncompletos.add(chaveUpper);
+    tickersComDadosIncompletos.add(chaveNormalizada);
+  };
+
+  const resultadoPrecisaFallback = (resultado: any): boolean => {
+    if (!resultado) return true;
+
+    const dyNumero = typeof resultado.dy12Meses === 'number'
+      ? resultado.dy12Meses
+      : Number.parseFloat(String(resultado.dy12Meses || '').replace(',', '.'));
+
+    const dyEhZeroOuInvalido = !Number.isFinite(dyNumero) || dyNumero <= 0;
+    const dyFormatadoVazio = !resultado.dyFormatado || resultado.dyFormatado === '0,00%';
+    const fonteIndicaErro = typeof resultado.fonte === 'string'
+      ? /nao_encontrado|erro/i.test(resultado.fonte)
+      : false;
+
+    return dyEhZeroOuInvalido || dyFormatadoVazio || fonteIndicaErro;
+  };
+
   try {
     const response = await fetch('/api/dividend-yield/batch', {
       method: 'POST',
@@ -753,6 +780,12 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
       Object.entries(resultadosBatch).forEach(([ticker, resultado]: [string, any]) => {
         const valorFormatado = resultado?.dyFormatado || '0,00%';
         preencherMapComResultado(ticker, valorFormatado, resultado || {});
+
+        if (resultadoPrecisaFallback(resultado)) {
+          marcarTickerComoIncompleto(ticker);
+          marcarTickerComoIncompleto(resultado?.symbol);
+          marcarTickerComoIncompleto(resultado?.requested);
+        }
       });
 
       console.log('✅ [DY-BATCH] Concluído via API:', dyMap.size, 'registros atualizados');
@@ -764,8 +797,19 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   }
 
   const faltantes = tickers.filter((ticker) => {
-    const chaveNormalizada = normalizarTicker(ticker) || ticker.toUpperCase();
-    return !dyMap.has(chaveNormalizada);
+    const chaveUpper = ticker.toUpperCase();
+    const chaveNormalizada = normalizarTicker(ticker) || chaveUpper;
+
+    if (!dyMap.has(chaveNormalizada)) {
+      return true;
+    }
+
+    if (tickersComDadosIncompletos.has(chaveUpper) || tickersComDadosIncompletos.has(chaveNormalizada)) {
+      return true;
+    }
+
+    const valorAtual = dyMap.get(chaveNormalizada);
+    return !valorAtual || valorAtual === '0,00%';
   });
 
   if (faltantes.length > 0) {
