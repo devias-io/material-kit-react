@@ -1,6 +1,6 @@
 import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
 
-const REQUEST_INTERVAL_MS = 1200;
+const REQUEST_INTERVAL_MS = 350;
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_RETRY_DELAY_MS = 1500;
 const RETRYABLE_STATUS_CODES = new Set([408, 425, 429, 500, 502, 503, 504]);
@@ -117,6 +117,26 @@ export type DividendYieldIntegradoResult = {
   symbol?: string;
 };
 
+const isDevelopmentEnv = process.env.NODE_ENV !== 'production';
+
+const debugLog = (...args: any[]) => {
+  if (isDevelopmentEnv) {
+    console.log(...args);
+  }
+};
+
+const debugWarn = (...args: any[]) => {
+  if (isDevelopmentEnv) {
+    console.warn(...args);
+  }
+};
+
+const debugError = (...args: any[]) => {
+  if (isDevelopmentEnv) {
+    console.error(...args);
+  }
+};
+
 export async function fetchDividendYieldIntegrado(
   ticker: string,
   isMobile: boolean
@@ -149,12 +169,12 @@ export async function fetchDividendYieldIntegrado(
       dyValue = valor;
       fonte = `${origemEtiqueta} | ${origem}`;
       dyObtido = true;
-      console.log(`✅ [DY] ${ticker}: ${formatarDy(valor)} (${origemEtiqueta} | ${origem})`);
+      debugLog(`✅ [DY] ${ticker}: ${formatarDy(valor)} (${origemEtiqueta} | ${origem})`);
       return true;
     }
 
     fonte = `${origemEtiqueta}-Zero | ${origem}`;
-    console.log(`⚠️ [DY] ${ticker}: Sem dividendos (${origemEtiqueta} | ${origem})`);
+    debugWarn(`⚠️ [DY] ${ticker}: Sem dividendos (${origemEtiqueta} | ${origem})`);
     return false;
   };
 
@@ -163,7 +183,7 @@ export async function fetchDividendYieldIntegrado(
     fetchOptions: RateLimitedFetchOptions
   ) => {
     try {
-      console.log(`${etiqueta} buscando DY para ${ticker}`);
+      debugLog(`${etiqueta} buscando DY para ${ticker}`);
       const response = await rateLimitedFetch(quoteUrl, fetchOptions);
 
       if (response.ok) {
@@ -171,10 +191,10 @@ export async function fetchDividendYieldIntegrado(
         const result = data.results?.[0];
         processResult(result, etiqueta);
       } else {
-        console.log(`${etiqueta} falhou com status ${response.status}`);
+        debugWarn(`${etiqueta} falhou com status ${response.status}`);
       }
     } catch (error: any) {
-      console.log(`${etiqueta} erro: ${error?.message || 'erro desconhecido'}`);
+      debugWarn(`${etiqueta} erro: ${error?.message || 'erro desconhecido'}`);
     }
   };
 
@@ -214,7 +234,7 @@ export async function fetchDividendYieldIntegrado(
       if (!dyObtido) {
         dyValue = 0;
         fonte = 'BRAPI-Mobile-Fallback';
-        console.log(`📱⚠️ [DY] ${ticker}: Todas as estratégias mobile falharam`);
+        debugWarn(`📱⚠️ [DY] ${ticker}: Todas as estratégias mobile falharam`);
       }
     } else {
       await tentarBusca('🖥️ [DY-DESKTOP] Estratégia padrão', {
@@ -229,11 +249,11 @@ export async function fetchDividendYieldIntegrado(
       if (!dyObtido) {
         dyValue = 0;
         fonte = 'BRAPI-Desktop-Zero | indisponível';
-        console.log(`🖥️⚠️ [DY] ${ticker}: Sem dividendos válidos na estratégia desktop`);
+        debugWarn(`🖥️⚠️ [DY] ${ticker}: Sem dividendos válidos na estratégia desktop`);
       }
     }
   } catch (error) {
-    console.error(`❌ Erro ao buscar DY para ${ticker}:`, error);
+    debugError(`❌ Erro ao buscar DY para ${ticker}:`, error);
     dyValue = 0;
     fonte = 'erro';
   }

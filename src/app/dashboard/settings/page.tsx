@@ -755,15 +755,28 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
 
     const dyNumero = typeof resultado.dy12Meses === 'number'
       ? resultado.dy12Meses
-      : Number.parseFloat(String(resultado.dy12Meses || '').replace(',', '.'));
+      : Number.parseFloat(String(resultado.dy12Meses ?? '').replace(',', '.'));
 
-    const dyEhZeroOuInvalido = !Number.isFinite(dyNumero) || dyNumero <= 0;
-    const dyFormatadoVazio = !resultado.dyFormatado || resultado.dyFormatado === '0,00%';
-    const fonteIndicaErro = typeof resultado.fonte === 'string'
-      ? /nao_encontrado|erro/i.test(resultado.fonte)
+    if (Number.isFinite(dyNumero) && dyNumero > 0) {
+      return false;
+    }
+
+    const fonteTexto = typeof resultado.fonte === 'string' ? resultado.fonte.toLowerCase() : '';
+    const dyFormatado = typeof resultado.dyFormatado === 'string' ? resultado.dyFormatado.trim() : '';
+
+    const fonteIndicaErro = fonteTexto
+      ? /nao_encontrado|erro|indisponivel|sem_resultado/.test(fonteTexto)
       : false;
 
-    return dyEhZeroOuInvalido || dyFormatadoVazio || fonteIndicaErro;
+    if (fonteIndicaErro) {
+      return true;
+    }
+
+    if (!dyFormatado || dyFormatado === '0,00%') {
+      return fonteTexto.length === 0;
+    }
+
+    return !Number.isFinite(dyNumero) || dyNumero <= 0;
   };
 
   try {
