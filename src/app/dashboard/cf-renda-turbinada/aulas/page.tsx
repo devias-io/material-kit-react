@@ -683,67 +683,6 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   );
 
   return (
-      <div
-        key={`lesson-${index}-${lesson.title}`}
-        style={{
-          padding: '20px',
-          borderRadius: '12px',
-          border: '1px solid #e2e8f0',
-          backgroundColor: '#f8fafc',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>{lesson.title}</h3>
-          <span
-            style={{
-              padding: '4px 10px',
-              borderRadius: '9999px',
-              backgroundColor: '#0f172a',
-              color: '#f8fafc',
-              fontSize: '12px',
-              fontWeight: 600
-            }}
-          >
-            {lesson.duration}
-          </span>
-        </div>
-        {lesson.description && (
-          <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>{lesson.description}</p>
-        )}
-        {lesson.content && (
-          <div
-            style={{
-              backgroundColor: '#e0f2fe',
-              borderRadius: '10px',
-              padding: '12px 16px'
-            }}
-          >
-            <p style={{ margin: 0, color: '#0f172a', fontSize: '14px', lineHeight: 1.6 }}>{lesson.content}</p>
-          </div>
-        )}
-        {lesson.videoUrl && (
-          <a
-            href={lesson.videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              alignSelf: 'flex-start',
-              fontSize: '14px',
-              fontWeight: 600,
-              color: '#0ea5e9'
-            }}
-          >
-            Assistir vídeo da aula →
-          </a>
-        )}
-      </div>
-    );
-  }, []);
-
-  return (
     <div
       style={{
         minHeight: '100vh',
