@@ -177,6 +177,9 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   });
   const [newModuleError, setNewModuleError] = React.useState<string | null>(null);
   const [viewAsStudent, setViewAsStudent] = React.useState(false);
+  const [editingLessonKey, setEditingLessonKey] = React.useState<string | null>(null);
+  const [editLessonForm, setEditLessonForm] = React.useState<LessonFormState>(createEmptyLessonForm());
+  const [editLessonError, setEditLessonError] = React.useState<string | null>(null);
 
   const visibleModules = React.useMemo(() => {
     if (isAdmin && !viewAsStudent) {
@@ -314,67 +317,370 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
     setViewAsStudent(prev => !prev);
   }, []);
 
-  const renderLesson = React.useCallback((lesson: Lesson, index: number) => {
-    return (
-      <div
-        key={`lesson-${index}-${lesson.title}`}
-        style={{
-          padding: '20px',
-          borderRadius: '12px',
-          border: '1px solid #e2e8f0',
-          backgroundColor: '#f8fafc',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>{lesson.title}</h3>
-          <span
-            style={{
-              padding: '4px 10px',
-              borderRadius: '9999px',
-              backgroundColor: '#0f172a',
-              color: '#f8fafc',
-              fontSize: '12px',
-              fontWeight: 600
-            }}
-          >
-            {lesson.duration}
-          </span>
-        </div>
-        {lesson.description && (
-          <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>{lesson.description}</p>
-        )}
-        {lesson.content && (
-          <div
-            style={{
-              backgroundColor: '#e0f2fe',
-              borderRadius: '10px',
-              padding: '12px 16px'
-            }}
-          >
-            <p style={{ margin: 0, color: '#0f172a', fontSize: '14px', lineHeight: 1.6 }}>{lesson.content}</p>
-          </div>
-        )}
-        {lesson.videoUrl && (
-          <a
-            href={lesson.videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              alignSelf: 'flex-start',
-              fontSize: '14px',
-              fontWeight: 600,
-              color: '#0ea5e9'
-            }}
-          >
-            Assistir vídeo da aula →
-          </a>
-        )}
-      </div>
-    );
+  const handleStartEditLesson = React.useCallback(
+    (moduleId: string, lessonIndex: number) => {
+      const module = modules.find(currentModule => currentModule.id === moduleId);
+      if (!module) {
+        return;
+      }
+
+      const lesson = module.lessons[lessonIndex];
+      if (!lesson) {
+        return;
+      }
+
+      setEditLessonForm({
+        title: lesson.title,
+        duration: lesson.duration,
+        description: lesson.description ?? '',
+        videoUrl: lesson.videoUrl ?? '',
+        content: lesson.content ?? ''
+      });
+      setEditLessonError(null);
+      setEditingLessonKey(`${moduleId}-${lessonIndex}`);
+    },
+    [modules]
+  );
+
+  const handleEditLessonFieldChange = React.useCallback((field: keyof LessonFormState, value: string) => {
+    setEditLessonForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
   }, []);
+
+  const handleCancelEditLesson = React.useCallback(() => {
+    setEditingLessonKey(null);
+    setEditLessonError(null);
+    setEditLessonForm(createEmptyLessonForm());
+  }, []);
+
+  const handleUpdateLesson = React.useCallback(
+    (event: React.FormEvent<HTMLFormElement>, moduleId: string, lessonIndex: number) => {
+      event.preventDefault();
+      setEditLessonError(null);
+
+      if (!editLessonForm.title.trim() || !editLessonForm.duration.trim()) {
+        setEditLessonError('Título e duração são obrigatórios.');
+        return;
+      }
+
+      const updatedLesson: Lesson = {
+        title: editLessonForm.title.trim(),
+        duration: editLessonForm.duration.trim(),
+        description: editLessonForm.description.trim() ? editLessonForm.description.trim() : undefined,
+        videoUrl: editLessonForm.videoUrl.trim() ? editLessonForm.videoUrl.trim() : undefined,
+        content: editLessonForm.content.trim() ? editLessonForm.content.trim() : undefined
+      };
+
+      setModules(prevModules =>
+        prevModules.map(module =>
+          module.id === moduleId
+            ? {
+                ...module,
+                lessons: module.lessons.map((lesson, index) => (index === lessonIndex ? updatedLesson : lesson))
+              }
+            : module
+        )
+      );
+
+      handleCancelEditLesson();
+    },
+    [editLessonForm, handleCancelEditLesson]
+  );
+
+  const handleDeleteLesson = React.useCallback(
+    (moduleId: string, lessonIndex: number) => {
+      setModules(prevModules =>
+        prevModules.map(module =>
+          module.id === moduleId
+            ? {
+                ...module,
+                lessons: module.lessons.filter((_, index) => index !== lessonIndex)
+              }
+            : module
+        )
+      );
+
+      if (editingLessonKey === `${moduleId}-${lessonIndex}`) {
+        handleCancelEditLesson();
+      }
+    },
+    [editingLessonKey, handleCancelEditLesson]
+  );
+
+  const renderLesson = React.useCallback(
+    (moduleId: string, lesson: Lesson, index: number) => {
+      const lessonKey = `${moduleId}-${index}`;
+      const isEditing = editingLessonKey === lessonKey;
+
+      return (
+        <div
+          key={`lesson-${index}-${lesson.title}`}
+          style={{
+            padding: '20px',
+            borderRadius: '12px',
+            border: '1px solid #e2e8f0',
+            backgroundColor: '#f8fafc',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}
+        >
+          {isEditing ? (
+            <form
+              onSubmit={event => handleUpdateLesson(event, moduleId, index)}
+              style={{
+                display: 'grid',
+                gap: '12px',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'
+              }}
+            >
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                Título da aula
+                <input
+                  type="text"
+                  value={editLessonForm.title}
+                  onChange={event => handleEditLessonFieldChange('title', event.target.value)}
+                  style={{
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5f5',
+                    padding: '10px 14px',
+                    fontSize: '14px'
+                  }}
+                  required
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                Duração
+                <input
+                  type="text"
+                  value={editLessonForm.duration}
+                  onChange={event => handleEditLessonFieldChange('duration', event.target.value)}
+                  style={{
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5f5',
+                    padding: '10px 14px',
+                    fontSize: '14px'
+                  }}
+                  required
+                />
+              </label>
+              <label
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                  fontSize: '14px',
+                  color: '#0f172a',
+                  gridColumn: '1 / -1'
+                }}
+              >
+                Descrição
+                <textarea
+                  value={editLessonForm.description}
+                  onChange={event => handleEditLessonFieldChange('description', event.target.value)}
+                  rows={3}
+                  style={{
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5f5',
+                    padding: '10px 14px',
+                    fontSize: '14px',
+                    resize: 'vertical'
+                  }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                Link do vídeo (opcional)
+                <input
+                  type="url"
+                  value={editLessonForm.videoUrl}
+                  onChange={event => handleEditLessonFieldChange('videoUrl', event.target.value)}
+                  style={{
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5f5',
+                    padding: '10px 14px',
+                    fontSize: '14px'
+                  }}
+                />
+              </label>
+              <label
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                  fontSize: '14px',
+                  color: '#0f172a',
+                  gridColumn: '1 / -1'
+                }}
+              >
+                Conteúdo escrito (opcional)
+                <textarea
+                  value={editLessonForm.content}
+                  onChange={event => handleEditLessonFieldChange('content', event.target.value)}
+                  rows={4}
+                  style={{
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5f5',
+                    padding: '10px 14px',
+                    fontSize: '14px',
+                    resize: 'vertical'
+                  }}
+                />
+              </label>
+              {editLessonError && (
+                <div style={{ gridColumn: '1 / -1', color: '#be123c', fontSize: '13px' }}>{editLessonError}</div>
+              )}
+              <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteLesson(moduleId, index)}
+                  style={{
+                    border: '1px solid #ef4444',
+                    backgroundColor: 'transparent',
+                    color: '#ef4444',
+                    borderRadius: '10px',
+                    padding: '10px 18px',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Excluir aula
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelEditLesson}
+                  style={{
+                    border: '1px solid #cbd5f5',
+                    backgroundColor: 'transparent',
+                    color: '#0f172a',
+                    borderRadius: '10px',
+                    padding: '10px 18px',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    padding: '12px 20px',
+                    borderRadius: '10px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Salvar alterações
+                </button>
+              </div>
+            </form>
+          ) : (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>{lesson.title}</h3>
+                <span
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '9999px',
+                    backgroundColor: '#0f172a',
+                    color: '#f8fafc',
+                    fontSize: '12px',
+                    fontWeight: 600
+                  }}
+                >
+                  {lesson.duration}
+                </span>
+              </div>
+              {lesson.description && (
+                <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>{lesson.description}</p>
+              )}
+              {lesson.content && (
+                <div
+                  style={{
+                    backgroundColor: '#e0f2fe',
+                    borderRadius: '10px',
+                    padding: '12px 16px'
+                  }}
+                >
+                  <p style={{ margin: 0, color: '#0f172a', fontSize: '14px', lineHeight: 1.6 }}>{lesson.content}</p>
+                </div>
+              )}
+              {lesson.videoUrl && (
+                <a
+                  href={lesson.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    alignSelf: 'flex-start',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: '#0ea5e9'
+                  }}
+                >
+                  Assistir vídeo da aula →
+                </a>
+              )}
+            </>
+          )}
+
+          {isAdmin && !isEditing && (
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => handleStartEditLesson(moduleId, index)}
+                style={{
+                  border: '1px solid #0ea5e9',
+                  backgroundColor: 'transparent',
+                  color: '#0ea5e9',
+                  borderRadius: '10px',
+                  padding: '8px 16px',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                Editar aula
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteLesson(moduleId, index)}
+                style={{
+                  border: '1px solid #ef4444',
+                  backgroundColor: 'transparent',
+                  color: '#ef4444',
+                  borderRadius: '10px',
+                  padding: '8px 16px',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                Excluir aula
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    },
+    [
+      editLessonError,
+      editLessonForm,
+      editingLessonKey,
+      handleCancelEditLesson,
+      handleDeleteLesson,
+      handleEditLessonFieldChange,
+      handleStartEditLesson,
+      handleUpdateLesson,
+      isAdmin
+    ]
+  );
 
   return (
     <div
@@ -621,7 +927,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#010101', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                       {module.title}
                     </span>
                     {isAdmin && (
@@ -692,7 +998,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                       </p>
                     </div>
                   ) : (
-                    module.lessons.map((lesson, index) => renderLesson(lesson, index))
+                    module.lessons.map((lesson, index) => renderLesson(module.id, lesson, index))
                   )}
                 </div>
 
