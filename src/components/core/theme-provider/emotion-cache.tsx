@@ -63,12 +63,12 @@ export function EmotionCacheProvider(props: EmotionCacheProviderProps) {
 		for (const { name, isGlobal } of inserted) {
 			const style = cache.inserted[name];
 
-			if (typeof style === "boolean") {
+			if (typeof style !== "string") {
 				continue;
 			}
 
 			if (isGlobal) {
-				globals.push({ name, style: style! });
+				globals.push({ name, style });
 			} else {
 				styles += style;
 				dataEmotionAttribute += ` ${name}`;
