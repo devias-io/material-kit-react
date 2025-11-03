@@ -24,14 +24,14 @@ function resolveEmailConfig(): EmailConfig {
     missing.push('SMTP_HOST');
   }
 
-  const user = process.env.SMTP_USER;
+  const user = process.env.SMTP_USER ?? process.env.SMTP_USERNAME;
   if (!user) {
-    missing.push('SMTP_USER');
+    missing.push('SMTP_USER/SMTP_USERNAME');
   }
 
-  const pass = process.env.SMTP_PASS;
+  const pass = process.env.SMTP_PASS ?? process.env.SMTP_PASSWORD;
   if (!pass) {
-    missing.push('SMTP_PASS');
+    missing.push('SMTP_PASS/SMTP_PASSWORD');
   }
 
   const fromEmail = process.env.SMTP_FROM || user;
