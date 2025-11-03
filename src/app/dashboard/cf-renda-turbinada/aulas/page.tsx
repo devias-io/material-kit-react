@@ -108,6 +108,7 @@ function getVideoEmbedConfig(videoUrl?: string): VideoEmbedConfig | null {
 
   const host = parsedUrl.hostname.replace(/^www\./, '');
 
+  // Vimeo: player.vimeo.com (já embedded)
   if (host === 'player.vimeo.com') {
     if (parsedUrl.pathname.includes('/video/')) {
       return {
@@ -115,15 +116,25 @@ function getVideoEmbedConfig(videoUrl?: string): VideoEmbedConfig | null {
         provider: 'vimeo'
       };
     }
-
     return null;
   }
 
+  // Vimeo: vimeo.com/event/XXX/embed/YYY (eventos privados)
   if (host.endsWith('vimeo.com')) {
+    // Formato: /event/123456/embed/abcd1234
+    const eventMatch = parsedUrl.pathname.match(/\/event\/\d+\/embed\/([a-zA-Z0-9]+)/);
+    if (eventMatch) {
+      return {
+        src: `https://player.vimeo.com/video/${eventMatch[1]}${parsedUrl.search}`,
+        provider: 'vimeo'
+      };
+    }
+
+    // Formato padrão: /123456789
     const segments = parsedUrl.pathname.split('/').filter(Boolean);
     const videoId = segments.pop();
 
-    if (videoId) {
+    if (videoId && /^\d+$/.test(videoId)) {
       return {
         src: `https://player.vimeo.com/video/${videoId}${parsedUrl.search}`,
         provider: 'vimeo'
@@ -131,6 +142,7 @@ function getVideoEmbedConfig(videoUrl?: string): VideoEmbedConfig | null {
     }
   }
 
+  // YouTube: youtu.be
   if (host === 'youtu.be') {
     const segments = parsedUrl.pathname.split('/').filter(Boolean);
     const videoId = segments.pop();
@@ -152,6 +164,7 @@ function getVideoEmbedConfig(videoUrl?: string): VideoEmbedConfig | null {
     }
   }
 
+  // YouTube: youtube.com
   if (host.endsWith('youtube.com')) {
     if (parsedUrl.pathname.startsWith('/embed/')) {
       return {
