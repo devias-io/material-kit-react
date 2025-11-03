@@ -1,176 +1,136 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
+import type { KeyboardEvent, MouseEvent } from 'react';
 
-import { useAuthAccess } from '@/hooks/use-auth-access';
+import { useUser } from '@/hooks/use-user';
 
-type Recurso = {
+interface Recurso {
+  key: string;
   title: string;
   description: string;
   href: string;
   icon: string;
   badge?: string;
-  permission: string;
-};
+}
 
-export default function RecursosExclusivos() {
-  const { hasContentAccess, loading } = useAuthAccess();
+const RECURSOS: Recurso[] = [
+  {
+    key: 'recursos-dicas',
+    title: 'Dicas de Investimentos',
+    description: 'Estratégias e insights exclusivos para maximizar seus retornos no mercado financeiro',
+    href: '/dashboard/recursos-exclusivos/dicas-de-investimentos',
+    icon: '💡',
+    badge: 'NOVO'
+  },
+  {
+    key: 'recursos-analise',
+    title: 'Análise de Carteira',
+    description: 'Relatórios detalhados e análises personalizadas da sua carteira de investimentos',
+    href: '/dashboard/recursos-exclusivos/analise-de-carteira',
+    icon: '📊',
+    badge: 'NOVO'
+  },
+  {
+    key: 'recursos-reserva',
+    title: 'Reserva de Emergência',
+    description: 'Guia completo com as melhores opções de investimento para sua reserva de emergência',
+    href: '/dashboard/recursos-exclusivos/reserva-emergencia',
+    icon: '🏦'
+  },
+  {
+    key: 'recursos-imposto',
+    title: 'Imposto de Renda',
+    description: 'Ferramentas, calculadoras e guias completos para declaração do IR com investimentos',
+    href: '/dashboard/recursos-exclusivos/imposto-de-renda',
+    icon: '📋',
+    badge: 'NOVIDADE'
+  },
+  {
+    key: 'recursos-telegram',
+    title: 'Telegram e Stories',
+    description: 'Entre no nosso grupo exclusivo para dicas, análises e discussões sobre investimentos',
+    href: '/dashboard/recursos-exclusivos/telegram',
+    icon: '💬',
+    badge: 'ATIVO'
+  },
+  {
+    key: 'recursos-lives',
+    title: 'Lives e Aulas',
+    description: 'Biblioteca completa de vídeos educativos, webinars e aulas ao vivo gravadas',
+    href: '/dashboard/recursos-exclusivos/lives-e-aulas',
+    icon: '🎥'
+  },
+  {
+    key: 'recursos-milhas',
+    title: 'Milhas Aéreas',
+    description: 'Estratégias e dicas para acumular milhas através de investimentos e cartões de crédito',
+    href: '/dashboard/recursos-exclusivos/milhas-aereas',
+    icon: '✈️'
+  },
+  {
+    key: 'recursos-ebooks',
+    title: 'Ebooks',
+    description: 'Material de estudo em PDF sobre investimentos, análise fundamentalista e estratégias',
+    href: '/dashboard/recursos-exclusivos/ebooks',
+    icon: '📚'
+  },
+  {
+    key: 'recursos-planilhas',
+    title: 'Planilhas',
+    description: 'Templates exclusivos para controle de carteira, análise de ações e planejamento financeiro',
+    href: '/dashboard/recursos-exclusivos/planilhas',
+    icon: '📈',
+    badge: 'POPULAR'
+  },
+  {
+    key: 'recursos-suporte',
+    title: 'Suporte',
+    description: 'Fale diretamente com o nosso time para tirar dúvidas e receber orientação personalizada.',
+    href: '/dashboard/recursos-exclusivos/central-duvidas',
+    icon: '🤝'
+  }
+];
 
-  const recursos = React.useMemo<Recurso[]>(
-    () => [
-      {
-        title: 'Dicas de Investimentos',
-        description: 'Estratégias e insights exclusivos para maximizar seus retornos no mercado financeiro',
-        href: '/dashboard/recursos-exclusivos/dicas-de-investimentos',
-        icon: '💡',
-        badge: 'NOVO',
-        permission: 'recursos-dicas'
-      },
-      {
-        title: 'Análise de Carteira',
-        description: 'Relatórios detalhados e análises personalizadas da sua carteira de investimentos',
-        href: '/dashboard/recursos-exclusivos/analise-de-carteira',
-        icon: '📊',
-        badge: 'NOVO',
-        permission: 'recursos-analise'
-      },
-      {
-        title: 'Reserva de Emergência',
-        description: 'Guia completo com as melhores opções de investimento para sua reserva de emergência',
-        href: '/dashboard/recursos-exclusivos/reserva-emergencia',
-        icon: '🏦',
-        permission: 'recursos-reserva'
-      },
-      {
-        title: 'Imposto de Renda',
-        description: 'Ferramentas, calculadoras e guias completos para declaração do IR com investimentos',
-        href: '/dashboard/recursos-exclusivos/imposto-de-renda',
-        icon: '📋',
-        badge: 'NOVIDADE',
-        permission: 'recursos-imposto'
-      },
-      {
-        title: 'Telegram e Stories',
-        description: 'Entre no nosso grupo exclusivo para dicas, análises e discussões sobre investimentos',
-        href: '/dashboard/recursos-exclusivos/telegram',
-        icon: '💬',
-        badge: 'ATIVO',
-        permission: 'recursos-telegram'
-      },
-      {
-        title: 'Lives e Aulas',
-        description: 'Biblioteca completa de vídeos educativos, webinars e aulas ao vivo gravadas',
-        href: '/dashboard/recursos-exclusivos/lives-e-aulas',
-        icon: '🎥',
-        permission: 'recursos-lives'
-      },
-      {
-        title: 'Milhas Aéreas',
-        description: 'Estratégias e dicas para acumular milhas através de investimentos e cartões de crédito',
-        href: '/dashboard/recursos-exclusivos/milhas-aereas',
-        icon: '✈️',
-        permission: 'recursos-milhas'
-      },
-      {
-        title: 'Ebooks',
-        description: 'Material de estudo em PDF sobre investimentos, análise fundamentalista e estratégias',
-        href: '/dashboard/recursos-exclusivos/ebooks',
-        icon: '📚',
-        permission: 'recursos-ebooks'
-      },
-      {
-        title: 'Planilhas',
-        description: 'Templates exclusivos para controle de carteira, análise de ações e planejamento financeiro',
-        href: '/dashboard/recursos-exclusivos/planilhas',
-        icon: '📈',
-        badge: 'POPULAR',
-        permission: 'recursos-planilhas'
-      },
-      {
-        title: 'Central de Suporte',
-        description: 'Fale com nosso time, abra chamados e acompanhe respostas às suas dúvidas',
-        href: '/dashboard/recursos-exclusivos/central-duvidas',
-        icon: '🆘',
-        permission: 'recursos-suporte'
-      }
-    ],
-    []
-  );
+export default function RecursosExclusivos(): React.JSX.Element {
+  const { user } = useUser();
 
-  const recursosDisponiveis = React.useMemo(
-    () => recursos.filter((recurso) => hasContentAccess(recurso.permission)),
-    [hasContentAccess, recursos]
-  );
+  const recursosFiltrados = useMemo(() => {
+    if (user?.plan === 'RENDA_TURBINADA') {
+      return RECURSOS.filter(recurso => recurso.key === 'recursos-suporte');
+    }
 
-  const handleNavigation = (href: string) => {
+    return RECURSOS;
+  }, [user?.plan]);
+
+  const handleNavigation = (href: string): void => {
     window.location.href = href;
   };
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          backgroundColor: '#f5f5f5',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div
-          style={{
-            backgroundColor: '#ffffff',
-            padding: '32px',
-            borderRadius: '12px',
-            border: '1px solid #e2e8f0',
-            color: '#475569',
-            fontSize: '16px',
-            fontWeight: 600,
-          }}
-        >
-          Carregando recursos...
-        </div>
-      </div>
-    );
-  }
+  const handleMouseEnter = (event: MouseEvent<HTMLDivElement>): void => {
+    event.currentTarget.style.transform = 'translateY(-4px)';
+    event.currentTarget.style.boxShadow = '0 16px 48px rgba(0, 0, 0, 0.4)';
+    const title = event.currentTarget.querySelector<HTMLElement>('.card-title');
+    if (title) {
+      title.style.color = '#00ff41';
+    }
+  };
 
-  if (recursosDisponiveis.length === 0) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          backgroundColor: '#f5f5f5',
-          padding: '24px',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '600px',
-            margin: '0 auto',
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            border: '1px solid #e2e8f0',
-            padding: '32px',
-            textAlign: 'center',
-          }}
-        >
-          <h2
-            style={{
-              fontSize: '24px',
-              fontWeight: 700,
-              color: '#1e293b',
-              marginBottom: '12px',
-            }}
-          >
-            Nenhum recurso disponível
-          </h2>
-          <p style={{ color: '#64748b', lineHeight: 1.5 }}>
-            No momento, não encontramos recursos liberados para o seu plano. Caso acredite que isso é um engano, fale com a nossa equipe de suporte.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const handleMouseLeave = (event: MouseEvent<HTMLDivElement>): void => {
+    event.currentTarget.style.transform = 'translateY(0)';
+    event.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)';
+    const title = event.currentTarget.querySelector<HTMLElement>('.card-title');
+    if (title) {
+      title.style.color = '#ffffff';
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>, href: string): void => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleNavigation(href);
+    }
+  };
 
   return (
     <div style={{
@@ -209,10 +169,10 @@ export default function RecursosExclusivos() {
         maxWidth: '1400px',
         margin: '0 auto'
       }}>
-        {recursosDisponiveis.map((recurso, index) => (
+        {recursosFiltrados.map((recurso) => (
           <div
-            key={index}
-            onClick={() => handleNavigation(recurso.href)}
+            key={recurso.key}
+            onClick={() => { handleNavigation(recurso.href); }}
             style={{
               position: 'relative',
               height: '280px',
@@ -225,18 +185,11 @@ export default function RecursosExclusivos() {
               transition: 'all 0.3s ease',
               transform: 'translateY(0)',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 16px 48px rgba(0, 0, 0, 0.4)';
-              const title = e.currentTarget.querySelector('.card-title');
-              if (title) title.style.color = '#00ff41';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)';
-              const title = e.currentTarget.querySelector('.card-title');
-              if (title) title.style.color = '#ffffff';
-            }}
+            tabIndex={0}
+            role="button"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onKeyDown={(event) => { handleKeyDown(event, recurso.href); }}
           >
             {/* Badge - removido para manter o padrão original */}
 
