@@ -1028,7 +1028,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                 type="button"
                 onClick={() => handleStartEditLesson(moduleId, index)}
                 style={{
-                  border: '1px solid #0ea5e9',
+                  border: '1px solid #010101',
                   backgroundColor: 'transparent',
                   color: '#010101',
                   borderRadius: '10px',
@@ -1475,7 +1475,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                       onClick={() => setOpenLessonModule(current => (current === module.id ? null : module.id))}
                       style={{
                         alignSelf: 'flex-start',
-                        border: '1px solid #0ea5e9',
+                        border: '1px solid #010101',
                         backgroundColor: openLessonModule === module.id ? '#0ea5e9' : 'transparent',
                         color: openLessonModule === module.id ? '#010101' : '#010101',
                         borderRadius: '9999px',
