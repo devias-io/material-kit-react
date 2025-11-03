@@ -1348,9 +1348,9 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                      {module.title}
-                    </span>
+<span style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+  {module.title}
+</span>
                     {isAdmin && (
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                         <span
