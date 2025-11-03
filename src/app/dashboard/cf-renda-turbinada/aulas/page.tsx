@@ -385,6 +385,19 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
   const [fetchError, setFetchError] = React.useState<string | null>(null);
+
+  const [editingModuleId, setEditingModuleId] = React.useState<string | null>(null);
+const [editModuleForm, setEditModuleForm] = React.useState<{
+  title: string;
+  highlight: string;
+  releaseDate: string;
+}>({
+  title: '',
+  highlight: '',
+  releaseDate: ''
+});
+const [editModuleError, setEditModuleError] = React.useState<string | null>(null);
+  
   const [liveEvents, setLiveEvents] = React.useState<LiveEvent[]>([]);
   const [liveForm, setLiveForm] = React.useState<LiveFormState>(createEmptyLiveForm());
   const [liveError, setLiveError] = React.useState<string | null>(null);
@@ -803,6 +816,93 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const handleToggleViewMode = React.useCallback(() => {
     setViewAsStudent(prev => !prev);
   }, []);
+
+  const handleStartEditModule = React.useCallback(
+  (moduleId: string) => {
+    const module = modules.find(m => m.id === moduleId);
+    if (!module) return;
+
+    const releaseDate = new Date(module.releaseDate);
+    const localDateTime = new Date(releaseDate.getTime() - releaseDate.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+
+    setEditModuleForm({
+      title: module.title,
+      highlight: module.highlight || '',
+      releaseDate: localDateTime
+    });
+    setEditModuleError(null);
+    setEditingModuleId(moduleId);
+  },
+  [modules]
+);
+
+const handleEditModuleFieldChange = React.useCallback((field: keyof typeof editModuleForm, value: string) => {
+  setEditModuleForm(prev => ({
+    ...prev,
+    [field]: value
+  }));
+}, []);
+
+const handleCancelEditModule = React.useCallback(() => {
+  setEditingModuleId(null);
+  setEditModuleError(null);
+  setEditModuleForm({ title: '', highlight: '', releaseDate: '' });
+}, []);
+
+const handleUpdateModule = React.useCallback(
+  async (event: React.FormEvent<HTMLFormElement>, moduleId: string) => {
+    event.preventDefault();
+    setEditModuleError(null);
+
+    if (!editModuleForm.title.trim() || !editModuleForm.releaseDate) {
+      setEditModuleError('Título e data de liberação são obrigatórios.');
+      return;
+    }
+
+    const parsedDate = new Date(editModuleForm.releaseDate);
+    if (Number.isNaN(parsedDate.getTime())) {
+      setEditModuleError('Informe uma data de liberação válida.');
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const response = await fetch(`/api/cf-renda-turbinada/modules/${moduleId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editModuleForm.title.trim(),
+          highlight: editModuleForm.highlight.trim(),
+          releaseDate: parsedDate.toISOString()
+        })
+      });
+
+      const data = (await response.json().catch(() => null)) as { module?: Module; error?: string } | null;
+
+      if (!response.ok || !data?.module) {
+        const message = data?.error ?? 'Erro ao atualizar módulo.';
+        throw new Error(message);
+      }
+
+      setModules(prevModules =>
+        sortModulesBySchedule(
+          prevModules.map(module => (module.id === moduleId ? normalizeModule(data.module) : module))
+        )
+      );
+
+      handleCancelEditModule();
+    } catch (error) {
+      console.error('Erro ao atualizar módulo:', error);
+      setEditModuleError(error instanceof Error ? error.message : 'Erro ao atualizar módulo. Tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
+  },
+  [editModuleForm, handleCancelEditModule, normalizeModule]
+);
 
   const handleCancelEditLesson = React.useCallback(() => {
     setEditingLessonKey(null);
@@ -1576,315 +1676,446 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
             const isReleased = releaseIsValid && releaseDate <= now;
             const isHidden = Boolean(module.isHidden);
 
-            return (
-              <div
-                key={module.id}
+return (
+  <div
+    key={module.id}
+    style={{
+      backgroundColor: '#ffffff',
+      borderRadius: '16px',
+      border: '1px solid #e2e8f0',
+      padding: '28px',
+      boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '20px'
+    }}
+  >
+    {editingModuleId === module.id ? (
+      // ========== FORMULÁRIO DE EDIÇÃO DO MÓDULO ==========
+      <form
+        onSubmit={event => handleUpdateModule(event, module.id)}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          backgroundColor: '#f8fafc',
+          padding: '20px',
+          borderRadius: '12px',
+          border: '1px solid #e2e8f0'
+        }}
+      >
+        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#010101' }}>
+          Editar Módulo
+        </h3>
+
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
+          Título do módulo
+          <input
+            type="text"
+            value={editModuleForm.title}
+            onChange={e => handleEditModuleFieldChange('title', e.target.value)}
+            style={{
+              borderRadius: '10px',
+              border: '1px solid #cbd5f5',
+              padding: '10px 14px',
+              fontSize: '14px'
+            }}
+            required
+          />
+        </label>
+
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
+          Data de liberação
+          <input
+            type="datetime-local"
+            value={editModuleForm.releaseDate}
+            onChange={e => handleEditModuleFieldChange('releaseDate', e.target.value)}
+            style={{
+              borderRadius: '10px',
+              border: '1px solid #cbd5f5',
+              padding: '10px 14px',
+              fontSize: '14px'
+            }}
+            required
+          />
+        </label>
+
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
+          Descrição do módulo
+          <textarea
+            value={editModuleForm.highlight}
+            onChange={e => handleEditModuleFieldChange('highlight', e.target.value)}
+            placeholder="Descreva o principal objetivo e ganhos deste módulo."
+            rows={4}
+            style={{
+              borderRadius: '10px',
+              border: '1px solid #cbd5f5',
+              padding: '10px 14px',
+              fontSize: '14px',
+              resize: 'vertical'
+            }}
+          />
+        </label>
+
+        {editModuleError && (
+          <div style={{ color: '#be123c', fontSize: '13px' }}>{editModuleError}</div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={handleCancelEditModule}
+            style={{
+              border: '1px solid #cbd5f5',
+              backgroundColor: 'transparent',
+              color: '#010101',
+              borderRadius: '10px',
+              padding: '10px 18px',
+              fontWeight: 600,
+              fontSize: '14px',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              opacity: isSaving ? 0.7 : 1
+            }}
+            disabled={isSaving}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            style={{
+              background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+              border: 'none',
+              color: '#ffffff',
+              fontWeight: 600,
+              fontSize: '14px',
+              padding: '12px 20px',
+              borderRadius: '10px',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              opacity: isSaving ? 0.85 : 1
+            }}
+            disabled={isSaving}
+          >
+            {isSaving ? 'Salvando...' : 'Salvar Alterações'}
+          </button>
+        </div>
+      </form>
+    ) : (
+      // ========== VISUALIZAÇÃO NORMAL DO MÓDULO ==========
+      <>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '14px', fontWeight: 700, color: '#010101', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              {module.title}
+            </span>
+            {isAdmin && (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <span
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '9999px',
+                    backgroundColor: isHidden ? '#fee2e2' : isReleased ? '#dcfce7' : '#fef3c7',
+                    color: isHidden ? '#b91c1c' : isReleased ? '#166534' : '#b45309',
+                    fontSize: '12px',
+                    fontWeight: 600
+                  }}
+                >
+                  {isHidden ? 'Oculto para alunos' : isReleased ? 'Disponível para alunos' : 'Agendado'}
+                </span>
+                <span style={{ fontSize: '12px', color: '#475569' }}>
+                  Liberação: {formatReleaseDate(module.releaseDate)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleStartEditModule(module.id)}
+                  style={{
+                    border: '1px solid #3b82f6',
+                    backgroundColor: 'transparent',
+                    color: '#3b82f6',
+                    borderRadius: '9999px',
+                    padding: '8px 16px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.7 : 1
+                  }}
+                  disabled={isSaving}
+                >
+                  Editar módulo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleModuleVisibility(module.id, isHidden)}
+                  style={{
+                    border: '1px solid #010101',
+                    backgroundColor: isHidden ? '#010101' : 'transparent',
+                    color: isHidden ? '#f8fafc' : '#010101',
+                    borderRadius: '9999px',
+                    padding: '8px 16px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.7 : 1
+                  }}
+                  disabled={isSaving}
+                >
+                  {isHidden ? 'Mostrar conteúdo' : 'Ocultar conteúdo'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteModule(module.id)}
+                  style={{
+                    border: '1px solid #ef4444',
+                    backgroundColor: 'transparent',
+                    color: '#ef4444',
+                    borderRadius: '9999px',
+                    padding: '8px 16px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.7 : 1
+                  }}
+                  disabled={isSaving}
+                >
+                  Excluir módulo
+                </button>
+              </div>
+            )}
+          </div>
+          <p style={{ margin: 0, color: '#1e293b', fontSize: '18px', lineHeight: 1.6 }}>
+            {module.highlight && module.highlight.trim().length > 0
+              ? module.highlight
+              : 'Conteúdo liberado recentemente.'}
+          </p>
+          {!isAdmin && !isReleased && (
+            <div
+              style={{
+                borderRadius: '10px',
+                backgroundColor: '#fef3c7',
+                color: '#b45309',
+                padding: '12px 16px',
+                fontSize: '14px'
+              }}
+            >
+              Este módulo ficará disponível em {formatReleaseDate(module.releaseDate)}.
+            </div>
+          )}
+        </div>
+
+        {/* SEÇÃO DE AULAS - MANTENHA TODO O CÓDIGO ORIGINAL */}
+        <div style={{ display: 'grid', gap: '16px' }}>
+          {module.lessons.length === 0 ? (
+            <div
+              style={{
+                padding: '20px',
+                borderRadius: '12px',
+                border: '1px dashed #cbd5f5',
+                backgroundColor: '#f8fafc',
+                textAlign: 'center'
+              }}
+            >
+              <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
+                Nenhuma aula cadastrada ainda.
+              </p>
+            </div>
+          ) : (
+            module.lessons.map((lesson, index) => renderLesson(module.id, lesson, index))
+          )}
+        </div>
+
+        {/* SEÇÃO ADMIN - ADICIONAR AULAS - MANTENHA TODO O CÓDIGO ORIGINAL */}
+        {isAdmin && (
+          <div
+            style={{
+              borderTop: '1px solid #e2e8f0',
+              paddingTop: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setOpenLessonModule(current => (current === module.id ? null : module.id))}
+              style={{
+                alignSelf: 'flex-start',
+                border: '1px solid #010101',
+                backgroundColor: openLessonModule === module.id ? '#0ea5e9' : 'transparent',
+                color: openLessonModule === module.id ? '#010101' : '#010101',
+                borderRadius: '9999px',
+                padding: '10px 18px',
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: isSaving ? 'not-allowed' : 'pointer',
+                opacity: isSaving ? 0.7 : 1
+              }}
+              disabled={isSaving}
+            >
+              {openLessonModule === module.id ? 'Fechar formulário' : 'Adicionar aula a este módulo'}
+            </button>
+
+            {openLessonModule === module.id && (
+              <form
+                onSubmit={event => handleAddLesson(event, module.id)}
                 style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '16px',
-                  border: '1px solid #e2e8f0',
-                  padding: '28px',
-                  boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '20px'
+                  display: 'grid',
+                  gap: '16px',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '12px',
+                  border: '1px solid #cbd5f5',
+                  padding: '20px'
                 }}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
-<span style={{ fontSize: '14px', fontWeight: 700, color: '#010101', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-  {module.title}
-</span>
-                    {isAdmin && (
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <span
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '9999px',
-                            backgroundColor: isHidden ? '#fee2e2' : isReleased ? '#dcfce7' : '#fef3c7',
-                            color: isHidden ? '#b91c1c' : isReleased ? '#166534' : '#b45309',
-                            fontSize: '12px',
-                            fontWeight: 600
-                          }}
-                        >
-                          {isHidden ? 'Oculto para alunos' : isReleased ? 'Disponível para alunos' : 'Agendado'}
-                        </span>
-                        <span style={{ fontSize: '12px', color: '#475569' }}>
-                          Liberação: {formatReleaseDate(module.releaseDate)}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleModuleVisibility(module.id, isHidden)}
-                          style={{
-                            border: '1px solid #010101',
-                            backgroundColor: isHidden ? '#010101' : 'transparent',
-                            color: isHidden ? '#f8fafc' : '#010101',
-                            borderRadius: '9999px',
-                            padding: '8px 16px',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            cursor: isSaving ? 'not-allowed' : 'pointer',
-                            opacity: isSaving ? 0.7 : 1
-                          }}
-                          disabled={isSaving}
-                        >
-                          {isHidden ? 'Mostrar conteúdo' : 'Ocultar conteúdo'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteModule(module.id)}
-                          style={{
-                            border: '1px solid #ef4444',
-                            backgroundColor: 'transparent',
-                            color: '#ef4444',
-                            borderRadius: '9999px',
-                            padding: '8px 16px',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            cursor: isSaving ? 'not-allowed' : 'pointer',
-                            opacity: isSaving ? 0.7 : 1
-                          }}
-                          disabled={isSaving}
-                        >
-                          Excluir módulo
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <p style={{ margin: 0, color: '#1e293b', fontSize: '18px', lineHeight: 1.6 }}>
-                    {module.highlight && module.highlight.trim().length > 0
-                      ? module.highlight
-                      : 'Conteúdo liberado recentemente.'}
-                  </p>
-                  {!isAdmin && !isReleased && (
-                    <div
-                      style={{
-                        borderRadius: '10px',
-                        backgroundColor: '#fef3c7',
-                        color: '#b45309',
-                        padding: '12px 16px',
-                        fontSize: '14px'
-                      }}
-                    >
-                      Este módulo ficará disponível em {formatReleaseDate(module.releaseDate)}.
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ display: 'grid', gap: '16px' }}>
-                  {module.lessons.length === 0 ? (
-                    <div
-                      style={{
-                        padding: '20px',
-                        borderRadius: '12px',
-                        border: '1px dashed #cbd5f5',
-                        backgroundColor: '#f8fafc',
-                        textAlign: 'center'
-                      }}
-                    >
-                      <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
-                        Nenhuma aula cadastrada ainda.
-                      </p>
-                    </div>
-                  ) : (
-                    module.lessons.map((lesson, index) => renderLesson(module.id, lesson, index))
-                  )}
-                </div>
-
-                {isAdmin && (
-                  <div
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
+                  Título da aula
+                  <input
+                    type="text"
+                    value={lessonForms[module.id]?.title ?? ''}
+                    onChange={event => handleLessonFieldChange(module.id, 'title', event.target.value)}
+                    placeholder="Ex.: Aula bônus com convidado"
                     style={{
-                      borderTop: '1px solid #e2e8f0',
-                      paddingTop: '20px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '16px'
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px'
                     }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setOpenLessonModule(current => (current === module.id ? null : module.id))}
-                      style={{
-                        alignSelf: 'flex-start',
-                        border: '1px solid #010101',
-                        backgroundColor: openLessonModule === module.id ? '#0ea5e9' : 'transparent',
-                        color: openLessonModule === module.id ? '#010101' : '#010101',
-                        borderRadius: '9999px',
-                        padding: '10px 18px',
-                        fontWeight: 600,
-                        fontSize: '14px',
-                        cursor: isSaving ? 'not-allowed' : 'pointer',
-                        opacity: isSaving ? 0.7 : 1
-                      }}
-                      disabled={isSaving}
-                    >
-                      {openLessonModule === module.id ? 'Fechar formulário' : 'Adicionar aula a este módulo'}
-                    </button>
-
-                    {openLessonModule === module.id && (
-                      <form
-                        onSubmit={event => handleAddLesson(event, module.id)}
-                        style={{
-                          display: 'grid',
-                          gap: '16px',
-                          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                          backgroundColor: '#f8fafc',
-                          borderRadius: '12px',
-                          border: '1px solid #cbd5f5',
-                          padding: '20px'
-                        }}
-                      >
-                        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
-                          Título da aula
-                          <input
-                            type="text"
-                            value={lessonForms[module.id]?.title ?? ''}
-                            onChange={event => handleLessonFieldChange(module.id, 'title', event.target.value)}
-                            placeholder="Ex.: Aula bônus com convidado"
-                            style={{
-                              borderRadius: '10px',
-                              border: '1px solid #cbd5f5',
-                              padding: '10px 14px',
-                              fontSize: '14px'
-                            }}
-                            required
-                          />
-                        </label>
-                        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
-                          Duração
-                          <input
-                            type="text"
-                            value={lessonForms[module.id]?.duration ?? ''}
-                            onChange={event => handleLessonFieldChange(module.id, 'duration', event.target.value)}
-                            placeholder="Ex.: 12 min"
-                            style={{
-                              borderRadius: '10px',
-                              border: '1px solid #cbd5f5',
-                              padding: '10px 14px',
-                              fontSize: '14px'
-                            }}
-                            required
-                          />
-                        </label>
-                        <label
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '6px',
-                            fontSize: '14px',
-                            color: '#010101',
-                            gridColumn: '1 / -1'
-                          }}
-                        >
-                          Descrição
-                          <textarea
-                            value={lessonForms[module.id]?.description ?? ''}
-                            onChange={event => handleLessonFieldChange(module.id, 'description', event.target.value)}
-                            placeholder="Explique o que será abordado nesta aula."
-                            rows={3}
-                            style={{
-                              borderRadius: '10px',
-                              border: '1px solid #cbd5f5',
-                              padding: '10px 14px',
-                              fontSize: '14px',
-                              resize: 'vertical'
-                            }}
-                          />
-                        </label>
-                        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
-                          Link do vídeo (opcional)
-                          <input
-                            type="url"
-                            value={lessonForms[module.id]?.videoUrl ?? ''}
-                            onChange={event => handleLessonFieldChange(module.id, 'videoUrl', event.target.value)}
-                            placeholder="https://..."
-                            style={{
-                              borderRadius: '10px',
-                              border: '1px solid #cbd5f5',
-                              padding: '10px 14px',
-                              fontSize: '14px'
-                            }}
-                          />
-                        </label>
-                        <label
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '6px',
-                            fontSize: '14px',
-                            color: '#010101',
-                            gridColumn: '1 / -1'
-                          }}
-                        >
-                          Conteúdo escrito (opcional)
-                          <textarea
-                            value={lessonForms[module.id]?.content ?? ''}
-                            onChange={event => handleLessonFieldChange(module.id, 'content', event.target.value)}
-                            placeholder="Cole aqui materiais de apoio, links e observações importantes."
-                            rows={4}
-                            style={{
-                              borderRadius: '10px',
-                              border: '1px solid #cbd5f5',
-                              padding: '10px 14px',
-                              fontSize: '14px',
-                              resize: 'vertical'
-                            }}
-                          />
-                        </label>
-                        {lessonErrors[module.id] && (
-                          <div style={{ gridColumn: '1 / -1', color: '#be123c', fontSize: '13px' }}>{lessonErrors[module.id]}</div>
-                        )}
-                        <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setLessonForms(prev => ({
-                                ...prev,
-                                [module.id]: createEmptyLessonForm()
-                              }))
-                            }
-                            style={{
-                              border: '1px solid #cbd5f5',
-                              backgroundColor: 'transparent',
-                              color: '#010101',
-                              borderRadius: '10px',
-                              padding: '10px 18px',
-                              fontWeight: 600,
-                              fontSize: '14px',
-                              cursor: isSaving ? 'not-allowed' : 'pointer',
-                              opacity: isSaving ? 0.7 : 1
-                            }}
-                            disabled={isSaving}
-                          >
-                            Limpar campos
-                          </button>
-                          <button
-                            type="submit"
-                            style={{
-                              background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                              border: 'none',
-                              color: '#ffffff',
-                              fontWeight: 600,
-                              fontSize: '14px',
-                              padding: '12px 20px',
-                              borderRadius: '10px',
-                              cursor: isSaving ? 'not-allowed' : 'pointer',
-                              opacity: isSaving ? 0.85 : 1
-                            }}
-                            disabled={isSaving}
-                          >
-                            {isSaving ? 'Salvando...' : 'Adicionar aula'}
-                          </button>
-                        </div>
-                      </form>
-                    )}
-                  </div>
+                    required
+                  />
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
+                  Duração
+                  <input
+                    type="text"
+                    value={lessonForms[module.id]?.duration ?? ''}
+                    onChange={event => handleLessonFieldChange(module.id, 'duration', event.target.value)}
+                    placeholder="Ex.: 12 min"
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                    required
+                  />
+                </label>
+                <label
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                    fontSize: '14px',
+                    color: '#010101',
+                    gridColumn: '1 / -1'
+                  }}
+                >
+                  Descrição
+                  <textarea
+                    value={lessonForms[module.id]?.description ?? ''}
+                    onChange={event => handleLessonFieldChange(module.id, 'description', event.target.value)}
+                    placeholder="Explique o que será abordado nesta aula."
+                    rows={3}
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px',
+                      resize: 'vertical'
+                    }}
+                  />
+                </label>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
+                  Link do vídeo (opcional)
+                  <input
+                    type="url"
+                    value={lessonForms[module.id]?.videoUrl ?? ''}
+                    onChange={event => handleLessonFieldChange(module.id, 'videoUrl', event.target.value)}
+                    placeholder="https://..."
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </label>
+                <label
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                    fontSize: '14px',
+                    color: '#010101',
+                    gridColumn: '1 / -1'
+                  }}
+                >
+                  Conteúdo escrito (opcional)
+                  <textarea
+                    value={lessonForms[module.id]?.content ?? ''}
+                    onChange={event => handleLessonFieldChange(module.id, 'content', event.target.value)}
+                    placeholder="Cole aqui materiais de apoio, links e observações importantes."
+                    rows={4}
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px',
+                      resize: 'vertical'
+                    }}
+                  />
+                </label>
+                {lessonErrors[module.id] && (
+                  <div style={{ gridColumn: '1 / -1', color: '#be123c', fontSize: '13px' }}>{lessonErrors[module.id]}</div>
                 )}
-              </div>
-            );
-          })
+                <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setLessonForms(prev => ({
+                        ...prev,
+                        [module.id]: createEmptyLessonForm()
+                      }))
+                    }
+                    style={{
+                      border: '1px solid #cbd5f5',
+                      backgroundColor: 'transparent',
+                      color: '#010101',
+                      borderRadius: '10px',
+                      padding: '10px 18px',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      cursor: isSaving ? 'not-allowed' : 'pointer',
+                      opacity: isSaving ? 0.7 : 1
+                    }}
+                    disabled={isSaving}
+                  >
+                    Limpar campos
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                      border: 'none',
+                      color: '#ffffff',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      padding: '12px 20px',
+                      borderRadius: '10px',
+                      cursor: isSaving ? 'not-allowed' : 'pointer',
+                      opacity: isSaving ? 0.85 : 1
+                    }}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Salvando...' : 'Adicionar aula'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         )}
-      </div>
+      </>
+    )}
+  </div>
+);
 
       {/* ========== SEÇÃO DE CALENDÁRIO DE LIVES ========== */}
       <div
