@@ -317,6 +317,27 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
     setViewAsStudent(prev => !prev);
   }, []);
 
+  const handleDeleteModule = React.useCallback(
+    (moduleId: string) => {
+      setModules(prevModules => prevModules.filter(module => module.id !== moduleId));
+      setLessonForms(prevForms => {
+        const { [moduleId]: _deletedForm, ...remainingForms } = prevForms;
+        return remainingForms;
+      });
+      setLessonErrors(prevErrors => {
+        const { [moduleId]: _deletedError, ...remainingErrors } = prevErrors;
+        return remainingErrors;
+      });
+
+      setOpenLessonModule(current => (current === moduleId ? null : current));
+
+      if (editingLessonKey?.startsWith(`${moduleId}-`)) {
+        handleCancelEditLesson();
+      }
+    },
+    [editingLessonKey, handleCancelEditLesson]
+  );
+
   const handleStartEditLesson = React.useCallback(
     (moduleId: string, lessonIndex: number) => {
       const module = modules.find(currentModule => currentModule.id === moduleId);
@@ -962,6 +983,22 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                           }}
                         >
                           {isHidden ? 'Mostrar conteúdo' : 'Ocultar conteúdo'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteModule(module.id)}
+                          style={{
+                            border: '1px solid #ef4444',
+                            backgroundColor: 'transparent',
+                            color: '#ef4444',
+                            borderRadius: '9999px',
+                            padding: '8px 16px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Excluir módulo
                         </button>
                       </div>
                     )}
