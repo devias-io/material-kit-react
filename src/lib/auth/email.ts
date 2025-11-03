@@ -10,12 +10,40 @@ type EmailConfig = {
   fromEmail: string;
 };
 
+function parseBooleanEnv(value: string | undefined): {
+  value: boolean | null;
+  invalid: boolean;
+} {
+  if (!value) {
+    return { value: null, invalid: false };
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  if (['true', '1', 'yes', 'y', 'on'].includes(normalized)) {
+    return { value: true, invalid: false };
+  }
+
+  if (['false', '0', 'no', 'n', 'off'].includes(normalized)) {
+    return { value: false, invalid: false };
+  }
+
+  return { value: null, invalid: true };
+}
+
 function resolveEmailConfig(): EmailConfig {
   const port = Number.parseInt(process.env.SMTP_PORT || '587', 10);
-  const secureEnv = process.env.SMTP_SECURE?.toLowerCase();
-  const secure =
-    secureEnv === 'true' ||
-    (secureEnv !== 'false' && !secureEnv && port === 465);
+  const { value: secureFromEnv, invalid: invalidSecure } = parseBooleanEnv(
+    process.env.SMTP_SECURE,
+  );
+
+  if (invalidSecure) {
+    throw new Error(
+      'Valor inválido para SMTP_SECURE. Utilize true/false ou 1/0.',
+    );
+  }
+
+  const secure = secureFromEnv ?? port === 465;
 
   const missing: string[] = [];
 
