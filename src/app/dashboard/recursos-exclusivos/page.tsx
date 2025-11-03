@@ -97,7 +97,9 @@ export default function RecursosExclusivos(): React.JSX.Element {
 
   const recursosFiltrados = useMemo(() => {
     if (user?.plan === 'RENDA_TURBINADA') {
-      return RECURSOS.filter(recurso => recurso.key === 'recursos-suporte');
+      return RECURSOS.filter(recurso =>
+        ['recursos-suporte', 'recursos-telegram'].includes(recurso.key)
+      );
     }
 
     return RECURSOS;
