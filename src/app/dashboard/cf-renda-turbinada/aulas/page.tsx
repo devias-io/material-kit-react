@@ -317,6 +317,12 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
     setViewAsStudent(prev => !prev);
   }, []);
 
+  const handleCancelEditLesson = React.useCallback(() => {
+    setEditingLessonKey(null);
+    setEditLessonError(null);
+    setEditLessonForm(createEmptyLessonForm());
+  }, []);
+
   const handleDeleteModule = React.useCallback(
     (moduleId: string) => {
       setModules(prevModules => prevModules.filter(module => module.id !== moduleId));
@@ -368,12 +374,6 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
       ...prev,
       [field]: value
     }));
-  }, []);
-
-  const handleCancelEditLesson = React.useCallback(() => {
-    setEditingLessonKey(null);
-    setEditLessonError(null);
-    setEditLessonForm(createEmptyLessonForm());
   }, []);
 
   const handleUpdateLesson = React.useCallback(
