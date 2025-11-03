@@ -59,9 +59,8 @@ export const PLAN_PERMISSIONS = {
     displayName: 'CF Renda Turbinada',
     isAdmin: false,
     pages: [
-      'relatorio-semanal',
       'cf-renda-turbinada', 'cf-renda-turbinada-aulas', 'cf-renda-turbinada-carteira',
-      'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
+      'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
       'recursos-reserva', 'recursos-suporte'
     ]
   },
