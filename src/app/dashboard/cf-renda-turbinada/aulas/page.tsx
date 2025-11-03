@@ -39,6 +39,35 @@ interface NewModuleFormState {
   releaseDate: string;
 }
 
+// ========== INTERFACES PARA LIVES ==========
+interface LiveEvent {
+  id: number;
+  title: string;
+  description?: string;
+  eventDate: string;
+  durationMinutes: number;
+  meetingUrl?: string;
+  isCancelled: boolean;
+}
+
+interface LiveFormState {
+  title: string;
+  description: string;
+  eventDate: string;
+  durationMinutes: string;
+  meetingUrl: string;
+}
+
+function createEmptyLiveForm(): LiveFormState {
+  return {
+    title: '',
+    description: '',
+    eventDate: '',
+    durationMinutes: '60',
+    meetingUrl: ''
+  };
+}
+
 function createEmptyLessonForm(): LessonFormState {
   return {
     title: '',
@@ -56,6 +85,46 @@ function renderTextWithLineBreaks(text: string): React.ReactNode {
       {index < array.length - 1 && <br />}
     </React.Fragment>
   ));
+}
+
+// ========== FUNÇÃO HELPER PARA FORMATAR DATA/HORA ==========
+function formatLiveDateTime(isoDate: string): { date: string; time: string; dayOfWeek: string } {
+  const date = new Date(isoDate);
+
+  if (Number.isNaN(date.getTime())) {
+    return { date: 'Data inválida', time: '', dayOfWeek: '' };
+  }
+
+  const dayOfWeek = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(date);
+  const dateStr = new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  }).format(date);
+  const timeStr = new Intl.DateTimeFormat('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
+
+  return {
+    date: dateStr,
+    time: timeStr,
+    dayOfWeek: dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1)
+  };
+}
+
+function isLivePast(eventDate: string): boolean {
+  return new Date(eventDate) < new Date();
+}
+
+function isLiveToday(eventDate: string): boolean {
+  const now = new Date();
+  const liveDate = new Date(eventDate);
+  return (
+    liveDate.getDate() === now.getDate() &&
+    liveDate.getMonth() === now.getMonth() &&
+    liveDate.getFullYear() === now.getFullYear()
+  );
 }
 
 type VideoProvider = 'vimeo' | 'youtube';
@@ -316,6 +385,13 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
   const [fetchError, setFetchError] = React.useState<string | null>(null);
+  const [liveEvents, setLiveEvents] = React.useState<LiveEvent[]>([]);
+  const [liveForm, setLiveForm] = React.useState<LiveFormState>(createEmptyLiveForm());
+  const [liveError, setLiveError] = React.useState<string | null>(null);
+  const [showLiveForm, setShowLiveForm] = React.useState(false);
+  const [editingLiveId, setEditingLiveId] = React.useState<number | null>(null);
+  const [isLoadingLives, setIsLoadingLives] = React.useState(true);
+  const isEditingLive = editingLiveId !== null;
 
   const normalizeModule = React.useCallback((module: Module): Module => ({
     ...module,
@@ -367,6 +443,46 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   }, [normalizeModule]);
 
   React.useEffect(() => {
+    let isMounted = true;
+
+    async function fetchLiveEvents(): Promise<void> {
+      setIsLoadingLives(true);
+
+      try {
+        const response = await fetch('/api/cf-renda-turbinada/live-events');
+        const data = (await response.json().catch(() => null)) as { events?: LiveEvent[]; error?: string } | null;
+
+        if (!response.ok || !data || !Array.isArray(data.events)) {
+          throw new Error(data?.error ?? 'Erro ao carregar lives.');
+        }
+
+        if (!isMounted) return;
+
+        setLiveEvents(
+          [...data.events].sort(
+            (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
+          )
+        );
+      } catch (error) {
+        console.error('Erro ao carregar lives:', error);
+        if (isMounted) {
+          setLiveEvents([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingLives(false);
+        }
+      }
+    }
+
+    void fetchLiveEvents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
     setLessonForms(prevForms => {
       const nextForms: Record<string, LessonFormState> = {};
 
@@ -403,6 +519,121 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
       return !module.isHidden && isReleased;
     });
   }, [isAdmin, modules, viewAsStudent]);
+
+  const handleLiveFieldChange = React.useCallback((field: keyof LiveFormState, value: string) => {
+    setLiveForm(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleAddLive = React.useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setLiveError(null);
+
+      if (!liveForm.title.trim() || !liveForm.eventDate) {
+        setLiveError('Título e data/hora são obrigatórios.');
+        return;
+      }
+
+      const parsedDate = new Date(liveForm.eventDate);
+      if (Number.isNaN(parsedDate.getTime())) {
+        setLiveError('Informe uma data/hora válida.');
+        return;
+      }
+
+      setIsSaving(true);
+
+      try {
+        const response = await fetch('/api/cf-renda-turbinada/live-events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: liveForm.title.trim(),
+            description: liveForm.description.trim() || undefined,
+            eventDate: parsedDate.toISOString(),
+            durationMinutes: Number.parseInt(liveForm.durationMinutes, 10) || 60,
+            meetingUrl: liveForm.meetingUrl.trim() || undefined
+          })
+        });
+
+        const data = (await response.json().catch(() => null)) as { event?: LiveEvent; error?: string } | null;
+
+        if (!response.ok || !data?.event) {
+          throw new Error(data?.error ?? 'Erro ao criar live.');
+        }
+
+        setLiveEvents(prev =>
+          [...prev, data.event].sort(
+            (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
+          )
+        );
+        setLiveForm(createEmptyLiveForm());
+        setShowLiveForm(false);
+        setEditingLiveId(null);
+      } catch (error) {
+        console.error('Erro ao criar live:', error);
+        setLiveError(error instanceof Error ? error.message : 'Erro ao criar live. Tente novamente.');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [liveForm]
+  );
+
+  const handleDeleteLive = React.useCallback(
+    async (liveId: number) => {
+      if (!confirm('Tem certeza que deseja excluir esta live?')) {
+        return;
+      }
+
+      setIsSaving(true);
+
+      try {
+        const response = await fetch(`/api/cf-renda-turbinada/live-events/${liveId}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao excluir live.');
+        }
+
+        setLiveEvents(prev => prev.filter(event => event.id !== liveId));
+      } catch (error) {
+        console.error('Erro ao excluir live:', error);
+        alert('Erro ao excluir live. Tente novamente.');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    []
+  );
+
+  const handleToggleLiveCancellation = React.useCallback(
+    async (liveId: number, currentIsCancelled: boolean) => {
+      setIsSaving(true);
+
+      try {
+        const response = await fetch(`/api/cf-renda-turbinada/live-events/${liveId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isCancelled: !currentIsCancelled })
+        });
+
+        const data = (await response.json().catch(() => null)) as { event?: LiveEvent; error?: string } | null;
+
+        if (!response.ok || !data?.event) {
+          throw new Error(data?.error ?? 'Erro ao atualizar live.');
+        }
+
+        setLiveEvents(prev => prev.map(event => (event.id === liveId ? data.event : event)));
+      } catch (error) {
+        console.error('Erro ao atualizar live:', error);
+        alert('Erro ao atualizar live. Tente novamente.');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    []
+  );
 
   const handleToggleModuleVisibility = React.useCallback(
     async (moduleId: string, currentIsHidden: boolean) => {
@@ -1653,6 +1884,390 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
             );
           })
         )}
+      </div>
+
+      {/* ========== SEÇÃO DE CALENDÁRIO DE LIVES ========== */}
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e2e8f0',
+          padding: '28px',
+          maxWidth: '1100px',
+          margin: '0 auto 48px',
+          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)'
+        }}
+      >
+        <div style={{ marginBottom: '24px' }}>
+          <h2 style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>
+            📅 Calendário de Lives
+          </h2>
+          <p style={{ margin: 0, color: '#64748b', fontSize: '16px', lineHeight: 1.6 }}>
+            Participe das lives semanais com conteúdo exclusivo, análises de mercado e tire suas dúvidas em tempo real.
+          </p>
+        </div>
+
+        {isAdmin && (
+          <div style={{ marginBottom: '24px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowLiveForm(prev => !prev);
+                if (showLiveForm) {
+                  setLiveForm(createEmptyLiveForm());
+                  setLiveError(null);
+                  setEditingLiveId(null);
+                }
+              }}
+              style={{
+                border: '1px solid #0ea5e9',
+                backgroundColor: showLiveForm ? '#0ea5e9' : 'transparent',
+                color: showLiveForm ? '#ffffff' : '#0ea5e9',
+                borderRadius: '9999px',
+                padding: '10px 20px',
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: isSaving ? 'not-allowed' : 'pointer',
+                opacity: isSaving ? 0.7 : 1
+              }}
+              disabled={isSaving}
+            >
+              {showLiveForm ? 'Cancelar' : '+ Adicionar Live'}
+            </button>
+
+            {showLiveForm && (
+              <form
+                onSubmit={handleAddLive}
+                style={{
+                  marginTop: '20px',
+                  display: 'grid',
+                  gap: '16px',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                  backgroundColor: '#f8fafc',
+                  padding: '20px',
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0'
+                }}
+              >
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                  Título da live
+                  <input
+                    type="text"
+                    value={liveForm.title}
+                    onChange={e => handleLiveFieldChange('title', e.target.value)}
+                    placeholder="Ex.: Live semanal - Análise de mercado"
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                    required
+                  />
+                </label>
+
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                  Data e horário
+                  <input
+                    type="datetime-local"
+                    value={liveForm.eventDate}
+                    onChange={e => handleLiveFieldChange('eventDate', e.target.value)}
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                    required
+                  />
+                </label>
+
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                  Duração (minutos)
+                  <input
+                    type="number"
+                    value={liveForm.durationMinutes}
+                    onChange={e => handleLiveFieldChange('durationMinutes', e.target.value)}
+                    placeholder="60"
+                    min="15"
+                    max="240"
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </label>
+
+                <label
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                    fontSize: '14px',
+                    color: '#0f172a',
+                    gridColumn: '1 / -1'
+                  }}
+                >
+                  Descrição
+                  <textarea
+                    value={liveForm.description}
+                    onChange={e => handleLiveFieldChange('description', e.target.value)}
+                    placeholder="Descreva o que será abordado nesta live..."
+                    rows={3}
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px',
+                      resize: 'vertical'
+                    }}
+                  />
+                </label>
+
+                <label
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                    fontSize: '14px',
+                    color: '#0f172a',
+                    gridColumn: '1 / -1'
+                  }}
+                >
+                  Link da reunião (opcional)
+                  <input
+                    type="url"
+                    value={liveForm.meetingUrl}
+                    onChange={e => handleLiveFieldChange('meetingUrl', e.target.value)}
+                    placeholder="https://zoom.us/..."
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </label>
+
+                {liveError && (
+                  <div style={{ gridColumn: '1 / -1', color: '#be123c', fontSize: '13px' }}>{liveError}</div>
+                )}
+
+                <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowLiveForm(false);
+                      setLiveForm(createEmptyLiveForm());
+                      setLiveError(null);
+                      setEditingLiveId(null);
+                    }}
+                    style={{
+                      border: '1px solid #cbd5f5',
+                      backgroundColor: 'transparent',
+                      color: '#0f172a',
+                      borderRadius: '10px',
+                      padding: '10px 18px',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                      border: 'none',
+                      color: '#ffffff',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      padding: '12px 20px',
+                      borderRadius: '10px',
+                      cursor: isSaving ? 'not-allowed' : 'pointer',
+                      opacity: isSaving ? 0.85 : 1
+                    }}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Salvando...' : isEditingLive ? 'Salvar alterações' : 'Criar Live'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
+
+        <div style={{ display: 'grid', gap: '16px' }}>
+          {isLoadingLives ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+              Carregando calendário...
+            </div>
+          ) : liveEvents.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '16px' }}>
+                {isAdmin ? 'Nenhuma live agendada ainda.' : 'Novas lives serão anunciadas em breve!'}
+              </p>
+            </div>
+          ) : (
+            liveEvents.map(live => {
+              const { date, time, dayOfWeek } = formatLiveDateTime(live.eventDate);
+              const isPast = isLivePast(live.eventDate);
+              const isToday = isLiveToday(live.eventDate);
+
+              return (
+                <div
+                  key={live.id}
+                  style={{
+                    padding: '20px',
+                    borderRadius: '12px',
+                    border: `2px solid ${
+                      live.isCancelled ? '#fecaca' : isToday ? '#22c55e' : isPast ? '#e2e8f0' : '#bfdbfe'
+                    }`,
+                    backgroundColor: live.isCancelled
+                      ? '#fef2f2'
+                      : isToday
+                      ? '#f0fdf4'
+                      : isPast
+                      ? '#f8fafc'
+                      : '#eff6ff',
+                    opacity: isPast && !isToday ? 0.7 : 1
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
+                          {live.title}
+                        </h3>
+                        {live.isCancelled && (
+                          <span
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '9999px',
+                              backgroundColor: '#fee2e2',
+                              color: '#b91c1c',
+                              fontSize: '12px',
+                              fontWeight: 600
+                            }}
+                          >
+                            CANCELADA
+                          </span>
+                        )}
+                        {isToday && !live.isCancelled && (
+                          <span
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '9999px',
+                              backgroundColor: '#22c55e',
+                              color: '#ffffff',
+                              fontSize: '12px',
+                              fontWeight: 600
+                            }}
+                          >
+                            HOJE
+                          </span>
+                        )}
+                        {isPast && !isToday && !live.isCancelled && (
+                          <span
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '9999px',
+                              backgroundColor: '#e2e8f0',
+                              color: '#475569',
+                              fontSize: '12px',
+                              fontWeight: 600
+                            }}
+                          >
+                            REALIZADA
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '14px', color: '#475569', fontWeight: 600 }}>
+                          📅 {dayOfWeek}, {date}
+                        </span>
+                        <span style={{ fontSize: '14px', color: '#475569', fontWeight: 600 }}>
+                          🕐 {time} ({live.durationMinutes} min)
+                        </span>
+                      </div>
+
+                      {live.description && (
+                        <p style={{ margin: '0 0 12px 0', color: '#64748b', fontSize: '14px', lineHeight: 1.6 }}>
+                          {renderTextWithLineBreaks(live.description)}
+                        </p>
+                      )}
+
+                      {live.meetingUrl && !isPast && !live.isCancelled && (
+                        <a
+                          href={live.meetingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'inline-block',
+                            padding: '10px 18px',
+                            borderRadius: '10px',
+                            backgroundColor: '#0ea5e9',
+                            color: '#ffffff',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            textDecoration: 'none'
+                          }}
+                        >
+                          🎥 Entrar na Live →
+                        </a>
+                      )}
+                    </div>
+
+                    {isAdmin && (
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleLiveCancellation(live.id, live.isCancelled)}
+                          style={{
+                            border: `1px solid ${live.isCancelled ? '#22c55e' : '#f59e0b'}`,
+                            backgroundColor: 'transparent',
+                            color: live.isCancelled ? '#22c55e' : '#f59e0b',
+                            borderRadius: '9999px',
+                            padding: '8px 16px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: isSaving ? 'not-allowed' : 'pointer',
+                            opacity: isSaving ? 0.7 : 1
+                          }}
+                          disabled={isSaving}
+                        >
+                          {live.isCancelled ? 'Reativar' : 'Cancelar'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteLive(live.id)}
+                          style={{
+                            border: '1px solid #ef4444',
+                            backgroundColor: 'transparent',
+                            color: '#ef4444',
+                            borderRadius: '9999px',
+                            padding: '8px 16px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: isSaving ? 'not-allowed' : 'pointer',
+                            opacity: isSaving ? 0.7 : 1
+                          }}
+                          disabled={isSaving}
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
       <div

@@ -1,4 +1,8 @@
-import { CfRendaTurbinadaLesson, CfRendaTurbinadaModule } from '@prisma/client';
+import {
+  CfRendaTurbinadaLesson,
+  CfRendaTurbinadaLiveEvent,
+  CfRendaTurbinadaModule
+} from '@prisma/client';
 
 type ModuleWithLessons = CfRendaTurbinadaModule & {
   lessons: CfRendaTurbinadaLesson[];
@@ -25,5 +29,17 @@ export function serializeModule(module: ModuleWithLessons) {
     isHidden: module.isHidden,
     sortOrder: module.sortOrder ?? undefined,
     lessons: module.lessons.map(serializeLesson)
+  };
+}
+
+export function serializeLiveEvent(event: CfRendaTurbinadaLiveEvent) {
+  return {
+    id: event.id,
+    title: event.title,
+    description: event.description ?? undefined,
+    eventDate: event.eventDate.toISOString(),
+    durationMinutes: event.durationMinutes,
+    meetingUrl: event.meetingUrl ?? undefined,
+    isCancelled: event.isCancelled
   };
 }
