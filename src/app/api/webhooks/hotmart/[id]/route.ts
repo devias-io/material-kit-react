@@ -1,15 +1,17 @@
+// src/app/api/webhooks/hotmart/[id]/route.ts
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { hashPassword } from '@/lib/auth/password'; // ✅ ADICIONADO
+import { hashPassword } from '@/lib/auth/password';
 import { activateEntitlement, deactivateEntitlement, isAddonPlan } from '@/lib/entitlements';
+import { enviarEmailCredenciais } from '@/lib/auth/email'; // ✅ ADICIONAR ENVIO DE EMAIL
 
 const prisma = new PrismaClient();
 
 // ✅ TOKEN ÚNICO DA HOTMART CONFIGURADO
 const TOKEN_MAPPING: Record<string, { name: string; plan: string; integrationId: string }> = {
-  'TokendYNZMSBlDXyWPST3VZPSsaqe3JfKYJ': { name: 'Produto Fatos da Bolsa Hotmart', plan: 'VIP', integrationId: 'HM001' }, // Será substituído pela detecção automática
+  'TokendYNZMSBlDXyWPST3VZPSsaqe3JfKYJ': { name: 'Produto Fatos da Bolsa Hotmart', plan: 'VIP', integrationId: 'HM001' },
 };
 
 // 🔍 FUNÇÃO PARA DETECTAR PLANO AUTOMATICAMENTE PELOS SEUS PRODUTOS HOTMART
@@ -22,6 +24,14 @@ const HOTMART_PRODUCT_IDS = {
   AMERICA: new Set(['5325106']),
   RENDA_TURBINADA: new Set(['6558190'])
 };
+
+// ✅ IDs DOS PRODUTOS QUE DEVEM ENVIAR EMAIL AUTOMÁTICO
+const PRODUTOS_COM_EMAIL_AUTOMATICO = new Set([
+  '6558190',  // CF Renda Turbinada
+  // Adicione outros IDs aqui se precisar no futuro:
+  // '4218223',  // Projeto FIIs
+  // '5325106',  // Projeto América
+]);
 
 function normalizarIdHotmart(valor: any): string | null {
   if (!valor && valor !== 0) return null;
@@ -42,7 +52,6 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
   try {
     console.log('🔍 Detectando plano do produto Hotmart:', webhookData);
 
-    // Extrair nome do produto de diferentes campos possíveis da Hotmart
     const productData = webhookData.data?.product || webhookData.product || {};
     const productName = productData?.name || 
                        productData?.product_name ||
@@ -114,10 +123,8 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
       }
     }
 
-    // 🔍 DETECTAR POR NOME (seus produtos reais na Hotmart)
     const produtoLower = productName.toLowerCase();
 
-    // 🌟 CLOSE FRIENDS LITE 2.0 (detectar PRIMEIRO - mais específico)
     if (produtoLower.includes('close friends lite 2.0') || 
         produtoLower.includes('cf lite 2.0') ||
         produtoLower.includes('lite 2.0') ||
@@ -128,7 +135,6 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
       };
     }
     
-    // ⭐ CLOSE FRIENDS LITE ORIGINAL
     if (produtoLower.includes('close friends lite') || 
         produtoLower.includes('cf lite') ||
         (produtoLower.includes('lite') && !produtoLower.includes('2.0') && !produtoLower.includes('v2'))) {
@@ -138,7 +144,6 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
       };
     }
     
-    // 👑 CLOSE FRIENDS VIP
     if (produtoLower.includes('close friends vip') ||
         produtoLower.includes('cf vip') ||
         produtoLower.includes('vip')) {
@@ -148,7 +153,6 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
       };
     }
 
-    // ⚡ CF RENDA TURBINADA
     if (produtoLower.includes('renda turbinada') ||
         produtoLower.includes('cf renda')) {
       return {
@@ -157,7 +161,6 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
       };
     }
     
-    // 🏢 PROJETO FIIs
     if (produtoLower.includes('projeto fiis') || 
         produtoLower.includes('fiis') ||
         produtoLower.includes('fii')) {
@@ -167,7 +170,6 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
       };
     }
     
-    // 💰 PROJETO RENDA PASSIVA
     if (produtoLower.includes('renda passiva') || 
         produtoLower.includes('dividendos')) {
       return { 
@@ -176,7 +178,6 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
       };
     }
     
-    // 🇺🇸 PROJETO AMÉRICA (conhecido como Projeto Trump na Hotmart)
     if (produtoLower.includes('projeto trump') || 
         produtoLower.includes('trump') ||
         produtoLower.includes('projeto américa') || 
@@ -187,14 +188,12 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
       };
     }
     
-    // 🔢 FALLBACK POR VALOR (se não conseguir pelo nome)
     const purchaseData = webhookData.data?.purchase || webhookData.purchase || {};
     const priceData = purchaseData?.price || {};
     const valor = priceData?.value || purchaseData?.amount || webhookData.price || 0;
     console.log(`💰 Valor da compra Hotmart: R$ ${valor}`);
     
     if (valor > 0) {
-      // Ajustar valores conforme seus preços na Hotmart
       if (valor >= 200) {
         return { plan: 'VIP', productName: `Produto VIP Hotmart - R$ ${valor}` };
       } else if (valor >= 150) {
@@ -202,19 +201,16 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
       } else if (valor >= 100) {
         return { plan: 'AMERICA', productName: `Projeto América Hotmart - R$ ${valor}` };
       } else if (valor >= 50) {
-        // Para valores médios, assumir LITE_V2 como padrão (mais recente)
         return { plan: 'LITE_V2', productName: `Close Friends LITE 2.0 Hotmart - R$ ${valor}` };
       } else {
-        // Para valores baixos, assumir LITE original
         return { plan: 'LITE', productName: `Close Friends LITE Hotmart - R$ ${valor}` };
       }
     }
     
-    // 📅 FALLBACK POR DATA (produtos de 2022 para trás são LITE original)
     const createdAt = webhookData.data?.created_at || webhookData.created_at;
     if (createdAt) {
       const productDate = new Date(createdAt);
-      const cutoffDate = new Date('2023-01-01'); // ✅ PRODUTOS ATÉ 2022 = LITE ORIGINAL
+      const cutoffDate = new Date('2023-01-01');
       
       if (productDate < cutoffDate) {
         console.log(`📅 Produto criado em ${productDate.toISOString().split('T')[0]} (antes de 2023) → LITE original`);
@@ -231,7 +227,6 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
       }
     }
     
-    // 🎯 FALLBACK FINAL: VIP como padrão mais seguro
     console.log(`⚠️ Não foi possível detectar o plano Hotmart específico, usando VIP como padrão`);
     return { 
       plan: 'VIP', 
@@ -247,7 +242,6 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
   }
 }
 
-// Função para gerar senha segura
 function generateSecurePassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
   const symbols = '!@#$%&*';
@@ -263,9 +257,7 @@ function generateSecurePassword(): string {
   return password.split('').sort(() => Math.random() - 0.5).join('');
 }
 
-// Calcular data de expiração - TODOS OS PLANOS = 1 ANO
 function calculateExpirationDate(plan: string): Date {
-  // TODOS os planos têm duração de 1 ano (365 dias)
   const expirationDate = new Date();
   expirationDate.setDate(expirationDate.getDate() + 365);
   
@@ -279,10 +271,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = params.id; // Este é o token único da integração
+    const token = params.id;
     console.log(`🔔 Webhook Hotmart recebido para token: ${token}`);
 
-    // Verificar se o token existe
     const integration = TOKEN_MAPPING[token];
     if (!integration) {
       console.log(`❌ Token Hotmart ${token} não encontrado`);
@@ -307,10 +298,8 @@ export async function POST(
 
     console.log('📦 Dados do webhook Hotmart:', JSON.stringify(webhookData, null, 2));
 
-    // 🔍 DETECTAR PLANO AUTOMATICAMENTE (DEPOIS DO PARSE)
     const { plan: planoDetectado, productName: nomeDetectado } = detectarPlanoHotmart(webhookData);
     
-    // ✅ SOBRESCREVER DADOS DA INTEGRAÇÃO COM DETECÇÃO AUTOMÁTICA
     const integrationData = {
       name: nomeDetectado,
       plan: planoDetectado,
@@ -321,11 +310,9 @@ export async function POST(
 
     const isAddonPurchase = isAddonPlan(integrationData.plan);
 
-    // Extrair evento
     const event = webhookData.event || 'PURCHASE_APPROVED';
     console.log(`🎯 Evento Hotmart recebido: ${event}`);
 
-    // Extrair informações básicas para todos os eventos
     const buyerData = webhookData.data?.buyer || webhookData.buyer || webhookData;
     const purchaseData = webhookData.data?.purchase || webhookData.purchase || webhookData;
     const productData = webhookData.data?.product || webhookData.product || webhookData;
@@ -337,14 +324,12 @@ export async function POST(
 
     console.log('🔍 Dados extraídos da Hotmart:', {
       event, buyerEmail, buyerName, transactionId, amount,
-      plan: integrationData.plan, // ✅ CORRIGIDO
-      integrationName: integrationData.name, // ✅ CORRIGIDO
+      plan: integrationData.plan,
+      integrationName: integrationData.name,
       token: token
     });
 
-    // Processar diferentes tipos de eventos
     if (event === 'PURCHASE_REFUNDED' || event === 'PURCHASE_CANCELLED' || event === 'PURCHASE_CHARGEBACK') {
-      // REEMBOLSO/CANCELAMENTO - BLOQUEAR USUÁRIO OU REVOGAR COMPLEMENTO
       console.log(`🚫 Evento de ${event} na Hotmart - avaliando revogação`);
 
       if (!buyerEmail || !buyerEmail.includes('@')) {
@@ -355,7 +340,6 @@ export async function POST(
         }, { status: 400 });
       }
 
-      // Conectar ao banco
       await prisma.$connect();
 
       const email = buyerEmail.toLowerCase().trim();
@@ -380,19 +364,18 @@ export async function POST(
             where: { email },
             data: {
               status: 'INACTIVE',
-              expirationDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Ontem
+              expirationDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
               origin: 'HOTMART'
             }
           });
         }
 
-        // Registrar reembolso
         try {
           await prisma.purchase.create({
             data: {
               userId: user.id,
-              amount: -(amount || 0), // Valor negativo para reembolso
-              productName: `${integrationData.name} - REEMBOLSO`, // ✅ CORRIGIDO
+              amount: -(amount || 0),
+              productName: `${integrationData.name} - REEMBOLSO`,
               hotmartTransactionId: transactionId,
               status: 'REFUNDED'
             }
@@ -433,7 +416,6 @@ export async function POST(
         });
 
       } else {
-        // Usuário não encontrado para reembolso
         await prisma.$disconnect();
         console.log(`⚠️ Usuário ${email} não encontrado para reembolso Hotmart`);
         
@@ -447,7 +429,6 @@ export async function POST(
       }
     }
 
-    // EVENTOS DE COMPRA (comportamento atual mantido)
     if (!['PURCHASE_APPROVED', 'PURCHASE_COMPLETE', 'PURCHASE_PAID'].includes(event)) {
       console.log(`📝 Evento Hotmart ${event} não processado pelo sistema`);
       return NextResponse.json({
@@ -460,7 +441,6 @@ export async function POST(
 
     console.log(`✅ Processando evento de compra Hotmart: ${event}`);
 
-    // Validação mínima
     if (!buyerEmail || !buyerEmail.includes('@')) {
       console.log('❌ Email inválido:', buyerEmail);
       return NextResponse.json({
@@ -469,10 +449,8 @@ export async function POST(
       }, { status: 400 });
     }
 
-    // Conectar ao banco
     await prisma.$connect();
 
-    // Verificar se usuário já existe
     const email = buyerEmail.toLowerCase().trim();
     let user = await prisma.user.findUnique({
       where: { email }
@@ -484,7 +462,6 @@ export async function POST(
     let entitlementExpiration: Date | null = null;
 
     if (user) {
-      // ATUALIZAR usuário existente
       console.log(`🔄 Atualizando usuário existente: ${email}`);
 
       treatedAsAddon = isAddonPurchase && user.plan !== integrationData.plan;
@@ -507,7 +484,7 @@ export async function POST(
         user = await prisma.user.update({
           where: { email },
           data: {
-            plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
+            plan: integrationData.plan,
             status: 'ACTIVE',
             hotmartCustomerId: transactionId,
             expirationDate: nextExpiration,
@@ -519,10 +496,9 @@ export async function POST(
       console.log(`✅ Usuário atualizado via Hotmart: ${email} → ${integrationData.plan} via token ${token}`);
 
     } else {
-      // CRIAR novo usuário
       isNewUser = true;
       tempPassword = generateSecurePassword();
-      const hashedPassword = await hashPassword(tempPassword); // ✅ USANDO HASH SEGURO
+      const hashedPassword = await hashPassword(tempPassword);
 
       console.log(`➕ Criando novo usuário via Hotmart: ${email}`);
 
@@ -538,12 +514,12 @@ export async function POST(
           email: email,
           firstName: firstName,
           lastName: lastName,
-          plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
+          plan: integrationData.plan,
           status: 'ACTIVE',
           hotmartCustomerId: transactionId,
           expirationDate: nextExpiration,
           origin: 'HOTMART',
-          password: hashedPassword, // ✅ USANDO HASH SEGURO
+          password: hashedPassword,
           passwordCreatedAt: new Date(),
           mustChangePassword: true,
           customPermissions: '[]'
@@ -551,6 +527,45 @@ export async function POST(
       });
 
       console.log(`✅ Novo usuário criado via Hotmart: ${email} → ${integrationData.plan} via token ${token}`);
+      
+      // ✅✅✅ ENVIAR EMAIL APENAS PARA PRODUTOS ESPECÍFICOS ✅✅✅
+      if (tempPassword) {
+        // Extrair ID do produto
+        const productId = normalizarIdHotmart(
+          productData?.id ||
+          productData?.product_id ||
+          productData?.prod ||
+          webhookData.product_id ||
+          webhookData.prod ||
+          webhookData.id
+        );
+        
+        console.log(`🔍 Produto ID: ${productId} | Verificando se deve enviar email...`);
+        
+        if (productId && PRODUTOS_COM_EMAIL_AUTOMATICO.has(productId)) {
+          try {
+            console.log(`📧 Produto ${productId} (${integrationData.plan}) está na lista de envio automático`);
+            console.log(`📧 Enviando email de boas-vindas para: ${email}`);
+            
+            await enviarEmailCredenciais(
+              email,
+              firstName,
+              tempPassword,
+              integrationData.plan
+            );
+            
+            console.log(`✅ Email de boas-vindas enviado com sucesso para: ${email}`);
+          } catch (emailError: any) {
+            console.error(`❌ Erro ao enviar email para ${email}:`, emailError.message);
+            console.error(`Stack trace:`, emailError.stack);
+            // Não falhar o webhook por causa de erro no email
+          }
+        } else {
+          console.log(`⏭️ Produto ${productId} não está configurado para envio automático de email`);
+          console.log(`ℹ️ Produtos com email automático: ${Array.from(PRODUTOS_COM_EMAIL_AUTOMATICO).join(', ')}`);
+        }
+      }
+      // ✅✅✅ FIM DO BLOCO DE ENVIO DE EMAIL ✅✅✅
     }
 
     if (isAddonPurchase) {
@@ -564,13 +579,12 @@ export async function POST(
       console.log(`🎁 Complemento ${integrationData.plan} ativo até ${expiresAt.toISOString()}`);
     }
 
-    // Registrar compra
     try {
       await prisma.purchase.create({
         data: {
           userId: user.id,
           amount: amount || 0,
-          productName: integrationData.name, // 🔥 NOME DETECTADO
+          productName: integrationData.name,
           hotmartTransactionId: transactionId,
           status: 'COMPLETED'
         }
@@ -604,7 +618,7 @@ export async function POST(
         plan: user.plan,
         status: user.status,
         isNewUser: isNewUser,
-        tempPassword: isNewUser ? tempPassword : undefined, // ✅ Para debug
+        emailSent: isNewUser && tempPassword ? 'Verificar logs' : 'N/A',
         addonGranted: isAddonPurchase,
         treatedAsAddon,
       },
@@ -642,7 +656,6 @@ export async function POST(
   }
 }
 
-// GET para status da integração
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -667,6 +680,13 @@ export async function GET(
       token: token,
       status: 'ACTIVE',
       webhookUrl: `${new URL(request.url).origin}/api/webhooks/hotmart/${token}`
+    },
+    emailConfig: {
+      autoSendEnabled: true,
+      productsWithAutoEmail: Array.from(PRODUTOS_COM_EMAIL_AUTOMATICO),
+      productsInfo: {
+        '6558190': 'CF Renda Turbinada (EMAIL AUTOMÁTICO ATIVO)'
+      }
     },
     message: `Integração Hotmart ${integration.name} ativa e funcionando`,
     timestamp: new Date().toISOString()
