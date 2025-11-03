@@ -1900,7 +1900,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
       >
         <div style={{ marginBottom: '24px' }}>
           <h2 style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>
-            📅 Calendário de Lives
+            Calendário de Lives
           </h2>
           <p style={{ margin: 0, color: '#64748b', fontSize: '16px', lineHeight: 1.6 }}>
             Participe das lives semanais com conteúdo exclusivo, análises de mercado e tire suas dúvidas em tempo real.
