@@ -2,15 +2,23 @@
 
 import React, { useState, useEffect } from 'react';
 
+import { useUser } from '@/hooks/use-user';
+
 const TelegramPage = () => {
+  const { user } = useUser();
   const [instagram, setInstagram] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [existingInstagram, setExistingInstagram] = useState('');
+  const isRendaTurbinada = user?.plan === 'RENDA_TURBINADA';
 
   // Carregar Instagram existente quando a página carregar
   useEffect(() => {
+    if (isRendaTurbinada) {
+      return;
+    }
+
     const loadExistingInstagram = async () => {
       try {
         const response = await fetch('/api/instagram-cadastro');
@@ -27,11 +35,11 @@ const TelegramPage = () => {
     };
 
     loadExistingInstagram();
-  }, []);
+  }, [isRendaTurbinada]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!instagram.trim()) {
       setError('Por favor, insira seu @ do Instagram');
       return;
@@ -204,10 +212,10 @@ const TelegramPage = () => {
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f5f5f5', 
-      padding: '24px' 
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#f5f5f5',
+      padding: '24px'
     }}>
       {/* Header */}
       <div style={{ 
@@ -222,8 +230,8 @@ const TelegramPage = () => {
         }}>
           📱📲 Recursos Exclusivos
         </h1>
-        <p style={{ 
-          color: '#64748b', 
+        <p style={{
+          color: '#64748b',
           fontSize: '20px',
           margin: '0',
           maxWidth: '700px',
@@ -231,21 +239,24 @@ const TelegramPage = () => {
           marginRight: 'auto',
           lineHeight: '1.6'
         }}>
-          Configure seu acesso aos conteúdos exclusivos do Instagram e Telegram
+          {isRendaTurbinada
+            ? 'Acesse diretamente o conteúdo exclusivo do Telegram'
+            : 'Configure seu acesso aos conteúdos exclusivos do Instagram e Telegram'}
         </p>
       </div>
 
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        
+
         {/* 📱 SEÇÃO INSTAGRAM */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '16px',
-          padding: '32px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-          marginBottom: '32px'
-        }}>
+        {!isRendaTurbinada && (
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            padding: '32px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+            marginBottom: '32px'
+          }}>
           <h2 style={{
             fontSize: '24px',
             fontWeight: '700',
@@ -480,6 +491,7 @@ const TelegramPage = () => {
             </ul>
           </div>
         </div>
+        )}
 
         {/* 📲 SEÇÃO TELEGRAM */}
         <div style={{
