@@ -48,7 +48,7 @@ const RECURSOS: Recurso[] = [
   },
   {
     key: 'recursos-telegram',
-    title: 'Telegram e Stories',
+    title: 'Acesso ao Telegram',
     description: 'Entre no nosso grupo exclusivo para dicas, análises e discussões sobre investimentos',
     href: '/dashboard/recursos-exclusivos/telegram',
     icon: '💬',
