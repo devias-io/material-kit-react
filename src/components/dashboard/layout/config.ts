@@ -55,6 +55,13 @@ export const navItems = [
         page: 'cf-renda-turbinada-aulas'
       },
       {
+        key: 'cf-renda-turbinada-bastidores',
+        title: 'Bastidores da Bolsa',
+        href: paths.dashboard.cfRendaTurbinadaBastidores,
+        icon: 'briefcase',
+        page: 'cf-renda-turbinada-bastidores'
+      },
+      {
         key: 'cf-renda-turbinada-carteira',
         title: 'Carteira Recomendada',
         href: paths.dashboard.cfRendaTurbinadaCarteira,

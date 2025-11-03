@@ -45,8 +45,8 @@ const planPermissions = {
     displayName: 'CF Renda Turbinada',
     isAdmin: false,
     pages: [
-      'cf-renda-turbinada', 'cf-renda-turbinada-aulas', 'cf-renda-turbinada-carteira',
-      'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
+      'cf-renda-turbinada', 'cf-renda-turbinada-aulas', 'cf-renda-turbinada-bastidores', 'cf-renda-turbinada-carteira',
+      'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
       'recursos-reserva'
     ]
   },
@@ -65,7 +65,7 @@ const planPermissions = {
     pages: [
       'small-caps', 'micro-caps', 'dividendos', 'fundos-imobiliarios', 'rentabilidades',
       'internacional', 'internacional-etfs', 'internacional-stocks', 'internacional-dividendos', 'internacional-projeto-america',
-      'cf-renda-turbinada', 'cf-renda-turbinada-aulas', 'cf-renda-turbinada-carteira',
+      'cf-renda-turbinada', 'cf-renda-turbinada-aulas', 'cf-renda-turbinada-bastidores', 'cf-renda-turbinada-carteira',
       'recursos-exclusivos', 'recursos-dicas', 'recursos-analise', 'recursos-ebooks',
       'recursos-imposto', 'recursos-lives', 'recursos-milhas', 'recursos-planilhas', 'recursos-telegram',
       'recursos-reserva',

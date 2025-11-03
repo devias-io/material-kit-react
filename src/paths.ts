@@ -20,6 +20,7 @@ export const paths = {
     rentabilidades: '/dashboard/rentabilidades',
     cfRendaTurbinada: '/dashboard/cf-renda-turbinada',
     cfRendaTurbinadaAulas: '/dashboard/cf-renda-turbinada/aulas',
+    cfRendaTurbinadaBastidores: '/dashboard/cf-renda-turbinada/bastidores-da-bolsa',
     cfRendaTurbinadaCarteira: '/dashboard/cf-renda-turbinada/carteira-recomendada',
     
     // 🛡️ ROTAS ADMINISTRATIVAS
