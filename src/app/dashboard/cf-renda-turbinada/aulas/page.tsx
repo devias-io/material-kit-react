@@ -793,7 +793,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'
               }}
             >
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
                 Título da aula
                 <input
                   type="text"
@@ -808,7 +808,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                   required
                 />
               </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
                 Duração
                 <input
                   type="text"
@@ -829,7 +829,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                   flexDirection: 'column',
                   gap: '6px',
                   fontSize: '14px',
-                  color: '#0f172a',
+                  color: '#010101',
                   gridColumn: '1 / -1'
                 }}
               >
@@ -847,7 +847,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                   }}
                 />
               </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
                 Link do vídeo (opcional)
                 <input
                   type="url"
@@ -867,7 +867,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                   flexDirection: 'column',
                   gap: '6px',
                   fontSize: '14px',
-                  color: '#0f172a',
+                  color: '#010101',
                   gridColumn: '1 / -1'
                 }}
               >
@@ -913,7 +913,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                   style={{
                     border: '1px solid #cbd5f5',
                     backgroundColor: 'transparent',
-                    color: '#0f172a',
+                    color: '#010101',
                     borderRadius: '10px',
                     padding: '10px 18px',
                     fontWeight: 600,
@@ -947,7 +947,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
           ) : (
             <>
 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>{lesson.title}</h3>
+  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#010101' }}>{lesson.title}</h3>
 </div>
               {lesson.description && (
                 <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>{lesson.description}</p>
@@ -958,7 +958,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                     width: '100%',
                     borderRadius: '12px',
                     overflow: 'hidden',
-                    backgroundColor: '#0f172a'
+                    backgroundColor: '#010101'
                   }}
                 >
                   <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
@@ -988,7 +988,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                     padding: '12px 16px'
                   }}
                 >
-                  <p style={{ margin: 0, color: '#0f172a', fontSize: '14px', lineHeight: 1.6 }}>{lesson.content}</p>
+                  <p style={{ margin: 0, color: '#010101', fontSize: '14px', lineHeight: 1.6 }}>{lesson.content}</p>
                 </div>
               )}
               {!enhancedEmbedSrc && lesson.videoUrl && (
@@ -1131,7 +1131,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
         >
           <div
             style={{
-              backgroundColor: '#0f172a',
+              backgroundColor: '#010101',
               color: '#f8fafc',
               borderRadius: '16px',
               padding: '24px',
@@ -1156,7 +1156,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                 style={{
                   border: '1px solid #38bdf8',
                   backgroundColor: viewAsStudent ? '#38bdf8' : 'transparent',
-                  color: viewAsStudent ? '#0f172a' : '#f8fafc',
+                  color: viewAsStudent ? '#010101' : '#f8fafc',
                   borderRadius: '9999px',
                   padding: '10px 18px',
                   fontWeight: 600,
@@ -1182,7 +1182,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
               boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)'
             }}
           >
-            <h2 style={{ margin: '0 0 12px 0', fontSize: '20px', color: '#0f172a' }}>Adicionar novo módulo</h2>
+            <h2 style={{ margin: '0 0 12px 0', fontSize: '20px', color: '#010101' }}>Adicionar novo módulo</h2>
             <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#475569' }}>
               Informe a data prevista de liberação e um resumo do conteúdo. Depois de criado, você pode incluir aulas individualmente.
             </p>
@@ -1190,7 +1190,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
               onSubmit={handleAddModule}
               style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}
             >
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
                 Título do módulo
                 <input
                   type="text"
@@ -1206,7 +1206,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                   required
                 />
               </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
                 Data de liberação
                 <input
                   type="datetime-local"
@@ -1227,7 +1227,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                   flexDirection: 'column',
                   gap: '6px',
                   fontSize: '14px',
-                  color: '#0f172a',
+                  color: '#010101',
                   gridColumn: '1 / -1'
                 }}
               >
@@ -1285,7 +1285,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
               textAlign: 'center'
             }}
           >
-            <h2 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '20px' }}>Carregando módulos...</h2>
+            <h2 style={{ margin: '0 0 12px 0', color: '#010101', fontSize: '20px' }}>Carregando módulos...</h2>
             <p style={{ margin: 0, color: '#475569', fontSize: '14px' }}>Aguarde um instante enquanto buscamos os conteúdos mais recentes.</p>
           </div>
         ) : fetchError ? (
@@ -1315,7 +1315,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
               textAlign: 'center'
             }}
           >
-            <h2 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '20px' }}>
+            <h2 style={{ margin: '0 0 12px 0', color: '#010101', fontSize: '20px' }}>
               {isAdmin && !viewAsStudent ? 'Nenhum módulo cadastrado ainda.' : 'Os conteúdos serão liberados em breve.'}
             </h2>
             <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
@@ -1348,7 +1348,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
-<span style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+<span style={{ fontSize: '14px', fontWeight: 600, color: '#010101', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
   {module.title}
 </span>
                     {isAdmin && (
@@ -1372,9 +1372,9 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                           type="button"
                           onClick={() => handleToggleModuleVisibility(module.id, isHidden)}
                           style={{
-                            border: '1px solid #0f172a',
-                            backgroundColor: isHidden ? '#0f172a' : 'transparent',
-                            color: isHidden ? '#f8fafc' : '#0f172a',
+                            border: '1px solid #010101',
+                            backgroundColor: isHidden ? '#010101' : 'transparent',
+                            color: isHidden ? '#f8fafc' : '#010101',
                             borderRadius: '9999px',
                             padding: '8px 16px',
                             fontSize: '12px',
@@ -1464,7 +1464,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                         alignSelf: 'flex-start',
                         border: '1px solid #0ea5e9',
                         backgroundColor: openLessonModule === module.id ? '#0ea5e9' : 'transparent',
-                        color: openLessonModule === module.id ? '#0f172a' : '#0ea5e9',
+                        color: openLessonModule === module.id ? '#010101' : '#0ea5e9',
                         borderRadius: '9999px',
                         padding: '10px 18px',
                         fontWeight: 600,
@@ -1490,7 +1490,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                           padding: '20px'
                         }}
                       >
-                        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
                           Título da aula
                           <input
                             type="text"
@@ -1506,7 +1506,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                             required
                           />
                         </label>
-                        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
                           Duração
                           <input
                             type="text"
@@ -1528,7 +1528,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                             flexDirection: 'column',
                             gap: '6px',
                             fontSize: '14px',
-                            color: '#0f172a',
+                            color: '#010101',
                             gridColumn: '1 / -1'
                           }}
                         >
@@ -1547,7 +1547,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                             }}
                           />
                         </label>
-                        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
                           Link do vídeo (opcional)
                           <input
                             type="url"
@@ -1568,7 +1568,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                             flexDirection: 'column',
                             gap: '6px',
                             fontSize: '14px',
-                            color: '#0f172a',
+                            color: '#010101',
                             gridColumn: '1 / -1'
                           }}
                         >
@@ -1602,7 +1602,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                             style={{
                               border: '1px solid #cbd5f5',
                               backgroundColor: 'transparent',
-                              color: '#0f172a',
+                              color: '#010101',
                               borderRadius: '10px',
                               padding: '10px 18px',
                               fontWeight: 600,
@@ -1644,7 +1644,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
 
       <div
         style={{
-          backgroundColor: '#0f172a',
+          backgroundColor: '#010101',
           color: '#f8fafc',
           borderRadius: '16px',
           padding: '28px',
@@ -1663,7 +1663,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
           style={{
             background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
             border: 'none',
-            color: '#0f172a',
+            color: '#010101',
             fontWeight: 700,
             fontSize: '14px',
             padding: '12px 20px',
