@@ -22,6 +22,7 @@ import { Lightbulb } from '@phosphor-icons/react/dist/ssr/Lightbulb';
 import { ChartLine } from '@phosphor-icons/react/dist/ssr/ChartLine';
 import { Star } from '@phosphor-icons/react/dist/ssr/Star';
 import { Shield } from '@phosphor-icons/react/dist/ssr/Shield';
+import { Briefcase } from '@phosphor-icons/react/dist/ssr/Briefcase';
 // 🛡️ NOVOS ÍCONES ADMINISTRATIVOS
 import { Gear } from '@phosphor-icons/react/dist/ssr/Gear';
 import { ShieldCheck } from '@phosphor-icons/react/dist/ssr/ShieldCheck';
@@ -49,6 +50,7 @@ export const navIcons = {
   'users': UsersIcon,
   'globe': Globe,
   'package': Package,
+  'briefcase': Briefcase,
   
   // Ícones dos recursos exclusivos
   'lightbulb': Lightbulb,         // Para Dicas de Investimentos
