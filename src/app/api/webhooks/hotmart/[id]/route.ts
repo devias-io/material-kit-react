@@ -19,7 +19,8 @@ const HOTMART_PRODUCT_IDS = {
   VIP: new Set(['1128762', '1762716', '2163067', '5060349', '1650879', '3670772', '2947386']),
   FIIS: new Set(['4218223']),
   RENDA_PASSIVA: new Set(['3547657']),
-  AMERICA: new Set(['5325106'])
+  AMERICA: new Set(['5325106']),
+  RENDA_TURBINADA: new Set(['6558190'])
 };
 
 function normalizarIdHotmart(valor: any): string | null {
@@ -104,11 +105,18 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
           productName: `Projeto Trump (América) Hotmart - Produto ${productId}`
         };
       }
+
+      if (HOTMART_PRODUCT_IDS.RENDA_TURBINADA.has(productId)) {
+        return {
+          plan: 'RENDA_TURBINADA',
+          productName: `CF Renda Turbinada Hotmart - Produto ${productId}`
+        };
+      }
     }
 
     // 🔍 DETECTAR POR NOME (seus produtos reais na Hotmart)
     const produtoLower = productName.toLowerCase();
-    
+
     // 🌟 CLOSE FRIENDS LITE 2.0 (detectar PRIMEIRO - mais específico)
     if (produtoLower.includes('close friends lite 2.0') || 
         produtoLower.includes('cf lite 2.0') ||
@@ -131,12 +139,21 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
     }
     
     // 👑 CLOSE FRIENDS VIP
-    if (produtoLower.includes('close friends vip') || 
+    if (produtoLower.includes('close friends vip') ||
         produtoLower.includes('cf vip') ||
         produtoLower.includes('vip')) {
-      return { 
-        plan: 'VIP', 
-        productName: `Close Friends VIP Hotmart - ${productName}` 
+      return {
+        plan: 'VIP',
+        productName: `Close Friends VIP Hotmart - ${productName}`
+      };
+    }
+
+    // ⚡ CF RENDA TURBINADA
+    if (produtoLower.includes('renda turbinada') ||
+        produtoLower.includes('cf renda')) {
+      return {
+        plan: 'RENDA_TURBINADA',
+        productName: `CF Renda Turbinada Hotmart - ${productName}`
       };
     }
     
