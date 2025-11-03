@@ -268,7 +268,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               marginBottom: '16px'
             }}
           >
-            Conteúdo protegido
+            Em breve
           </h1>
 
           <p
@@ -290,7 +290,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               lineHeight: 1.6
             }}
           >
-            Até lá, apenas administradores podem visualizar a carteira recomendada.
+           Em breve você poderá visualizar a carteira recomendada.
           </p>
         </div>
       </div>
