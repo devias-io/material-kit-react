@@ -46,7 +46,7 @@ const planPermissions = {
     isAdmin: false,
     pages: [
       'cf-renda-turbinada', 'cf-renda-turbinada-aulas', 'cf-renda-turbinada-carteira',
-      'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
+      'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
       'recursos-reserva'
     ]
   },
