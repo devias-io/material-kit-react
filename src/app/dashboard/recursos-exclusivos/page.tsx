@@ -133,8 +133,8 @@ export default function RecursosExclusivos(): React.JSX.Element {
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
+    <div style={{
+      minHeight: '100vh',
       backgroundColor: '#f5f5f5', 
       padding: '24px' 
     }}>
