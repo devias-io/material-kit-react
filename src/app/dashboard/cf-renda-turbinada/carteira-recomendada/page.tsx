@@ -2,6 +2,9 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import { Lock } from 'lucide-react';
+
+import { useAuthAccess } from '@/hooks/use-auth-access';
 import { useDataStore } from '@/hooks/useDataStore';
 
 type StepCard = {
@@ -103,6 +106,8 @@ const formatPercentage = (value: number | null | undefined): string => {
 
 export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   const router = useRouter();
+  const { planInfo, loading: authLoading } = useAuthAccess();
+  const isAdmin = planInfo.isAdmin;
   const {
     dados,
     cotacoes,
@@ -114,10 +119,18 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   const isMobile = useDeviceDetection();
 
   const ativosOriginais = React.useMemo(() => {
+    if (!isAdmin) {
+      return [];
+    }
+
     return Array.isArray(dados?.cfRendaTurbinada) ? dados.cfRendaTurbinada : [];
-  }, [dados?.cfRendaTurbinada]);
+  }, [dados?.cfRendaTurbinada, isAdmin]);
 
   React.useEffect(() => {
+    if (!isAdmin) {
+      return;
+    }
+
     const tickers = Array.from(
       new Set(
         ativosOriginais
@@ -129,7 +142,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
     if (tickers.length > 0) {
       buscarCotacoes(tickers);
     }
-  }, [ativosOriginais, buscarCotacoes]);
+  }, [ativosOriginais, buscarCotacoes, isAdmin]);
 
   const ativosProcessados = React.useMemo(() => {
     return ativosOriginais
@@ -207,6 +220,82 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
 
   const isLoadingCarteira = loading || isLoading;
   const carteiraVazia = !isLoadingCarteira && ativosProcessados.length === 0;
+
+  if (!authLoading && !isAdmin) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          backgroundColor: '#f5f5f5',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px'
+        }}
+      >
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '520px',
+            backgroundColor: '#ffffff',
+            borderRadius: '20px',
+            padding: '48px 32px',
+            textAlign: 'center',
+            boxShadow: '0 24px 60px rgba(15, 23, 42, 0.12)',
+            border: '1px solid #e2e8f0'
+          }}
+        >
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '88px',
+              height: '88px',
+              borderRadius: '9999px',
+              backgroundColor: '#fee2e2',
+              marginBottom: '24px'
+            }}
+          >
+            <Lock size={40} style={{ color: '#dc2626' }} />
+          </div>
+
+          <h1
+            style={{
+              fontSize: '28px',
+              fontWeight: 700,
+              color: '#0f172a',
+              marginBottom: '16px'
+            }}
+          >
+            Conteúdo protegido
+          </h1>
+
+          <p
+            style={{
+              fontSize: '18px',
+              color: '#1f2937',
+              marginBottom: '12px',
+              lineHeight: 1.6
+            }}
+          >
+            Esta página ficará disponível para os assinantes a partir de{' '}
+            <strong>11/11/2025</strong>.
+          </p>
+
+          <p
+            style={{
+              fontSize: '16px',
+              color: '#4b5563',
+              lineHeight: 1.6
+            }}
+          >
+            Até lá, apenas administradores podem visualizar a carteira recomendada.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
