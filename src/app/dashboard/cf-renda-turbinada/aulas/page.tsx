@@ -2524,38 +2524,6 @@ visibleModules.map(module => {
         </div>
       </div>
 
-      <div
-        style={{
-          backgroundColor: '#010101',
-          color: '#f8fafc',
-          borderRadius: '16px',
-          padding: '28px',
-          maxWidth: '1100px',
-          margin: '0 auto'
-        }}
-      >
-        <h2 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: 700 }}>Próximos passos</h2>
-        <p style={{ margin: '0 0 16px 0', fontSize: '16px', lineHeight: 1.6 }}>
-          Após assistir às aulas, acesse a Carteira Recomendada para acompanhar as operações sugeridas e configure alertas no Profit
-          para executar os movimentos com disciplina. Se pintar qualquer dúvida, marque os minutos da aula e envie para o suporte.
-        </p>
-        <button
-          type="button"
-          onClick={() => router.push('/dashboard/cf-renda-turbinada/carteira-recomendada')}
-          style={{
-            background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-            border: 'none',
-            color: '#010101',
-            fontWeight: 700,
-            fontSize: '14px',
-            padding: '12px 20px',
-            borderRadius: '10px',
-            cursor: 'pointer'
-          }}
-        >
-          Ver Carteira Recomendada →
-        </button>
-      </div>
     </div>
   );
 }
