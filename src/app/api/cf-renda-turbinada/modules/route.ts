@@ -28,10 +28,7 @@ export async function GET(request: NextRequest) {
       where: isAdmin
         ? undefined
         : {
-            isHidden: false,
-            releaseDate: {
-              lte: now
-            }
+            isHidden: false
           },
       orderBy: [
         { releaseDate: 'asc' },
@@ -48,7 +45,28 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ modules: modules.map(serializeModule) });
+    const serializedModules = modules.map(module => {
+      const baseModule = serializeModule(module);
+      const releaseTimestamp = module.releaseDate instanceof Date
+        ? module.releaseDate.getTime()
+        : Number.NaN;
+      const isReleased = !Number.isNaN(releaseTimestamp) && releaseTimestamp <= now.getTime();
+
+      if (isAdmin || isReleased) {
+        return {
+          ...baseModule,
+          isReleased
+        };
+      }
+
+      return {
+        ...baseModule,
+        isReleased,
+        lessons: []
+      };
+    });
+
+    return NextResponse.json({ modules: serializedModules });
   } catch (error) {
     console.error('Erro ao listar módulos do CF Renda Turbinada:', error);
     return NextResponse.json({ error: 'Erro ao listar módulos' }, { status: 500 });
