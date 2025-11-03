@@ -39,10 +39,7 @@ export const PLAN_PERMISSIONS = {
     displayName: 'Projeto Renda Passiva',
     isAdmin: false,
     pages: [
-      'relatorio-semanal',
-      'dividendos', 'fundos-imobiliarios', 'rentabilidades',
-      'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
-      'recursos-reserva', 'recursos-suporte'
+      'dividendos', 'fundos-imobiliarios', 'rentabilidades'
     ]
   },
   'FIIS': {
