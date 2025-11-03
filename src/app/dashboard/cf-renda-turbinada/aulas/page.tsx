@@ -49,6 +49,15 @@ function createEmptyLessonForm(): LessonFormState {
   };
 }
 
+function renderTextWithLineBreaks(text: string): React.ReactNode {
+  return text.split('\n').map((line, index, array) => (
+    <React.Fragment key={index}>
+      {line}
+      {index < array.length - 1 && <br />}
+    </React.Fragment>
+  ));
+}
+
 type VideoProvider = 'vimeo' | 'youtube';
 
 interface VideoEmbedConfig {
@@ -949,9 +958,11 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
   <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#010101' }}>{lesson.title}</h3>
 </div>
-              {lesson.description && (
-                <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>{lesson.description}</p>
-              )}
+{lesson.description && (
+  <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
+    {renderTextWithLineBreaks(lesson.description)}
+  </p>
+)}
               {enhancedEmbedSrc && (
                 <div
                   style={{
@@ -980,17 +991,19 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                   </div>
                 </div>
               )}
-              {lesson.content && (
-                <div
-                  style={{
-                    backgroundColor: '#e0f2fe',
-                    borderRadius: '10px',
-                    padding: '12px 16px'
-                  }}
-                >
-                  <p style={{ margin: 0, color: '#010101', fontSize: '14px', lineHeight: 1.6 }}>{lesson.content}</p>
-                </div>
-              )}
+{lesson.content && (
+  <div
+    style={{
+      backgroundColor: '#e0f2fe',
+      borderRadius: '10px',
+      padding: '12px 16px'
+    }}
+  >
+    <p style={{ margin: 0, color: '#010101', fontSize: '14px', lineHeight: 1.6 }}>
+      {renderTextWithLineBreaks(lesson.content)}
+    </p>
+  </div>
+)}
               {!enhancedEmbedSrc && lesson.videoUrl && (
                 <a
                   href={lesson.videoUrl}
