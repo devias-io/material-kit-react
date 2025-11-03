@@ -49,6 +49,170 @@ function createEmptyLessonForm(): LessonFormState {
   };
 }
 
+type VideoProvider = 'vimeo' | 'youtube';
+
+interface VideoEmbedConfig {
+  src: string;
+  provider: VideoProvider;
+}
+
+function parseYouTubeStartParam(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return null;
+  }
+
+  if (/^\d+$/.test(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  const timePattern = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/i;
+  const match = trimmedValue.match(timePattern);
+
+  if (!match || match[0].length === 0) {
+    return null;
+  }
+
+  const hours = match[1] ? Number.parseInt(match[1], 10) : 0;
+  const minutes = match[2] ? Number.parseInt(match[2], 10) : 0;
+  const seconds = match[3] ? Number.parseInt(match[3], 10) : 0;
+  const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+
+  return totalSeconds > 0 ? String(totalSeconds) : null;
+}
+
+function getVideoEmbedConfig(videoUrl?: string): VideoEmbedConfig | null {
+  if (!videoUrl) {
+    return null;
+  }
+
+  const trimmedUrl = videoUrl.trim();
+
+  if (!trimmedUrl) {
+    return null;
+  }
+
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(trimmedUrl);
+  } catch (error) {
+    console.error('URL de vídeo inválida:', error);
+    return null;
+  }
+
+  const host = parsedUrl.hostname.replace(/^www\./, '');
+
+  if (host === 'player.vimeo.com') {
+    if (parsedUrl.pathname.includes('/video/')) {
+      return {
+        src: `https://player.vimeo.com${parsedUrl.pathname}${parsedUrl.search}`,
+        provider: 'vimeo'
+      };
+    }
+
+    return null;
+  }
+
+  if (host.endsWith('vimeo.com')) {
+    const segments = parsedUrl.pathname.split('/').filter(Boolean);
+    const videoId = segments.pop();
+
+    if (videoId) {
+      return {
+        src: `https://player.vimeo.com/video/${videoId}${parsedUrl.search}`,
+        provider: 'vimeo'
+      };
+    }
+  }
+
+  if (host === 'youtu.be') {
+    const segments = parsedUrl.pathname.split('/').filter(Boolean);
+    const videoId = segments.pop();
+
+    if (videoId) {
+      const params = new URLSearchParams();
+      const startParam = parseYouTubeStartParam(parsedUrl.searchParams.get('t') ?? parsedUrl.searchParams.get('start'));
+
+      if (startParam) {
+        params.set('start', startParam);
+      }
+
+      const query = params.toString();
+
+      return {
+        src: `https://www.youtube.com/embed/${videoId}${query ? `?${query}` : ''}`,
+        provider: 'youtube'
+      };
+    }
+  }
+
+  if (host.endsWith('youtube.com')) {
+    if (parsedUrl.pathname.startsWith('/embed/')) {
+      return {
+        src: `https://www.youtube.com${parsedUrl.pathname}${parsedUrl.search}`,
+        provider: 'youtube'
+      };
+    }
+
+    const videoId = parsedUrl.searchParams.get('v');
+
+    if (videoId) {
+      const params = new URLSearchParams();
+      const listParam = parsedUrl.searchParams.get('list');
+      const startParam = parseYouTubeStartParam(parsedUrl.searchParams.get('t') ?? parsedUrl.searchParams.get('start'));
+
+      if (listParam) {
+        params.set('list', listParam);
+      }
+
+      if (startParam) {
+        params.set('start', startParam);
+      }
+
+      const query = params.toString();
+
+      return {
+        src: `https://www.youtube.com/embed/${videoId}${query ? `?${query}` : ''}`,
+        provider: 'youtube'
+      };
+    }
+  }
+
+  return null;
+}
+
+function enhanceEmbedSrc(config: VideoEmbedConfig): string {
+  try {
+    const embedUrl = new URL(config.src);
+
+    if (config.provider === 'vimeo') {
+      embedUrl.searchParams.set('title', '0');
+      embedUrl.searchParams.set('byline', '0');
+      embedUrl.searchParams.set('portrait', '0');
+      embedUrl.searchParams.set('transparent', '0');
+    }
+
+    if (config.provider === 'youtube') {
+      if (!embedUrl.searchParams.has('rel')) {
+        embedUrl.searchParams.set('rel', '0');
+      }
+
+      embedUrl.searchParams.set('modestbranding', '1');
+    }
+
+    return embedUrl.toString();
+  } catch (error) {
+    console.error('Não foi possível ajustar a URL de incorporação do vídeo:', error);
+    return config.src;
+  }
+}
+
 
 function formatReleaseDate(isoDate: string): string {
   const date = new Date(isoDate);
@@ -591,6 +755,8 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
     (moduleId: string, lesson: Lesson, index: number) => {
       const lessonKey = `${moduleId}-${index}`;
       const isEditing = editingLessonKey === lessonKey;
+      const embedConfig = getVideoEmbedConfig(lesson.videoUrl);
+      const enhancedEmbedSrc = embedConfig ? enhanceEmbedSrc(embedConfig) : null;
 
       return (
         <div
@@ -785,6 +951,34 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
               {lesson.description && (
                 <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>{lesson.description}</p>
               )}
+              {enhancedEmbedSrc && (
+                <div
+                  style={{
+                    width: '100%',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    backgroundColor: '#0f172a'
+                  }}
+                >
+                  <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+                    <iframe
+                      src={enhancedEmbedSrc}
+                      title={`Vídeo da aula ${lesson.title}`}
+                      allow="autoplay; fullscreen; picture-in-picture"
+                      allowFullScreen
+                      loading="lazy"
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        border: 0
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
               {lesson.content && (
                 <div
                   style={{
@@ -796,7 +990,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                   <p style={{ margin: 0, color: '#0f172a', fontSize: '14px', lineHeight: 1.6 }}>{lesson.content}</p>
                 </div>
               )}
-              {lesson.videoUrl && (
+              {!enhancedEmbedSrc && lesson.videoUrl && (
                 <a
                   href={lesson.videoUrl}
                   target="_blank"
