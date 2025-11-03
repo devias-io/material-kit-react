@@ -6,19 +6,22 @@ import { useRouter } from 'next/navigation';
 import { useAuthAccess } from '@/hooks/use-auth-access';
 
 interface Lesson {
+  id?: number;
   title: string;
   duration: string;
   description?: string;
   videoUrl?: string;
   content?: string;
+  sortOrder?: number;
 }
 
 interface Module {
   id: string;
   title: string;
-  highlight: string;
+  highlight?: string;
   releaseDate: string;
   isHidden?: boolean;
+  sortOrder?: number;
   lessons: Lesson[];
 }
 
@@ -46,100 +49,6 @@ function createEmptyLessonForm(): LessonFormState {
   };
 }
 
-const initialModules: Module[] = [
-  {
-    id: 'parte-1',
-    title: 'Parte 1 – Fundamentos e Setup',
-    highlight: 'Tudo o que você precisa para começar com segurança e dominar a base do mercado de opções.',
-    releaseDate: '2024-08-05T09:00:00-03:00',
-    lessons: [
-      {
-        title: 'Como abrir conta na corretora e acessar o Profit',
-        duration: '10 min',
-        description: 'Passo a passo completo para habilitar o home broker, configurar o Profit e operar sem travar.'
-      },
-      {
-        title: 'O que são opções (call, put, vencimento, strike, exemplos práticos)',
-        duration: '20 min',
-        description: 'Entenda a lógica por trás das opções com exemplos reais e linguagem simples.'
-      },
-      {
-        title: 'Fatores que influenciam no preço',
-        duration: '20 min',
-        description: 'Tempo, volatilidade, juros e preço do ativo explicados na prática para você precificar com confiança.'
-      }
-    ]
-  },
-  {
-    id: 'parte-2',
-    title: 'Parte 2 – Operações Básicas',
-    highlight: 'Estratégias essenciais para gerar renda com risco controlado.',
-    releaseDate: '2024-08-12T09:00:00-03:00',
-    lessons: [
-      {
-        title: 'Como vender put (coberta e descoberta, quando usar cada uma)',
-        duration: '10 min',
-        description: 'Escolha a estrutura correta para receber prêmios com segurança e saber quando ficar de fora.'
-      },
-      {
-        title: 'Como vender call (coberta e descoberta)',
-        duration: '10 min',
-        description: 'Passo a passo para operar calls e proteger sua carteira.'
-      },
-      {
-        title: 'Riscos: margem, assignment, liquidez, ajuste de posição',
-        duration: '15 min',
-        description: 'Aprenda a calcular a margem exigida, lidar com exercício e ajustar operações antes do vencimento.'
-      },
-      {
-        title: 'Pó e exercício (estratégia do pó, exercício automático/manual)',
-        duration: '10 min',
-        description: 'Entenda como funciona a estratégia do pó e como agir no dia do exercício.'
-      }
-    ]
-  },
-  {
-    id: 'parte-3',
-    title: 'Parte 3 – Estratégia e Análise',
-    highlight: 'Combine leitura de mercado com estruturas para turbinar a renda mensal.',
-    releaseDate: '2024-08-19T09:00:00-03:00',
-    lessons: [
-      {
-        title: 'Análise técnica básica (suporte, resistência, candles de reversão)',
-        duration: '20 min',
-        description: 'Identifique zonas de oportunidade e pontos de saída com clareza.'
-      },
-      {
-        title: 'Travas com opções',
-        duration: '15 min',
-        description: 'Como montar travas de alta e baixa para proteger lucro e reduzir risco.'
-      },
-      {
-        title: '4 estruturas avançadas',
-        duration: '15 min',
-        description: 'Estratégias selecionadas para cenários específicos com exemplos reais.'
-      }
-    ]
-  },
-  {
-    id: 'parte-4',
-    title: 'Parte 4 – Execução e Diferencial',
-    highlight: 'Transforme conhecimento em resultado seguindo o plano sem desviar do método.',
-    releaseDate: '2024-08-26T09:00:00-03:00',
-    lessons: [
-      {
-        title: 'Como seguir todas as recomendações (disciplina, gestão de risco, carteira mensal)',
-        duration: '15 min',
-        description: 'Organize sua rotina semanal, ajuste tamanho de posição e mantenha a consistência.'
-      },
-      {
-        title: 'Como usar IA para analisar opções',
-        duration: '10 min',
-        description: 'Ferramentas de inteligência artificial para validar cenários e acelerar decisões.'
-      }
-    ]
-  }
-];
 
 function formatReleaseDate(isoDate: string): string {
   const date = new Date(isoDate);
@@ -157,17 +66,55 @@ function formatReleaseDate(isoDate: string): string {
   }).format(date);
 }
 
+function sortLessonsByOrder(lessons: Lesson[]): Lesson[] {
+  return [...lessons].sort((lessonA, lessonB) => {
+    const orderA = lessonA.sortOrder ?? Number.MAX_SAFE_INTEGER;
+    const orderB = lessonB.sortOrder ?? Number.MAX_SAFE_INTEGER;
+
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+
+    return lessonA.title.localeCompare(lessonB.title);
+  });
+}
+
+function sortModulesBySchedule(modules: Module[]): Module[] {
+  return [...modules].sort((moduleA, moduleB) => {
+    const releaseA = new Date(moduleA.releaseDate).getTime();
+    const releaseB = new Date(moduleB.releaseDate).getTime();
+    const hasValidReleaseA = !Number.isNaN(releaseA);
+    const hasValidReleaseB = !Number.isNaN(releaseB);
+
+    if (hasValidReleaseA && hasValidReleaseB && releaseA !== releaseB) {
+      return releaseA - releaseB;
+    }
+
+    if (hasValidReleaseA && !hasValidReleaseB) {
+      return -1;
+    }
+
+    if (!hasValidReleaseA && hasValidReleaseB) {
+      return 1;
+    }
+
+    const orderA = moduleA.sortOrder ?? Number.MAX_SAFE_INTEGER;
+    const orderB = moduleB.sortOrder ?? Number.MAX_SAFE_INTEGER;
+
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+
+    return moduleA.title.localeCompare(moduleB.title);
+  });
+}
+
 export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const router = useRouter();
   const { planInfo } = useAuthAccess();
   const isAdmin = planInfo.isAdmin;
-  const [modules, setModules] = React.useState<Module[]>(initialModules);
-  const [lessonForms, setLessonForms] = React.useState<Record<string, LessonFormState>>(() =>
-    initialModules.reduce<Record<string, LessonFormState>>((acc, module) => {
-      acc[module.id] = createEmptyLessonForm();
-      return acc;
-    }, {})
-  );
+  const [modules, setModules] = React.useState<Module[]>([]);
+  const [lessonForms, setLessonForms] = React.useState<Record<string, LessonFormState>>({});
   const [lessonErrors, setLessonErrors] = React.useState<Record<string, string | null>>({});
   const [openLessonModule, setOpenLessonModule] = React.useState<string | null>(null);
   const [newModuleForm, setNewModuleForm] = React.useState<NewModuleFormState>({
@@ -180,6 +127,82 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const [editingLessonKey, setEditingLessonKey] = React.useState<string | null>(null);
   const [editLessonForm, setEditLessonForm] = React.useState<LessonFormState>(createEmptyLessonForm());
   const [editLessonError, setEditLessonError] = React.useState<string | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [fetchError, setFetchError] = React.useState<string | null>(null);
+
+  const normalizeModule = React.useCallback((module: Module): Module => ({
+    ...module,
+    highlight: module.highlight ?? '',
+    isHidden: Boolean(module.isHidden),
+    lessons: sortLessonsByOrder(module.lessons ?? [])
+  }), []);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    async function fetchModulesData(): Promise<void> {
+      setIsLoading(true);
+      setFetchError(null);
+
+      try {
+        const response = await fetch('/api/cf-renda-turbinada/modules');
+        const data = (await response.json().catch(() => null)) as { modules?: Module[]; error?: string } | null;
+
+        if (!response.ok || !data || !Array.isArray(data.modules)) {
+          const message = data?.error ?? 'Erro ao carregar módulos.';
+          throw new Error(message);
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        setModules(sortModulesBySchedule(data.modules.map(normalizeModule)));
+      } catch (error) {
+        console.error('Erro ao carregar módulos:', error);
+
+        if (isMounted) {
+          setFetchError(error instanceof Error ? error.message : 'Erro ao carregar módulos.');
+          setModules([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void fetchModulesData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [normalizeModule]);
+
+  React.useEffect(() => {
+    setLessonForms(prevForms => {
+      const nextForms: Record<string, LessonFormState> = {};
+
+      modules.forEach(module => {
+        nextForms[module.id] = prevForms[module.id] ?? createEmptyLessonForm();
+      });
+
+      return nextForms;
+    });
+
+    setLessonErrors(prevErrors => {
+      const nextErrors: Record<string, string | null> = {};
+
+      modules.forEach(module => {
+        if (prevErrors[module.id]) {
+          nextErrors[module.id] = prevErrors[module.id];
+        }
+      });
+
+      return nextErrors;
+    });
+  }, [modules]);
 
   const visibleModules = React.useMemo(() => {
     if (isAdmin && !viewAsStudent) {
@@ -195,18 +218,38 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
     });
   }, [isAdmin, modules, viewAsStudent]);
 
-  const handleToggleModuleVisibility = React.useCallback((moduleId: string) => {
-    setModules(prevModules =>
-      prevModules.map(module =>
-        module.id === moduleId
-          ? {
-              ...module,
-              isHidden: !module.isHidden
-            }
-          : module
-      )
-    );
-  }, []);
+  const handleToggleModuleVisibility = React.useCallback(
+    async (moduleId: string, currentIsHidden: boolean) => {
+      setIsSaving(true);
+
+      try {
+        const response = await fetch(`/api/cf-renda-turbinada/modules/${moduleId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isHidden: !currentIsHidden })
+        });
+
+        const data = (await response.json().catch(() => null)) as { module?: Module; error?: string } | null;
+
+        if (!response.ok || !data?.module) {
+          const message = data?.error ?? 'Erro ao atualizar módulo.';
+          throw new Error(message);
+        }
+
+        setModules(prevModules =>
+          sortModulesBySchedule(
+            prevModules.map(module => (module.id === moduleId ? normalizeModule(data.module) : module))
+          )
+        );
+      } catch (error) {
+        console.error('Erro ao atualizar visibilidade:', error);
+        alert(error instanceof Error ? error.message : 'Erro ao atualizar módulo. Tente novamente.');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [normalizeModule]
+  );
 
   const handleLessonFieldChange = React.useCallback((moduleId: string, field: keyof LessonFormState, value: string) => {
     setLessonForms(prev => ({
@@ -219,7 +262,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   }, []);
 
   const handleAddLesson = React.useCallback(
-    (event: React.FormEvent<HTMLFormElement>, moduleId: string) => {
+    async (event: React.FormEvent<HTMLFormElement>, moduleId: string) => {
       event.preventDefault();
       setLessonErrors(prev => ({ ...prev, [moduleId]: null }));
 
@@ -233,36 +276,59 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
         return;
       }
 
-      const newLesson: Lesson = {
-        title: form.title.trim(),
-        duration: form.duration.trim(),
-        description: form.description.trim() ? form.description.trim() : undefined,
-        videoUrl: form.videoUrl.trim() ? form.videoUrl.trim() : undefined,
-        content: form.content.trim() ? form.content.trim() : undefined
-      };
+      setIsSaving(true);
 
-      setModules(prevModules =>
-        prevModules.map(module =>
-          module.id === moduleId
-            ? {
-                ...module,
-                lessons: [...module.lessons, newLesson]
-              }
-            : module
-        )
-      );
+      try {
+        const response = await fetch(`/api/cf-renda-turbinada/modules/${moduleId}/lessons`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: form.title.trim(),
+            duration: form.duration.trim(),
+            description: form.description.trim() || undefined,
+            videoUrl: form.videoUrl.trim() || undefined,
+            content: form.content.trim() || undefined
+          })
+        });
 
-      setLessonForms(prev => ({
-        ...prev,
-        [moduleId]: createEmptyLessonForm()
-      }));
-      setOpenLessonModule(moduleId);
+        const data = (await response.json().catch(() => null)) as { lesson?: Lesson; error?: string } | null;
+
+        if (!response.ok || !data?.lesson) {
+          const message = data?.error ?? 'Erro ao adicionar aula.';
+          throw new Error(message);
+        }
+
+        setModules(prevModules =>
+          prevModules.map(module =>
+            module.id === moduleId
+              ? {
+                  ...module,
+                  lessons: sortLessonsByOrder([...module.lessons, data.lesson])
+                }
+              : module
+          )
+        );
+
+        setLessonForms(prev => ({
+          ...prev,
+          [moduleId]: createEmptyLessonForm()
+        }));
+        setOpenLessonModule(moduleId);
+      } catch (error) {
+        console.error('Erro ao adicionar aula:', error);
+        setLessonErrors(prev => ({
+          ...prev,
+          [moduleId]: error instanceof Error ? error.message : 'Erro ao adicionar aula. Tente novamente.'
+        }));
+      } finally {
+        setIsSaving(false);
+      }
     },
     [lessonForms]
   );
 
   const handleAddModule = React.useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setNewModuleError(null);
 
@@ -277,33 +343,37 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
         return;
       }
 
-      const newModule: Module = {
-        id: `module-${Date.now()}`,
-        title: newModuleForm.title.trim(),
-        highlight: newModuleForm.highlight.trim() || 'Conteúdo liberado recentemente.',
-        releaseDate: parsedDate.toISOString(),
-        isHidden: false,
-        lessons: []
-      };
+      setIsSaving(true);
 
-      setModules(prevModules => {
-        const updatedModules = [...prevModules, newModule];
-        return updatedModules.sort((a, b) => {
-          const aDate = new Date(a.releaseDate).getTime();
-          const bDate = new Date(b.releaseDate).getTime();
-          return aDate - bDate;
+      try {
+        const response = await fetch('/api/cf-renda-turbinada/modules', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: newModuleForm.title.trim(),
+            highlight: newModuleForm.highlight.trim(),
+            releaseDate: parsedDate.toISOString()
+          })
         });
-      });
 
-      setLessonForms(prev => ({
-        ...prev,
-        [newModule.id]: createEmptyLessonForm()
-      }));
+        const data = (await response.json().catch(() => null)) as { module?: Module; error?: string } | null;
 
-      setNewModuleForm({ title: '', highlight: '', releaseDate: '' });
-      setOpenLessonModule(newModule.id);
+        if (!response.ok || !data?.module) {
+          const message = data?.error ?? 'Erro ao criar módulo.';
+          throw new Error(message);
+        }
+
+        setModules(prevModules => sortModulesBySchedule([...prevModules, normalizeModule(data.module)]));
+        setNewModuleForm({ title: '', highlight: '', releaseDate: '' });
+        setOpenLessonModule(data.module.id);
+      } catch (error) {
+        console.error('Erro ao criar módulo:', error);
+        setNewModuleError(error instanceof Error ? error.message : 'Erro ao criar módulo. Tente novamente.');
+      } finally {
+        setIsSaving(false);
+      }
     },
-    [newModuleForm]
+    [newModuleForm, normalizeModule]
   );
 
   const handleNewModuleFieldChange = React.useCallback((field: keyof NewModuleFormState, value: string) => {
@@ -324,21 +394,45 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   }, []);
 
   const handleDeleteModule = React.useCallback(
-    (moduleId: string) => {
-      setModules(prevModules => prevModules.filter(module => module.id !== moduleId));
-      setLessonForms(prevForms => {
-        const { [moduleId]: _deletedForm, ...remainingForms } = prevForms;
-        return remainingForms;
-      });
-      setLessonErrors(prevErrors => {
-        const { [moduleId]: _deletedError, ...remainingErrors } = prevErrors;
-        return remainingErrors;
-      });
+    async (moduleId: string) => {
+      if (!confirm('Tem certeza que deseja excluir este módulo e todas as suas aulas?')) {
+        return;
+      }
 
-      setOpenLessonModule(current => (current === moduleId ? null : current));
+      setIsSaving(true);
 
-      if (editingLessonKey?.startsWith(`${moduleId}-`)) {
-        handleCancelEditLesson();
+      try {
+        const response = await fetch(`/api/cf-renda-turbinada/modules/${moduleId}`, {
+          method: 'DELETE'
+        });
+
+        const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
+
+        if (!response.ok) {
+          const message = data?.error ?? 'Erro ao excluir módulo.';
+          throw new Error(message);
+        }
+
+        setModules(prevModules => prevModules.filter(module => module.id !== moduleId));
+        setLessonForms(prevForms => {
+          const { [moduleId]: _deletedForm, ...remainingForms } = prevForms;
+          return remainingForms;
+        });
+        setLessonErrors(prevErrors => {
+          const { [moduleId]: _deletedError, ...remainingErrors } = prevErrors;
+          return remainingErrors;
+        });
+
+        setOpenLessonModule(current => (current === moduleId ? null : current));
+
+        if (editingLessonKey?.startsWith(`${moduleId}-`)) {
+          handleCancelEditLesson();
+        }
+      } catch (error) {
+        console.error('Erro ao excluir módulo:', error);
+        alert(error instanceof Error ? error.message : 'Erro ao excluir módulo. Tente novamente.');
+      } finally {
+        setIsSaving(false);
       }
     },
     [editingLessonKey, handleCancelEditLesson]
@@ -377,7 +471,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   }, []);
 
   const handleUpdateLesson = React.useCallback(
-    (event: React.FormEvent<HTMLFormElement>, moduleId: string, lessonIndex: number) => {
+    async (event: React.FormEvent<HTMLFormElement>, moduleId: string, lessonIndex: number) => {
       event.preventDefault();
       setEditLessonError(null);
 
@@ -386,48 +480,111 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
         return;
       }
 
-      const updatedLesson: Lesson = {
-        title: editLessonForm.title.trim(),
-        duration: editLessonForm.duration.trim(),
-        description: editLessonForm.description.trim() ? editLessonForm.description.trim() : undefined,
-        videoUrl: editLessonForm.videoUrl.trim() ? editLessonForm.videoUrl.trim() : undefined,
-        content: editLessonForm.content.trim() ? editLessonForm.content.trim() : undefined
-      };
+      const module = modules.find(currentModule => currentModule.id === moduleId);
+      const lesson = module?.lessons[lessonIndex];
 
-      setModules(prevModules =>
-        prevModules.map(module =>
-          module.id === moduleId
-            ? {
-                ...module,
-                lessons: module.lessons.map((lesson, index) => (index === lessonIndex ? updatedLesson : lesson))
-              }
-            : module
-        )
-      );
+      if (!lesson || typeof lesson.id !== 'number') {
+        setEditLessonError('Aula não encontrada.');
+        return;
+      }
 
-      handleCancelEditLesson();
+      setIsSaving(true);
+
+      try {
+        const response = await fetch(`/api/cf-renda-turbinada/lessons/${lesson.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: editLessonForm.title.trim(),
+            duration: editLessonForm.duration.trim(),
+            description: editLessonForm.description.trim() || undefined,
+            videoUrl: editLessonForm.videoUrl.trim() || undefined,
+            content: editLessonForm.content.trim() || undefined
+          })
+        });
+
+        const data = (await response.json().catch(() => null)) as { lesson?: Lesson; error?: string } | null;
+
+        if (!response.ok || !data?.lesson) {
+          const message = data?.error ?? 'Erro ao atualizar aula.';
+          throw new Error(message);
+        }
+
+        setModules(prevModules =>
+          prevModules.map(currentModule =>
+            currentModule.id === moduleId
+              ? {
+                  ...currentModule,
+                  lessons: sortLessonsByOrder(
+                    currentModule.lessons.map(existingLesson =>
+                      existingLesson.id === lesson.id ? data.lesson : existingLesson
+                    )
+                  )
+                }
+              : currentModule
+          )
+        );
+
+        handleCancelEditLesson();
+      } catch (error) {
+        console.error('Erro ao atualizar aula:', error);
+        setEditLessonError(error instanceof Error ? error.message : 'Erro ao atualizar aula. Tente novamente.');
+      } finally {
+        setIsSaving(false);
+      }
     },
-    [editLessonForm, handleCancelEditLesson]
+    [editLessonForm, handleCancelEditLesson, modules]
   );
 
   const handleDeleteLesson = React.useCallback(
-    (moduleId: string, lessonIndex: number) => {
-      setModules(prevModules =>
-        prevModules.map(module =>
-          module.id === moduleId
-            ? {
-                ...module,
-                lessons: module.lessons.filter((_, index) => index !== lessonIndex)
-              }
-            : module
-        )
-      );
+    async (moduleId: string, lessonIndex: number) => {
+      if (!confirm('Tem certeza que deseja excluir esta aula?')) {
+        return;
+      }
 
-      if (editingLessonKey === `${moduleId}-${lessonIndex}`) {
-        handleCancelEditLesson();
+      const module = modules.find(currentModule => currentModule.id === moduleId);
+      const lesson = module?.lessons[lessonIndex];
+
+      if (!lesson || typeof lesson.id !== 'number') {
+        return;
+      }
+
+      setIsSaving(true);
+
+      try {
+        const response = await fetch(`/api/cf-renda-turbinada/lessons/${lesson.id}`, {
+          method: 'DELETE'
+        });
+
+        const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
+
+        if (!response.ok) {
+          const message = data?.error ?? 'Erro ao excluir aula.';
+          throw new Error(message);
+        }
+
+        setModules(prevModules =>
+          prevModules.map(currentModule =>
+            currentModule.id === moduleId
+              ? {
+                  ...currentModule,
+                  lessons: currentModule.lessons.filter(existingLesson => existingLesson.id !== lesson.id)
+                }
+              : currentModule
+          )
+        );
+
+        if (editingLessonKey === `${moduleId}-${lessonIndex}`) {
+          handleCancelEditLesson();
+        }
+      } catch (error) {
+        console.error('Erro ao excluir aula:', error);
+        alert(error instanceof Error ? error.message : 'Erro ao excluir aula. Tente novamente.');
+      } finally {
+        setIsSaving(false);
       }
     },
-    [editingLessonKey, handleCancelEditLesson]
+    [modules, editingLessonKey, handleCancelEditLesson]
   );
 
   const renderLesson = React.useCallback(
@@ -437,7 +594,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
 
       return (
         <div
-          key={`lesson-${index}-${lesson.title}`}
+          key={lesson.id ? `lesson-${lesson.id}` : `lesson-${moduleId}-${index}`}
           style={{
             padding: '20px',
             borderRadius: '12px',
@@ -564,8 +721,10 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                     padding: '10px 18px',
                     fontWeight: 600,
                     fontSize: '14px',
-                    cursor: 'pointer'
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.7 : 1
                   }}
+                  disabled={isSaving}
                 >
                   Excluir aula
                 </button>
@@ -580,8 +739,10 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                     padding: '10px 18px',
                     fontWeight: 600,
                     fontSize: '14px',
-                    cursor: 'pointer'
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.7 : 1
                   }}
+                  disabled={isSaving}
                 >
                   Cancelar
                 </button>
@@ -595,10 +756,12 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                     fontSize: '14px',
                     padding: '12px 20px',
                     borderRadius: '10px',
-                    cursor: 'pointer'
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.85 : 1
                   }}
+                  disabled={isSaving}
                 >
-                  Salvar alterações
+                  {isSaving ? 'Salvando...' : 'Salvar alterações'}
                 </button>
               </div>
             </form>
@@ -664,8 +827,10 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                   padding: '8px 16px',
                   fontWeight: 600,
                   fontSize: '14px',
-                  cursor: 'pointer'
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  opacity: isSaving ? 0.7 : 1
                 }}
+                disabled={isSaving}
               >
                 Editar aula
               </button>
@@ -680,8 +845,10 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                   padding: '8px 16px',
                   fontWeight: 600,
                   fontSize: '14px',
-                  cursor: 'pointer'
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  opacity: isSaving ? 0.7 : 1
                 }}
+                disabled={isSaving}
               >
                 Excluir aula
               </button>
@@ -699,7 +866,8 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
       handleEditLessonFieldChange,
       handleStartEditLesson,
       handleUpdateLesson,
-      isAdmin
+      isAdmin,
+      isSaving
     ]
   );
 
@@ -783,6 +951,9 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                 <span style={{ fontSize: '14px', color: '#cbd5f5' }}>
                   Controle a liberação dos módulos conforme o cronograma e adicione aulas extras com vídeos ou materiais de apoio.
                 </span>
+                {isSaving && (
+                  <span style={{ fontSize: '13px', color: '#38bdf8' }}>Salvando alterações...</span>
+                )}
               </div>
               <button
                 type="button"
@@ -794,8 +965,10 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                   borderRadius: '9999px',
                   padding: '10px 18px',
                   fontWeight: 600,
-                  cursor: 'pointer'
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  opacity: isSaving ? 0.7 : 1
                 }}
+                disabled={isSaving}
               >
                 {viewAsStudent ? 'Visualizar como administrador' : 'Visualizar como aluno'}
               </button>
@@ -892,10 +1065,12 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                     fontSize: '14px',
                     padding: '12px 20px',
                     borderRadius: '10px',
-                    cursor: 'pointer'
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.85 : 1
                   }}
+                  disabled={isSaving}
                 >
-                  Criar módulo
+                  {isSaving ? 'Salvando...' : 'Criar módulo'}
                 </button>
               </div>
             </form>
@@ -904,7 +1079,37 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1100px', margin: '0 auto 48px' }}>
-        {visibleModules.length === 0 ? (
+        {isLoading ? (
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              border: '1px solid #e2e8f0',
+              padding: '28px',
+              boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+              textAlign: 'center'
+            }}
+          >
+            <h2 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '20px' }}>Carregando módulos...</h2>
+            <p style={{ margin: 0, color: '#475569', fontSize: '14px' }}>Aguarde um instante enquanto buscamos os conteúdos mais recentes.</p>
+          </div>
+        ) : fetchError ? (
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              border: '1px solid #fecaca',
+              padding: '28px',
+              boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+              textAlign: 'center'
+            }}
+          >
+            <h2 style={{ margin: '0 0 12px 0', color: '#b91c1c', fontSize: '20px' }}>Não foi possível carregar os módulos</h2>
+            <p style={{ margin: 0, color: '#b91c1c', fontSize: '14px', lineHeight: 1.6 }}>
+              {fetchError}
+            </p>
+          </div>
+        ) : visibleModules.length === 0 ? (
           <div
             style={{
               backgroundColor: '#ffffff',
@@ -970,7 +1175,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                         </span>
                         <button
                           type="button"
-                          onClick={() => handleToggleModuleVisibility(module.id)}
+                          onClick={() => handleToggleModuleVisibility(module.id, isHidden)}
                           style={{
                             border: '1px solid #0f172a',
                             backgroundColor: isHidden ? '#0f172a' : 'transparent',
@@ -979,8 +1184,10 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                             padding: '8px 16px',
                             fontSize: '12px',
                             fontWeight: 600,
-                            cursor: 'pointer'
+                            cursor: isSaving ? 'not-allowed' : 'pointer',
+                            opacity: isSaving ? 0.7 : 1
                           }}
+                          disabled={isSaving}
                         >
                           {isHidden ? 'Mostrar conteúdo' : 'Ocultar conteúdo'}
                         </button>
@@ -995,15 +1202,21 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                             padding: '8px 16px',
                             fontSize: '12px',
                             fontWeight: 600,
-                            cursor: 'pointer'
+                            cursor: isSaving ? 'not-allowed' : 'pointer',
+                            opacity: isSaving ? 0.7 : 1
                           }}
+                          disabled={isSaving}
                         >
                           Excluir módulo
                         </button>
                       </div>
                     )}
                   </div>
-                  <p style={{ margin: 0, color: '#1e293b', fontSize: '18px', lineHeight: 1.6 }}>{module.highlight}</p>
+                  <p style={{ margin: 0, color: '#1e293b', fontSize: '18px', lineHeight: 1.6 }}>
+                    {module.highlight && module.highlight.trim().length > 0
+                      ? module.highlight
+                      : 'Conteúdo liberado recentemente.'}
+                  </p>
                   {!isAdmin && !isReleased && (
                     <div
                       style={{
@@ -1061,8 +1274,10 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                         padding: '10px 18px',
                         fontWeight: 600,
                         fontSize: '14px',
-                        cursor: 'pointer'
+                        cursor: isSaving ? 'not-allowed' : 'pointer',
+                        opacity: isSaving ? 0.7 : 1
                       }}
+                      disabled={isSaving}
                     >
                       {openLessonModule === module.id ? 'Fechar formulário' : 'Adicionar aula a este módulo'}
                     </button>
@@ -1197,8 +1412,10 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                               padding: '10px 18px',
                               fontWeight: 600,
                               fontSize: '14px',
-                              cursor: 'pointer'
+                              cursor: isSaving ? 'not-allowed' : 'pointer',
+                              opacity: isSaving ? 0.7 : 1
                             }}
+                            disabled={isSaving}
                           >
                             Limpar campos
                           </button>
@@ -1212,10 +1429,12 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                               fontSize: '14px',
                               padding: '12px 20px',
                               borderRadius: '10px',
-                              cursor: 'pointer'
+                              cursor: isSaving ? 'not-allowed' : 'pointer',
+                              opacity: isSaving ? 0.85 : 1
                             }}
+                            disabled={isSaving}
                           >
-                            Adicionar aula
+                            {isSaving ? 'Salvando...' : 'Adicionar aula'}
                           </button>
                         </div>
                       </form>

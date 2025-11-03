@@ -786,3 +786,33 @@ model Report {
   @@index([status])
   @@map("reports")
 }
+
+model CfRendaTurbinadaModule {
+  id          String                      @id @default(cuid())
+  title       String
+  highlight   String?
+  releaseDate DateTime
+  isHidden    Boolean                     @default(false)
+  createdAt   DateTime                    @default(now())
+  updatedAt   DateTime                    @updatedAt
+  sortOrder   Int?
+  lessons     CfRendaTurbinadaLesson[]
+
+  @@map("modules")
+}
+
+model CfRendaTurbinadaLesson {
+  id          Int                     @id @default(autoincrement())
+  moduleId    String
+  title       String
+  duration    String
+  description String?
+  videoUrl    String?
+  content     String?
+  sortOrder   Int?
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  module      CfRendaTurbinadaModule  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@map("lessons")
+}
