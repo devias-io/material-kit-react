@@ -148,7 +148,7 @@ const TelegramPage = () => {
               Acesse os canais exclusivos da sua assinatura através do nosso bot:
             </p>
             <a
-              href="https://t.me/fatosdabolsacfbot"
+              href="https://t.me/membroscfbot"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -533,7 +533,7 @@ const TelegramPage = () => {
             </div>
 
             <a
-              href="https://t.me/fatosdabolsacfbot"
+              href="https://t.me/membroscfbot"
               target="_blank"
               rel="noopener noreferrer"
               style={{
