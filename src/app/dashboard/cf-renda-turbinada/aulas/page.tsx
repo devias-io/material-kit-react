@@ -1017,7 +1017,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                 style={{
                   border: '1px solid #0ea5e9',
                   backgroundColor: 'transparent',
-                  color: '#0ea5e9',
+                  color: '#010101',
                   borderRadius: '10px',
                   padding: '8px 16px',
                   fontWeight: 600,
@@ -1464,7 +1464,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
                         alignSelf: 'flex-start',
                         border: '1px solid #0ea5e9',
                         backgroundColor: openLessonModule === module.id ? '#0ea5e9' : 'transparent',
-                        color: openLessonModule === module.id ? '#010101' : '#0ea5e9',
+                        color: openLessonModule === module.id ? '#010101' : '#010101',
                         borderRadius: '9999px',
                         padding: '10px 18px',
                         fontWeight: 600,
