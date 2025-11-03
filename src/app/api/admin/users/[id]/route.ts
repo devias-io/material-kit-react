@@ -129,6 +129,54 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
     }
 
+    const normalizeCustomPermissions = (value: unknown): string => {
+      if (!value) {
+        return '[]';
+      }
+
+      const toArray = () => {
+        if (Array.isArray(value)) {
+          return value;
+        }
+
+        if (typeof value === 'string') {
+          const trimmed = value.trim();
+
+          if (!trimmed) {
+            return [];
+          }
+
+          try {
+            const parsed = JSON.parse(trimmed);
+
+            if (Array.isArray(parsed)) {
+              return parsed;
+            }
+          } catch (error) {
+            // se não for um JSON válido, trataremos como uma permissão única
+          }
+
+          return [trimmed];
+        }
+
+        return [];
+      };
+
+      const normalized = toArray()
+        .map(item => {
+          if (typeof item === 'string') {
+            return item.trim();
+          }
+
+          return String(item);
+        })
+        .filter(item => item.length > 0);
+
+      const unique = Array.from(new Set(normalized));
+
+      return JSON.stringify(unique);
+    };
+
     // Preparar dados para atualização
     const updateData: any = {
       firstName: userData.firstName,
@@ -136,7 +184,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       email: userData.email,
       plan: userData.plan,
       status: userData.status,
-      customPermissions: userData.customPermissions || []
+      customPermissions: normalizeCustomPermissions(userData.customPermissions)
     };
 
     // Só atualizar expirationDate se foi fornecida
