@@ -122,8 +122,7 @@ export default function CfRendaTurbinadaPage(): React.JSX.Element {
                 lineHeight: 1.5
               }}
             >
-              Acesse o hub exclusivo do Close Friends Renda Turbinada. Aqui você encontra o passo a passo para montar o setup,
-              assistir às aulas e acompanhar as recomendações práticas que geram renda com opções.
+              Acesso exclusivo Renda Turbinada. Área destinada às nossas aulas.
             </p>
           </div>
         </div>
