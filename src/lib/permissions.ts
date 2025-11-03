@@ -60,7 +60,7 @@ export const PLAN_PERMISSIONS = {
     isAdmin: false,
     pages: [
       'relatorio-semanal',
-      'cf-renda-turbinada', 'cf-renda-turbinada-aulas', 'cf-renda-turbinada-carteira',
+      'cf-renda-turbinada', 'cf-renda-turbinada-aulas', 'cf-renda-turbinada-bastidores', 'cf-renda-turbinada-carteira',
       'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
       'recursos-reserva', 'recursos-suporte'
     ]
@@ -83,7 +83,7 @@ export const PLAN_PERMISSIONS = {
       'relatorio-semanal',
       'small-caps', 'micro-caps', 'dividendos', 'fundos-imobiliarios', 'rentabilidades',
       'internacional', 'internacional-etfs', 'internacional-stocks', 'internacional-dividendos', 'internacional-projeto-america',
-      'cf-renda-turbinada', 'cf-renda-turbinada-aulas', 'cf-renda-turbinada-carteira',
+      'cf-renda-turbinada', 'cf-renda-turbinada-aulas', 'cf-renda-turbinada-bastidores', 'cf-renda-turbinada-carteira',
       'recursos-exclusivos', 'recursos-dicas', 'recursos-analise', 'recursos-ebooks',
       'recursos-imposto', 'recursos-lives', 'recursos-milhas', 'recursos-planilhas', 'recursos-telegram',
       'recursos-reserva', 'recursos-suporte',

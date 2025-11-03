@@ -20,6 +20,12 @@ const navigationCards: NavigationCard[] = [
     badge: 'NOVO'
   },
   {
+    title: 'Bastidores da Bolsa',
+    description: 'Entre nos bastidores das aulas com materiais complementares, anexos e atualizações exclusivas.',
+    href: '/dashboard/cf-renda-turbinada/bastidores-da-bolsa',
+    icon: '🗂️'
+  },
+  {
     title: 'Carteira Recomendada',
     description: 'Acompanhe as operações sugeridas e o plano mensal para gerar renda com consistência.',
     href: '/dashboard/cf-renda-turbinada/carteira-recomendada',

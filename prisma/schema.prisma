@@ -830,3 +830,60 @@ model CfRendaTurbinadaLiveEvent {
 
   @@map("live_events")
 }
+
+model BastidoresDaBolsaModule {
+  id          String                        @id @default(cuid())
+  title       String
+  highlight   String?
+  releaseDate DateTime
+  isHidden    Boolean                       @default(false)
+  createdAt   DateTime                      @default(now())
+  updatedAt   DateTime                      @updatedAt
+  sortOrder   Int?
+  lessons     BastidoresDaBolsaLesson[]
+
+  @@map("bastidores_modules")
+}
+
+model BastidoresDaBolsaLesson {
+  id          Int                            @id @default(autoincrement())
+  moduleId    String
+  title       String
+  duration    String
+  description String?
+  videoUrl    String?
+  content     String?
+  sortOrder   Int?
+  createdAt   DateTime                       @default(now())
+  updatedAt   DateTime                       @updatedAt
+  module      BastidoresDaBolsaModule        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  materials   BastidoresDaBolsaLessonMaterial[]
+
+  @@map("bastidores_lessons")
+}
+
+model BastidoresDaBolsaLessonMaterial {
+  id        Int                      @id @default(autoincrement())
+  lessonId  Int
+  title     String
+  fileUrl   String
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+  lesson    BastidoresDaBolsaLesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("bastidores_lesson_materials")
+}
+
+model BastidoresDaBolsaLiveEvent {
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String?  @map("description")
+  eventDate       DateTime @map("event_date")
+  durationMinutes Int      @default(60) @map("duration_minutes")
+  meetingUrl      String?  @map("meeting_url")
+  isCancelled     Boolean  @default(false) @map("is_cancelled")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("bastidores_live_events")
+}
