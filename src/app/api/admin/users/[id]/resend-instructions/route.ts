@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { gerarSenhaSegura, hashPassword } from '@/lib/auth/password';
 import { enviarEmailCredenciais } from '@/lib/auth/email';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 async function verifyAuth() {
   try {
