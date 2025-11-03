@@ -1,15 +1,107 @@
-import nodemailer from 'nodemailer';
+import nodemailer, { Transporter } from 'nodemailer';
 import { getPlanDisplayName } from '@/lib/permissions';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+type EmailConfig = {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  pass: string;
+  fromEmail: string;
+};
+
+function parseBooleanEnv(value: string | undefined): {
+  value: boolean | null;
+  invalid: boolean;
+} {
+  if (!value) {
+    return { value: null, invalid: false };
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  if (['true', '1', 'yes', 'y', 'on'].includes(normalized)) {
+    return { value: true, invalid: false };
+  }
+
+  if (['false', '0', 'no', 'n', 'off'].includes(normalized)) {
+    return { value: false, invalid: false };
+  }
+
+  return { value: null, invalid: true };
+}
+
+function resolveEmailConfig(): EmailConfig {
+  const port = Number.parseInt(process.env.SMTP_PORT || '587', 10);
+  const { value: secureFromEnv, invalid: invalidSecure } = parseBooleanEnv(
+    process.env.SMTP_SECURE,
+  );
+
+  if (invalidSecure) {
+    throw new Error(
+      'Valor inválido para SMTP_SECURE. Utilize true/false ou 1/0.',
+    );
+  }
+
+  const secure = secureFromEnv ?? port === 465;
+
+  const missing: string[] = [];
+
+  const host = process.env.SMTP_HOST;
+  if (!host) {
+    missing.push('SMTP_HOST');
+  }
+
+  const user = process.env.SMTP_USER;
+  if (!user) {
+    missing.push('SMTP_USER');
+  }
+
+  const pass = process.env.SMTP_PASS;
+  if (!pass) {
+    missing.push('SMTP_PASS');
+  }
+
+  const fromEmail = process.env.SMTP_FROM || user;
+  if (!fromEmail) {
+    missing.push('SMTP_FROM');
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Configuração de email incompleta. Defina as variáveis: ${missing.join(', ')}`,
+    );
+  }
+
+  return {
+    host: host!,
+    port,
+    secure,
+    user: user!,
+    pass: pass!,
+    fromEmail: fromEmail!,
+  };
+}
+
+let cachedTransporter: Transporter | null = null;
+
+function getMailer(): { transporter: Transporter; fromEmail: string } {
+  const config = resolveEmailConfig();
+
+  if (!cachedTransporter) {
+    cachedTransporter = nodemailer.createTransport({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      auth: {
+        user: config.user,
+        pass: config.pass,
+      },
+    });
+  }
+
+  return { transporter: cachedTransporter, fromEmail: config.fromEmail };
+}
 
 export async function enviarEmailCredenciais(
   email: string,
@@ -309,8 +401,10 @@ export async function enviarEmailCredenciais(
     </html>
   `;
 
+  const { transporter, fromEmail } = getMailer();
+
   await transporter.sendMail({
-    from: `"Equipe Fatos da Bolsa" <${process.env.SMTP_FROM}>`,
+    from: `"Equipe Fatos da Bolsa" <${fromEmail}>`,
     to: email,
     subject: '🎉 Bem-vindo ao Fatos da Bolsa - Seu acesso foi liberado!',
     html: htmlContent
@@ -438,8 +532,10 @@ export async function enviarEmailResetSenha(
     </html>
   `;
 
+  const { transporter, fromEmail } = getMailer();
+
   await transporter.sendMail({
-    from: `"Equipe Fatos da Bolsa" <${process.env.SMTP_FROM}>`,
+    from: `"Equipe Fatos da Bolsa" <${fromEmail}>`,
     to: email,
     subject: '🔑 Redefinir sua senha - Fatos da Bolsa',
     html: htmlContent
