@@ -39,10 +39,7 @@ export const PLAN_PERMISSIONS = {
     displayName: 'Projeto Renda Passiva',
     isAdmin: false,
     pages: [
-      'relatorio-semanal',
-      'dividendos', 'fundos-imobiliarios', 'rentabilidades',
-      'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
-      'recursos-reserva', 'recursos-suporte'
+      'dividendos', 'fundos-imobiliarios', 'rentabilidades'
     ]
   },
   'FIIS': {
@@ -147,11 +144,6 @@ export function getUserPermissions(plan: string, customPermissions?: string[], e
 export function hasPageAccess(userPermissions: string[], page: string): boolean {
   // Admin sempre tem acesso total
   if (userPermissions.some(p => p.startsWith('admin'))) {
-    return true;
-  }
-  
-  // Relatório semanal é sempre acessível
-  if (page === 'relatorio-semanal') {
     return true;
   }
   

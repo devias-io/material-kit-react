@@ -40,7 +40,8 @@ interface AuthAccessContextValue {
   };
 }
 
-const GUARANTEED_PAGES = ['relatorio-semanal', 'recursos-suporte'] as const;
+const GUARANTEED_PAGES = ['recursos-suporte'] as const;
+const DEFAULT_OPEN_PAGES = ['relatorio-semanal'] as const;
 
 const FALLBACK_PLAN_INFO: AuthAccessPlanInfo = {
   displayName: 'Visitante',
@@ -50,8 +51,20 @@ const FALLBACK_PLAN_INFO: AuthAccessPlanInfo = {
   activeEntitlements: [],
 };
 
-function ensureGuaranteedPages(pages: string[]): string[] {
+interface EnsureGuaranteedPagesOptions {
+  planKey?: string;
+}
+
+function ensureGuaranteedPages(pages: string[], options: EnsureGuaranteedPagesOptions = {}): string[] {
   const pageSet = new Set<string>([...GUARANTEED_PAGES, ...pages]);
+
+  const { planKey } = options;
+  const shouldIncludeDefaultOpenPages = !planKey || planKey !== 'RENDA_PASSIVA';
+
+  if (shouldIncludeDefaultOpenPages) {
+    DEFAULT_OPEN_PAGES.forEach(page => pageSet.add(page));
+  }
+
   return Array.from(pageSet);
 }
 
@@ -124,7 +137,7 @@ function derivePlanInfo(user: User | null): AuthAccessPlanInfo {
   const isAdmin = allConfigs.some(config => config?.isAdmin);
   const customPermissions = user.customPermissions ?? [];
 
-  const pages = ensureGuaranteedPages([...basePages, ...addonPages, ...customPermissions]);
+  const pages = ensureGuaranteedPages([...basePages, ...addonPages, ...customPermissions], { planKey: user.plan });
 
   return {
     displayName,
