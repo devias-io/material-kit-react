@@ -20,11 +20,34 @@ function parseBooleanEnv(value: string | undefined): {
 
   const normalized = value.trim().toLowerCase();
 
-  if (['true', '1', 'yes', 'y', 'on'].includes(normalized)) {
+  if (
+    [
+      'true',
+      '1',
+      'yes',
+      'y',
+      'on',
+      // Provedores costumam usar "ssl" para conexões seguras já na porta 465
+      'ssl',
+    ].includes(normalized)
+  ) {
     return { value: true, invalid: false };
   }
 
-  if (['false', '0', 'no', 'n', 'off'].includes(normalized)) {
+  if (
+    [
+      'false',
+      '0',
+      'no',
+      'n',
+      'off',
+      // Termos comuns que significam STARTTLS/porta 587
+      'tls',
+      'starttls',
+      'auto',
+      'default',
+    ].includes(normalized)
+  ) {
     return { value: false, invalid: false };
   }
 
@@ -39,7 +62,7 @@ function resolveEmailConfig(): EmailConfig {
 
   if (invalidSecure) {
     throw new Error(
-      'Valor inválido para SMTP_SECURE. Utilize true/false ou 1/0.',
+      'Valor inválido para SMTP_SECURE. Utilize true/false, 1/0 ou termos como ssl/tls/starttls/auto.',
     );
   }
 
@@ -47,24 +70,46 @@ function resolveEmailConfig(): EmailConfig {
 
   const missing: string[] = [];
 
-  const host = process.env.SMTP_HOST;
+  const host =
+    process.env.SMTP_HOST ??
+    process.env.EMAIL_HOST ??
+    process.env.MAIL_HOST ??
+    process.env.SMTP_SERVER ??
+    process.env.MAIL_SERVER;
   if (!host) {
-    missing.push('SMTP_HOST');
+    missing.push('SMTP_HOST (ou EMAIL_HOST/MAIL_HOST/SMTP_SERVER/MAIL_SERVER)');
   }
 
-  const user = process.env.SMTP_USER ?? process.env.SMTP_USERNAME;
+  const user =
+    process.env.SMTP_USER ??
+    process.env.SMTP_USERNAME ??
+    process.env.EMAIL_USER ??
+    process.env.MAIL_USER ??
+    process.env.SMTP_LOGIN;
   if (!user) {
-    missing.push('SMTP_USER/SMTP_USERNAME');
+    missing.push('SMTP_USER/SMTP_USERNAME (ou EMAIL_USER/MAIL_USER/SMTP_LOGIN)');
   }
 
-  const pass = process.env.SMTP_PASS ?? process.env.SMTP_PASSWORD;
+  const pass =
+    process.env.SMTP_PASS ??
+    process.env.SMTP_PASSWORD ??
+    process.env.EMAIL_PASS ??
+    process.env.EMAIL_PASSWORD ??
+    process.env.MAIL_PASS ??
+    process.env.MAIL_PASSWORD;
   if (!pass) {
-    missing.push('SMTP_PASS/SMTP_PASSWORD');
+    missing.push('SMTP_PASS/SMTP_PASSWORD (ou EMAIL_PASS/EMAIL_PASSWORD/MAIL_PASS/MAIL_PASSWORD)');
   }
 
-  const fromEmail = process.env.SMTP_FROM || user;
+  const fromEmail =
+    process.env.SMTP_FROM ??
+    process.env.SMTP_FROM_EMAIL ??
+    process.env.EMAIL_FROM ??
+    process.env.MAIL_FROM ??
+    process.env.SMTP_SENDER ??
+    user;
   if (!fromEmail) {
-    missing.push('SMTP_FROM');
+    missing.push('SMTP_FROM (ou SMTP_FROM_EMAIL/EMAIL_FROM/MAIL_FROM/SMTP_SENDER)');
   }
 
   if (missing.length > 0) {
