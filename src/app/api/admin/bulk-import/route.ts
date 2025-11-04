@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { auth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
@@ -67,22 +68,26 @@ function calculateExpirationDate(plan: string, customDate?: string): Date {
 }
 
 // Verificar autenticação
-async function verifyAuth(request: NextRequest) {
-  const userEmail = request.headers.get('x-user-email');
-  
-  if (userEmail === 'admin@fatosdobolsa.com') {
-    return true;
+async function verifyAuth() {
+  try {
+    const session = await auth();
+    if (session?.user?.plan === 'ADMIN') {
+      return session.user;
+    }
+    return null;
+  } catch (error) {
+    console.error('❌ Erro na verificação:', error);
+    return null;
   }
-  
-  return false;
 }
 
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 BULK IMPORT - Iniciando importação em massa');
-    
+
     // Verificar autenticação
-    if (!(await verifyAuth(request))) {
+    const admin = await verifyAuth();
+    if (!admin) {
       return NextResponse.json(
         { error: 'Acesso negado' },
         { status: 401 }
