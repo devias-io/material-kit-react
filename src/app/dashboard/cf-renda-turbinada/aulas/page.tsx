@@ -79,6 +79,11 @@ function createEmptyLessonForm(): LessonFormState {
   };
 }
 
+const pagePadding = '24px clamp(12px, 4vw, 24px)';
+const sectionPadding = '24px clamp(14px, 4vw, 24px)';
+const cardPadding = '28px clamp(16px, 4vw, 28px)';
+const blockPadding = '20px clamp(12px, 4vw, 20px)';
+
 function renderTextWithLineBreaks(text: string): React.ReactNode {
   return text.split('\n').map((line, index, array) => (
     <React.Fragment key={index}>
@@ -1122,7 +1127,7 @@ const handleUpdateModule = React.useCallback(
         <div
           key={lesson.id ? `lesson-${lesson.id}` : `lesson-${moduleId}-${index}`}
           style={{
-            padding: '20px',
+            padding: blockPadding,
             borderRadius: '12px',
             border: '1px solid #e2e8f0',
             backgroundColor: '#f8fafc',
@@ -1422,7 +1427,7 @@ const handleUpdateModule = React.useCallback(
       style={{
         minHeight: '100vh',
         backgroundColor: '#f5f5f5',
-        padding: '24px'
+        padding: pagePadding
       }}
     >
       <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -1485,7 +1490,7 @@ const handleUpdateModule = React.useCallback(
               backgroundColor: '#010101',
               color: '#f8fafc',
               borderRadius: '16px',
-              padding: '24px',
+              padding: sectionPadding,
               display: 'flex',
               flexDirection: 'column',
               gap: '12px'
@@ -1529,7 +1534,7 @@ const handleUpdateModule = React.useCallback(
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               border: '1px solid #e2e8f0',
-              padding: '24px',
+              padding: sectionPadding,
               boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)'
             }}
           >
@@ -1631,7 +1636,7 @@ const handleUpdateModule = React.useCallback(
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               border: '1px solid #e2e8f0',
-              padding: '28px',
+              padding: cardPadding,
               boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
               textAlign: 'center'
             }}
@@ -1645,7 +1650,7 @@ const handleUpdateModule = React.useCallback(
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               border: '1px solid #fecaca',
-              padding: '28px',
+              padding: cardPadding,
               boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
               textAlign: 'center'
             }}
@@ -1661,7 +1666,7 @@ const handleUpdateModule = React.useCallback(
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               border: '1px solid #e2e8f0',
-              padding: '28px',
+              padding: cardPadding,
               boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
               textAlign: 'center'
             }}
@@ -1690,7 +1695,7 @@ visibleModules.map(module => {
         backgroundColor: '#ffffff',
         borderRadius: '16px',
         border: '1px solid #e2e8f0',
-        padding: '28px',
+        padding: cardPadding,
         boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
         display: 'flex',
         flexDirection: 'column',
@@ -1707,7 +1712,7 @@ visibleModules.map(module => {
             flexDirection: 'column',
             gap: '16px',
             backgroundColor: '#f8fafc',
-            padding: '20px',
+            padding: blockPadding,
             borderRadius: '12px',
             border: '1px solid #e2e8f0'
           }}
@@ -1924,7 +1929,7 @@ visibleModules.map(module => {
                 {module.lessons.length === 0 ? (
                   <div
                     style={{
-                      padding: '20px',
+                      padding: blockPadding,
                       borderRadius: '12px',
                       border: '1px dashed #cbd5f5',
                       backgroundColor: '#f8fafc',
@@ -1981,7 +1986,7 @@ visibleModules.map(module => {
                         backgroundColor: '#f8fafc',
                         borderRadius: '12px',
                         border: '1px solid #cbd5f5',
-                        padding: '20px'
+                        padding: blockPadding
                       }}
                     >
                       <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
@@ -2146,7 +2151,7 @@ visibleModules.map(module => {
           backgroundColor: '#ffffff',
           borderRadius: '16px',
           border: '1px solid #e2e8f0',
-          padding: '28px',
+          padding: cardPadding,
           maxWidth: '1100px',
           margin: '0 auto 48px',
           boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)'
@@ -2198,7 +2203,7 @@ visibleModules.map(module => {
                   gap: '16px',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
                   backgroundColor: '#f8fafc',
-                  padding: '20px',
+                  padding: blockPadding,
                   borderRadius: '12px',
                   border: '1px solid #e2e8f0'
                 }}
@@ -2375,7 +2380,7 @@ visibleModules.map(module => {
                 <div
                   key={live.id}
                   style={{
-                    padding: '20px',
+                    padding: blockPadding,
                     borderRadius: '12px',
                     border: `2px solid ${
                       live.isCancelled ? '#fecaca' : isToday ? '#22c55e' : isPast ? '#e2e8f0' : '#bfdbfe'
