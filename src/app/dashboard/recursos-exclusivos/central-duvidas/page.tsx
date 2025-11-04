@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/use-user';
 import type { User } from '@/types/user';
+import { formatTextWithLinks } from '@/utils/formatTextWithLinks';
 
 // Tipos
 interface Comment {
@@ -646,14 +647,23 @@ export default function CentralDuvidas() {
                         }}>
                           Pergunta
                         </h5>
-                        <p style={{
-                          fontSize: '15px',
-                          color: '#374151',
-                          margin: '0',
-                          lineHeight: '1.6',
-                          whiteSpace: 'pre-wrap'
-                        }}>
-                          {question.content}
+                        <p
+                          style={{
+                            fontSize: '15px',
+                            color: '#374151',
+                            margin: '0',
+                            lineHeight: '1.6',
+                          }}
+                        >
+                          {formatTextWithLinks(question.content, {
+                            linkProps: {
+                              style: {
+                                color: '#2563eb',
+                                textDecoration: 'underline',
+                                wordBreak: 'break-word',
+                              },
+                            },
+                          })}
                         </p>
                       </div>
 
@@ -763,13 +773,22 @@ export default function CentralDuvidas() {
                                 </div>
                                 
                                 {/* Conteúdo da resposta */}
-                                <div style={{
-                                  fontSize: '15px',
-                                  color: '#374151',
-                                  lineHeight: '1.6',
-                                  whiteSpace: 'pre-wrap'
-                                }}>
-                                  {answer.content}
+                                <div
+                                  style={{
+                                    fontSize: '15px',
+                                    color: '#374151',
+                                    lineHeight: '1.6',
+                                  }}
+                                >
+                                  {formatTextWithLinks(answer.content, {
+                                    linkProps: {
+                                      style: {
+                                        color: '#2563eb',
+                                        textDecoration: 'underline',
+                                        wordBreak: 'break-word',
+                                      },
+                                    },
+                                  })}
                                 </div>
 
                                 {answer.comments.length > 0 && (

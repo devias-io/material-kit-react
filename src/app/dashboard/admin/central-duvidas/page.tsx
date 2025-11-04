@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useUser } from '@/hooks/use-user';
+import { formatTextWithLinks } from '@/utils/formatTextWithLinks';
 import styles from './central-duvidas.module.css';
 
 type QuestionStatus = 'NOVA' | 'RESPONDIDA' | 'FECHADA';
@@ -780,7 +781,11 @@ export default function AdminCentralDuvidas() {
                       </div>
                     </header>
 
-                    <div className={styles.questionContent}>{question.content}</div>
+                    <div className={styles.questionContent}>
+                      {formatTextWithLinks(question.content, {
+                        linkProps: { className: styles.answerLink },
+                      })}
+                    </div>
 
                     {expandedQuestion === question.id && (
                       <div className={styles.detailArea}>
@@ -806,7 +811,11 @@ export default function AdminCentralDuvidas() {
                                       </button>
                                     </div>
                                   </div>
-                                  <div className={styles.answerContent}>{answer.content}</div>
+                                  <div className={styles.answerContent}>
+                                    {formatTextWithLinks(answer.content, {
+                                      linkProps: { className: styles.answerLink },
+                                    })}
+                                  </div>
                                 </div>
                               ))}
                             </div>
