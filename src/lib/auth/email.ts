@@ -1,14 +1,22 @@
-import nodemailer, { Transporter } from 'nodemailer';
+import { createTransport } from 'nodemailer';
+import type { SendMailOptions, Transporter } from 'nodemailer';
 import { getPlanDisplayName } from '@/lib/permissions';
 
-type EmailConfig = {
+interface EmailConfig {
   host: string;
   port: number;
   secure: boolean;
   user: string;
   pass: string;
   fromEmail: string;
-};
+  pool: boolean;
+  maxConnections: number | null;
+  maxMessages: number | null;
+  rateLimit: number | null;
+  rateDelta: number | null;
+  retryAttempts: number;
+  retryDelayMs: number;
+}
 
 function parseBooleanEnv(value: string | undefined): {
   value: boolean | null;
@@ -52,6 +60,45 @@ function parseBooleanEnv(value: string | undefined): {
   }
 
   return { value: null, invalid: true };
+}
+
+function parseIntegerEnv(
+  value: string | undefined,
+  {
+    allowZero = false,
+    min,
+    label,
+  }: {
+    allowZero?: boolean;
+    min?: number;
+    label?: string;
+  } = {},
+): number | null {
+  if (value === undefined || value === '') {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+
+  if (Number.isNaN(parsed)) {
+    throw new Error(
+      `Valor inválido para número inteiro${label ? ` em ${label}` : ''}: "${value}"`,
+    );
+  }
+
+  if (!allowZero && parsed === 0) {
+    throw new Error(
+      `Valor deve ser maior que zero${label ? ` para ${label}` : ''}.`,
+    );
+  }
+
+  if (min !== undefined && parsed < min) {
+    throw new Error(
+      `Valor deve ser maior ou igual a ${min}${label ? ` para ${label}` : ''}.`,
+    );
+  }
+
+  return parsed;
 }
 
 function resolveEmailConfig(): EmailConfig {
@@ -118,6 +165,43 @@ function resolveEmailConfig(): EmailConfig {
     );
   }
 
+  const { value: poolFromEnv, invalid: invalidPool } = parseBooleanEnv(
+    process.env.SMTP_POOL,
+  );
+
+  if (invalidPool) {
+    throw new Error('Valor inválido para SMTP_POOL. Utilize true/false ou 1/0.');
+  }
+
+  const pool = poolFromEnv ?? true;
+
+  const maxConnections = parseIntegerEnv(process.env.SMTP_MAX_CONNECTIONS, {
+    min: 1,
+    label: 'SMTP_MAX_CONNECTIONS',
+  });
+  const maxMessages = parseIntegerEnv(process.env.SMTP_MAX_MESSAGES, {
+    min: 1,
+    label: 'SMTP_MAX_MESSAGES',
+  });
+  const rateLimit = parseIntegerEnv(process.env.SMTP_RATE_LIMIT, {
+    min: 1,
+    label: 'SMTP_RATE_LIMIT',
+  });
+  const rateDelta = parseIntegerEnv(process.env.SMTP_RATE_DELTA, {
+    min: 1000,
+    label: 'SMTP_RATE_DELTA',
+  });
+  const retryAttempts =
+    parseIntegerEnv(process.env.SMTP_RETRY_ATTEMPTS, {
+      min: 1,
+      label: 'SMTP_RETRY_ATTEMPTS',
+    }) ?? 3;
+  const retryDelayMs =
+    parseIntegerEnv(process.env.SMTP_RETRY_DELAY_MS, {
+      min: 1000,
+      label: 'SMTP_RETRY_DELAY_MS',
+    }) ?? 15000;
+
   return {
     host: host!,
     port,
@@ -125,19 +209,33 @@ function resolveEmailConfig(): EmailConfig {
     user: user!,
     pass: pass!,
     fromEmail: fromEmail!,
+    pool,
+    maxConnections,
+    maxMessages,
+    rateLimit,
+    rateDelta,
+    retryAttempts,
+    retryDelayMs,
   };
 }
 
 let cachedTransporter: Transporter | null = null;
 
-function getMailer(): { transporter: Transporter; fromEmail: string } {
-  const config = resolveEmailConfig();
+function getMailer(
+  configParam?: EmailConfig,
+): { transporter: Transporter; fromEmail: string } {
+  const config = configParam ?? resolveEmailConfig();
 
   if (!cachedTransporter) {
-    cachedTransporter = nodemailer.createTransport({
+    cachedTransporter = createTransport({
       host: config.host,
       port: config.port,
       secure: config.secure,
+      pool: config.pool,
+      maxConnections: config.maxConnections ?? undefined,
+      maxMessages: config.maxMessages ?? undefined,
+      rateLimit: config.rateLimit ?? undefined,
+      rateDelta: config.rateDelta ?? undefined,
       auth: {
         user: config.user,
         pass: config.pass,
@@ -146,6 +244,49 @@ function getMailer(): { transporter: Transporter; fromEmail: string } {
   }
 
   return { transporter: cachedTransporter, fromEmail: config.fromEmail };
+}
+
+function isRateLimitError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const err = error as { response?: string; responseCode?: number };
+
+  if (!err.response && err.responseCode === undefined) {
+    return false;
+  }
+
+  return (
+    (typeof err.response === 'string' && /ratelimit/i.test(err.response)) ||
+    err.responseCode === 451
+  );
+}
+
+async function sendMailWithRetry(
+  mailOptions: Omit<SendMailOptions, 'from'>,
+  attempt = 1,
+  configParam?: EmailConfig,
+): Promise<void> {
+  const config = configParam ?? resolveEmailConfig();
+  const { transporter, fromEmail } = getMailer(config);
+
+  try {
+    await transporter.sendMail({
+      from: `"Equipe Fatos da Bolsa" <${fromEmail}>`,
+      ...mailOptions,
+    });
+  } catch (error) {
+    if (isRateLimitError(error) && attempt < config.retryAttempts) {
+      const delay = config.retryDelayMs * attempt;
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, delay);
+      });
+      return sendMailWithRetry(mailOptions, attempt + 1, config);
+    }
+
+    throw error;
+  }
 }
 
 export async function enviarEmailCredenciais(
@@ -446,13 +587,10 @@ export async function enviarEmailCredenciais(
     </html>
   `;
 
-  const { transporter, fromEmail } = getMailer();
-
-  await transporter.sendMail({
-    from: `"Equipe Fatos da Bolsa" <${fromEmail}>`,
+  await sendMailWithRetry({
     to: email,
     subject: '🎉 Bem-vindo ao Fatos da Bolsa - Seu acesso foi liberado!',
-    html: htmlContent
+    html: htmlContent,
   });
 }
 
@@ -577,12 +715,9 @@ export async function enviarEmailResetSenha(
     </html>
   `;
 
-  const { transporter, fromEmail } = getMailer();
-
-  await transporter.sendMail({
-    from: `"Equipe Fatos da Bolsa" <${fromEmail}>`,
+  await sendMailWithRetry({
     to: email,
     subject: '🔑 Redefinir sua senha - Fatos da Bolsa',
-    html: htmlContent
+    html: htmlContent,
   });
 }
