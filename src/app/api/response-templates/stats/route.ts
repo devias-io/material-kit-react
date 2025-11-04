@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: (error as Error).message }, { status: 401 });
     }
 
-    if (!user || user.plan !== 'ADMIN') {
+    if (!user || (user.plan !== 'ADMIN' && user.plan !== 'ANALISTA')) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

@@ -98,6 +98,7 @@ const planLabels: Record<string, string> = {
   RENDA_TURBINADA: 'CF Renda Turbinada',
   AMERICA: 'Projeto América',
   ADMIN: 'Administrador',
+  ANALISTA: 'Analista',
 };
 
 const sortOptions: { value: SortOption; label: string }[] = [
