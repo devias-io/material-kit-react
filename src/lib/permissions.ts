@@ -59,7 +59,10 @@ export const PLAN_PERMISSIONS = {
       'cf-renda-turbinada',
       'cf-renda-turbinada-aulas',
       'cf-renda-turbinada-bastidores',
-      'cf-renda-turbinada-carteira'
+      'cf-renda-turbinada-carteira',
+      'recursos-exclusivos',
+      'recursos-telegram',
+      'recursos-suporte'
     ]
   },
   'AMERICA': {
