@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar se é admin
-    const isAdmin = user.plan === 'ADMIN';
+    const isAdmin = user.plan === 'ADMIN' || user.plan === 'ANALISTA';
     
     // Filtros opcionais
     const statusParam = searchParams.get('status');

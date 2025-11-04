@@ -25,7 +25,7 @@ export async function POST(
     }
 
     // Verificar se é admin
-    if (user.plan !== 'ADMIN') {
+    if (user.plan !== 'ADMIN' && user.plan !== 'ANALISTA') {
       return NextResponse.json({ error: 'Only admins can create answers' }, { status: 403 });
     }
 
@@ -176,7 +176,7 @@ export async function GET(
     }
 
     // Verificar permissão
-    const isAdmin = user.plan === 'ADMIN';
+    const isAdmin = user.plan === 'ADMIN' || user.plan === 'ANALISTA';
     const isOwner = question.userId === user.id;
 
     if (!isAdmin && !isOwner) {

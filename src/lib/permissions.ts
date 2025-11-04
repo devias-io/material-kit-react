@@ -75,6 +75,14 @@ export const PLAN_PERMISSIONS = {
       'recursos-reserva', 'recursos-suporte'
     ]
   },
+  'ANALISTA': {
+    displayName: 'Analista',
+    isAdmin: false,
+    pages: [
+      // Acesso à central administrativa de dúvidas para responder perguntas
+      'admin-central-duvidas'
+    ]
+  },
   'ADMIN': {
     displayName: 'Administrador',
     isAdmin: true,

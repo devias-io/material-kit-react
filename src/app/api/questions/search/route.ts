@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const isAdmin = user.plan === 'ADMIN';
+    const isAdmin = user.plan === 'ADMIN' || user.plan === 'ANALISTA';
     
 
     const whereCategory = category && category !== 'ALL'

@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     const user = session.user;
 
-    if (user.plan !== 'ADMIN') {
+    if (user.plan !== 'ADMIN' && user.plan !== 'ANALISTA') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     const user = session.user;
 
-    if (user.plan !== 'ADMIN') {
+    if (user.plan !== 'ADMIN' && user.plan !== 'ANALISTA') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
