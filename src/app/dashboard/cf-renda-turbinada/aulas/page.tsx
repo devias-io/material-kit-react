@@ -79,10 +79,15 @@ function createEmptyLessonForm(): LessonFormState {
   };
 }
 
-const pagePadding = '24px clamp(12px, 4vw, 24px)';
-const sectionPadding = '24px clamp(14px, 4vw, 24px)';
-const cardPadding = '28px clamp(16px, 4vw, 28px)';
-const blockPadding = '20px clamp(12px, 4vw, 20px)';
+const pageHorizontalPadding = 'clamp(12px, 4vw, 24px)';
+const sectionHorizontalPadding = 'clamp(14px, 4vw, 24px)';
+const cardHorizontalPadding = 'clamp(16px, 4vw, 28px)';
+const blockHorizontalPadding = 'clamp(12px, 4vw, 20px)';
+const pagePadding = `24px ${pageHorizontalPadding}`;
+const sectionPadding = `24px ${sectionHorizontalPadding}`;
+const cardPadding = `28px ${cardHorizontalPadding}`;
+const blockPadding = `20px ${blockHorizontalPadding}`;
+const compactVideoHorizontalOffset = `(${pageHorizontalPadding} + ${blockHorizontalPadding})`;
 
 function renderTextWithLineBreaks(text: string): React.ReactNode {
   return text.split('\n').map((line, index, array) => (
@@ -392,17 +397,60 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const [isSaving, setIsSaving] = React.useState(false);
   const [fetchError, setFetchError] = React.useState<string | null>(null);
 
+  const [isCompactViewport, setIsCompactViewport] = React.useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    return window.matchMedia('(max-width: 640px)').matches;
+  });
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 640px)');
+
+    const handleViewportChange = (event: MediaQueryListEvent) => {
+      setIsCompactViewport(event.matches);
+    };
+
+    setIsCompactViewport(mediaQuery.matches);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleViewportChange);
+      return () => mediaQuery.removeEventListener('change', handleViewportChange);
+    }
+
+    mediaQuery.addListener?.(handleViewportChange);
+    return () => mediaQuery.removeListener?.(handleViewportChange);
+  }, []);
+
+  const compactVideoStyles = React.useMemo<React.CSSProperties | null>(() => {
+    if (!isCompactViewport) {
+      return null;
+    }
+
+    return {
+      width: `calc(100% + 2 * ${compactVideoHorizontalOffset})`,
+      marginLeft: `calc(-1 * ${compactVideoHorizontalOffset})`,
+      marginRight: `calc(-1 * ${compactVideoHorizontalOffset})`,
+      maxWidth: '100vw'
+    };
+  }, [isCompactViewport]);
+
   const [editingModuleId, setEditingModuleId] = React.useState<string | null>(null);
-const [editModuleForm, setEditModuleForm] = React.useState<{
-  title: string;
-  highlight: string;
-  releaseDate: string;
-}>({
-  title: '',
-  highlight: '',
-  releaseDate: ''
-});
-const [editModuleError, setEditModuleError] = React.useState<string | null>(null);
+  const [editModuleForm, setEditModuleForm] = React.useState<{
+    title: string;
+    highlight: string;
+    releaseDate: string;
+  }>({
+    title: '',
+    highlight: '',
+    releaseDate: ''
+  });
+  const [editModuleError, setEditModuleError] = React.useState<string | null>(null);
   
   const [liveEvents, setLiveEvents] = React.useState<LiveEvent[]>([]);
   const [liveForm, setLiveForm] = React.useState<LiveFormState>(createEmptyLiveForm());
@@ -1312,7 +1360,8 @@ const handleUpdateModule = React.useCallback(
                     width: '100%',
                     borderRadius: '12px',
                     overflow: 'hidden',
-                    backgroundColor: '#010101'
+                    backgroundColor: '#010101',
+                    ...(compactVideoStyles ?? {})
                   }}
                 >
                   <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
@@ -1417,6 +1466,7 @@ const handleUpdateModule = React.useCallback(
       handleEditLessonFieldChange,
       handleStartEditLesson,
       handleUpdateLesson,
+      compactVideoStyles,
       isAdmin,
       isSaving
     ]
