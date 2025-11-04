@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { isLifetimePlan } from '@/lib/lifetime-plans';
 
 const prisma = new PrismaClient();
 
@@ -23,16 +24,18 @@ function generateSecurePassword(): string {
 
 // Calcular data de expiração
 function calculateExpirationDate(plan: string): Date | null {
-  const expirationMap = {
+  if (isLifetimePlan(plan)) {
+    console.log(`🎉 Plano ${plan}: acesso vitalício (sem data de expiração).`);
+    return null;
+  }
+
+  const expirationMap: Record<string, number> = {
     'VIP': 365,
     'LITE': 365,
-    'RENDA_PASSIVA': null, // Vitalício
-    'FIIS': null, // Vitalício
     'AMERICA': 365
   };
 
-  const days = expirationMap[plan as keyof typeof expirationMap];
-  if (days === null) return null;
+  const days = expirationMap[plan as keyof typeof expirationMap] ?? 365;
 
   const expirationDate = new Date();
   expirationDate.setDate(expirationDate.getDate() + days);

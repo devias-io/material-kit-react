@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { getActiveEntitlementCodes } from '@/lib/entitlements';
+import { isLifetimePlan } from '@/lib/lifetime-plans';
 
 const prisma = new PrismaClient();
 
@@ -187,8 +188,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       customPermissions: normalizeCustomPermissions(userData.customPermissions)
     };
 
-    // Só atualizar expirationDate se foi fornecida
-    if (userData.expirationDate) {
+    // Garantir acesso vitalício para planos específicos
+    if (isLifetimePlan(userData.plan)) {
+      updateData.expirationDate = null;
+    } else if (userData.expirationDate) {
       updateData.expirationDate = new Date(userData.expirationDate);
     } else if (userData.expirationDate === null || userData.expirationDate === '') {
       updateData.expirationDate = null;

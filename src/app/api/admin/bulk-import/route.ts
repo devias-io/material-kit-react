@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { auth } from '@/lib/auth';
+import { isLifetimePlan } from '@/lib/lifetime-plans';
 
 const prisma = new PrismaClient();
 
@@ -159,25 +160,35 @@ function generateSecurePassword(): string {
   return password.split('').sort(() => Math.random() - 0.5).join('');
 }
 
-// Função para calcular data de expiração - TODOS OS PLANOS = 1 ANO
-function calculateExpirationDate(plan: string, customDate?: string): Date {
-  // PRIORIDADE 1: Data informada no CSV
+// Função para calcular data de expiração - considerar planos vitalícios
+function calculateExpirationDate(plan: string, customDate?: string): Date | null {
+  // PRIORIDADE 1: Data informada no CSV (apenas para planos não vitalícios)
   if (customDate && customDate.trim()) {
-    try {
-      const parsedDate = new Date(customDate.trim());
-      // Verificar se a data é válida
-      if (!isNaN(parsedDate.getTime())) {
-        console.log(`📅 Usando data do CSV: ${customDate} → ${parsedDate.toISOString()}`);
-        return parsedDate;
-      } else {
-        console.warn(`⚠️ Data inválida no CSV: ${customDate}, usando 1 ano a partir de hoje`);
+    if (isLifetimePlan(plan)) {
+      console.log(`⚠️ Plano ${plan} é vitalício. Ignorando data personalizada "${customDate}".`);
+    } else {
+      try {
+        const parsedDate = new Date(customDate.trim());
+        // Verificar se a data é válida
+        if (!isNaN(parsedDate.getTime())) {
+          console.log(`📅 Usando data do CSV: ${customDate} → ${parsedDate.toISOString()}`);
+          return parsedDate;
+        } else {
+          console.warn(`⚠️ Data inválida no CSV: ${customDate}, usando 1 ano a partir de hoje`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ Erro ao processar data ${customDate}:`, error);
       }
-    } catch (error) {
-      console.warn(`⚠️ Erro ao processar data ${customDate}:`, error);
     }
   }
 
-  // PRIORIDADE 2: TODOS os planos = 1 ano (365 dias)
+  // PRIORIDADE 2: Planos vitalícios não possuem data de expiração
+  if (isLifetimePlan(plan)) {
+    console.log(`🎉 Plano ${plan}: acesso vitalício (sem data de expiração).`);
+    return null;
+  }
+
+  // PRIORIDADE 3: Demais planos = 1 ano (365 dias)
   const expirationDate = new Date();
   expirationDate.setDate(expirationDate.getDate() + 365);
   console.log(`📅 Plano ${plan}: Expira em ${expirationDate.toISOString().split('T')[0]} (365 dias)`);
