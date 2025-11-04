@@ -295,7 +295,15 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const { firstName, lastName, email, plan, expirationDate, hotmartCustomerId } = requestData;
+    const {
+      firstName,
+      lastName,
+      email,
+      plan,
+      expirationDate,
+      hotmartCustomerId,
+      customPermissions: customPermissionsInput
+    } = requestData;
     console.log('📝 Criando usuário com senha segura:', { firstName, lastName, email, plan });
     
     // Validações
@@ -314,6 +322,43 @@ export async function POST(request: NextRequest) {
       }, { status: 400, headers });
     }
     
+    const normalizeCustomPermissions = (value: unknown): string[] => {
+      if (!value) {
+        return [];
+      }
+
+      if (Array.isArray(value)) {
+        return value.map(permission => String(permission).trim()).filter(Boolean);
+      }
+
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+
+        if (!trimmed) {
+          return [];
+        }
+
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            return parsed.map(permission => String(permission).trim()).filter(Boolean);
+          }
+        } catch (error) {
+          // trataremos como permissão simples
+        }
+
+        return [trimmed];
+      }
+
+      return [];
+    };
+
+    const normalizedCustomPermissions = Array.from(new Set(normalizeCustomPermissions(customPermissionsInput)));
+    const effectiveCustomPermissions =
+      plan === 'ANALISTA'
+        ? normalizedCustomPermissions.filter(permission => permission.startsWith('admin'))
+        : normalizedCustomPermissions;
+
     // Conectar ao banco
     await prisma.$connect();
     console.log('✅ Conectado ao banco para criação');
@@ -368,7 +413,8 @@ export async function POST(request: NextRequest) {
         origin: 'MANUAL',
         mustChangePassword: true, // ✅ FORÇA MUDANÇA NO PRIMEIRO ACESSO
         hotmartCustomerId: hotmartCustomerId || null,
-        expirationDate: normalizedExpirationDate
+        expirationDate: normalizedExpirationDate,
+        customPermissions: JSON.stringify(effectiveCustomPermissions)
       }
     });
 
@@ -423,7 +469,8 @@ export async function POST(request: NextRequest) {
         plan: novoUsuario.plan,
         status: novoUsuario.status,
         hotmartCustomerId: novoUsuario.hotmartCustomerId,
-        origin: novoUsuario.origin
+        origin: novoUsuario.origin,
+        customPermissions: effectiveCustomPermissions
       },
       email: {
         sent: emailSent,

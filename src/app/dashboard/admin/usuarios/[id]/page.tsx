@@ -394,6 +394,13 @@ export default function EditUserPage() {
     );
   };
 
+  const planHasAdminAccess = user ? getPlanPermissions(user.plan).some(permission => permission.startsWith('admin')) : false;
+  const customHasAdminAccess = user ? getArrayPermissions(user.customPermissions).some(permission => permission.startsWith('admin')) : false;
+  const showAdminCategory = (user?.plan === 'ANALISTA' || user?.plan === 'ADMIN') || planHasAdminAccess || customHasAdminAccess;
+  const contentCategories = showAdminCategory
+    ? ['Principal', 'Internacional', 'Recursos Exclusivos', 'Administrativo']
+    : ['Principal', 'Internacional', 'Recursos Exclusivos'];
+
   const getPlanInfo = (plan: string) => {
     const planMap = {
       'VIP': { label: 'Close Friends VIP', color: '#8B5CF6', emoji: '👑' },
@@ -826,9 +833,16 @@ export default function EditUserPage() {
                 <strong> Permissões customizadas:</strong> Liberações extras independente do plano
               </Typography>
 
-              {['Principal', 'Internacional', 'Recursos Exclusivos'].map(category => (
+              {contentCategories.map(category => (
                 <Box key={category} mb={2}>
-                  <Typography variant="subtitle2" sx={{ color: '#F59E0B', mb: 1, fontWeight: '600' }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: category === 'Administrativo' ? '#1D4ED8' : '#F59E0B',
+                      mb: 1,
+                      fontWeight: '600'
+                    }}
+                  >
                     {category}:
                   </Typography>
                   <FormGroup>
