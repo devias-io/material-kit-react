@@ -1,1026 +1,1236 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Alert,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  LinearProgress,
-  Grid,
-  Paper,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Tabs,
-  Tab,
-  CircularProgress,
-  Tooltip,
-  Menu,
-  MenuItem,
-  Checkbox,
-  Toolbar
-} from '@mui/material';
+import Link from 'next/link';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useUser } from '@/hooks/use-user';
+import { formatTextWithLinks } from '@/utils/formatTextWithLinks';
+import styles from './central-duvidas.module.css';
 
-// 🔄 IMPORTAR NOVOS HOOKS DA API
-import { 
-  useAgendaEstatisticas, 
-  useAgendaUpload, 
-  useAgendaExport 
-} from '@/hooks/useAgendaAPI';
-import { useAuthAccess } from '@/hooks/use-auth-access';
+type QuestionStatus = 'NOVA' | 'RESPONDIDA' | 'FECHADA';
 
-// Ícones Mock (mantendo consistência com o padrão atual)
-const UploadIcon = () => <span>📤</span>;
-const DownloadIcon = () => <span>📥</span>;
-const DeleteIcon = () => <span>🗑️</span>;
-const RefreshIcon = () => <span>🔄</span>;
-const ViewIcon = () => <span>👁️</span>;
-const ArrowLeftIcon = () => <span>←</span>;
-const MoreVertIcon = () => <span>⋮</span>;
-const EditIcon = () => <span>✏️</span>;
-
-// 🆕 PARSER INTELIGENTE DE DATAS - ACEITA MÚLTIPLOS FORMATOS
-const parseDataInteligente = (dataString: string): Date | null => {
-  if (!dataString) return null;
-  
-  // Remover espaços e normalizar separadores
-  const data = dataString.trim().replace(/\//g, '-').replace(/\./g, '-');
-  
-  const match = data.match(/^(\d{1,4})-(\d{1,2})-(\d{1,2})$/);
-  if (!match) return null;
-  
-  const [, parte1, parte2, parte3] = match;
-  let ano: number, mes: number, dia: number;
-  
-  // Detectar formato baseado nos valores
-  if (parte1.length === 4) {
-    // Começa com ano (4 dígitos)
-    ano = parseInt(parte1);
-    
-    if (parseInt(parte2) > 12) {
-      // YYYY-DD-MM (formato brasileiro adaptado)
-      dia = parseInt(parte2);
-      mes = parseInt(parte3);
-    } else if (parseInt(parte3) > 12) {
-      // YYYY-MM-DD (formato ISO)
-      mes = parseInt(parte2);
-      dia = parseInt(parte3);
-    } else {
-      // Ambos podem ser mês/dia, assumir YYYY-MM-DD como padrão
-      mes = parseInt(parte2);
-      dia = parseInt(parte3);
-    }
-  } else {
-    // Não começa com ano - formato brasileiro DD-MM-YYYY
-    dia = parseInt(parte1);
-    mes = parseInt(parte2);
-    ano = parseInt(parte3);
-  }
-  
-  // Validar valores
-  if (ano < 1900 || ano > 2100) return null;
-  if (mes < 1 || mes > 12) return null;
-  if (dia < 1 || dia > 31) return null;
-  
-  // Criar data com horário fixo para evitar problemas de timezone
-  return new Date(ano, mes - 1, dia, 12, 0, 0);
-};
-
-// Configurações dos tipos de eventos
-const TIPOS_EVENTO = {
-  resultado: { icon: '📊', cor: '#3b82f6', label: 'Resultados' },
-  dividendo: { icon: '💰', cor: '#22c55e', label: 'Dividendos' },
-  rendimento: { icon: '💰', cor: '#f59e0b', label: 'Rendimentos' },
-  assembleia: { icon: '🏛️', cor: '#8b5cf6', label: 'Assembleia' },
-  conference_call: { icon: '📞', cor: '#06b6d4', label: 'Conference Call' },
-  relatorio: { icon: '📄', cor: '#64748b', label: 'Relatório' },
-  evento_especial: { icon: '⭐', cor: '#ec4899', label: 'Evento Especial' },
-  fato_relevante: { icon: '⚠️', cor: '#ef4444', label: 'Fato Relevante' }
-};
-
-const STATUS_CONFIG = {
-  confirmado: { cor: '#22c55e', label: 'Confirmado' },
-  estimado: { cor: '#f59e0b', label: 'Estimado' },
-  cancelado: { cor: '#ef4444', label: 'Cancelado' },
-  adiado: { cor: '#8b5cf6', label: 'Adiado' }
-};
-
-interface EventoCorporativo {
-  ticker: string;
-  tipo_evento: string;
-  titulo: string;
-  data_evento: string;
-  descricao: string;
-  status: string;
-  prioridade?: string;
-  url_externo?: string;
-  observacoes?: string;
-  id?: string;
+interface Question {
+  id: string;
+  title: string;
+  content: string;
+  status: QuestionStatus;
+  createdAt: string;
+  readByAdmin: boolean;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    plan: string;
+  };
+  answers: Answer[];
 }
 
-// Componente principal da página
-export default function CentralAgendaPage() {
-  const { hasAnalisesTrimesestraisAdminAccess, loading: authLoading, user } = useAuthAccess();
-  const [tabAtual, setTabAtual] = useState(0);
-  const [dialogLimpar, setDialogLimpar] = useState(false);
-  const [etapaProcessamento, setEtapaProcessamento] = useState<string>('');
-  
-  // 🔄 USAR NOVOS HOOKS DA API
-  const { 
-    estatisticas, 
-    loading: statsLoading, 
-    carregarEstatisticas 
-  } = useAgendaEstatisticas();
-  
-  const { 
-    uploadEventos, 
-    excluirEvento,
-    excluirEventos,
-    excluirPorTicker,
-    limparTodos, 
-    loading: uploadLoading, 
-    progresso 
-  } = useAgendaUpload();
-  
-  const { 
-    exportarDados, 
-    loading: exportLoading 
-  } = useAgendaExport();
+interface Answer {
+  id: string;
+  content: string;
+  createdAt: string;
+  isFaq?: boolean;
+  faqTitle?: string | null;
+  faqOrder?: number;
+  admin: {
+    firstName: string;
+    lastName: string;
+  };
+}
 
-  // 🗑️ Estados para exclusão
-  const [eventoParaExcluir, setEventoParaExcluir] = useState<number | null>(null);
-  const [tickerParaExcluir, setTickerParaExcluir] = useState<string | null>(null);
-  const [eventosSelecionados, setEventosSelecionados] = useState<number[]>([]);
-  const [modoSelecao, setModoSelecao] = useState(false);
-  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [menuEventoIndex, setMenuEventoIndex] = useState<number | null>(null);
+interface FAQ {
+  id: string;
+  content: string;
+  faqTitle: string | null;
+  faqOrder: number;
+  createdAt: string;
+  question: {
+    id: string;
+    title: string;
+    content: string;
+    createdAt: string;
+  };
+  admin: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+}
 
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+interface Stats {
+  overview: {
+    totalQuestions: number;
+    totalAnswers: number;
+    unreadQuestions: number;
+    pendingQuestions: number;
+    averageResponseTimeHours: number;
+  };
+  breakdown: {
+    byStatus: Array<{ status: string; count: number }>;
+    byPriority: Array<{ priority: string; count: number }>;
+  };
+}
 
-  // ✅ CARREGAR ESTATÍSTICAS AO MONTAR COMPONENTE
+interface ResponseTemplate {
+  id: string;
+  title: string;
+  content: string;
+  isActive: boolean;
+  usageCount: number;
+  createdAt: string;
+}
+
+type StatusFilter = 'ALL' | 'NOVA' | 'RESPONDIDA';
+type SortOption = 'RECENT' | 'OLDER';
+
+const statusLabels: Record<QuestionStatus, string> = {
+  NOVA: 'Nova',
+  RESPONDIDA: 'Respondida',
+  FECHADA: 'Respondida',
+};
+
+const planLabels: Record<string, string> = {
+  VIP: 'Close Friends VIP',
+  LITE: 'Close Friends LITE',
+  LITE_V2: 'Close Friends LITE 2.0',
+  RENDA_PASSIVA: 'Projeto Renda Passiva',
+  FIIS: 'Projeto FIIs',
+  RENDA_TURBINADA: 'CF Renda Turbinada',
+  AMERICA: 'Projeto América',
+  ADMIN: 'Administrador',
+};
+
+const sortOptions: { value: SortOption; label: string }[] = [
+  { value: 'RECENT', label: 'Mais recentes primeiro' },
+  { value: 'OLDER', label: 'Mais antigas primeiro' },
+];
+
+const statusTabs: { value: StatusFilter; label: string }[] = [
+  { value: 'ALL', label: 'Todas' },
+  { value: 'NOVA', label: 'Novas' },
+  { value: 'RESPONDIDA', label: 'Respondidas' },
+];
+
+export default function AdminCentralDuvidas() {
+  const { user } = useUser();
+
+  const [currentTab, setCurrentTab] = useState<'QUESTIONS' | 'FAQ'>('QUESTIONS');
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
+
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOption, setSortOption] = useState<SortOption>('RECENT');
+  const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
+
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
+  const [activeResponseQuestionId, setActiveResponseQuestionId] = useState<string | null>(null);
+  const [responseContent, setResponseContent] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const [templates, setTemplates] = useState<ResponseTemplate[]>([]);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [templateSearch, setTemplateSearch] = useState('');
+
+  const [showFaqModal, setShowFaqModal] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<Answer | null>(null);
+  const [faqTitle, setFaqTitle] = useState('');
+  const [faqOrder, setFaqOrder] = useState(0);
+
+  const [editFaqModalOpen, setEditFaqModalOpen] = useState(false);
+  const [faqToEdit, setFaqToEdit] = useState<FAQ | null>(null);
+  const [editFaqTitle, setEditFaqTitle] = useState('');
+  const [editFaqOrder, setEditFaqOrder] = useState(0);
+  const [editFaqContent, setEditFaqContent] = useState('');
+
+  const [deleteFaqDialogOpen, setDeleteFaqDialogOpen] = useState(false);
+  const [faqToDelete, setFaqToDelete] = useState<FAQ | null>(null);
+
+  const [showCreateFaqModal, setShowCreateFaqModal] = useState(false);
+  const [createFaqData, setCreateFaqData] = useState({ title: '', content: '', faqOrder: 0 });
+  const [creatingFaq, setCreatingFaq] = useState(false);
+
   useEffect(() => {
-    carregarEstatisticas();
-  }, [carregarEstatisticas]);
+    loadData(1);
+  }, []);
 
-  // 🆕 PROCESSAR UPLOAD DE CSV COM PARSER INTELIGENTE E API
-  const handleUploadCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const arquivo = event.target.files?.[0];
-    if (!arquivo) return;
+  useEffect(() => {
+    loadData(1);
+  }, [currentTab, statusFilter]);
 
-    setEtapaProcessamento('Lendo arquivo...');
-    await delay(300);
+  const loadData = async (page = currentPage) => {
+    if (currentTab === 'QUESTIONS') {
+      await Promise.all([loadQuestions(page), loadStats()]);
+    } else {
+      await loadFAQs();
+    }
+  };
 
+  const loadQuestions = async (page = currentPage) => {
+    setLoading(true);
     try {
-      const texto = await arquivo.text();
-      const linhas = texto.split('\n').filter(linha => linha.trim());
-      
-      if (linhas.length < 2) {
-        throw new Error('Arquivo CSV deve ter pelo menos cabeçalho e uma linha de dados');
+      const params = new URLSearchParams();
+      params.append('excludeVirtual', 'true');
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+      if (statusFilter !== 'ALL') {
+        const statusParam =
+          statusFilter === 'RESPONDIDA' ? 'RESPONDIDA,FECHADA' : statusFilter;
+        params.append('status', statusParam);
       }
 
-      const cabecalho = linhas[0].split(',').map(col => col.trim());
-      console.log('Cabeçalho encontrado:', cabecalho);
-
-      // Mapeamento de colunas flexível
-      const mapeamentoColunas: { [key: string]: string } = {
-        'tipo': 'tipo_evento',
-        'tipo_evento': 'tipo_evento',
-        'data': 'data_evento', 
-        'data_evento': 'data_evento',
-        'categoria': 'tipo_evento'
-      };
-
-      // Validar colunas obrigatórias com mapeamento flexível
-      const colunasObrigatorias = ['ticker', 'titulo', 'descricao', 'status'];
-      const colunasTipoEvento = ['tipo', 'tipo_evento', 'categoria'];
-      const colunasDataEvento = ['data', 'data_evento'];
-
-      const colunasFaltantes = colunasObrigatorias.filter(col => !cabecalho.includes(col));
-      
-      // Verificar se existe pelo menos uma coluna de tipo_evento
-      const temTipoEvento = colunasTipoEvento.some(col => cabecalho.includes(col));
-      if (!temTipoEvento) {
-        colunasFaltantes.push('tipo_evento (ou tipo)');
-      }
-
-      // Verificar se existe pelo menos uma coluna de data_evento  
-      const temDataEvento = colunasDataEvento.some(col => cabecalho.includes(col));
-      if (!temDataEvento) {
-        colunasFaltantes.push('data_evento (ou data)');
-      }
-      
-      if (colunasFaltantes.length > 0) {
-        throw new Error(`Colunas obrigatórias faltantes: ${colunasFaltantes.join(', ')}`);
-      }
-
-      setEtapaProcessamento(`Processando ${linhas.length - 1} linhas...`);
-
-      // Processar dados
-      const eventosNovos: EventoCorporativo[] = [];
-      
-      for (let i = 1; i < linhas.length; i++) {
-        const valores = linhas[i].split(',').map(val => val.trim());
-        
-        if (valores.length < cabecalho.length) {
-          console.warn(`Linha ${i + 1} incompleta, pulando...`);
-          continue;
-        }
-
-        const evento: any = {};
-        
-        // Mapear colunas do CSV para o formato esperado
-        cabecalho.forEach((coluna, index) => {
-          const colunaDestino = mapeamentoColunas[coluna] || coluna;
-          evento[colunaDestino] = valores[index] || '';
-        });
-
-        // Adicionar ID único
-        evento.id = `${evento.ticker}-${evento.data_evento}-${i}`;
-
-        // Validar dados obrigatórios
-        if (!evento.ticker || !evento.data_evento || !evento.titulo) {
-          console.warn(`Linha ${i + 1} com dados obrigatórios faltantes, pulando...`);
-          continue;
-        }
-
-        // 🆕 VALIDAR DATA USANDO PARSER INTELIGENTE
-        const dataEvento = parseDataInteligente(evento.data_evento);
-        if (!dataEvento) {
-          console.warn(`Linha ${i + 1} com data inválida: ${evento.data_evento}`);
-          continue;
-        }
-
-        // Normalizar a data no formato ISO para armazenamento
-        evento.data_evento = dataEvento.toISOString().split('T')[0]; // YYYY-MM-DD
-
-        eventosNovos.push(evento as EventoCorporativo);
-      }
-
-      if (eventosNovos.length === 0) {
-        throw new Error('Nenhum evento válido encontrado no arquivo');
-      }
-
-      setEtapaProcessamento('Enviando para servidor...');
-
-      // 🚀 USAR API EM VEZ DE localStorage
-      const resultado = await uploadEventos(eventosNovos, {
-        nomeArquivo: arquivo.name,
-        tamanhoArquivo: arquivo.size,
-        totalLinhas: linhas.length,
-        linhasProcessadas: eventosNovos.length
+      const response = await fetch(`/api/questions?${params.toString()}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
-      // ✅ RECARREGAR ESTATÍSTICAS
-      await carregarEstatisticas();
-      
-      alert(`✅ ${eventosNovos.length} eventos carregados com sucesso!\n\nTickers processados: ${new Set(eventosNovos.map(e => e.ticker)).size}\n\n📅 Formatos de data aceitos: DD/MM/YYYY, YYYY-MM-DD, YYYY-DD-MM`);
-      
-    } catch (error) {
-      console.error('Erro no upload:', error);
-      alert(`❌ Erro ao processar arquivo:\n${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      if (response.ok) {
+        const data = await response.json();
+        const normalizedQuestions = (data.questions || []).map((question: Question) => ({
+          ...question,
+          status: question.status === 'FECHADA' ? 'RESPONDIDA' : question.status,
+        }));
+        setQuestions(normalizedQuestions);
+        setCurrentPage(data.pagination.page);
+        setTotal(data.pagination.total);
+        setError('');
+      } else {
+        setError('Erro ao carregar perguntas. Tente novamente.');
+      }
+    } catch (err) {
+      setError('Erro de conexão');
     } finally {
-      setEtapaProcessamento('');
-      event.target.value = '';
+      setLoading(false);
     }
   };
 
-  // ✅ EXPORTAR VIA API
-  const handleExportarDados = async () => {
+  const loadStats = async () => {
     try {
-      await exportarDados();
-      alert('Dados exportados com sucesso!');
-    } catch (error) {
-      alert('Erro ao exportar dados');
+      const response = await fetch('/api/questions/stats', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar estatísticas:', err);
     }
   };
 
-  // ✅ LIMPAR VIA API
-  const handleLimparTudo = async () => {
+  const loadFAQs = async () => {
+    setLoading(true);
     try {
-      await limparTodos();
-      await carregarEstatisticas();
-      setEventosSelecionados([]);
-      setModoSelecao(false);
-      setDialogLimpar(false);
-      alert('Dados removidos com sucesso.');
-    } catch (error) {
-      alert('Erro ao remover dados');
+      const response = await fetch('/api/faq', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFaqs(data.faqs || []);
+        setError('');
+      } else {
+        setError('Erro ao carregar FAQs');
+      }
+    } catch (err) {
+      setError('Erro ao carregar FAQs');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Download do template
-  const downloadTemplate = () => {
-    const template = `ticker,tipo_evento,titulo,data_evento,descricao,status,prioridade,url_externo,observacoes
-VALE3,resultado,Resultados 1T25,2025-05-15,Divulgação dos resultados do primeiro trimestre,confirmado,alta,,
-PETR4,dividendo,Ex-Dividendos,2025-06-10,Data ex-dividendos referente aos resultados,estimado,media,,
-MALL11,rendimento,Rendimento Jun/25,2025-06-15,Distribuição mensal de rendimentos,confirmado,alta,,
-HSML11,assembleia,AGO 2025,2025-04-28,Assembleia Geral de Cotistas,confirmado,alta,https://hsml11.com.br,
-BTLG11,conference_call,Conference Call 1T25,2025-05-16,Apresentação dos resultados trimestrais,confirmado,media,,Às 16h00
-VALE3,fato_relevante,Comunicado Importante,2025-07-01,Comunicado sobre operações especiais,estimado,baixa,,`;
+  const handleCreateFAQ = async () => {
+    if (!createFaqData.title.trim() || !createFaqData.content.trim()) {
+      setError('Título e conteúdo são obrigatórios');
+      return;
+    }
 
-    const blob = new Blob([template], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'template_agenda_corporativa.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+    setCreatingFaq(true);
+    try {
+      const token =
+        typeof window !== 'undefined'
+          ? document.cookie.match(/auth-token=([^;]+)/)?.[1] || localStorage.getItem('auth-token') || ''
+          : '';
 
-  // 🗑️ Funções de exclusão VIA API
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, index: number) => {
-    setMenuAnchor(event.currentTarget);
-    setMenuEventoIndex(index);
-  };
+      const response = await fetch('/api/faq/create', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(user?.email ? { 'X-User-Email': user.email } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(createFaqData),
+      });
 
-  const handleMenuClose = () => {
-    setMenuAnchor(null);
-    setMenuEventoIndex(null);
-  };
-
-  const handleExcluirEvento = (index: number) => {
-    setEventoParaExcluir(index);
-    handleMenuClose();
-  };
-
-  const confirmarExclusaoEvento = async () => {
-    if (eventoParaExcluir !== null) {
-      try {
-        await excluirEvento(eventoParaExcluir);
-        await carregarEstatisticas();
-        setEventoParaExcluir(null);
-        alert('✅ Evento excluído com sucesso!');
-      } catch (error) {
-        alert('Erro ao excluir evento');
+      if (response.ok) {
+        setSuccess('FAQ criada com sucesso!');
+        setShowCreateFaqModal(false);
+        setCreateFaqData({ title: '', content: '', faqOrder: 0 });
+        loadFAQs();
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Erro ao criar FAQ');
       }
+    } catch (err) {
+      setError('Erro ao criar FAQ');
+    } finally {
+      setCreatingFaq(false);
     }
   };
 
-  const handleExcluirTicker = (ticker: string) => {
-    setTickerParaExcluir(ticker);
-  };
+  const loadTemplates = async () => {
+    setLoadingTemplates(true);
+    try {
+      const params = new URLSearchParams();
+      params.append('isActive', 'true');
 
-  const confirmarExclusaoTicker = async () => {
-    if (tickerParaExcluir) {
-      try {
-        const eventosDoTicker = estatisticas.eventos.filter(e => e.ticker === tickerParaExcluir).length;
-        await excluirPorTicker(tickerParaExcluir);
-        await carregarEstatisticas();
-        setTickerParaExcluir(null);
-        alert(`✅ ${eventosDoTicker} eventos do ticker ${tickerParaExcluir} excluídos!`);
-      } catch (error) {
-        alert('Erro ao excluir eventos do ticker');
+      const response = await fetch(`/api/response-templates?${params.toString()}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTemplates(data.templates || []);
+      } else {
+        setError('Erro ao carregar templates');
       }
+    } catch (err) {
+      setError('Erro ao carregar templates');
+    } finally {
+      setLoadingTemplates(false);
     }
   };
 
-  const handleSelecionar = (index: number) => {
-    setEventosSelecionados(prev => 
-      prev.includes(index) 
-        ? prev.filter(i => i !== index)
-        : [...prev, index]
-    );
-  };
+  const handleUseTemplate = async (template: ResponseTemplate) => {
+    try {
+      await fetch(`/api/response-templates/${template.id}/use`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-  const handleSelecionarTodos = () => {
-    if (eventosSelecionados.length === estatisticas.eventos.length) {
-      setEventosSelecionados([]);
-    } else {
-      setEventosSelecionados(estatisticas.eventos.map((_, index) => index));
+      setResponseContent(template.content);
+      setShowTemplatesModal(false);
+      setSuccess(`Template "${template.title}" aplicado!`);
+    } catch (err) {
+      setError('Erro ao aplicar template');
     }
   };
 
-  const excluirSelecionados = async () => {
-    if (eventosSelecionados.length > 0) {
-      try {
-        await excluirEventos(eventosSelecionados);
-        await carregarEstatisticas();
-        setEventosSelecionados([]);
-        setModoSelecao(false);
-        alert(`✅ ${eventosSelecionados.length} eventos excluídos!`);
-      } catch (error) {
-        alert('Erro ao excluir eventos selecionados');
+  const handleMarkAsFAQ = (answer: Answer, questionTitle: string) => {
+    setSelectedAnswer(answer);
+    setFaqTitle(answer.faqTitle || questionTitle);
+    setFaqOrder(answer.faqOrder || 0);
+    setShowFaqModal(true);
+  };
+
+  const submitFAQ = async () => {
+    if (!selectedAnswer) return;
+
+    try {
+      const response = await fetch(`/api/answers/${selectedAnswer.id}/faq`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isFaq: !selectedAnswer.isFaq,
+          faqTitle: selectedAnswer.isFaq ? null : faqTitle,
+          faqOrder: selectedAnswer.isFaq ? 0 : faqOrder,
+        }),
+      });
+
+      if (response.ok) {
+        const action = selectedAnswer.isFaq ? 'removida das' : 'adicionada às';
+        setSuccess(`Resposta ${action} FAQs!`);
+        setShowFaqModal(false);
+        setSelectedAnswer(null);
+        setFaqTitle('');
+        setFaqOrder(0);
+        loadData();
+      } else {
+        setError('Erro ao alterar status FAQ');
       }
+    } catch (err) {
+      setError('Erro ao alterar status FAQ');
     }
   };
 
-  // Estatísticas por ticker VIA API
-  const estatisticasPorTicker = React.useMemo(() => {
-    const stats: { [ticker: string]: { total: number; proximos: number } } = {};
-    const hoje = new Date();
-    
-    estatisticas.eventos.forEach(evento => {
-      if (!stats[evento.ticker]) {
-        stats[evento.ticker] = { total: 0, proximos: 0 };
+  const handleEditFaq = (faq: FAQ) => {
+    setFaqToEdit(faq);
+    setEditFaqTitle(faq.faqTitle || '');
+    setEditFaqOrder(faq.faqOrder || 0);
+    setEditFaqContent(faq.content || '');
+    setEditFaqModalOpen(true);
+  };
+
+  const handleUpdateFaq = async () => {
+    if (!faqToEdit) return;
+
+    try {
+      const response = await fetch(`/api/answers/${faqToEdit.id}/faq`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isFaq: true,
+          faqTitle: editFaqTitle,
+          faqOrder: editFaqOrder,
+          content: editFaqContent,
+        }),
+      });
+
+      if (response.ok) {
+        setSuccess('FAQ atualizada com sucesso!');
+        setEditFaqModalOpen(false);
+        setFaqToEdit(null);
+        loadFAQs();
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Erro ao atualizar FAQ');
       }
-      stats[evento.ticker].total++;
-      
-      const dataEvento = new Date(evento.data_evento);
-      const diffDays = Math.ceil((dataEvento.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-      if (diffDays >= 0 && diffDays <= 30) {
-        stats[evento.ticker].proximos++;
+    } catch (err) {
+      setError('Erro ao atualizar FAQ');
+    }
+  };
+
+  const handleDeleteFaq = (faq: FAQ) => {
+    setFaqToDelete(faq);
+    setDeleteFaqDialogOpen(true);
+  };
+
+  const confirmDeleteFaq = async () => {
+    if (!faqToDelete) return;
+
+    try {
+      const response = await fetch(`/api/answers/${faqToDelete.id}/faq`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        setSuccess('FAQ removida com sucesso!');
+        setDeleteFaqDialogOpen(false);
+        setFaqToDelete(null);
+        loadFAQs();
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Erro ao remover FAQ');
       }
+    } catch (err) {
+      setError('Erro ao remover FAQ');
+    }
+  };
+
+  const handleStartResponse = (question: Question) => {
+    setSelectedQuestion(question);
+    setResponseContent('');
+    setActiveResponseQuestionId(question.id);
+    setExpandedQuestion(question.id);
+    loadTemplates();
+  };
+
+  const handleCancelResponse = () => {
+    setActiveResponseQuestionId(null);
+    setResponseContent('');
+    setSelectedQuestion(null);
+  };
+
+  const handleSubmitResponse = async () => {
+    if (!selectedQuestion || !responseContent.trim()) {
+      setError('Resposta é obrigatória');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await fetch(`/api/questions/${selectedQuestion.id}/answers`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: responseContent,
+        }),
+      });
+
+      if (response.ok) {
+        setSuccess('Resposta enviada com sucesso!');
+        setResponseContent('');
+        setSelectedQuestion(null);
+        setActiveResponseQuestionId(null);
+        loadData();
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Erro ao enviar resposta');
+      }
+    } catch (err) {
+      setError('Erro de conexão');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
+  };
 
-    return Object.entries(stats)
-      .map(([ticker, data]) => ({ ticker, ...data }))
-      .sort((a, b) => b.total - a.total);
-  }, [estatisticas.eventos]);
+  const formatDateRelative = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
 
-  if (authLoading) {
-    return (
-      <Box sx={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        backgroundColor: '#f8fafc'
-      }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <CircularProgress size={48} sx={{ mb: 2, color: '#3b82f6' }} />
-          <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', mb: 1 }}>
-            Verificando permissões administrativas...
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Central da Agenda Corporativa
-          </Typography>
-        </Box>
-      </Box>
-    );
-  }
+    if (diffInMinutes < 60) {
+      return `${Math.max(1, diffInMinutes)} min atrás`;
+    }
 
-  if (!hasAnalisesTrimesestraisAdminAccess()) {
-    return (
-      <Box sx={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        backgroundColor: '#f8fafc',
-        p: 3
-      }}>
-        <Card sx={{ maxWidth: 600, textAlign: 'center', p: 6 }}>
-          <Typography variant="h2" sx={{ fontSize: '64px', mb: 3 }}>
-            📅
-          </Typography>
-          <Typography variant="h4" sx={{ 
-            fontWeight: 700, 
-            color: '#dc2626', 
-            mb: 2 
-          }}>
-            Acesso Administrativo Negado
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
-            A <strong>Central da Agenda Corporativa</strong> é uma área restrita a administradores do sistema. 
-            Você não possui as permissões necessárias para gerenciar eventos corporativos.
-          </Typography>
-          <Alert severity="info" sx={{ mb: 4, textAlign: 'left' }}>
-            <Typography variant="body2">
-              <strong>Usuário:</strong> {user?.email || 'N/A'}<br/>
-              <strong>Plano:</strong> {user?.plan || 'N/A'}<br/>
-              <strong>Área solicitada:</strong> Agenda Corporativa (Admin)
-            </Typography>
-          </Alert>
-          <Stack direction="row" spacing={2} justifyContent="center">
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() => window.location.href = '/dashboard'}
-              sx={{ px: 4 }}
-            >
-              Voltar ao Dashboard
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => window.history.back()}
-              sx={{ px: 4 }}
-            >
-              Página Anterior
-            </Button>
-          </Stack>
-        </Card>
-      </Box>
-    );
-  }
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      return `${diffInHours}h atrás`;
+    }
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays === 1) {
+      return 'Ontem';
+    }
+
+    return formatDate(dateString);
+  };
+
+  const getStatusBadgeClass = (status: QuestionStatus) => {
+    switch (status) {
+      case 'NOVA':
+        return styles.statusNew;
+      case 'RESPONDIDA':
+      case 'FECHADA':
+        return styles.statusAnswered;
+      default:
+        return '';
+    }
+  };
+
+  const statusCounts = useMemo(
+    () =>
+      questions.reduce(
+        (acc, question) => {
+          acc.total += 1;
+          if (question.status === 'NOVA') {
+            acc.NOVA += 1;
+          } else {
+            acc.RESPONDIDA += 1;
+          }
+          return acc;
+        },
+        { total: 0, NOVA: 0, RESPONDIDA: 0 } as Record<'total' | 'NOVA' | 'RESPONDIDA', number>,
+      ),
+    [questions],
+  );
+
+  const filteredQuestions = useMemo(() => {
+    let data = [...questions];
+
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      data = data.filter((question) => {
+        const matchesTitle = question.title.toLowerCase().includes(term);
+        const matchesContent = question.content.toLowerCase().includes(term);
+        const matchesUser = `${question.user.firstName} ${question.user.lastName}`.toLowerCase().includes(term);
+        return matchesTitle || matchesContent || matchesUser;
+      });
+    }
+
+    return data.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+
+      if (sortOption === 'RECENT') {
+        return dateB - dateA;
+      }
+
+      return dateA - dateB;
+    });
+  }, [questions, searchTerm, sortOption]);
+
+  const filteredTemplates = useMemo(
+    () =>
+      templates.filter((template) => {
+        const query = templateSearch.toLowerCase();
+        return (
+          template.title.toLowerCase().includes(query) || template.content.toLowerCase().includes(query)
+        );
+      }),
+    [templates, templateSearch],
+  );
+
+  const totalPages = total > 0 ? Math.ceil(total / limit) : 1;
+
+  const handleRefresh = () => {
+    if (currentTab === 'QUESTIONS') {
+      loadQuestions(currentPage);
+      loadStats();
+    } else {
+      loadFAQs();
+    }
+  };
+
+  const isLoadingQuestions = loading && currentTab === 'QUESTIONS';
+  const isLoadingFaqs = loading && currentTab === 'FAQ';
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
-      {/* Header */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-            📅 Central da Agenda Corporativa (API)
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Sistema unificado sincronizado entre todos os dispositivos
-          </Typography>
-        </Box>
-        
-        <Stack direction="row" spacing={2}>
-          <Button
-            startIcon={<ArrowLeftIcon />}
-            onClick={() => window.history.back()}
-            variant="outlined"
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <div>
+            <h1 className={styles.headerTitle}>Central de Dúvidas - Admin</h1>
+            <p className={styles.headerSubtitle}>
+              Gerencie as dúvidas dos membros, organize respostas da equipe e alimente a base de conhecimento.
+            </p>
+          </div>
+          <div className={styles.headerActions}>
+            <Link href="/dashboard/admin/templates" className={styles.secondaryButton}>
+              Gerenciar templates
+            </Link>
+            <button type="button" className={styles.secondaryButton} onClick={handleRefresh}>
+              Atualizar dados
+            </button>
+          </div>
+        </header>
+
+        <div className={styles.mainTabs}>
+          <button
+            type="button"
+            className={`${styles.mainTabButton} ${currentTab === 'QUESTIONS' ? styles.mainTabButtonActive : ''}`}
+            onClick={() => setCurrentTab('QUESTIONS')}
           >
-            Voltar
-          </Button>
-
-          {/* ✅ INDICADOR DE STATUS DA API */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <div style={{ 
-              width: 8, 
-              height: 8, 
-              borderRadius: '50%', 
-              backgroundColor: '#10b981' 
-            }} />
-            <Typography sx={{ fontSize: '12px', color: '#64748b' }}>
-              API Conectada
-            </Typography>
-          </Box>
-          
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={carregarEstatisticas}
-            disabled={statsLoading}
+            Atendimento
+          </button>
+          <button
+            type="button"
+            className={`${styles.mainTabButton} ${currentTab === 'FAQ' ? styles.mainTabButtonActive : ''}`}
+            onClick={() => setCurrentTab('FAQ')}
           >
-            {statsLoading ? 'Atualizando...' : 'Atualizar'}
-          </Button>
-          
-          {estatisticas.totalEventos > 0 && (
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={() => setDialogLimpar(true)}
-            >
-              Limpar Tudo
-            </Button>
-          )}
-        </Stack>
-      </Stack>
+            Base de conhecimento
+          </button>
+        </div>
 
-      {/* Cards de Estatísticas - AGORA VIA API */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h3" sx={{ fontWeight: 700, color: '#3b82f6' }}>
-                {statsLoading ? '...' : estatisticas.totalEventos}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total de Eventos
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h3" sx={{ fontWeight: 700, color: '#22c55e' }}>
-                {statsLoading ? '...' : estatisticas.totalTickers}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Tickers Únicos
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h3" sx={{ fontWeight: 700, color: '#f59e0b' }}>
-                {statsLoading ? '...' : estatisticas.proximos30Dias}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Próximos 30 Dias
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Última Atualização
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {statsLoading ? '...' : (estatisticas.dataUltimoUpload 
-                  ? new Date(estatisticas.dataUltimoUpload).toLocaleDateString('pt-BR') 
-                  : 'Nunca'
-                )}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+        {error && (
+          <div className={`${styles.alert} ${styles.alertError}`}>
+            <span>{error}</span>
+            <button type="button" onClick={() => setError('')} aria-label="Fechar alerta">
+              ×
+            </button>
+          </div>
+        )}
 
-      {/* Área de Upload - ATUALIZADA PARA API */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-            📤 Importar Eventos
-          </Typography>
-          
-          <Stack spacing={3}>
-            <Alert severity="info">
-              <Typography variant="body2">
-                <strong>📋 Como usar:</strong><br/>
-                1. Baixe o template CSV abaixo<br/>
-                2. Preencha com os dados dos eventos corporativos<br/>
-                3. Faça upload do arquivo preenchido<br/>
-                4. Os dados aparecerão automaticamente nas páginas dos ativos<br/>
-                <br/>
-                <strong>✅ Dados serão sincronizados entre todos os dispositivos automaticamente</strong><br/>
-                <strong>📅 Formatos de data aceitos:</strong> YYYY-MM-DD, DD/MM/YYYY, YYYY-DD-MM, DD.MM.YYYY
-              </Typography>
-            </Alert>
+        {success && (
+          <div className={`${styles.alert} ${styles.alertSuccess}`}>
+            <span>{success}</span>
+            <button type="button" onClick={() => setSuccess('')} aria-label="Fechar alerta">
+              ×
+            </button>
+          </div>
+        )}
 
-            <Stack direction="row" spacing={2} alignItems="center">
-              <input
-                accept=".csv"
-                style={{ display: 'none' }}
-                id="upload-csv-agenda"
-                type="file"
-                onChange={handleUploadCSV}
-                disabled={uploadLoading}
-              />
-              <label htmlFor="upload-csv-agenda">
-                <Button
-                  component="span"
-                  variant="contained"
-                  startIcon={uploadLoading ? <CircularProgress size={16} /> : <UploadIcon />}
-                  disabled={uploadLoading}
-                  size="large"
-                >
-                  {uploadLoading ? 'Processando...' : 'Upload CSV'}
-                </Button>
-              </label>
-              
-              <Button
-                variant="outlined"
-                startIcon={<DownloadIcon />}
-                onClick={downloadTemplate}
-                size="large"
-              >
-                Baixar Template
-              </Button>
+        {currentTab === 'QUESTIONS' && (
+          <>
+            <section className={styles.summaryGrid}>
+              <div className={styles.summaryCard}>
+                <span className={styles.summaryLabel}>Total</span>
+                <strong className={styles.summaryValue}>{stats?.overview.totalQuestions ?? statusCounts.total}</strong>
+              </div>
+              <div className={styles.summaryCard}>
+                <span className={styles.summaryLabel}>Pendentes</span>
+                <strong className={styles.summaryValue}>{stats?.overview.pendingQuestions ?? statusCounts.NOVA}</strong>
+              </div>
+              <div className={styles.summaryCard}>
+                <span className={styles.summaryLabel}>Respondidas</span>
+                <strong className={styles.summaryValue}>{stats?.overview.totalAnswers ?? statusCounts.RESPONDIDA}</strong>
+              </div>
+              <div className={styles.summaryCard}>
+                <span className={styles.summaryLabel}>Tempo médio de resposta</span>
+                <strong className={styles.summaryValue}>
+                  {stats?.overview.averageResponseTimeHours
+                    ? `${stats.overview.averageResponseTimeHours.toFixed(1)}h`
+                    : '—'}
+                </strong>
+              </div>
+            </section>
 
-              <Button 
-                variant="outlined"
-                onClick={handleExportarDados} 
-                startIcon={<DownloadIcon />}
-                disabled={exportLoading}
-              >
-                {exportLoading ? 'Exportando...' : 'Exportar Dados'}
-              </Button>
-            </Stack>
-
-            {uploadLoading && (
-              <Box>
-                <Typography sx={{ mb: 1, color: '#64748b', fontSize: '0.875rem' }}>
-                  {etapaProcessamento}
-                </Typography>
-                <LinearProgress 
-                  value={progresso} 
-                  variant="determinate" 
-                  sx={{
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: '#e2e8f0',
-                    '& .MuiLinearProgress-bar': {
-                      backgroundColor: '#3b82f6',
-                      borderRadius: 4
-                    }
-                  }}
-                />
-              </Box>
-            )}
-          </Stack>
-        </CardContent>
-      </Card>
-
-      {/* Tabs de Visualização */}
-      {estatisticas.totalEventos > 0 && (
-        <Card>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={tabAtual} onChange={(_, newValue) => setTabAtual(newValue)}>
-              <Tab label={`📊 Eventos (${estatisticas.totalEventos})`} />
-              <Tab label={`🏢 Por Ticker (${estatisticas.totalTickers})`} />
-            </Tabs>
-          </Box>
-
-          <CardContent sx={{ p: 0 }}>
-            {/* Tab 1: Lista de Eventos */}
-            {tabAtual === 0 && (
-              <>
-                {/* 🗑️ Toolbar de ações */}
-                <Toolbar sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                  <Stack direction="row" spacing={2} alignItems="center" sx={{ flex: 1 }}>
-                    <Button
-                      size="small"
-                      variant={modoSelecao ? "contained" : "outlined"}
+            <div className={styles.filtersCard}>
+              <div className={styles.filterHeader}>
+                <div className={styles.filterTabs}>
+                  {statusTabs.map((tab) => (
+                    <button
+                      key={tab.value}
+                      type="button"
+                      className={`${styles.tabButton} ${statusFilter === tab.value ? styles.tabButtonActive : ''}`}
                       onClick={() => {
-                        setModoSelecao(!modoSelecao);
-                        setEventosSelecionados([]);
+                        setStatusFilter(tab.value);
+                        setExpandedQuestion(null);
                       }}
                     >
-                      {modoSelecao ? 'Cancelar Seleção' : 'Selecionar Múltiplos'}
-                    </Button>
-
-                    {modoSelecao && (
-                      <>
-                        <Button
-                          size="small"
-                          onClick={handleSelecionarTodos}
-                        >
-                          {eventosSelecionados.length === estatisticas.eventos.length ? 'Desmarcar Todos' : 'Selecionar Todos'}
-                        </Button>
-
-                        {eventosSelecionados.length > 0 && (
-                          <Button
-                            size="small"
-                            color="error"
-                            variant="contained"
-                            startIcon={<DeleteIcon />}
-                            onClick={excluirSelecionados}
-                          >
-                            Excluir Selecionados ({eventosSelecionados.length})
-                          </Button>
-                        )}
-                      </>
-                    )}
-                  </Stack>
-                </Toolbar>
-
-                <TableContainer sx={{ maxHeight: 600 }}>
-                  <Table stickyHeader size="small">
-                    <TableHead>
-                      <TableRow>
-                        {modoSelecao && <TableCell padding="checkbox">Sel.</TableCell>}
-                        <TableCell>Ticker</TableCell>
-                        <TableCell>Tipo</TableCell>
-                        <TableCell>Título</TableCell>
-                        <TableCell>Data</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell align="center">Ações</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {estatisticas.eventos
-                        .sort((a, b) => new Date(a.data_evento).getTime() - new Date(b.data_evento).getTime())
-                        .map((evento, index) => {
-                          const config = TIPOS_EVENTO[evento.tipo_evento as keyof typeof TIPOS_EVENTO] || 
-                                       { icon: '📅', cor: '#64748b', label: evento.tipo_evento };
-                          const statusConfig = STATUS_CONFIG[evento.status as keyof typeof STATUS_CONFIG] || 
-                                              { cor: '#64748b', label: evento.status };
-                          
-                          return (
-                            <TableRow key={index} hover>
-                              {modoSelecao && (
-                                <TableCell padding="checkbox">
-                                  <Checkbox
-                                    checked={eventosSelecionados.includes(index)}
-                                    onChange={() => handleSelecionar(index)}
-                                  />
-                                </TableCell>
-                              )}
-                              <TableCell sx={{ fontWeight: 600 }}>
-                                {evento.ticker}
-                              </TableCell>
-                              <TableCell>
-                                <Chip
-                                  icon={<span>{config.icon}</span>}
-                                  label={config.label}
-                                  size="small"
-                                  sx={{
-                                    backgroundColor: config.cor,
-                                    color: 'white',
-                                    fontSize: '0.75rem'
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Box>
-                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                    {evento.titulo}
-                                  </Typography>
-                                  {evento.observacoes && (
-                                    <Typography variant="caption" color="text.secondary">
-                                      📝 {evento.observacoes}
-                                    </Typography>
-                                  )}
-                                </Box>
-                              </TableCell>
-                              <TableCell>
-                                <Typography variant="body2">
-                                  {new Date(evento.data_evento).toLocaleDateString('pt-BR')}
-                                </Typography>
-                              </TableCell>
-                              <TableCell>
-                                <Chip
-                                  label={statusConfig.label}
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{
-                                    borderColor: statusConfig.cor,
-                                    color: statusConfig.cor,
-                                    fontSize: '0.75rem'
-                                  }}
-                                />
-                              </TableCell>
-
-                              <TableCell align="center">
-                                <Tooltip title="Mais opções">
-                                  <IconButton
-                                    size="small"
-                                    onClick={(e) => handleMenuClick(e, index)}
-                                  >
-                                    <MoreVertIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </>
-            )}
-
-            {/* Tab 2: Estatísticas por Ticker */}
-            {tabAtual === 1 && (
-              <Box sx={{ p: 3 }}>
-                <Grid container spacing={2}>
-                  {estatisticasPorTicker.map(({ ticker, total, proximos }) => (
-                    <Grid item xs={12} sm={6} md={4} key={ticker}>
-                      <Card variant="outlined">
-                        <CardContent>
-                          <Stack direction="row" justifyContent="space-between" alignItems="center">
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                              {ticker}
-                            </Typography>
-                            <Stack direction="row" spacing={1} alignItems="center">
-                              <Chip
-                                label={`${total} total`}
-                                size="small"
-                                color="primary"
-                              />
-                              {proximos > 0 && (
-                                <Chip
-                                  label={`${proximos} próximos`}
-                                  size="small"
-                                  color="warning"
-                                />
-                              )}
-                              <Tooltip title="Excluir todos eventos deste ticker">
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  onClick={() => handleExcluirTicker(ticker)}
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Tooltip>
-                            </Stack>
-                          </Stack>
-                        </CardContent>
-                      </Card>
-                    </Grid>
+                      {tab.label} ({tab.value === 'ALL' ? statusCounts.total : statusCounts[tab.value]})
+                    </button>
                   ))}
-                </Grid>
-              </Box>
+                </div>
+              </div>
+
+              <div className={styles.filterControls}>
+                <div className={styles.searchBox}>
+                  <input
+                    type="search"
+                    placeholder="Buscar por título, conteúdo ou membro"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                  />
+                </div>
+                <select
+                  className={styles.select}
+                  value={sortOption}
+                  onChange={(event) => setSortOption(event.target.value as SortOption)}
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <section className={styles.listSection}>
+              {isLoadingQuestions && questions.length === 0 ? (
+                <div className={styles.loadingWrapper}>
+                  <p>Carregando dúvidas...</p>
+                </div>
+              ) : filteredQuestions.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <h3>Nenhuma dúvida encontrada</h3>
+                  <p>Revise os filtros, altere a busca ou aguarde novas perguntas dos membros.</p>
+                </div>
+              ) : (
+                filteredQuestions.map((question) => (
+                  <article key={question.id} className={styles.questionCard}>
+                    <header className={styles.questionHeader}>
+                      <div className={styles.questionHeading}>
+                        <button
+                          type="button"
+                          className={styles.expandButton}
+                          onClick={() =>
+                            setExpandedQuestion((current) => (current === question.id ? null : question.id))
+                          }
+                          aria-expanded={expandedQuestion === question.id}
+                        >
+                          <span className={styles.expandIcon} aria-hidden="true" />
+                          <span className={styles.questionTitle}>{question.title}</span>
+                        </button>
+                        <span className={`${styles.statusBadge} ${getStatusBadgeClass(question.status)}`}>
+                          {statusLabels[question.status]}
+                        </span>
+                      </div>
+                      <div className={styles.questionMeta}>
+                        <span className={styles.questionMetaItem}>
+                          <strong>
+                            {question.user.firstName} {question.user.lastName}
+                          </strong>
+                          {planLabels[question.user.plan] && ` • ${planLabels[question.user.plan]}`}
+                        </span>
+                        <span className={styles.questionMetaItem}>{formatDateRelative(question.createdAt)}</span>
+                        <span className={styles.questionMetaItem}>Criada em {formatDate(question.createdAt)}</span>
+                        <span className={styles.questionMetaItem}>
+                          {question.answers.length === 1 ? '1 resposta' : `${question.answers.length} respostas`}
+                        </span>
+                        {!question.readByAdmin && (
+                          <span className={`${styles.statusBadge} ${styles.statusUnread}`}>
+                            Nova para equipe
+                          </span>
+                        )}
+                      </div>
+                    </header>
+
+                    <div className={styles.questionContent}>
+                      {formatTextWithLinks(question.content, {
+                        linkProps: { className: styles.answerLink },
+                      })}
+                    </div>
+
+                    {/* Área de ações do card */}
+                    {question.status === 'NOVA' && 
+                     activeResponseQuestionId !== question.id && 
+                     expandedQuestion !== question.id && (
+                      <footer className={styles.questionFooter}>
+                        <button
+                          type="button"
+                          className={styles.responseButton}
+                          onClick={() => handleStartResponse(question)}
+                        >
+                          <svg className={styles.responseIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                          </svg>
+                          Responder dúvida
+                        </button>
+                      </footer>
+                    )}
+
+                    {expandedQuestion === question.id && (
+                      <div className={styles.detailArea}>
+                        {question.answers.length > 0 ? (
+                          <div>
+                            <h4>Respostas da equipe</h4>
+                            <div className={styles.listSection}>
+                              {question.answers.map((answer) => (
+                                <div key={answer.id} className={styles.answerCard}>
+                                  <div className={styles.answerHeader}>
+                                    <div>
+                                      <strong>Fatos da Bolsa</strong>
+                                      <div>{formatDate(answer.createdAt)}</div>
+                                    </div>
+                                    <div className={styles.answerActions}>
+                                      {answer.isFaq && <span className={`${styles.tag} ${styles.tagNeutral}`}>FAQ</span>}
+                                      <button
+                                        type="button"
+                                        className={styles.secondaryButton}
+                                        onClick={() => handleMarkAsFAQ(answer, question.title)}
+                                      >
+                                        {answer.isFaq ? 'Remover das FAQs' : 'Adicionar às FAQs'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className={styles.answerContent}>
+                                    {formatTextWithLinks(answer.content, {
+                                      linkProps: { className: styles.answerLink },
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <p className={styles.emptyAnswers}>Nenhuma resposta da equipe cadastrada ainda.</p>
+                        )}
+                        
+                        {/* Botão dentro da área expandida */}
+                        {question.status === 'NOVA' && activeResponseQuestionId !== question.id && (
+                          <footer className={styles.questionFooter} style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+                            <button
+                              type="button"
+                              className={styles.responseButton}
+                              onClick={() => handleStartResponse(question)}
+                            >
+                              <svg className={styles.responseIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                              </svg>
+                              Responder dúvida
+                            </button>
+                          </footer>
+                        )}
+                      </div>
+                    )}
+
+                    {activeResponseQuestionId === question.id && (
+                      <div className={styles.responseForm}>
+                        <label htmlFor={`response-${question.id}`} className={styles.responseLabel}>
+                          Responder membro
+                        </label>
+                        <textarea
+                          id={`response-${question.id}`}
+                          className={styles.responseTextarea}
+                          value={responseContent}
+                          onChange={(event) => setResponseContent(event.target.value)}
+                          placeholder="Escreva sua resposta para o membro"
+                        />
+                        <div className={styles.responseActions}>
+                          <button
+                            type="button"
+                            className={styles.secondaryButton}
+                            onClick={() => setShowTemplatesModal(true)}
+                          >
+                            Inserir template
+                          </button>
+                          <div className={styles.responseActionButtons}>
+                            <button
+                              type="button"
+                              className={styles.secondaryButton}
+                              onClick={handleCancelResponse}
+                              disabled={submitting}
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.primaryButton}
+                              onClick={handleSubmitResponse}
+                              disabled={submitting}
+                            >
+                              {submitting ? 'Enviando...' : 'Publicar resposta'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                  </article>
+                ))
+              )}
+            </section>
+
+            {total > limit && (
+              <div className={styles.pagination}>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => currentPage > 1 && loadQuestions(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </button>
+                <span>
+                  Página {currentPage} de {totalPages}
+                </span>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => currentPage < totalPages && loadQuestions(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                >
+                  Próxima
+                </button>
+              </div>
             )}
-          </CardContent>
-        </Card>
+          </>
+        )}
+
+        {currentTab === 'FAQ' && (
+          <>
+            <div className={styles.header}>
+              <div>
+                <h2 className={styles.headerTitle}>Base de conhecimento</h2>
+                <p className={styles.headerSubtitle}>
+                  Aproveite respostas frequentes para acelerar o atendimento e garantir consistência na comunicação.
+                </p>
+              </div>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={() => setShowCreateFaqModal(true)}
+              >
+                Criar FAQ
+              </button>
+            </div>
+
+            {isLoadingFaqs && faqs.length === 0 ? (
+              <div className={styles.loadingWrapper}>
+                <p>Carregando base de conhecimento...</p>
+              </div>
+            ) : faqs.length === 0 ? (
+              <div className={styles.emptyState}>
+                <h3>Nenhum artigo cadastrado</h3>
+                <p>Converta respostas relevantes em FAQs para ajudar toda a comunidade.</p>
+              </div>
+            ) : (
+              <div className={styles.faqList}>
+                {faqs.map((faq) => (
+                  <div key={faq.id} className={styles.faqCard}>
+                    <div className={styles.faqHeader}>
+                      <h3 className={styles.faqTitle}>{faq.faqTitle || faq.question.title}</h3>
+                      <div className={styles.actionGroup}>
+                        <button
+                          type="button"
+                          className={styles.secondaryButton}
+                          onClick={() => handleEditFaq(faq)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.dangerButton}
+                          onClick={() => handleDeleteFaq(faq)}
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={styles.faqMeta}>
+                      <span className={`${styles.tag} ${styles.tagPrimary}`}>
+                        Pergunta original: {faq.question.title}
+                      </span>
+                      <span className={`${styles.tag} ${styles.tagNeutral}`}>
+                        Ordem: {faq.faqOrder}
+                      </span>
+                      <span>{formatDate(faq.createdAt)}</span>
+                    </div>
+
+                    <div className={styles.faqContent}>{faq.content}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {showTemplatesModal && (
+        <div className={styles.modalOverlay}>
+          <div className={`${styles.modalContent} ${styles.modalLarge}`}>
+            <div className={styles.modalHeader}>
+              <h2>Selecionar template</h2>
+              <button type="button" onClick={() => setShowTemplatesModal(false)} aria-label="Fechar">
+                ×
+              </button>
+            </div>
+            <div className={`${styles.modalBody} ${styles.modalBodyScrollable}`}>
+              <div className={styles.fieldGroup}>
+                <label>Buscar templates</label>
+                <input
+                  type="search"
+                  placeholder="Digite para buscar por título ou conteúdo"
+                  value={templateSearch}
+                  onChange={(event) => setTemplateSearch(event.target.value)}
+                />
+              </div>
+              {loadingTemplates ? (
+                <div className={styles.loadingWrapper}>
+                  <p>Carregando templates...</p>
+                </div>
+              ) : filteredTemplates.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <h3>Nenhum template disponível</h3>
+                  <p>Crie modelos reutilizáveis para acelerar suas respostas.</p>
+                </div>
+              ) : (
+                <div className={styles.templateList}>
+                  {filteredTemplates.map((template) => (
+                    <button
+                      key={template.id}
+                      type="button"
+                      className={styles.templateItem}
+                      onClick={() => handleUseTemplate(template)}
+                    >
+                      <div className={styles.templateItemHeader}>
+                        <strong>{template.title}</strong>
+                        {template.usageCount > 0 && (
+                          <span className={styles.templateStats}>{template.usageCount} usos</span>
+                        )}
+                      </div>
+                      <p>{template.content}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setShowTemplatesModal(false)}>
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Menu de contexto para ações do evento */}
-      <Menu
-        anchorEl={menuAnchor}
-        open={Boolean(menuAnchor)}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={() => menuEventoIndex !== null && handleExcluirEvento(menuEventoIndex)}>
-          <DeleteIcon /> &nbsp; Excluir Evento
-        </MenuItem>
-      </Menu>
-
-      {/* Dialogs de Confirmação */}
-      <Dialog 
-        open={eventoParaExcluir !== null} 
-        onClose={() => setEventoParaExcluir(null)}
-      >
-        <DialogTitle>🗑️ Excluir Evento</DialogTitle>
-        <DialogContent>
-          {eventoParaExcluir !== null && (
-            <Typography>
-              Tem certeza que deseja excluir o evento:
-              <br/><br/>
-              <strong>{estatisticas.eventos[eventoParaExcluir]?.titulo}</strong>
-              <br/>
-              <em>{estatisticas.eventos[eventoParaExcluir]?.ticker} - {new Date(estatisticas.eventos[eventoParaExcluir]?.data_evento).toLocaleDateString('pt-BR')}</em>
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEventoParaExcluir(null)}>
-            Cancelar
-          </Button>
-          <Button
-            color="error"
-            onClick={confirmarExclusaoEvento}
-          >
-            Excluir
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog 
-        open={tickerParaExcluir !== null} 
-        onClose={() => setTickerParaExcluir(null)}
-      >
-        <DialogTitle>🗑️ Excluir Todos Eventos do Ticker</DialogTitle>
-        <DialogContent>
-          {tickerParaExcluir && (
-            <Typography>
-              Tem certeza que deseja excluir todos os{' '}
-              <strong>{estatisticas.eventos.filter(e => e.ticker === tickerParaExcluir).length} eventos</strong>{' '}
-              do ticker <strong>{tickerParaExcluir}</strong>?
-              <br/><br/>
-              Esta ação não pode ser desfeita.
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setTickerParaExcluir(null)}>
-            Cancelar
-          </Button>
-          <Button
-            color="error"
-            onClick={confirmarExclusaoTicker}
-          >
-            Excluir Todos
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={dialogLimpar} onClose={() => setDialogLimpar(false)}>
-        <DialogTitle>🗑️ Limpar Todos os Dados</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Tem certeza que deseja limpar todos os {estatisticas.totalEventos} eventos carregados?
-            Esta ação não pode ser desfeita.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogLimpar(false)}>
-            Cancelar
-          </Button>
-          <Button
-            color="error"
-            onClick={handleLimparTudo}
-          >
-            Confirmar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Estado vazio */}
-      {estatisticas.totalEventos === 0 && !statsLoading && (
-        <Paper sx={{ p: 6, textAlign: 'center', mt: 4 }}>
-          <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
-            📭 Nenhum evento carregado
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Faça upload de um arquivo CSV para começar a gerenciar os eventos corporativos
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<DownloadIcon />}
-            onClick={downloadTemplate}
-          >
-            Baixar Template
-          </Button>
-        </Paper>
+      {showFaqModal && selectedAnswer && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2>{selectedAnswer.isFaq ? 'Remover das FAQs' : 'Adicionar à base de conhecimento'}</h2>
+              <button type="button" onClick={() => setShowFaqModal(false)} aria-label="Fechar">
+                ×
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {selectedAnswer.isFaq ? (
+                <p>Tem certeza de que deseja remover esta resposta da base de conhecimento?</p>
+              ) : (
+                <>
+                  <div className={styles.fieldGroup}>
+                    <label>Título da FAQ</label>
+                    <input
+                      type="text"
+                      value={faqTitle}
+                      onChange={(event) => setFaqTitle(event.target.value)}
+                      placeholder="Defina um título descritivo para a FAQ"
+                    />
+                  </div>
+                  <div className={styles.fieldGroup}>
+                    <label>Ordem de exibição</label>
+                    <input
+                      type="number"
+                      value={faqOrder}
+                      onChange={(event) => setFaqOrder(Number(event.target.value))}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setShowFaqModal(false)}>
+                Cancelar
+              </button>
+              <button type="button" className={styles.primaryButton} onClick={submitFAQ}>
+                {selectedAnswer.isFaq ? 'Remover' : 'Adicionar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-    </Box>
+
+      {showCreateFaqModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2>Criar FAQ</h2>
+              <button type="button" onClick={() => setShowCreateFaqModal(false)} aria-label="Fechar">
+                ×
+              </button>
+            </div>
+            <div className={`${styles.modalBody} ${styles.modalBodyScrollable}`}>
+              <div className={styles.fieldGroup}>
+                <label>Título</label>
+                <input
+                  type="text"
+                  value={createFaqData.title}
+                  onChange={(event) => setCreateFaqData({ ...createFaqData, title: event.target.value })}
+                />
+              </div>
+              <div className={styles.fieldGroup}>
+                <label>Conteúdo</label>
+                <textarea
+                  value={createFaqData.content}
+                  onChange={(event) => setCreateFaqData({ ...createFaqData, content: event.target.value })}
+                />
+              </div>
+              <div className={styles.fieldGroup}>
+                <label>Ordem</label>
+                <input
+                  type="number"
+                  value={createFaqData.faqOrder}
+                  onChange={(event) =>
+                    setCreateFaqData({ ...createFaqData, faqOrder: Number(event.target.value) })
+                  }
+                />
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setShowCreateFaqModal(false)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.primaryButton}
+                onClick={handleCreateFAQ}
+                disabled={creatingFaq}
+              >
+                {creatingFaq ? 'Criando...' : 'Criar FAQ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editFaqModalOpen && faqToEdit && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2>Editar FAQ</h2>
+              <button type="button" onClick={() => setEditFaqModalOpen(false)} aria-label="Fechar">
+                ×
+              </button>
+            </div>
+            <div className={`${styles.modalBody} ${styles.modalBodyScrollable}`}>
+              <div className={styles.fieldGroup}>
+                <label>Título</label>
+                <input
+                  type="text"
+                  value={editFaqTitle}
+                  onChange={(event) => setEditFaqTitle(event.target.value)}
+                />
+              </div>
+              <div className={styles.fieldGroup}>
+                <label>Ordem</label>
+                <input
+                  type="number"
+                  value={editFaqOrder}
+                  onChange={(event) => setEditFaqOrder(Number(event.target.value))}
+                />
+              </div>
+              <div className={styles.fieldGroup}>
+                <label>Conteúdo</label>
+                <textarea
+                  value={editFaqContent}
+                  onChange={(event) => setEditFaqContent(event.target.value)}
+                />
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setEditFaqModalOpen(false)}>
+                Cancelar
+              </button>
+              <button type="button" className={styles.primaryButton} onClick={handleUpdateFaq}>
+                Salvar alterações
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteFaqDialogOpen && faqToDelete && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2>Remover FAQ</h2>
+            </div>
+            <div className={styles.modalBody}>
+              <p>
+                Tem certeza de que deseja remover a FAQ "
+                {faqToDelete.faqTitle || faqToDelete.question.title}"?
+              </p>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.secondaryButton} onClick={() => setDeleteFaqDialogOpen(false)}>
+                Cancelar
+              </button>
+              <button type="button" className={styles.dangerButton} onClick={confirmDeleteFaq}>
+                Remover
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
