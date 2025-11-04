@@ -30,7 +30,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
-    const isAdmin = user.plan === 'ADMIN';
+    const isAdmin = user.plan === 'ADMIN' || user.plan === 'ANALISTA';
     const isAuthor = comment.authorId === user.id;
     if (!isAdmin && !isAuthor) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });

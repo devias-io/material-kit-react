@@ -45,10 +45,10 @@ export async function PUT(
       }, { status: 401 });
     }
 
-    if (user.plan !== 'ADMIN') {
+    if (user.plan !== 'ADMIN' && user.plan !== 'ANALISTA') {
       console.log('❌ [AUTH] Acesso negado - Plano:', user.plan);
-      return NextResponse.json({ 
-        error: 'Admin access required' 
+      return NextResponse.json({
+        error: 'Admin access required'
       }, { status: 403 });
     }
 
@@ -228,7 +228,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    if (user.plan !== 'ADMIN') {
+    if (user.plan !== 'ADMIN' && user.plan !== 'ANALISTA') {
       console.log('❌ [AUTH] Acesso negado - Plano:', user.plan);
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }

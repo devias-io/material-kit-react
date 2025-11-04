@@ -21,7 +21,7 @@ export async function GET(
       return NextResponse.json({ error: (error as Error).message }, { status: 401 });
     }
 
-    if (!user || user.plan !== 'ADMIN') {
+    if (!user || (user.plan !== 'ADMIN' && user.plan !== 'ANALISTA')) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
@@ -69,7 +69,7 @@ export async function PUT(
       return NextResponse.json({ error: (error as Error).message }, { status: 401 });
     }
 
-    if (!user || user.plan !== 'ADMIN') {
+    if (!user || (user.plan !== 'ADMIN' && user.plan !== 'ANALISTA')) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
@@ -205,7 +205,7 @@ export async function DELETE(
       return NextResponse.json({ error: (error as Error).message }, { status: 401 });
     }
 
-    if (!user || user.plan !== 'ADMIN') {
+    if (!user || (user.plan !== 'ADMIN' && user.plan !== 'ANALISTA')) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

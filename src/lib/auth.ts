@@ -59,6 +59,7 @@ export async function auth() {
 
     // Determinar permissões baseado no seu sistema
     const isAdmin = user.plan === 'ADMIN'
+    const isAnalyst = user.plan === 'ANALISTA'
     
     // Verificar se tem acesso à análise de carteira
     let customPermissions: string[] = []
@@ -88,10 +89,12 @@ export async function auth() {
                         user.plan === 'ADMIN' ||
                         customPermissions.includes('recursos-exclusivos')
 
+    const role = isAdmin ? 'ADMIN' : isAnalyst ? 'ANALISTA' : 'USER'
+
     return {
       user: {
         id: user.id,
-        role: isAdmin ? 'ADMIN' : 'USER',
+        role,
         name: `${user.firstName} ${user.lastName}`.trim(),
         firstName: user.firstName,
         lastName: user.lastName,

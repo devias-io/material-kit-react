@@ -501,7 +501,7 @@ export default function CentralDuvidas() {
             {questions.map((question) => {
               const questionUserName = getQuestionUserName(question.user);
               const questionUserPlan = getQuestionUserPlanLabel(question.user);
-              const canMarkAsResolved = currentUser?.plan === 'ADMIN' && currentUser?.id !== question.user.id;
+              const canMarkAsResolved = (currentUser?.plan === 'ADMIN' || currentUser?.plan === 'ANALISTA') && currentUser?.id !== question.user.id;
 
               return (
                 <div
