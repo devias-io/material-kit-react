@@ -21,6 +21,46 @@ async function verifyAuth() {
   }
 }
 
+function parseCustomPermissions(rawValue: unknown): string[] {
+  if (!rawValue) {
+    return [];
+  }
+
+  const toArray = () => {
+    if (Array.isArray(rawValue)) {
+      return rawValue;
+    }
+
+    if (typeof rawValue === 'string') {
+      const trimmed = rawValue.trim();
+
+      if (!trimmed) {
+        return [];
+      }
+
+      try {
+        const parsed = JSON.parse(trimmed);
+
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      } catch (error) {
+        // Valor não é um JSON válido - trataremos como permissão única
+      }
+
+      return [trimmed];
+    }
+
+    return [];
+  };
+
+  const normalized = toArray()
+    .map(item => (typeof item === 'string' ? item.trim() : String(item)))
+    .filter(item => item.length > 0);
+
+  return Array.from(new Set(normalized));
+}
+
 // GET - Buscar dados do usuário + compras
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -78,7 +118,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       totalPurchases: user.totalPurchases || 0,
       purchaseCount: user.purchaseCount || 0,
       expirationDate: user.expirationDate?.toISOString(),
-      customPermissions: user.customPermissions || [],
+      customPermissions: parseCustomPermissions(user.customPermissions),
       origin: user.origin,
       entitlements: user.entitlements.map(entitlement => ({
         id: entitlement.id,
@@ -130,52 +170,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
     }
 
-    const normalizeCustomPermissions = (value: unknown): string => {
-      if (!value) {
-        return '[]';
-      }
+    const normalizeCustomPermissions = (plan: string | null | undefined, value: unknown): string => {
+      const parsed = parseCustomPermissions(value);
 
-      const toArray = () => {
-        if (Array.isArray(value)) {
-          return value;
-        }
+      const allowedPermissions = plan === 'ANALISTA'
+        ? parsed.filter(permission => permission.startsWith('admin'))
+        : parsed;
 
-        if (typeof value === 'string') {
-          const trimmed = value.trim();
-
-          if (!trimmed) {
-            return [];
-          }
-
-          try {
-            const parsed = JSON.parse(trimmed);
-
-            if (Array.isArray(parsed)) {
-              return parsed;
-            }
-          } catch (error) {
-            // se não for um JSON válido, trataremos como uma permissão única
-          }
-
-          return [trimmed];
-        }
-
-        return [];
-      };
-
-      const normalized = toArray()
-        .map(item => {
-          if (typeof item === 'string') {
-            return item.trim();
-          }
-
-          return String(item);
-        })
-        .filter(item => item.length > 0);
-
-      const unique = Array.from(new Set(normalized));
-
-      return JSON.stringify(unique);
+      return JSON.stringify(allowedPermissions);
     };
 
     // Preparar dados para atualização
@@ -185,7 +187,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       email: userData.email,
       plan: userData.plan,
       status: userData.status,
-      customPermissions: normalizeCustomPermissions(userData.customPermissions)
+      customPermissions: normalizeCustomPermissions(userData.plan ?? existingUser.plan, userData.customPermissions)
     };
 
     // Garantir acesso vitalício para planos específicos
@@ -224,7 +226,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       totalPurchases: updatedUser.totalPurchases || 0,
       purchaseCount: updatedUser.purchaseCount || 0,
       expirationDate: updatedUser.expirationDate?.toISOString(),
-      customPermissions: updatedUser.customPermissions || [],
+      customPermissions: parseCustomPermissions(updatedUser.customPermissions),
       origin: updatedUser.origin,
       entitlements: updatedUser.entitlements.map(entitlement => ({
         id: entitlement.id,

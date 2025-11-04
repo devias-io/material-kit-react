@@ -88,7 +88,7 @@ export async function GET(
     }
 
     // Verificar permissão: usuário só pode ver suas próprias perguntas ou ser admin
-    const isAdmin = user.plan === 'ADMIN';
+    const isAdmin = user.plan === 'ADMIN' || user.plan === 'ANALISTA';
     const isOwner = question.userId === user.id;
 
     if (!isAdmin && !isOwner) {
@@ -152,7 +152,7 @@ export async function PUT(
     const body = await request.json();
     const { status, priority } = body;
 
-    const isAdmin = user.plan === 'ADMIN';
+    const isAdmin = user.plan === 'ADMIN' || user.plan === 'ANALISTA';
     const isOwner = question.userId === user.id;
 
     // Verificar permissões para diferentes ações
@@ -284,7 +284,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Question not found' }, { status: 404 });
     }
 
-    const isAdmin = user.plan === 'ADMIN';
+    const isAdmin = user.plan === 'ADMIN' || user.plan === 'ANALISTA';
     const isOwner = question.userId === user.id;
 
     if (!isAdmin && !isOwner) {

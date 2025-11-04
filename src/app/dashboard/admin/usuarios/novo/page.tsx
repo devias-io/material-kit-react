@@ -15,9 +15,24 @@ import {
   Select,
   MenuItem,
   Alert,
-  Chip
+  Chip,
+  Checkbox,
+  FormGroup,
+  FormControlLabel,
+  Divider
 } from '@mui/material';
 import { useUser } from '@/hooks/use-user';
+import { PLAN_PERMISSIONS } from '@/lib/permissions';
+
+type PlanKey = keyof typeof PLAN_PERMISSIONS;
+
+interface FormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  plan: PlanKey;
+  expirationDate: string;
+}
 
 export default function NovoUsuarioPage() {
   const { user } = useUser();
@@ -27,13 +42,50 @@ export default function NovoUsuarioPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
   
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = React.useState<FormData>({
     firstName: '',
     lastName: '',
     email: '',
     plan: 'LITE',
     expirationDate: ''
   });
+  const [customPermissions, setCustomPermissions] = React.useState<string[]>([]);
+
+  const adminResources = React.useMemo(
+    () => [
+      { id: 'admin', label: 'Painel Administrativo' },
+      { id: 'admin-dashboard', label: 'Dashboard Admin' },
+      { id: 'admin-usuarios', label: 'Gestão de Usuários' },
+      { id: 'admin-instagram', label: 'Instagram Close Friends' },
+      { id: 'admin-integracoes', label: 'Integrações' },
+      { id: 'admin-renovacoes', label: 'Renovações' },
+      { id: 'admin-empresas', label: 'Gestão de Empresas' },
+      { id: 'admin-proventos', label: 'Central de Proventos' },
+      { id: 'admin-relatorios', label: 'Gestão de Relatórios' },
+      { id: 'admin-relatorio-semanal', label: 'Relatório Semanal' },
+      { id: 'admin-analises-trimesestrais', label: 'Análises Trimestrais' },
+      { id: 'admin-analise-tecnica', label: 'Análises Técnicas' },
+      { id: 'admin-carteiras', label: 'Analisar Carteiras' },
+      { id: 'admin-settings', label: 'Configurações' },
+      { id: 'admin-central-duvidas', label: 'Central de Dúvidas' }
+    ],
+    []
+  );
+
+  const isAnalistaPlan = formData.plan === 'ANALISTA';
+
+  const planPermissions = React.useMemo(() => {
+    const planConfig = PLAN_PERMISSIONS[formData.plan];
+    return planConfig?.pages ?? [];
+  }, [formData.plan]);
+
+  const handlePlanChange = (plan: PlanKey) => {
+    setFormData(prev => ({ ...prev, plan }));
+
+    if (plan !== 'ANALISTA') {
+      setCustomPermissions([]);
+    }
+  };
 
   // Verificar se é admin
   React.useEffect(() => {
@@ -48,13 +100,18 @@ export default function NovoUsuarioPage() {
     setError(null);
 
     try {
+      const payload = {
+        ...formData,
+        customPermissions: isAnalistaPlan ? customPermissions : []
+      };
+
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
@@ -74,8 +131,24 @@ export default function NovoUsuarioPage() {
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const toggleAdminPermission = (permissionId: string, checked: boolean) => {
+    setCustomPermissions(prev => {
+      const normalizedId = permissionId.trim();
+
+      if (!normalizedId) {
+        return prev;
+      }
+
+      if (checked) {
+        return Array.from(new Set([...prev, normalizedId]));
+      }
+
+      return prev.filter(permission => permission !== normalizedId);
+    });
   };
 
   // ✅ FUNÇÃO PARA OBTER INFO DOS PLANOS
@@ -118,6 +191,12 @@ export default function NovoUsuarioPage() {
         color: '#F97316',
         emoji: '⚡',
         isNew: true
+      },
+      'ANALISTA': {
+        label: 'Perfil Analista',
+        description: 'Acesso administrativo personalizado à central e ferramentas selecionadas',
+        color: '#2563EB',
+        emoji: '📊'
       },
       'AMERICA': {
         label: 'Projeto América',
@@ -248,7 +327,7 @@ export default function NovoUsuarioPage() {
                   <InputLabel>Plano</InputLabel>
                   <Select
                     value={formData.plan}
-                    onChange={(e) => handleInputChange('plan', e.target.value)}
+                    onChange={(e) => handlePlanChange(e.target.value as PlanKey)}
                     sx={{
                       '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' },
                       '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#CBD5E1' },
@@ -328,7 +407,14 @@ export default function NovoUsuarioPage() {
                         />
                       </Box>
                     </MenuItem>
-                    
+
+                    <MenuItem value="ANALISTA">
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <span>📊</span>
+                        <span>Perfil Analista</span>
+                      </Box>
+                    </MenuItem>
+
                     <MenuItem value="ADMIN">
                       <Box display="flex" alignItems="center" gap={1}>
                         <span>🛡️</span>
@@ -339,8 +425,8 @@ export default function NovoUsuarioPage() {
                 </FormControl>
                 
                 {/* ✅ DESCRIÇÃO DO PLANO SELECIONADO */}
-                <Box mt={2} p={2} sx={{ 
-                  backgroundColor: `${selectedPlanInfo.color}10`, 
+                <Box mt={2} p={2} sx={{
+                  backgroundColor: `${selectedPlanInfo.color}10`,
                   borderRadius: 2,
                   border: `1px solid ${selectedPlanInfo.color}20`
                 }}>
@@ -350,16 +436,16 @@ export default function NovoUsuarioPage() {
                       {selectedPlanInfo.label}
                     </Typography>
                     {selectedPlanInfo.isNew && (
-                      <Chip 
-                        label="NOVO" 
-                        size="small" 
-                        sx={{ 
-                          bgcolor: selectedPlanInfo.color, 
-                          color: 'white', 
+                      <Chip
+                        label="NOVO"
+                        size="small"
+                        sx={{
+                          bgcolor: selectedPlanInfo.color,
+                          color: 'white',
                           fontWeight: '700',
                           fontSize: '10px',
                           height: '18px'
-                        }} 
+                        }}
                       />
                     )}
                   </Box>
@@ -367,6 +453,69 @@ export default function NovoUsuarioPage() {
                     {selectedPlanInfo.description}
                   </Typography>
                 </Box>
+
+                {isAnalistaPlan && (
+                  <Box
+                    mt={3}
+                    p={3}
+                    sx={{
+                      backgroundColor: '#F1F5F9',
+                      borderRadius: 2,
+                      border: '1px solid #CBD5F5'
+                    }}
+                  >
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1E293B', mb: 1 }}>
+                      🛠️ Acessos administrativos do Analista
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#475569', mb: 2 }}>
+                      Escolha quais áreas administrativas o analista poderá acessar. A Central de Dúvidas fica sempre disponível para que ele responda às perguntas dos membros.
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <FormGroup>
+                      {adminResources.map(resource => {
+                        const fromPlan = planPermissions.includes(resource.id);
+                        const checked = fromPlan || customPermissions.includes(resource.id);
+
+                        return (
+                          <FormControlLabel
+                            key={resource.id}
+                            control={
+                              <Checkbox
+                                checked={checked}
+                                onChange={(event) => toggleAdminPermission(resource.id, event.target.checked)}
+                                disabled={fromPlan}
+                                sx={{
+                                  color: '#2563EB',
+                                  '&.Mui-checked': { color: '#2563EB' }
+                                }}
+                              />
+                            }
+                            label={
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <Typography sx={{ color: fromPlan ? '#1E40AF' : '#0F172A', fontSize: '0.875rem' }}>
+                                  {resource.label}
+                                </Typography>
+                                {fromPlan && (
+                                  <Chip
+                                    label="Plano"
+                                    size="small"
+                                    sx={{
+                                      backgroundColor: '#DBEAFE',
+                                      color: '#1D4ED8',
+                                      fontSize: '10px',
+                                      height: '18px'
+                                    }}
+                                  />
+                                )}
+                              </Box>
+                            }
+                            sx={{ margin: 0 }}
+                          />
+                        );
+                      })}
+                    </FormGroup>
+                  </Box>
+                )}
               </Grid>
               
               <Grid item xs={12}>

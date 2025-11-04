@@ -176,7 +176,13 @@ export function AuthAccessProvider({ children }: AuthAccessProviderProps): React
 
   const hasAnalisesTrimesestraisAdminAccess = React.useCallback(() => planInfo.isAdmin, [planInfo.isAdmin]);
 
-  const hasCentralDuvidasAdminAccess = React.useCallback(() => planInfo.isAdmin, [planInfo.isAdmin]);
+  const hasCentralDuvidasAdminAccess = React.useCallback(() => {
+    if (planInfo.isAdmin) {
+      return true;
+    }
+
+    return planInfo.pages.includes('admin-central-duvidas');
+  }, [planInfo.isAdmin, planInfo.pages]);
 
   const hasAccessSync = React.useCallback(
     (page: string): boolean => {

@@ -45,7 +45,7 @@ interface User {
   lastName: string;
   email: string;
   avatar?: string;
-  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'AMERICA' | 'ADMIN';
+  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'AMERICA' | 'ANALISTA' | 'ADMIN';
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING';
   hotmartCustomerId?: string;
   createdAt: string;
@@ -110,7 +110,23 @@ export default function EditUserPage() {
     { id: 'recursos-lives', label: 'Lives e Aulas', category: 'Recursos Exclusivos' },
     { id: 'recursos-milhas', label: 'Milhas Aéreas', category: 'Recursos Exclusivos' },
     { id: 'recursos-planilhas', label: 'Planilhas', category: 'Recursos Exclusivos' },
-    { id: 'recursos-telegram', label: 'Telegram', category: 'Recursos Exclusivos' }
+    { id: 'recursos-telegram', label: 'Telegram', category: 'Recursos Exclusivos' },
+    // Administrativos
+    { id: 'admin', label: 'Painel Administrativo', category: 'Administrativo' },
+    { id: 'admin-dashboard', label: 'Dashboard Admin', category: 'Administrativo' },
+    { id: 'admin-usuarios', label: 'Gestão de Usuários (Admin)', category: 'Administrativo' },
+    { id: 'admin-instagram', label: 'Instagram Close Friends (Admin)', category: 'Administrativo' },
+    { id: 'admin-integracoes', label: 'Integrações (Admin)', category: 'Administrativo' },
+    { id: 'admin-renovacoes', label: 'Renovações (Admin)', category: 'Administrativo' },
+    { id: 'admin-empresas', label: 'Gestão de Empresas (Admin)', category: 'Administrativo' },
+    { id: 'admin-proventos', label: 'Central de Proventos (Admin)', category: 'Administrativo' },
+    { id: 'admin-relatorios', label: 'Gestão de Relatórios (Admin)', category: 'Administrativo' },
+    { id: 'admin-relatorio-semanal', label: 'Relatório Semanal (Admin)', category: 'Administrativo' },
+    { id: 'admin-analises-trimesestrais', label: 'Análises Trimestrais (Admin)', category: 'Administrativo' },
+    { id: 'admin-analise-tecnica', label: 'Análises Técnicas (Admin)', category: 'Administrativo' },
+    { id: 'admin-carteiras', label: 'Analisar Carteiras (Admin)', category: 'Administrativo' },
+    { id: 'admin-settings', label: 'Configurações (Admin)', category: 'Administrativo' },
+    { id: 'admin-central-duvidas', label: 'Central de Dúvidas (Admin)', category: 'Administrativo' }
   ];
 
   const normalizePermissionId = (permissionId: string): string => {
@@ -378,6 +394,13 @@ export default function EditUserPage() {
     );
   };
 
+  const planHasAdminAccess = user ? getPlanPermissions(user.plan).some(permission => permission.startsWith('admin')) : false;
+  const customHasAdminAccess = user ? getArrayPermissions(user.customPermissions).some(permission => permission.startsWith('admin')) : false;
+  const showAdminCategory = (user?.plan === 'ANALISTA' || user?.plan === 'ADMIN') || planHasAdminAccess || customHasAdminAccess;
+  const contentCategories = showAdminCategory
+    ? ['Principal', 'Internacional', 'Recursos Exclusivos', 'Administrativo']
+    : ['Principal', 'Internacional', 'Recursos Exclusivos'];
+
   const getPlanInfo = (plan: string) => {
     const planMap = {
       'VIP': { label: 'Close Friends VIP', color: '#8B5CF6', emoji: '👑' },
@@ -387,6 +410,7 @@ export default function EditUserPage() {
       'FIIS': { label: 'Projeto FIIs', color: '#F59E0B', emoji: '🏢' },
       'RENDA_TURBINADA': { label: 'CF Renda Turbinada', color: '#F97316', emoji: '⚡' },
       'AMERICA': { label: 'Projeto América', color: '#EF4444', emoji: '🇺🇸' },
+      'ANALISTA': { label: 'Analista', color: '#2563EB', emoji: '📊' },
       'ADMIN': { label: 'Administrador', color: '#6B7280', emoji: '🛡️' }
     };
     return planMap[plan as keyof typeof planMap] || { label: plan, color: '#9CA3AF', emoji: '📋' };
@@ -670,6 +694,7 @@ export default function EditUserPage() {
                       <MenuItem value="FIIS">🏢 Projeto FIIs</MenuItem>
                       <MenuItem value="AMERICA">🇺🇸 Projeto América</MenuItem>
                       <MenuItem value="RENDA_TURBINADA">⚡ CF Renda Turbinada</MenuItem>
+                      <MenuItem value="ANALISTA">📊 Analista</MenuItem>
                       <MenuItem value="ADMIN">🛡️ Administrador</MenuItem>
                     </Select>
                   </FormControl>
@@ -808,9 +833,16 @@ export default function EditUserPage() {
                 <strong> Permissões customizadas:</strong> Liberações extras independente do plano
               </Typography>
 
-              {['Principal', 'Internacional', 'Recursos Exclusivos'].map(category => (
+              {contentCategories.map(category => (
                 <Box key={category} mb={2}>
-                  <Typography variant="subtitle2" sx={{ color: '#F59E0B', mb: 1, fontWeight: '600' }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: category === 'Administrativo' ? '#1D4ED8' : '#F59E0B',
+                      mb: 1,
+                      fontWeight: '600'
+                    }}
+                  >
                     {category}:
                   </Typography>
                   <FormGroup>
