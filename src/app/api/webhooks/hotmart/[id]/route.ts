@@ -6,6 +6,7 @@ import { PrismaClient } from '@prisma/client';
 import { hashPassword } from '@/lib/auth/password';
 import { activateEntitlement, deactivateEntitlement, isAddonPlan } from '@/lib/entitlements';
 import { enviarEmailCredenciais } from '@/lib/auth/email'; // ✅ ADICIONAR ENVIO DE EMAIL
+import { isLifetimePlan } from '@/lib/lifetime-plans';
 
 const prisma = new PrismaClient();
 
@@ -257,12 +258,17 @@ function generateSecurePassword(): string {
   return password.split('').sort(() => Math.random() - 0.5).join('');
 }
 
-function calculateExpirationDate(plan: string): Date {
+function calculateExpirationDate(plan: string): Date | null {
+  if (isLifetimePlan(plan)) {
+    console.log(`🎉 Plano ${plan}: acesso vitalício (sem data de expiração).`);
+    return null;
+  }
+
   const expirationDate = new Date();
   expirationDate.setDate(expirationDate.getDate() + 365);
-  
+
   console.log(`📅 Plano ${plan}: Expira em ${expirationDate.toISOString().split('T')[0]} (365 dias a partir de hoje)`);
-  
+
   return expirationDate;
 }
 
@@ -576,7 +582,11 @@ export async function POST(
         origin: 'HOTMART',
         expiresAt,
       });
-      console.log(`🎁 Complemento ${integrationData.plan} ativo até ${expiresAt.toISOString()}`);
+      if (expiresAt) {
+        console.log(`🎁 Complemento ${integrationData.plan} ativo até ${expiresAt.toISOString()}`);
+      } else {
+        console.log(`🎁 Complemento ${integrationData.plan} ativado com acesso vitalício.`);
+      }
     }
 
     try {

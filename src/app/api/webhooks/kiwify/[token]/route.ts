@@ -6,6 +6,7 @@ import { enviarEmailCredenciais } from '@/lib/auth/email'; // ✅ ADICIONADO
 import { hashPassword } from '@/lib/auth/password'; // ✅ ADICIONADO
 import { KIWIFY_TOKEN_MAPPING } from '@/data/integrations';
 import { activateEntitlement, deactivateEntitlement, isAddonPlan } from '@/lib/entitlements';
+import { isLifetimePlan } from '@/lib/lifetime-plans';
 
 const prisma = new PrismaClient();
 
@@ -240,8 +241,13 @@ function generateSecurePassword(): string {
   return password.split('').sort(() => Math.random() - 0.5).join('');
 }
 
-// Calcular data de expiração - TODOS OS PLANOS = 1 ANO
-function calculateExpirationDate(): Date {
+// Calcular data de expiração considerando planos vitalícios
+function calculateExpirationDate(plan: string): Date | null {
+  if (isLifetimePlan(plan)) {
+    console.log(`🎉 Plano ${plan}: acesso vitalício (sem data de expiração).`);
+    return null;
+  }
+
   const expirationDate = new Date();
   expirationDate.setDate(expirationDate.getDate() + 365);
   return expirationDate;
@@ -463,7 +469,7 @@ export async function POST(
 
       if (treatedAsAddon) {
         console.log(`➕ Ativando complemento ${integrationData.plan} para ${email} via Kiwify`);
-        entitlementExpiration = calculateExpirationDate();
+        entitlementExpiration = calculateExpirationDate(integrationData.plan);
         user = await prisma.user.update({
           where: { email },
           data: {
@@ -473,7 +479,7 @@ export async function POST(
           }
         });
       } else {
-        const nextExpiration = calculateExpirationDate();
+        const nextExpiration = calculateExpirationDate(integrationData.plan);
         entitlementExpiration = isAddonPurchase ? nextExpiration : entitlementExpiration;
 
         user = await prisma.user.update({
@@ -502,7 +508,7 @@ export async function POST(
       const firstName = nameParts[0] || 'Cliente';
       const lastName = nameParts.slice(1).join(' ') || 'Kiwify';
 
-      const nextExpiration = calculateExpirationDate();
+      const nextExpiration = calculateExpirationDate(integrationData.plan);
       entitlementExpiration = isAddonPurchase ? nextExpiration : entitlementExpiration;
 
       user = await prisma.user.create({
@@ -526,14 +532,18 @@ export async function POST(
     }
 
     if (isAddonPurchase) {
-      const expiresAt = entitlementExpiration ?? calculateExpirationDate();
+      const expiresAt = entitlementExpiration ?? calculateExpirationDate(integrationData.plan);
       await activateEntitlement(prisma, {
         userId: user.id,
         code: integrationData.plan,
         origin: 'KIWIFY',
         expiresAt,
       });
-      console.log(`🎁 Complemento ${integrationData.plan} ativo até ${expiresAt.toISOString()} via Kiwify`);
+      if (expiresAt) {
+        console.log(`🎁 Complemento ${integrationData.plan} ativo até ${expiresAt.toISOString()} via Kiwify`);
+      } else {
+        console.log(`🎁 Complemento ${integrationData.plan} ativado com acesso vitalício via Kiwify.`);
+      }
     }
 
     // Registrar compra

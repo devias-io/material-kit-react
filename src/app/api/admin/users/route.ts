@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { enviarEmailCredenciais } from '@/lib/auth/email';
 import { hashPassword, gerarSenhaSegura } from '@/lib/auth/password'; // ✅ ADICIONADO
 import { auth } from '@/lib/auth';
+import { isLifetimePlan } from '@/lib/lifetime-plans';
 
 const prisma = new PrismaClient({
   datasourceUrl: process.env.NODE_ENV === 'production' 
@@ -329,6 +330,24 @@ export async function POST(request: NextRequest) {
       }, { status: 400, headers });
     }
     
+    // Normalizar data de expiração considerando planos vitalícios
+    let normalizedExpirationDate: Date | null = null;
+    if (expirationDate) {
+      const parsed = new Date(expirationDate);
+      if (isNaN(parsed.getTime())) {
+        console.warn(`⚠️ Data de expiração inválida recebida (${expirationDate}). Ignorando.`);
+      } else {
+        normalizedExpirationDate = parsed;
+      }
+    }
+
+    if (isLifetimePlan(plan)) {
+      if (normalizedExpirationDate) {
+        console.log(`⚠️ Plano ${plan} é vitalício. Ignorando data personalizada de expiração.`);
+      }
+      normalizedExpirationDate = null;
+    }
+
     // ✅ GERAR SENHA SEGURA
     const tempPassword = gerarSenhaSegura();
     console.log(`🔑 Senha segura gerada: ${tempPassword}`);
@@ -348,12 +367,13 @@ export async function POST(request: NextRequest) {
         status: 'ACTIVE',
         origin: 'MANUAL',
         mustChangePassword: true, // ✅ FORÇA MUDANÇA NO PRIMEIRO ACESSO
-        hotmartCustomerId: hotmartCustomerId || null
+        hotmartCustomerId: hotmartCustomerId || null,
+        expirationDate: normalizedExpirationDate
       }
     });
-    
+
     // Se há dados do Hotmart, criar registro separado
-    if (expirationDate || hotmartCustomerId) {
+    if (normalizedExpirationDate || hotmartCustomerId) {
       try {
         console.log('🔄 Criando dados do Hotmart...');
         await prisma.hotmartData.create({
@@ -363,7 +383,7 @@ export async function POST(request: NextRequest) {
             productId: 'MANUAL_CREATION',
             productName: `Plano ${plan}`,
             purchaseDate: new Date(),
-            expirationDate: expirationDate ? new Date(expirationDate) : null,
+            expirationDate: normalizedExpirationDate,
             status: 'ACTIVE'
           }
         });
