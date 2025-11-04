@@ -62,17 +62,20 @@ export async function notifyQuestionAnswered(questionId: string, adminName: stri
     }
 
     // Criar notificação para o usuário que fez a pergunta
+    const displayAdminName = 'Fatos da Bolsa';
+
     await createNotification({
       userId: question.userId,
       title: 'Sua pergunta foi respondida!',
-      message: `${adminName} respondeu sua pergunta: "${question.title}"`,
+      message: `${displayAdminName} respondeu sua pergunta: "${question.title}"`,
       type: 'success',
       category: 'question_answered',
-actionUrl: `/dashboard/recursos-exclusivos/central-duvidas#${questionId}`,
+      actionUrl: `/dashboard/recursos-exclusivos/central-duvidas#${questionId}`,
       metadata: {
         questionId: questionId,
         questionTitle: question.title,
-        adminName: adminName
+        adminName: adminName,
+        answeredByDisplayName: displayAdminName
       }
     });
 
