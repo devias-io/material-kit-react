@@ -21,6 +21,23 @@ import { useAuthAccess } from '@/hooks/use-auth-access';
 import { navItems } from './config';
 import { navIcons } from './nav-icons';
 
+function applyPlanOverrides(items: NavItemConfig[], plan?: string): NavItemConfig[] {
+  return items.map(item => {
+    const withChildren = item.items
+      ? { ...item, items: applyPlanOverrides(item.items, plan) }
+      : { ...item };
+
+    if (plan === 'RENDA_TURBINADA' && withChildren.key === 'recursos-telegram') {
+      return {
+        ...withChildren,
+        title: 'Telegram de membros',
+      };
+    }
+
+    return withChildren;
+  });
+}
+
 function filterNavItems(
   items: NavItemConfig[],
   hasAccessSync: (page: string) => boolean,
@@ -77,11 +94,16 @@ export interface MobileNavProps {
 export function MobileNav({ onClose, open = false }: MobileNavProps): React.JSX.Element {
   const pathname = usePathname();
   const [expandedItems, setExpandedItems] = React.useState<Record<string, boolean>>({});
-  const { planInfo, loading, hasAccessSync } = useAuthAccess();
+  const { planInfo, loading, hasAccessSync, user } = useAuthAccess();
+
+  const planAdjustedNavItems = React.useMemo(
+    () => applyPlanOverrides(navItems, user?.plan),
+    [user?.plan]
+  );
 
   const filteredNavItems = React.useMemo(
-    () => filterNavItems([...navItems], hasAccessSync, planInfo.isAdmin),
-    [hasAccessSync, planInfo.isAdmin]
+    () => filterNavItems(planAdjustedNavItems, hasAccessSync, planInfo.isAdmin),
+    [planAdjustedNavItems, hasAccessSync, planInfo.isAdmin]
   );
 
   const toggleExpanded = (key: string) => {
