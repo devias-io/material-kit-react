@@ -104,6 +104,13 @@ export default function AdminDashboard() {
       status: 'active'
     },
     {
+      title: 'Envio de Notificações',
+      description: 'Dispare comunicados personalizados para planos específicos da base.',
+      icon: '📣',
+      href: '/dashboard/admin/notificacoes',
+      status: 'active'
+    },
+    {
       title: 'Relatório Semanal',
       description: 'Produza e publique o relatório semanal com destaques e insights do mercado.',
       icon: '🗞️',

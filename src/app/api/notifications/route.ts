@@ -88,43 +88,121 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { 
-      targetUserId, 
-      title, 
-      message, 
-      type = 'info', 
+    const {
+      targetUserId,
+      targetPlan,
+      targetPlans,
+      title,
+      message,
+      type = 'info',
       category = 'general',
       actionUrl,
       metadata = {}
     } = body;
 
-    // Validações
-    if (!targetUserId || !title || !message) {
-      return NextResponse.json({ 
-        error: 'targetUserId, title and message are required' 
+    if (!title || !message) {
+      return NextResponse.json({
+        error: 'title and message are required'
       }, { status: 400 });
     }
 
-    const notification = await prisma.notification.create({
-      data: {
-        userId: targetUserId,
-        title: title.trim(),
-        message: message.trim(),
-        type,
-        category,
-        actionUrl,
-        metadata
-      }
-    });
+    const plansInput: string[] = [];
 
-    emitNotificationEvent(targetUserId, {
-      type: 'refresh',
-      reason: 'created'
+    if (Array.isArray(targetPlans)) {
+      plansInput.push(
+        ...targetPlans
+          .filter((plan: unknown): plan is string => typeof plan === 'string')
+          .map(plan => plan.trim())
+          .filter(Boolean)
+      );
+    }
+
+    if (typeof targetPlan === 'string' && targetPlan.trim()) {
+      plansInput.push(targetPlan.trim());
+    }
+
+    const uniquePlans = Array.from(new Set(plansInput));
+
+    if (!targetUserId && uniquePlans.length === 0) {
+      return NextResponse.json({
+        error: 'targetUserId or targetPlans is required'
+      }, { status: 400 });
+    }
+
+    const recipientIds = new Set<string>();
+
+    if (targetUserId && typeof targetUserId === 'string') {
+      recipientIds.add(targetUserId);
+    }
+
+    if (uniquePlans.length > 0) {
+      const usersFromPlans = await prisma.user.findMany({
+        where: {
+          plan: {
+            in: uniquePlans
+          }
+        },
+        select: {
+          id: true
+        }
+      });
+
+      usersFromPlans.forEach(userRecord => {
+        if (userRecord.id) {
+          recipientIds.add(userRecord.id);
+        }
+      });
+    }
+
+    if (recipientIds.size === 0) {
+      return NextResponse.json({
+        error: 'No recipients found for the provided criteria'
+      }, { status: 404 });
+    }
+
+    const metadataPayload =
+      metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+        ? metadata
+        : {};
+
+    const baseMetadata = {
+      ...metadataPayload,
+      ...(uniquePlans.length > 0 ? { targetPlans: uniquePlans } : {}),
+      broadcast: uniquePlans.length > 0,
+      createdBy: user.id,
+      createdByEmail: user.email
+    };
+
+    const sanitizedActionUrl =
+      typeof actionUrl === 'string' && actionUrl.trim() ? actionUrl.trim() : undefined;
+
+    const notifications = await prisma.$transaction(
+      Array.from(recipientIds).map(recipientId =>
+        prisma.notification.create({
+          data: {
+            userId: recipientId,
+            title: title.trim(),
+            message: message.trim(),
+            type,
+            category,
+            actionUrl: sanitizedActionUrl,
+            metadata: baseMetadata
+          }
+        })
+      )
+    );
+
+    Array.from(recipientIds).forEach(recipientId => {
+      emitNotificationEvent(recipientId, {
+        type: 'refresh',
+        reason: 'created'
+      });
     });
 
     return NextResponse.json({
-      notification,
-      message: 'Notification created successfully'
+      notificationsCreated: notifications.length,
+      recipients: Array.from(recipientIds),
+      message: `Notification created for ${notifications.length} recipient(s)`
     }, { status: 201 });
 
   } catch (error) {
