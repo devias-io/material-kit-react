@@ -32,7 +32,7 @@ interface User {
   lastName: string;
   email: string;
   avatar?: string;
-  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'AMERICA' | 'ADMIN'; // ✅ ADICIONADO LITE_V2
+  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'AMERICA' | 'ANALISTA' | 'ADMIN'; // ✅ ADICIONADO LITE_V2
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING';
   hotmartCustomerId?: string;
   createdAt: string;
@@ -165,6 +165,7 @@ export default function AdminUsersPage() {
       'FIIS': { label: 'Projeto FIIs', color: '#D97706', emoji: '🏢' },
       'RENDA_TURBINADA': { label: 'CF Renda Turbinada', color: '#F97316', emoji: '⚡' },
       'AMERICA': { label: 'Projeto América', color: '#DC2626', emoji: '🗽' },
+      'ANALISTA': { label: 'Analista', color: '#2563EB', emoji: '📊' },
       'ADMIN': { label: 'Administrador', color: '#4B5563', emoji: '👨‍💼' }
     };
     return planMap[plan as keyof typeof planMap] || { label: plan, color: '#6B7280', emoji: '📋' };
@@ -235,6 +236,7 @@ export default function AdminUsersPage() {
         RENDA_PASSIVA: users.filter(u => u.plan === 'RENDA_PASSIVA').length,
         RENDA_TURBINADA: users.filter(u => u.plan === 'RENDA_TURBINADA').length,
         AMERICA: users.filter(u => u.plan === 'AMERICA').length,
+        ANALISTA: users.filter(u => u.plan === 'ANALISTA').length,
         ADMIN: users.filter(u => u.plan === 'ADMIN').length
       }
     };

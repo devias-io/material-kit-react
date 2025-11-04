@@ -67,9 +67,9 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
     
-    if (user.plan !== 'ADMIN') {
+    if (user.plan !== 'ADMIN' && user.plan !== 'ANALISTA') {
       console.log('❌ [AUTH] Acesso negado - Plano do usuário:', user.plan);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Admin access required',
         debug: `User plan: ${user.plan}, required: ADMIN`
       }, { status: 403 });

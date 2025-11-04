@@ -30,7 +30,7 @@ export async function POST(
       return NextResponse.json({ error: 'Question not found' }, { status: 404 });
     }
 
-    const isAdmin = user.plan === 'ADMIN';
+    const isAdmin = user.plan === 'ADMIN' || user.plan === 'ANALISTA';
     if (!isAdmin) {
       console.warn(
         `Unauthorized comment creation attempt by user ${user.id} on question ${params.id}`
