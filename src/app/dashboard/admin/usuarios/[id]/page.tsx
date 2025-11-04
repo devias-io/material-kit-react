@@ -36,6 +36,7 @@ import {
 
 import { useUser } from '@/hooks/use-user';
 import { PLAN_PERMISSIONS } from '@/lib/permissions';
+import { isLifetimePlan } from '@/lib/lifetime-plans';
 import { useRouter, useParams } from 'next/navigation';
 
 interface User {
@@ -51,7 +52,7 @@ interface User {
   lastLogin?: string;
   totalPurchases: number;
   purchaseCount: number;
-  expirationDate?: string;
+  expirationDate?: string | null;
   customPermissions?: string[];
   origin: 'MANUAL' | 'HOTMART' | 'KIWIFY' | 'EDUZZ';
   entitlements?: Array<{
@@ -87,6 +88,7 @@ export default function EditUserPage() {
   const [purchases, setPurchases] = React.useState<Purchase[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [resending, setResending] = React.useState(false);
+  const previousExpirationDateRef = React.useRef<string | null>(null);
 
   // Lista de conteúdos disponíveis para liberação
   const availableContents = [
@@ -189,6 +191,7 @@ export default function EditUserPage() {
         customPermissions: normalizedCustomPermissions,
         activeEntitlements,
       });
+      previousExpirationDateRef.current = data.user.expirationDate ?? null;
       setPurchases(data.purchases || []);
       setError(null);
       
@@ -276,6 +279,28 @@ export default function EditUserPage() {
     } finally {
       setResending(false);
     }
+  };
+
+  const handleLifetimeToggle = (checked: boolean) => {
+    if (!user) return;
+
+    if (isLifetimePlan(user.plan)) {
+      setUser({ ...user, expirationDate: null });
+      return;
+    }
+
+    if (checked) {
+      if (user.expirationDate !== null) {
+        previousExpirationDateRef.current = user.expirationDate ?? previousExpirationDateRef.current;
+      }
+
+      setUser({ ...user, expirationDate: null });
+      return;
+    }
+
+    const previousExpiration = previousExpirationDateRef.current;
+    setUser({ ...user, expirationDate: previousExpiration ?? undefined });
+    previousExpirationDateRef.current = previousExpiration ?? null;
   };
 
   const handlePermissionChange = (contentId: string, checked: boolean) => {
@@ -367,7 +392,7 @@ export default function EditUserPage() {
     return planMap[plan as keyof typeof planMap] || { label: plan, color: '#9CA3AF', emoji: '📋' };
   };
 
-  const formatDate = (dateString?: string) => {
+  const formatDate = (dateString?: string | null) => {
     if (!dateString) return '';
     return new Date(dateString).toISOString().split('T')[0];
   };
@@ -379,7 +404,7 @@ export default function EditUserPage() {
     }).format(value);
   };
 
-  const isExpired = (expirationDate?: string) => {
+  const isExpired = (expirationDate?: string | null) => {
     if (!expirationDate) return false;
     return new Date(expirationDate) < new Date();
   };
@@ -421,7 +446,9 @@ export default function EditUserPage() {
   }
 
   const planInfo = getPlanInfo(user.plan);
-  const expired = isExpired(user.expirationDate);
+  const lifetimePlan = isLifetimePlan(user.plan);
+  const isLifetimeAccess = lifetimePlan || user.expirationDate === null;
+  const expired = !isLifetimeAccess && isExpired(user.expirationDate);
 
   return (
     <Box sx={{ p: 4, backgroundColor: '#F8FAFC', minHeight: '100vh' }}>
@@ -611,9 +638,26 @@ export default function EditUserPage() {
                     <InputLabel sx={{ color: '#64748B' }}>Plano</InputLabel>
                     <Select
                       value={user.plan}
-                      onChange={(e) => setUser({ ...user, plan: e.target.value as any })}
-                      sx={{ 
-                        color: '#1E293B', 
+                      onChange={(e) => {
+                        const selectedPlan = e.target.value as User['plan'];
+
+                        setUser(prevUser => {
+                          if (!prevUser) {
+                            return prevUser;
+                          }
+
+                          const nextUser = { ...prevUser, plan: selectedPlan };
+
+                          if (isLifetimePlan(selectedPlan)) {
+                            previousExpirationDateRef.current = prevUser.expirationDate ?? previousExpirationDateRef.current;
+                            nextUser.expirationDate = null;
+                          }
+
+                          return nextUser;
+                        });
+                      }}
+                      sx={{
+                        color: '#1E293B',
                         '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' },
                         '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#CBD5E1' },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#3B82F6', borderWidth: '2px' }
@@ -667,14 +711,50 @@ export default function EditUserPage() {
                   />
                 </Grid>
                 <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={isLifetimeAccess}
+                        onChange={(e) => handleLifetimeToggle(e.target.checked)}
+                        disabled={lifetimePlan}
+                        sx={{
+                          '& .MuiSwitch-switchBase.Mui-checked': { color: '#3B82F6' },
+                          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#3B82F6' }
+                        }}
+                      />
+                    }
+                    label={lifetimePlan ? 'Plano com acesso vitalício' : 'Marcar acesso vitalício'}
+                    sx={{
+                      mb: 1,
+                      ml: 0,
+                      '& .MuiFormControlLabel-label': { color: '#1E293B', fontWeight: 500 }
+                    }}
+                  />
                   <TextField
                     fullWidth
                     label="Data de Vencimento do Acesso"
                     type="date"
                     value={formatDate(user.expirationDate)}
-                    onChange={(e) => setUser({ ...user, expirationDate: e.target.value })}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+
+                      if (newValue) {
+                        previousExpirationDateRef.current = newValue;
+                      }
+
+                      setUser(prevUser => {
+                        if (!prevUser) {
+                          return prevUser;
+                        }
+
+                        return {
+                          ...prevUser,
+                          expirationDate: newValue ? newValue : undefined,
+                        };
+                      });
+                    }}
                     InputLabelProps={{ shrink: true, style: { color: '#64748B' } }}
-                    sx={{ 
+                    sx={{
                       '& .MuiInputBase-input': { color: '#1E293B' },
                       '& .MuiOutlinedInput-root': {
                         '& fieldset': { borderColor: '#E2E8F0' },
@@ -682,15 +762,26 @@ export default function EditUserPage() {
                         '&.Mui-focused fieldset': { borderColor: '#3B82F6', borderWidth: '2px' },
                       }
                     }}
+                    disabled={isLifetimeAccess}
                     helperText={
-                      user.expirationDate 
-                        ? expired 
-                          ? "🔴 Acesso expirado" 
-                          : "⏰ Acesso válido até " + new Date(user.expirationDate).toLocaleDateString('pt-BR')
-                        : "Sem data de vencimento - acesso ilimitado"
+                      isLifetimeAccess
+                        ? lifetimePlan
+                          ? '♾️ Plano vitalício - acesso ilimitado'
+                          : '♾️ Acesso marcado como vitalício'
+                        : user.expirationDate
+                          ? expired
+                            ? '🔴 Acesso expirado'
+                            : '⏰ Acesso válido até ' + new Date(user.expirationDate).toLocaleDateString('pt-BR')
+                          : 'Sem data de vencimento - defina uma data ou marque como vitalício'
                     }
                     FormHelperTextProps={{
-                      sx: { color: expired ? '#EF4444' : '#64748B' }
+                      sx: {
+                        color: expired
+                          ? '#EF4444'
+                          : isLifetimeAccess
+                            ? '#0EA5E9'
+                            : '#64748B'
+                      }
                     }}
                   />
                 </Grid>
