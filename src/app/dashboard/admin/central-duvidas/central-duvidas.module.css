@@ -420,6 +420,12 @@
   line-height: 1.6;
 }
 
+.answerLink {
+  color: #bfdbfe;
+  text-decoration: underline;
+  word-break: break-word;
+}
+
 .responsePrompt {
   padding: 16px 24px 0;
 }
