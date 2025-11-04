@@ -16,6 +16,123 @@ interface ImportUser {
   status?: string;
 }
 
+const PLAN_MAPPINGS: Record<string, string> = {
+  VIP: 'VIP',
+  CLOSE_FRIENDS_VIP: 'VIP',
+  CLOSEFRIENDSVIP: 'VIP',
+  CF_VIP: 'VIP',
+  LITE: 'LITE',
+  CLOSE_FRIENDS_LITE: 'LITE',
+  CLOSEFRIENDSLITE: 'LITE',
+  CF_LITE: 'LITE',
+  LITE_V2: 'LITE_V2',
+  LITE20: 'LITE_V2',
+  LITE_20: 'LITE_V2',
+  LITE2: 'LITE_V2',
+  CLOSE_FRIENDS_LITE_V2: 'LITE_V2',
+  CLOSEFRIENDSLITEV2: 'LITE_V2',
+  RENDA_PASSIVA: 'RENDA_PASSIVA',
+  PROJETO_RENDA_PASSIVA: 'RENDA_PASSIVA',
+  PROJETO_RENDAPASSIVA: 'RENDA_PASSIVA',
+  FIIS: 'FIIS',
+  PROJETO_FIIS: 'FIIS',
+  PROJETOFIIS: 'FIIS',
+  RENDA_TURBINADA: 'RENDA_TURBINADA',
+  RENDA_TURB: 'RENDA_TURBINADA',
+  CF_RENDA_TURBINADA: 'RENDA_TURBINADA',
+  CFRENDA_TURBINADA: 'RENDA_TURBINADA',
+  CFRENDA_TURB: 'RENDA_TURBINADA',
+  CFRENDA: 'RENDA_TURBINADA',
+  CF_RENDA: 'RENDA_TURBINADA',
+  AMERICA: 'AMERICA',
+  PROJETO_AMERICA: 'AMERICA',
+  PROJETOAMERICA: 'AMERICA',
+  ADMIN: 'ADMIN'
+};
+
+const STATUS_MAPPINGS: Record<string, string> = {
+  ACTIVE: 'ACTIVE',
+  ATIVO: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  INATIVO: 'INACTIVE',
+  PENDING: 'PENDING',
+  PENDENTE: 'PENDING'
+};
+
+function normalizeKey(value?: string): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  return trimmed
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
+}
+
+function normalizePlan(plan?: string): string {
+  const key = normalizeKey(plan);
+  if (!key) {
+    return 'VIP';
+  }
+
+  const directMatch = PLAN_MAPPINGS[key];
+  if (directMatch) {
+    return directMatch;
+  }
+
+  if (key.includes('RENDA') && key.includes('TURBIN')) {
+    return 'RENDA_TURBINADA';
+  }
+
+  if (key.includes('RENDA') && key.includes('PASSIVA')) {
+    return 'RENDA_PASSIVA';
+  }
+
+  if (key.includes('AMERICA')) {
+    return 'AMERICA';
+  }
+
+  if (key.includes('FIIS') || key.includes('FII')) {
+    return 'FIIS';
+  }
+
+  if (key.includes('LITE') && (key.includes('2') || key.includes('V2'))) {
+    return 'LITE_V2';
+  }
+
+  if (key.includes('LITE')) {
+    return 'LITE';
+  }
+
+  if (key.includes('ADMIN')) {
+    return 'ADMIN';
+  }
+
+  if (key.includes('VIP')) {
+    return 'VIP';
+  }
+
+  console.warn(`⚠️ Plano desconhecido recebido na importação: "${plan}" → usando VIP por padrão.`);
+  return 'VIP';
+}
+
+function normalizeStatus(status?: string): string {
+  const key = normalizeKey(status);
+  if (!key) {
+    return 'ACTIVE';
+  }
+
+  return STATUS_MAPPINGS[key] || 'ACTIVE';
+}
+
 interface ImportResult {
   success: number;
   failed: number;
@@ -135,7 +252,9 @@ export async function POST(request: NextRequest) {
         }
 
         const email = user.email.toLowerCase().trim();
-        
+        const plan = normalizePlan(user.plan);
+        const status = normalizeStatus(user.status);
+
         // Verificar se usuário já existe
         const existingUser = await prisma.user.findUnique({
           where: { email }
@@ -145,19 +264,19 @@ export async function POST(request: NextRequest) {
           // ATUALIZAR usuário existente
           console.log(`🔄 Atualizando usuário existente: ${email}`);
           
-          const expirationDate = calculateExpirationDate(user.plan || 'VIP', user.expirationDate);
+          const expirationDate = calculateExpirationDate(plan, user.expirationDate);
           console.log(`📅 Data de expiração para ${email}: ${expirationDate?.toISOString() || 'Vitalício'}`);
-          
+
           const updatedUser = await prisma.user.update({
             where: { email },
             data: {
               firstName: user.firstName.trim(),
               lastName: user.lastName.trim(),
-              plan: user.plan || 'VIP',
-              status: user.status || 'ACTIVE',
+              plan,
+              status,
               expirationDate: expirationDate,
               // NÃO sobrescrever senha se já existir
-              ...(existingUser.password ? {} : { 
+              ...(existingUser.password ? {} : {
                 password: generateSecurePassword(),
                 passwordCreatedAt: new Date(),
                 mustChangePassword: true 
@@ -172,16 +291,16 @@ export async function POST(request: NextRequest) {
           // CRIAR novo usuário
           console.log(`➕ Criando novo usuário: ${email}`);
           
-          const expirationDate = calculateExpirationDate(user.plan || 'VIP', user.expirationDate);
+          const expirationDate = calculateExpirationDate(plan, user.expirationDate);
           console.log(`📅 Data de expiração para ${email}: ${expirationDate?.toISOString() || 'Vitalício'}`);
-          
+
           const newUser = await prisma.user.create({
             data: {
               firstName: user.firstName.trim(),
               lastName: user.lastName.trim(),
               email,
-              plan: user.plan || 'VIP',
-              status: user.status || 'ACTIVE',
+              plan,
+              status,
               password: generateSecurePassword(),
               passwordCreatedAt: new Date(),
               mustChangePassword: true,
