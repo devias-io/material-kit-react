@@ -751,7 +751,7 @@ export default function CentralDuvidas() {
                                       fontWeight: '500',
                                       color: '#374151'
                                     }}>
-                                      {answer.admin.firstName} {answer.admin.lastName} (Administrador)
+                                      Fatos da Bolsa (Administrador)
                                     </span>
                                   </div>
                                   <span style={{

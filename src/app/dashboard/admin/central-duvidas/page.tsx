@@ -792,9 +792,7 @@ export default function AdminCentralDuvidas() {
                                 <div key={answer.id} className={styles.answerCard}>
                                   <div className={styles.answerHeader}>
                                     <div>
-                                      <strong>
-                                        {answer.admin.firstName} {answer.admin.lastName}
-                                      </strong>
+                                      <strong>Fatos da Bolsa</strong>
                                       <div>{formatDate(answer.createdAt)}</div>
                                     </div>
                                     <div className={styles.answerActions}>
