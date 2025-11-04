@@ -787,6 +787,21 @@ export default function AdminCentralDuvidas() {
                       })}
                     </div>
 
+                    {/* Botão fora da área expandida para perguntas sem expansão */}
+                    {question.status === 'NOVA' && 
+                     activeResponseQuestionId !== question.id && 
+                     expandedQuestion !== question.id && (
+                      <div className={styles.responseActions}>
+                        <button
+                          type="button"
+                          className={styles.primaryButton}
+                          onClick={() => handleStartResponse(question)}
+                        >
+                          Responder dúvida
+                        </button>
+                      </div>
+                    )}
+
                     {expandedQuestion === question.id && (
                       <div className={styles.detailArea}>
                         {question.answers.length > 0 ? (
@@ -823,18 +838,19 @@ export default function AdminCentralDuvidas() {
                         ) : (
                           <p className={styles.emptyAnswers}>Nenhuma resposta da equipe cadastrada ainda.</p>
                         )}
-                      </div>
-                    )}
-
-                    {question.status === 'NOVA' && activeResponseQuestionId !== question.id && (
-                      <div className={styles.responsePrompt}>
-                        <button
-                          type="button"
-                          className={styles.primaryButton}
-                          onClick={() => handleStartResponse(question)}
-                        >
-                          Responder dúvida
-                        </button>
+                        
+                        {/* Botão dentro da área expandida */}
+                        {question.status === 'NOVA' && activeResponseQuestionId !== question.id && (
+                          <div className={styles.responseActions} style={{ marginTop: '1rem' }}>
+                            <button
+                              type="button"
+                              className={styles.primaryButton}
+                              onClick={() => handleStartResponse(question)}
+                            >
+                              Responder dúvida
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
 
