@@ -1,5 +1,3 @@
-'use server';
-
 const BRAPI_TOKEN = process.env.BRAPI_TOKEN?.trim();
 
 const DEFAULT_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
