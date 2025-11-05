@@ -44,7 +44,7 @@ function useIfixRealTime() {
       setLoading(true);
       setError(null);
 
-      console.log('🚀 IFIX: Buscando dados reais com IFIX.SA...');
+      debugLog('🚀 IFIX: Buscando dados reais com IFIX.SA...');
 
       const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
       
@@ -80,7 +80,7 @@ function useIfixRealTime() {
         if (dadosObtidos) break;
 
         try {
-          console.log(`🎯 IFIX: Tentando "${estrategia.nome}"...`);
+          debugLog(`🎯 IFIX: Tentando "${estrategia.nome}"...`);
           
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 6000);
@@ -93,15 +93,15 @@ function useIfixRealTime() {
 
           clearTimeout(timeoutId);
 
-          console.log(`📊 IFIX: ${estrategia.nome} - Status: ${response.status}`);
+          debugLog(`📊 IFIX: ${estrategia.nome} - Status: ${response.status}`);
 
           if (response.ok) {
             const data = await response.json();
-            console.log(`📊 IFIX: ${estrategia.nome} - Resposta:`, data);
+            debugLog(`📊 IFIX: ${estrategia.nome} - Resposta:`, data);
 
             // ✅ VERIFICAR ERROS
             if (data.error) {
-              console.log(`❌ IFIX: ${estrategia.nome} - Erro: ${data.message}`);
+              debugLog(`❌ IFIX: ${estrategia.nome} - Erro: ${data.message}`);
               continue;
             }
 
@@ -110,7 +110,7 @@ function useIfixRealTime() {
             if (resultado?.regularMarketPrice) {
               const preco = resultado.regularMarketPrice;
               
-              console.log(`🔍 IFIX: ${estrategia.nome} - Preço: ${preco}`);
+              debugLog(`🔍 IFIX: ${estrategia.nome} - Preço: ${preco}`);
               
               // ✅ VALIDAÇÃO: IFIX.SA deve estar entre 3000-4000
               if (preco >= 3000 && preco <= 4000) {
@@ -128,24 +128,24 @@ function useIfixRealTime() {
                   name: resultado.shortName || 'IFIX - Índice de Fundos Imobiliários'
                 };
 
-                console.log(`✅ IFIX: DADOS REAIS OBTIDOS!`, dados);
+                debugLog(`✅ IFIX: DADOS REAIS OBTIDOS!`, dados);
                 setIfixData(dados);
                 dadosObtidos = true;
                 break;
               } else {
-                console.log(`❌ IFIX: ${estrategia.nome} - Preço fora da faixa válida: ${preco}`);
+                debugLog(`❌ IFIX: ${estrategia.nome} - Preço fora da faixa válida: ${preco}`);
               }
             } else {
-              console.log(`❌ IFIX: ${estrategia.nome} - Sem dados de preço`);
+              debugLog(`❌ IFIX: ${estrategia.nome} - Sem dados de preço`);
             }
           } else {
-            console.log(`❌ IFIX: ${estrategia.nome} - HTTP ${response.status}`);
+            debugLog(`❌ IFIX: ${estrategia.nome} - HTTP ${response.status}`);
           }
         } catch (error) {
           if (error instanceof Error && error.name === 'AbortError') {
-            console.log(`⏱️ IFIX: ${estrategia.nome} - Timeout`);
+            debugLog(`⏱️ IFIX: ${estrategia.nome} - Timeout`);
           } else {
-            console.log(`❌ IFIX: ${estrategia.nome} - Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+            debugError(`❌ IFIX: ${estrategia.nome} - Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
           }
         }
 
@@ -155,18 +155,19 @@ function useIfixRealTime() {
 
       // ⚠️ FALLBACK (só se IFIX.SA não funcionar)
       if (!dadosObtidos) {
-        console.log('⚠️ IFIX: IFIX.SA falhou. Usando fallback baseado no último valor conhecido...');
+        debugWarn('⚠️ IFIX: IFIX.SA falhou. Usando fallback baseado no último valor conhecido...');
         
-        // Baseado no valor real que vimos: 3417.45
-        const valorUltimoConhecido = 3417.45;
+        // Baseado no valor real que vimos
+        const valorUltimoConhecido = DEFAULT_IFIX_CURRENT;
         const agora = new Date();
         const isHorarioComercial = agora.getHours() >= 9 && agora.getHours() <= 18;
-        
+
         // Pequena variação aleatória
         const variacaoSimulada = (Math.random() - 0.5) * (isHorarioComercial ? 0.8 : 0.3);
         const valorFinal = valorUltimoConhecido * (1 + variacaoSimulada / 100);
-        
+
         const dadosFallback = {
+          ...createStaticIfixFallbackPayload('FALLBACK_BASEADO_EM_3417'),
           valor: valorFinal,
           valorFormatado: new Intl.NumberFormat('pt-BR', {
             maximumFractionDigits: 0
@@ -174,31 +175,30 @@ function useIfixRealTime() {
           variacao: valorFinal - valorUltimoConhecido,
           variacaoPercent: variacaoSimulada,
           trend: variacaoSimulada >= 0 ? 'up' : 'down',
-          timestamp: new Date().toISOString(),
-          fonte: 'FALLBACK_BASEADO_EM_3417',
           symbol: 'IFIX.SA',
           name: 'IFIX - Índice de Fundos Imobiliários'
         };
         
-        console.log('📈 IFIX: Fallback baseado no valor real:', dadosFallback);
+        debugLog('📈 IFIX: Fallback baseado no valor real:', dadosFallback);
         setIfixData(dadosFallback);
         setError('Usando dados baseados no último valor conhecido');
       }
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
-      console.error('❌ IFIX: Erro geral:', err);
+      debugError('❌ IFIX: Erro geral:', err);
       setError(errorMessage);
       
       // Emergência: usar o valor real que descobrimos
       setIfixData({
-        valor: 3417.45,
-        valorFormatado: '3.417',
+        ...createStaticIfixFallbackPayload('EMERGENCIA_VALOR_REAL'),
+        valor: DEFAULT_IFIX_CURRENT,
+        valorFormatado: new Intl.NumberFormat('pt-BR', {
+          maximumFractionDigits: 0
+        }).format(Math.round(DEFAULT_IFIX_CURRENT)),
         variacao: -1.25,
         variacaoPercent: -0.04,
         trend: 'down',
-        timestamp: new Date().toISOString(),
-        fonte: 'EMERGENCIA_VALOR_REAL',
         symbol: 'IFIX.SA',
         name: 'IFIX - Índice de Fundos Imobiliários'
       });
@@ -245,65 +245,36 @@ function useIfixPeriodo(ativosAtualizados: any[], ifixAtualData: any) {
           dataMaisAntiga = new Date(2020, 2, 23);
         }
 
-        console.log('📅 Data mais antiga da carteira:', dataMaisAntiga.toLocaleDateString('pt-BR'));
+        debugLog('📅 Data mais antiga da carteira:', dataMaisAntiga.toLocaleDateString('pt-BR'));
 
         // 📊 USAR IFIX ATUAL DO HOOK PRINCIPAL (EVITA BUSCA DUPLICADA)
         let ifixAtual = 3417.45; // Fallback baseado no valor real descoberto
         
         if (ifixAtualData?.valor && ifixAtualData.valor > 3000) {
           ifixAtual = ifixAtualData.valor;
-          console.log('✅ IFIX atual recebido do hook principal:', ifixAtual.toLocaleString('pt-BR'));
+          debugLog('✅ IFIX atual recebido do hook principal:', ifixAtual.toLocaleString('pt-BR'));
         } else {
-          console.log('⚠️ IFIX atual não disponível, usando fallback realista:', ifixAtual.toLocaleString('pt-BR'));
+          debugLog('⚠️ IFIX atual não disponível, usando fallback realista:', ifixAtual.toLocaleString('pt-BR'));
         }
 
         // 📊 VALORES HISTÓRICOS DO IFIX ATUALIZADOS
         const anoInicial = dataMaisAntiga.getFullYear();
         const mesInicial = dataMaisAntiga.getMonth();
         
-        const valoresHistoricos: { [key: string]: number } = {
-          // 2020 - CRASH COVID
-          '2020-0': 2850, '2020-1': 2800, '2020-2': 1950, '2020-3': 2200,
-          '2020-4': 2400, '2020-5': 2650, '2020-6': 2750, '2020-7': 2820,
-          '2020-8': 2900, '2020-9': 2850, '2020-10': 2950, '2020-11': 3100,
-          
-          // 2021 - ALTA VOLATILIDADE
-          '2021-0': 3150, '2021-1': 3200, '2021-2': 3100, '2021-3': 3250,
-          '2021-4': 3400, '2021-5': 3500, '2021-6': 3450, '2021-7': 3350,
-          '2021-8': 3200, '2021-9': 3050, '2021-10': 2950, '2021-11': 3000,
-          
-          // 2022 - CORREÇÃO
-          '2022-0': 3100, '2022-1': 3150, '2022-2': 3200, '2022-3': 3180,
-          '2022-4': 3120, '2022-5': 2980, '2022-6': 2900, '2022-7': 3050,
-          '2022-8': 3100, '2022-9': 3150, '2022-10': 3200, '2022-11': 3050,
-          
-          // 2023 - RECUPERAÇÃO
-          '2023-0': 3080, '2023-1': 3120, '2023-2': 3050, '2023-3': 3100,
-          '2023-4': 3150, '2023-5': 3200, '2023-6': 3250, '2023-7': 3220,
-          '2023-8': 3180, '2023-9': 3140, '2023-10': 3200, '2023-11': 3280,
-          
-          // 2024 - ESTABILIZAÇÃO
-          '2024-0': 3300, '2024-1': 3280, '2024-2': 3250, '2024-3': 3220,
-          '2024-4': 3200, '2024-5': 3180, '2024-6': 3210, '2024-7': 3240,
-          '2024-8': 3260, '2024-9': 3230, '2024-10': 3200, '2024-11': 3180,
-          
-          // 2025 - RECUPERAÇÃO (baseado nos dados reais de 2025)
-          '2025-0': 3200, '2025-1': 3220, '2025-2': 3240, '2025-3': 3260,
-          '2025-4': 3280, '2025-5': 3300, '2025-6': 3350, '2025-7': 3400
-        };
+        const valoresHistoricos = IFIX_HISTORICAL_VALUES;
         
         // 🎯 BUSCAR VALOR HISTÓRICO
         const chaveEspecifica = `${anoInicial}-${mesInicial}`;
         const ifixInicial = valoresHistoricos[chaveEspecifica] || 
                            valoresHistoricos[`${anoInicial}-0`] || 3000;
         
-        console.log(`📊 IFIX inicial (${chaveEspecifica}):`, ifixInicial.toLocaleString('pt-BR'));
-        console.log(`📊 IFIX atual:`, ifixAtual.toLocaleString('pt-BR'));
+        debugLog(`📊 IFIX inicial (${chaveEspecifica}):`, ifixInicial.toLocaleString('pt-BR'));
+        debugLog(`📊 IFIX atual:`, ifixAtual.toLocaleString('pt-BR'));
 
         // 🧮 CALCULAR PERFORMANCE NO PERÍODO
         const performancePeriodo = ((ifixAtual - ifixInicial) / ifixInicial) * 100;
         
-        console.log(`📊 Performance IFIX no período: ${performancePeriodo.toFixed(2)}%`);
+        debugLog(`📊 Performance IFIX no período: ${performancePeriodo.toFixed(2)}%`);
         
         // 📅 FORMATAR PERÍODO
         const mesInicial_formatado = dataMaisAntiga.toLocaleDateString('pt-BR', { 
@@ -321,7 +292,7 @@ function useIfixPeriodo(ativosAtualizados: any[], ifixAtualData: any) {
           dataEntradaCompleta: dataMaisAntiga.toLocaleDateString('pt-BR')
         };
 
-        console.log('📊 Resultado FINAL IFIX período:', {
+        debugLog('📊 Resultado FINAL IFIX período:', {
           periodo: `desde ${mesInicial_formatado}`,
           inicial: ifixInicial.toLocaleString('pt-BR'),
           atual: ifixAtual.toLocaleString('pt-BR'),
@@ -331,7 +302,7 @@ function useIfixPeriodo(ativosAtualizados: any[], ifixAtualData: any) {
         setIfixPeriodo(resultado);
 
       } catch (error) {
-        console.error('❌ Erro ao calcular IFIX período:', error);
+        debugError('❌ Erro ao calcular IFIX período:', error);
         
         // Fallback baseado no valor real descoberto
         const fallback = {
@@ -387,7 +358,7 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
   const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
   const cotacoesMap = new Map();
   
-  console.log('🚀 [OTIMIZADO] Buscando', tickers.length, 'cotações EM PARALELO...');
+  debugLog('🚀 [OTIMIZADO] Buscando', tickers.length, 'cotações EM PARALELO...');
   
   // ✅ STRATEGY 1: Tentar batch request primeiro (1 requisição para todos)
   try {
@@ -400,7 +371,7 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
     if (response.ok) {
       const data = await response.json();
       if (data.results && data.results.length > 0) {
-        console.log('✅ BATCH REQUEST SUCESSO:', data.results.length, 'cotações em 1 só request');
+        debugLog('✅ BATCH REQUEST SUCESSO:', data.results.length, 'cotações em 1 só request');
         
         data.results.forEach((quote: any) => {
           if (quote.regularMarketPrice > 0) {
@@ -430,11 +401,11 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
       }
     }
   } catch (error) {
-    console.log('❌ Batch request falhou, usando paralelo individual');
+    debugLog('❌ Batch request falhou, usando paralelo individual');
   }
   
   // ✅ STRATEGY 2: Requests paralelos individuais (SEM DELAYS!)
-  console.log('🚀 [PARALELO] Executando', tickers.length, 'requests simultâneos...');
+  debugLog('🚀 [PARALELO] Executando', tickers.length, 'requests simultâneos...');
   
   const promises = tickers.map(async (ticker) => {
     try {
@@ -470,14 +441,14 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
         }
       }
     } catch (error) {
-      console.log(`❌ [${ticker}]:`, error instanceof Error ? error.message : 'Erro desconhecido');
+      debugLog(`❌ [${ticker}]:`, error instanceof Error ? error.message : 'Erro desconhecido');
     }
   });
   
   // 🚀 EXECUTAR TODAS EM PARALELO (ZERO DELAYS)
   await Promise.allSettled(promises);
   
-  console.log('✅ [PARALELO] Concluído:', cotacoesMap.size, 'de', tickers.length);
+  debugLog('✅ [PARALELO] Concluído:', cotacoesMap.size, 'de', tickers.length);
   return cotacoesMap;
 }
 
@@ -489,7 +460,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
     return dyMap;
   }
 
-  console.log('📈 [OTIMIZADO] Buscando DY para', tickers.length, 'tickers com estratégia integrada...');
+  debugLog('📈 [OTIMIZADO] Buscando DY para', tickers.length, 'tickers com estratégia integrada...');
 
   const preencherMapComResultado = (
     chavePrincipal: string,
@@ -579,12 +550,12 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
         }
       });
 
-      console.log('✅ [DY-BATCH] Concluído via API:', dyMap.size, 'registros atualizados');
+      debugLog('✅ [DY-BATCH] Concluído via API:', dyMap.size, 'registros atualizados');
     } else {
-      console.log('⚠️ [DY-BATCH] Falha na API batch:', response.status, response.statusText);
+      debugLog('⚠️ [DY-BATCH] Falha na API batch:', response.status, response.statusText);
     }
   } catch (error) {
-    console.log('⚠️ [DY-BATCH] Erro ao buscar batch:', error instanceof Error ? error.message : 'Erro desconhecido');
+    debugLog('⚠️ [DY-BATCH] Erro ao buscar batch:', error instanceof Error ? error.message : 'Erro desconhecido');
   }
 
   const faltantes = tickers.filter((ticker) => {
@@ -620,7 +591,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
     });
   }
 
-  console.log('✅ [DY-INTEGRADO] Concluído:', dyMap.size, 'registros atualizados');
+  debugLog('✅ [DY-INTEGRADO] Concluído:', dyMap.size, 'registros atualizados');
   return dyMap;
 }
 
@@ -651,14 +622,14 @@ function useFiisIntegradas() {
     setLoadingProventos(true);
     const novosProventos = new Map<string, number>();
     
-    console.log('💰 Iniciando busca de proventos para', ativosData.length, 'FIIs');
+    debugLog('💰 Iniciando busca de proventos para', ativosData.length, 'FIIs');
     
     const buscarProventoAtivo = async (ativo: any) => {
       try {
         const [dia, mes, ano] = ativo.dataEntrada.split('/');
         const dataEntradaISO = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
         
-        console.log(`💰 Buscando proventos para ${ativo.ticker} desde ${ativo.dataEntrada}`);
+        debugLog(`💰 Buscando proventos para ${ativo.ticker} desde ${ativo.dataEntrada}`);
         
         const controller = new AbortController();
         setTimeout(() => controller.abort(), 2000);
@@ -680,14 +651,14 @@ function useFiisIntegradas() {
             });
             
             const total = proventosFiltrados.reduce((sum: number, p: any) => sum + (p.valor || 0), 0);
-            console.log(`💰 ${ativo.ticker}: R$ ${total.toFixed(2)} (${proventosFiltrados.length} proventos)`);
+            debugLog(`💰 ${ativo.ticker}: R$ ${total.toFixed(2)} (${proventosFiltrados.length} proventos)`);
             return { ticker: ativo.ticker, valor: total };
           }
         } else {
-          console.log(`💰 ${ativo.ticker}: Erro HTTP ${response.status}`);
+          debugLog(`💰 ${ativo.ticker}: Erro HTTP ${response.status}`);
         }
       } catch (error) {
-        console.log(`💰 ${ativo.ticker}: Erro -`, error instanceof Error ? error.message : 'Erro desconhecido');
+        debugLog(`💰 ${ativo.ticker}: Erro -`, error instanceof Error ? error.message : 'Erro desconhecido');
       }
       
       return { ticker: ativo.ticker, valor: 0 };
@@ -710,7 +681,7 @@ function useFiisIntegradas() {
       }
     });
     
-    console.log('💰 Proventos finais:', Object.fromEntries(novosProventos));
+    debugLog('💰 Proventos finais:', Object.fromEntries(novosProventos));
     setProventosMap(novosProventos);
     setLoadingProventos(false);
     return novosProventos;
@@ -729,7 +700,7 @@ function useFiisIntegradas() {
       setTodosOsDadosProntos(false);
       const tickers = fiisData.map(ativo => ativo.ticker);
       
-      console.log('🚀 INICIANDO BUSCA STEP-BY-STEP ROBUSTA - ESTRATÉGIA MOBILE UNIVERSAL...');
+      debugLog('🚀 INICIANDO BUSCA STEP-BY-STEP ROBUSTA - ESTRATÉGIA MOBILE UNIVERSAL...');
       
       // 🔄 RESET DOS ESTADOS
       setCotacoesCompletas(new Map());
@@ -737,7 +708,7 @@ function useFiisIntegradas() {
       setProventosCompletos(new Map());
 
       // ⚡ PARALELIZAÇÃO TOTAL - SUBSTITUA TODO O BLOCO DAS ETAPAS POR ISTO:
-      console.log('⚡ EXECUTANDO TODAS AS ETAPAS EM PARALELO...');
+      debugLog('⚡ EXECUTANDO TODAS AS ETAPAS EM PARALELO...');
 
       // Ativar todos os loadings
       setLoadingCotacoes(true);
@@ -755,7 +726,7 @@ function useFiisIntegradas() {
       ]);
 
       const tempoTotal = performance.now() - inicioTempo;
-      console.log(`🎉 TODAS AS ETAPAS CONCLUÍDAS EM ${tempoTotal.toFixed(0)}ms!`);
+      debugLog(`🎉 TODAS AS ETAPAS CONCLUÍDAS EM ${tempoTotal.toFixed(0)}ms!`);
 
       // Processar resultados
       const cotacoesMap = cotacoesResult.status === 'fulfilled' ? cotacoesResult.value : new Map();
@@ -763,16 +734,16 @@ function useFiisIntegradas() {
       const proventosData = proventosResult.status === 'fulfilled' ? proventosResult.value : new Map();
 
       // Logs de debug (seus logs originais mantidos)
-      console.log('📊 Cotações obtidas:', cotacoesMap.size, 'de', tickers.length);
-      console.log('📈 DY obtidos:', dyMap.size, 'de', tickers.length);
-      console.log('💰 Proventos obtidos:', proventosData.size, 'de', fiisData.length);
+      debugLog('📊 Cotações obtidas:', cotacoesMap.size, 'de', tickers.length);
+      debugLog('📈 DY obtidos:', dyMap.size, 'de', tickers.length);
+      debugLog('💰 Proventos obtidos:', proventosData.size, 'de', fiisData.length);
 
       // Seu debug do DY mantido
-      console.log('🔍 [PARALLEL-DEBUG] dyMap processado:');
-      console.log('🔍 [PARALLEL-DEBUG] dyMap.size:', dyMap.size);
-      console.log('🔍 [PARALLEL-DEBUG] dyMap conteúdo:', Object.fromEntries(dyMap));
-      console.log('🔍 [PARALLEL-DEBUG] Exemplo KNRI11:', dyMap.get('KNRI11'));
-      console.log('🔍 [PARALLEL-DEBUG] Exemplo HGLG11:', dyMap.get('HGLG11'));
+      debugLog('🔍 [PARALLEL-DEBUG] dyMap processado:');
+      debugLog('🔍 [PARALLEL-DEBUG] dyMap.size:', dyMap.size);
+      debugLog('🔍 [PARALLEL-DEBUG] dyMap conteúdo:', Object.fromEntries(dyMap));
+      debugLog('🔍 [PARALLEL-DEBUG] Exemplo KNRI11:', dyMap.get('KNRI11'));
+      debugLog('🔍 [PARALLEL-DEBUG] Exemplo HGLG11:', dyMap.get('HGLG11'));
 
       // Atualizar estados
       setCotacoesCompletas(cotacoesMap);
@@ -790,7 +761,7 @@ function useFiisIntegradas() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       setError(errorMessage);
-      console.error('❌ Erro na busca otimizada:', err);
+      debugError('❌ Erro na busca otimizada:', err);
       setTodosOsDadosProntos(true);
     }
   }, [fiisData, isMobile, buscarProventosAtivos]);
@@ -800,16 +771,16 @@ function useFiisIntegradas() {
     if (!todosOsDadosProntos || fiisData.length === 0) return;
     
     // 🔍 DEBUG COMPLETO DAS DEPENDÊNCIAS
-    console.log('🏆 PROCESSANDO TOTAL RETURN - TODOS OS DADOS PRONTOS!');
-    console.log('🔍 [DEPS-DEBUG] Verificando estados no momento da execução:');
-    console.log('🔍 [DEPS-DEBUG] todosOsDadosProntos:', todosOsDadosProntos);
-    console.log('🔍 [DEPS-DEBUG] fiisData.length:', fiisData.length);
-    console.log('🔍 [DEPS-DEBUG] cotacoesCompletas.size:', cotacoesCompletas.size);
-    console.log('🔍 [DEPS-DEBUG] dyCompletos.size:', dyCompletos.size);
-    console.log('🔍 [DEPS-DEBUG] proventosCompletos.size:', proventosCompletos.size);
-    console.log('🔍 [DEPS-DEBUG] dyCompletos conteúdo:', Object.fromEntries(dyCompletos));
+    debugLog('🏆 PROCESSANDO TOTAL RETURN - TODOS OS DADOS PRONTOS!');
+    debugLog('🔍 [DEPS-DEBUG] Verificando estados no momento da execução:');
+    debugLog('🔍 [DEPS-DEBUG] todosOsDadosProntos:', todosOsDadosProntos);
+    debugLog('🔍 [DEPS-DEBUG] fiisData.length:', fiisData.length);
+    debugLog('🔍 [DEPS-DEBUG] cotacoesCompletas.size:', cotacoesCompletas.size);
+    debugLog('🔍 [DEPS-DEBUG] dyCompletos.size:', dyCompletos.size);
+    debugLog('🔍 [DEPS-DEBUG] proventosCompletos.size:', proventosCompletos.size);
+    debugLog('🔍 [DEPS-DEBUG] dyCompletos conteúdo:', Object.fromEntries(dyCompletos));
     
-    console.log('📊 Dados disponíveis:', {
+    debugLog('📊 Dados disponíveis:', {
       cotacoes: cotacoesCompletas.size,
       dy: dyCompletos.size, 
       proventos: proventosCompletos.size,
@@ -825,12 +796,12 @@ function useFiisIntegradas() {
 
       // 🔍 DEBUG DY ASSIGNMENT
       const dyAPI = dyCompletos.get(tickerNormalizado) || '0,00%';
-      console.log(`🔍 [ASSIGN-DEBUG] ${ativo.ticker}:`);
-      console.log(`  - dyCompletos.size: ${dyCompletos.size}`);
-      console.log(`  - dyCompletos.has('${ativo.ticker}'): ${dyCompletos.has(tickerNormalizado)}`);
-      console.log(`  - dyCompletos.get('${ativo.ticker}'): ${dyCompletos.get(tickerNormalizado)}`);
-      console.log(`  - dyAPI final: ${dyAPI}`);
-      console.log(`  - loadingDY: ${loadingDY}`);
+      debugLog(`🔍 [ASSIGN-DEBUG] ${ativo.ticker}:`);
+      debugLog(`  - dyCompletos.size: ${dyCompletos.size}`);
+      debugLog(`  - dyCompletos.has('${ativo.ticker}'): ${dyCompletos.has(tickerNormalizado)}`);
+      debugLog(`  - dyCompletos.get('${ativo.ticker}'): ${dyCompletos.get(tickerNormalizado)}`);
+      debugLog(`  - dyAPI final: ${dyAPI}`);
+      debugLog(`  - loadingDY: ${loadingDY}`);
       
       const proventosAtivo = proventosCompletos.get(tickerNormalizado) || proventosCompletos.get(ativo.ticker) || 0;
 
@@ -847,7 +818,7 @@ function useFiisIntegradas() {
           novasCotacoes[ativo.ticker] = precoAtualNum;
         }
         
-        console.log(`🏆 ${ativo.ticker}: DY final que será usado = ${dyAPI}`);
+        debugLog(`🏆 ${ativo.ticker}: DY final que será usado = ${dyAPI}`);
         
         return {
           ...ativo,
@@ -874,7 +845,7 @@ function useFiisIntegradas() {
         // ⚠️ ATIVO SEM COTAÇÃO REAL
         const performanceProventos = ativo.precoEntrada > 0 ? (proventosAtivo / ativo.precoEntrada) * 100 : 0;
         
-        console.log(`🏆 ${ativo.ticker}: (sem cotação) DY final que será usado = ${dyAPI}`);
+        debugLog(`🏆 ${ativo.ticker}: (sem cotação) DY final que será usado = ${dyAPI}`);
         
         return {
           ...ativo,
@@ -904,13 +875,13 @@ function useFiisIntegradas() {
     setCotacoesAtualizadas(novasCotacoes);
     setAtivosAtualizados(ativosFinais);
     
-    console.log('🏆 TOTAL RETURN PROCESSADO COM SUCESSO - PRIMEIRA VEZ!');
+    debugLog('🏆 TOTAL RETURN PROCESSADO COM SUCESSO - PRIMEIRA VEZ!');
   }, [todosOsDadosProntos, cotacoesCompletas, dyCompletos, proventosCompletos, fiisData, loadingDY]);
 
   // UseEffect original simplificado
   React.useEffect(() => {
     const timeoutId = setTimeout(() => {
-      console.log('🚀 Iniciando busca de dados...');
+      debugLog('🚀 Iniciando busca de dados...');
       buscarDadosCompletos();
     }, 100); // Pequeno debounce
 
@@ -918,7 +889,7 @@ function useFiisIntegradas() {
   }, [buscarDadosCompletos]);
 
   const refetch = React.useCallback(() => {
-    console.log('🔄 REFETCH: Resetando e buscando dados novamente...');
+    debugLog('🔄 REFETCH: Resetando e buscando dados novamente...');
     setTodosOsDadosProntos(false); // Reset do flag
     buscarDadosCompletos();
   }, [buscarDadosCompletos]);

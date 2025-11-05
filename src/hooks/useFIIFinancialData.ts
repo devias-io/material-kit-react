@@ -2,6 +2,11 @@
 'use client';
 
 import * as React from 'react';
+import {
+  createRealtimeIfixFallbackPayload,
+  DEFAULT_FII_MARKET_DATA_FALLBACK,
+} from '@/utils/ifixConstants';
+import { debugError, debugLog } from '@/utils/logger';
 
 // 🔥 TIPOS PARA DADOS FINANCEIROS DOS FIIs
 export interface FIIMarketData {
@@ -47,7 +52,7 @@ export function useFIIFinancialData() {
       setLoading(true);
       setError(null);
 
-      console.log('🔄 Buscando dados financeiros dos FIIs...');
+      debugLog('🔄 Buscando dados financeiros dos FIIs...');
 
       // 🌐 BUSCAR DADOS DA API CUSTOMIZADA PARA FIIs
       const response = await fetch('/api/financial/fii-market-data', {
@@ -66,7 +71,7 @@ export function useFIIFinancialData() {
       const data: FIIFinancialDataResponse = await response.json();
       
       if (data.success && data.marketData) {
-        console.log('✅ Dados financeiros FIIs recebidos:', data.marketData);
+        debugLog('✅ Dados financeiros FIIs recebidos:', data.marketData);
         setMarketData(data.marketData);
         setLastUpdate(data.timestamp);
       } else {
@@ -75,19 +80,17 @@ export function useFIIFinancialData() {
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
-      console.error('❌ Erro ao buscar dados financeiros FIIs:', err);
+      debugError('❌ Erro ao buscar dados financeiros FIIs:', err);
       setError(errorMessage);
 
       // 🔄 FALLBACK: Dados padrão para FIIs
-      console.log('🔄 Usando dados de fallback para FIIs...');
-      const fallbackData: FIIMarketData = {
-        ifix: { value: "3.200", trend: "up", diff: 0.25 },
-        carteiraHoje: { value: "12.4%", trend: "up", diff: 12.4 },
-        dividendYield: { value: "11.8%", trend: "up", diff: 11.8 },
-        carteiraPeriodo: { value: "15.2%", trend: "up", diff: 15.2 }
-      };
-      
-      setMarketData(fallbackData);
+      debugLog('🔄 Usando dados de fallback para FIIs...');
+      setMarketData({
+        ifix: { ...DEFAULT_FII_MARKET_DATA_FALLBACK.ifix },
+        carteiraHoje: { ...DEFAULT_FII_MARKET_DATA_FALLBACK.carteiraHoje },
+        dividendYield: { ...DEFAULT_FII_MARKET_DATA_FALLBACK.dividendYield },
+        carteiraPeriodo: { ...DEFAULT_FII_MARKET_DATA_FALLBACK.carteiraPeriodo },
+      });
       setLastUpdate(new Date().toISOString());
     } finally {
       setLoading(false);
@@ -128,7 +131,7 @@ export function useIFIXRealTime() {
       setLoading(true);
       setError(null);
 
-      console.log('🔍 BUSCANDO DADOS IFIX EM TEMPO REAL...');
+      debugLog('🔍 BUSCANDO DADOS IFIX EM TEMPO REAL...');
 
       // 🔑 TOKEN BRAPI VALIDADO
       const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
@@ -161,7 +164,7 @@ export function useIFIXRealTime() {
             fonte: 'BRAPI_REAL'
           };
 
-          console.log('✅ IFIX PROCESSADO:', processedData);
+          debugLog('✅ IFIX PROCESSADO:', processedData);
           setIfixData(processedData);
           
         } else {
@@ -173,21 +176,11 @@ export function useIFIXRealTime() {
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
-      console.error('❌ Erro ao buscar IFIX:', err);
+      debugError('❌ Erro ao buscar IFIX:', err);
       setError(errorMessage);
       
       // 🔄 FALLBACK
-      const fallbackData = {
-        valor: 3200,
-        valorFormatado: '3.200',
-        variacao: 8.0,
-        variacaoPercent: 0.25,
-        trend: 'up',
-        volume: 125000000,
-        timestamp: new Date().toISOString(),
-        fonte: 'FALLBACK'
-      };
-      setIfixData(fallbackData);
+      setIfixData(createRealtimeIfixFallbackPayload('FALLBACK'));
     } finally {
       setLoading(false);
     }
