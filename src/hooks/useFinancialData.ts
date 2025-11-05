@@ -1,8 +1,9 @@
 // src/hooks/useFinancialData.ts
 'use client';
-import { useState, useEffect, useCallback } from 'react';
 
-// 🎯 TIPOS PARA OS DADOS FINANCEIROS
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+
 export interface MarketData {
   ibovespa: { value: string; trend: 'up' | 'down'; diff: number };
   indiceSmall: { value: string; trend: 'up' | 'down'; diff: number };
@@ -12,82 +13,84 @@ export interface MarketData {
   carteiraPeriodo: { value: string; trend: 'up' | 'down'; diff: number };
 }
 
+interface FinancialMarketDataResponse {
+  marketData?: MarketData;
+  metadata?: Record<string, any>;
+  error?: string;
+}
+
+const FALLBACK_MARKET_DATA: MarketData = {
+  ibovespa: { value: '136.787', trend: 'down', diff: -0.18 },
+  indiceSmall: { value: '2.155', trend: 'up', diff: 0.47 },
+  carteiraHoje: { value: '88.7%', trend: 'up', diff: 88.7 },
+  dividendYield: { value: '7.4%', trend: 'up', diff: 7.4 },
+  ibovespaPeriodo: { value: '6.1%', trend: 'up', diff: 6.1 },
+  carteiraPeriodo: { value: '9.3%', trend: 'up', diff: 9.3 }
+};
+
+const QUERY_KEY = ['financial', 'market-data'];
+
+async function fetchMarketData(): Promise<FinancialMarketDataResponse> {
+  const response = await fetch('/api/financial/market-data', {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json'
+    },
+    cache: 'no-store'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 interface UseFinancialDataReturn {
   marketData: MarketData | null;
+  metadata: Record<string, any> | null;
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  isFetching: boolean;
 }
 
 export function useFinancialData(): UseFinancialDataReturn {
-  const [marketData, setMarketData] = useState<MarketData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const query = useQuery<FinancialMarketDataResponse>({
+    queryKey: QUERY_KEY,
+    queryFn: fetchMarketData,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    placeholderData: (previousData) => previousData
+  });
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('🔄 Buscando dados do mercado via API...');
-      
-      const response = await fetch('/api/financial/market-data', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // ✅ Adicionar cache busting se necessário
-        cache: 'no-store'
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      // ✅ VERIFICAR SE HÁ ERRO NA RESPOSTA (mesmo com status 200)
-      if (data.error) {
-        console.warn('⚠️ API retornou erro mas com status 200:', data.error);
-        // Mesmo assim, usar os dados de fallback
-      }
-      
-      console.log('✅ Dados do mercado recebidos:', data.marketData);
-      setMarketData(data.marketData);
-      
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
-      setError(errorMessage);
-      console.error('❌ Erro no useFinancialData:', err);
-      
-      // 🚨 FALLBACK LOCAL SE A API FALHAR COMPLETAMENTE
-      console.log('📊 Usando fallback local devido ao erro na API');
-      setMarketData({
-        ibovespa: { value: "136.787", trend: "down", diff: -0.18 },
-        indiceSmall: { value: "2.155", trend: "up", diff: 0.47 }, // SMLL Yahoo Finance
-        carteiraHoje: { value: "88.7%", trend: "up", diff: 88.7 },
-        dividendYield: { value: "7.4%", trend: "up", diff: 7.4 },
-        ibovespaPeriodo: { value: "6.1%", trend: "up", diff: 6.1 },
-        carteiraPeriodo: { value: "9.3%", trend: "up", diff: 9.3 },
-      });
-      
-    } finally {
-      setLoading(false);
+  const marketData = useMemo(() => {
+    if (query.data?.marketData) {
+      return query.data.marketData;
     }
-  }, []);
 
-  useEffect(() => {
-    fetchData();
-    
-    // ⏰ ATUALIZAR DADOS A CADA 5 MINUTOS
-    const interval = setInterval(fetchData, 5 * 60 * 1000);
-    
-    return () => clearInterval(interval);
-  }, [fetchData]);
+    if (query.isError) {
+      return FALLBACK_MARKET_DATA;
+    }
+
+    return null;
+  }, [query.data?.marketData, query.isError]);
+
+  const metadata = query.data?.metadata ?? null;
+
+  const queryError = query.error instanceof Error ? query.error.message : query.error ? 'Erro desconhecido' : null;
+  const apiError = query.data?.error ?? null;
+  const error = queryError ?? (typeof apiError === 'string' ? apiError : null);
 
   return {
     marketData,
-    loading,
+    metadata,
+    loading: query.isPending,
     error,
-    refetch: fetchData,
+    refetch: async () => {
+      await query.refetch();
+    },
+    isFetching: query.isFetching
   };
 }
