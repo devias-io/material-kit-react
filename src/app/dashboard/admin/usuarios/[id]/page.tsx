@@ -98,6 +98,11 @@ export default function EditUserPage() {
     { id: 'fundos-imobiliarios', label: 'Fundos Imobiliários', category: 'Principal' },
     { id: 'rentabilidades', label: 'Rentabilidades', category: 'Principal' },
 
+    { id: 'cf-renda-turbinada', label: 'CF Renda Turbinada', category: 'CF Renda Turbinada' },
+    { id: 'cf-renda-turbinada-aulas', label: 'CF Renda Turbinada • Aulas', category: 'CF Renda Turbinada' },
+    { id: 'cf-renda-turbinada-bastidores', label: 'CF Renda Turbinada • Bastidores da Bolsa', category: 'CF Renda Turbinada' },
+    { id: 'cf-renda-turbinada-carteira', label: 'CF Renda Turbinada • Carteira Recomendada', category: 'CF Renda Turbinada' },
+
     { id: 'internacional-etfs', label: 'ETFs Internacionais', category: 'Internacional' },
     { id: 'internacional-stocks', label: 'Stocks', category: 'Internacional' },
     { id: 'internacional-dividendos', label: 'Dividendos Internacionais', category: 'Internacional' },
@@ -398,8 +403,8 @@ export default function EditUserPage() {
   const customHasAdminAccess = user ? getArrayPermissions(user.customPermissions).some(permission => permission.startsWith('admin')) : false;
   const showAdminCategory = (user?.plan === 'ANALISTA' || user?.plan === 'ADMIN') || planHasAdminAccess || customHasAdminAccess;
   const contentCategories = showAdminCategory
-    ? ['Principal', 'Internacional', 'Recursos Exclusivos', 'Administrativo']
-    : ['Principal', 'Internacional', 'Recursos Exclusivos'];
+    ? ['Principal', 'CF Renda Turbinada', 'Internacional', 'Recursos Exclusivos', 'Administrativo']
+    : ['Principal', 'CF Renda Turbinada', 'Internacional', 'Recursos Exclusivos'];
 
   const getPlanInfo = (plan: string) => {
     const planMap = {
