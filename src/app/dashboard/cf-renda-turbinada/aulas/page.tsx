@@ -34,6 +34,11 @@ interface LessonFormState {
   content: string;
 }
 
+interface MoveLessonFormState {
+  moduleId: string;
+  position: string;
+}
+
 interface NewModuleFormState {
   title: string;
   highlight: string;
@@ -375,6 +380,10 @@ function sortModulesBySchedule(modules: Module[]): Module[] {
   });
 }
 
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
 export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const router = useRouter();
   const { planInfo } = useAuthAccess();
@@ -393,6 +402,9 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const [editingLessonKey, setEditingLessonKey] = React.useState<string | null>(null);
   const [editLessonForm, setEditLessonForm] = React.useState<LessonFormState>(createEmptyLessonForm());
   const [editLessonError, setEditLessonError] = React.useState<string | null>(null);
+  const [moveLessonForms, setMoveLessonForms] = React.useState<Record<string, MoveLessonFormState>>({});
+  const [moveLessonErrors, setMoveLessonErrors] = React.useState<Record<string, string | null>>({});
+  const [openMoveLessonKey, setOpenMoveLessonKey] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
   const [fetchError, setFetchError] = React.useState<string | null>(null);
@@ -875,6 +887,7 @@ const visibleModules = React.useMemo(() => {
 
   const handleToggleViewMode = React.useCallback(() => {
     setViewAsStudent(prev => !prev);
+    setOpenMoveLessonKey(null);
   }, []);
 
   const handleStartEditModule = React.useCallback(
@@ -1035,6 +1048,7 @@ const handleUpdateModule = React.useCallback(
         content: lesson.content ?? ''
       });
       setEditLessonError(null);
+      setOpenMoveLessonKey(null);
       setEditingLessonKey(`${moduleId}-${lessonIndex}`);
     },
     [modules]
@@ -1164,12 +1178,229 @@ const handleUpdateModule = React.useCallback(
     [modules, editingLessonKey, handleCancelEditLesson]
   );
 
+  const handleToggleMoveLesson = React.useCallback(
+    (moduleId: string, lessonIndex: number) => {
+      const key = `${moduleId}-${lessonIndex}`;
+      const module = modules.find(currentModule => currentModule.id === moduleId);
+      const lessonCount = module?.lessons.length ?? 0;
+      const defaultPosition = clampNumber(
+        lessonCount > 0 ? Math.min(lessonIndex + 1, lessonCount) : 1,
+        1,
+        Math.max(lessonCount, 1)
+      );
+
+      setMoveLessonForms(prev => ({
+        ...prev,
+        [key]: {
+          moduleId,
+          position: String(defaultPosition)
+        }
+      }));
+
+      setMoveLessonErrors(prev => ({
+        ...prev,
+        [key]: null
+      }));
+
+      setOpenMoveLessonKey(currentKey => (currentKey === key ? null : key));
+    },
+    [modules]
+  );
+
+  const handleMoveLessonModuleChange = React.useCallback(
+    (sourceModuleId: string, lessonIndex: number, destinationModuleId: string) => {
+      const key = `${sourceModuleId}-${lessonIndex}`;
+      const destinationModule = modules.find(currentModule => currentModule.id === destinationModuleId);
+      const isSameModule = destinationModuleId === sourceModuleId;
+      const destinationCount = destinationModule?.lessons.length ?? 0;
+      const maxPosition = Math.max(1, isSameModule ? destinationCount : destinationCount + 1);
+
+      setMoveLessonForms(prev => {
+        const currentForm = prev[key];
+        const parsedCurrentPosition = currentForm ? Number.parseInt(currentForm.position, 10) : Number.NaN;
+        const fallbackPosition = isSameModule ? lessonIndex + 1 : destinationCount + 1;
+        const safePosition = clampNumber(
+          Number.isNaN(parsedCurrentPosition) ? fallbackPosition : parsedCurrentPosition,
+          1,
+          maxPosition
+        );
+
+        return {
+          ...prev,
+          [key]: {
+            moduleId: destinationModuleId,
+            position: String(safePosition)
+          }
+        };
+      });
+
+      setMoveLessonErrors(prev => ({
+        ...prev,
+        [key]: null
+      }));
+    },
+    [modules]
+  );
+
+  const handleMoveLessonPositionChange = React.useCallback(
+    (sourceModuleId: string, lessonIndex: number, position: string) => {
+      const key = `${sourceModuleId}-${lessonIndex}`;
+
+      setMoveLessonForms(prev => {
+        const currentForm = prev[key] ?? { moduleId: sourceModuleId, position: String(lessonIndex + 1) };
+        const targetModule = modules.find(currentModule => currentModule.id === currentForm.moduleId);
+        const isSameModule = currentForm.moduleId === sourceModuleId;
+        const targetCount = targetModule?.lessons.length ?? 0;
+        const maxPosition = Math.max(1, isSameModule ? targetCount : targetCount + 1);
+        const parsedPosition = Number.parseInt(position, 10);
+        const fallbackPosition = isSameModule ? lessonIndex + 1 : targetCount + 1;
+        const safePosition = clampNumber(
+          Number.isNaN(parsedPosition) ? fallbackPosition : parsedPosition,
+          1,
+          maxPosition
+        );
+
+        return {
+          ...prev,
+          [key]: {
+            moduleId: currentForm.moduleId,
+            position: String(safePosition)
+          }
+        };
+      });
+
+      setMoveLessonErrors(prev => ({
+        ...prev,
+        [key]: null
+      }));
+    },
+    [modules]
+  );
+
+  const handleSubmitMoveLesson = React.useCallback(
+    async (event: React.FormEvent<HTMLFormElement>, moduleId: string, lessonIndex: number) => {
+      event.preventDefault();
+
+      const module = modules.find(currentModule => currentModule.id === moduleId);
+      const lesson = module?.lessons[lessonIndex];
+
+      if (!lesson || typeof lesson.id !== 'number') {
+        return;
+      }
+
+      const key = `${moduleId}-${lessonIndex}`;
+      const form = moveLessonForms[key] ?? { moduleId, position: String(lessonIndex + 1) };
+      const targetModuleId = form.moduleId;
+      const positionNumber = Number.parseInt(form.position, 10);
+
+      const targetModule = modules.find(currentModule => currentModule.id === targetModuleId);
+
+      if (!targetModule) {
+        setMoveLessonErrors(prev => ({
+          ...prev,
+          [key]: 'Selecione um módulo válido.'
+        }));
+        return;
+      }
+
+      if (Number.isNaN(positionNumber) || positionNumber < 1) {
+        setMoveLessonErrors(prev => ({
+          ...prev,
+          [key]: 'Informe uma posição válida.'
+        }));
+        return;
+      }
+
+      const isSameModule = targetModuleId === moduleId;
+      const maxPosition = Math.max(1, isSameModule ? targetModule.lessons.length : targetModule.lessons.length + 1);
+
+      if (positionNumber > maxPosition) {
+        setMoveLessonErrors(prev => ({
+          ...prev,
+          [key]: `Posição deve ser entre 1 e ${maxPosition}.`
+        }));
+        return;
+      }
+
+      setIsSaving(true);
+      setMoveLessonErrors(prev => ({
+        ...prev,
+        [key]: null
+      }));
+
+      try {
+        const response = await fetch('/api/cf-renda-turbinada/lessons/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lessonId: lesson.id,
+            targetModuleId,
+            targetPosition: positionNumber
+          })
+        });
+
+        const data = (await response.json().catch(() => null)) as { modules?: Module[]; error?: string } | null;
+
+        if (!response.ok || !data?.modules) {
+          const message = data?.error ?? 'Erro ao mover aula.';
+          throw new Error(message);
+        }
+
+        setModules(prevModules => {
+          const updates = new Map(
+            data.modules.map(moduleData => {
+              const normalized = normalizeModule(moduleData);
+              return [normalized.id, normalized] as const;
+            })
+          );
+
+          const nextModules = prevModules.map(currentModule => updates.get(currentModule.id) ?? currentModule);
+
+          updates.forEach((moduleValue, moduleKey) => {
+            if (!nextModules.some(existingModule => existingModule.id === moduleKey)) {
+              nextModules.push(moduleValue);
+            }
+          });
+
+          return sortModulesBySchedule(nextModules);
+        });
+
+        setOpenMoveLessonKey(null);
+        setMoveLessonForms(prev => {
+          const { [key]: _removedForm, ...remainingForms } = prev;
+          return remainingForms;
+        });
+        setMoveLessonErrors(prev => {
+          const { [key]: _removedError, ...remainingErrors } = prev;
+          return remainingErrors;
+        });
+      } catch (error) {
+        console.error('Erro ao mover aula:', error);
+        setMoveLessonErrors(prev => ({
+          ...prev,
+          [key]: error instanceof Error ? error.message : 'Erro ao mover aula. Tente novamente.'
+        }));
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [modules, moveLessonForms, normalizeModule]
+  );
+
   const renderLesson = React.useCallback(
     (moduleId: string, lesson: Lesson, index: number) => {
       const lessonKey = `${moduleId}-${index}`;
       const isEditing = editingLessonKey === lessonKey;
       const embedConfig = getVideoEmbedConfig(lesson.videoUrl);
       const enhancedEmbedSrc = embedConfig ? enhanceEmbedSrc(embedConfig) : null;
+      const moveForm = moveLessonForms[lessonKey] ?? { moduleId, position: String(index + 1) };
+      const currentModule = modules.find(currentModule => currentModule.id === moduleId) ?? null;
+      const selectedModule =
+        modules.find(currentModule => currentModule.id === moveForm.moduleId) ?? currentModule;
+      const targetCount = selectedModule?.lessons.length ?? 0;
+      const isSameModuleTarget = selectedModule?.id === moduleId;
+      const maxMovePosition = Math.max(1, isSameModuleTarget ? targetCount : targetCount + 1);
+      const moveError = moveLessonErrors[lessonKey] ?? null;
 
       return (
         <div
@@ -1410,16 +1641,16 @@ const handleUpdateModule = React.useCallback(
                 >
                   Assistir vídeo da aula →
                 </a>
-              )}
-            </>
-          )}
+            )}
+          </>
+        )}
 
-          {isAdmin && !isEditing && (
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => handleStartEditLesson(moduleId, index)}
-                style={{
+        {isAdmin && !isEditing && !viewAsStudent && (
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => handleStartEditLesson(moduleId, index)}
+              style={{
                   border: '1px solid #010101',
                   backgroundColor: 'transparent',
                   color: '#010101',
@@ -1436,13 +1667,109 @@ const handleUpdateModule = React.useCallback(
               </button>
               <button
                 type="button"
-                onClick={() => handleDeleteLesson(moduleId, index)}
-                style={{
-                  border: '1px solid #ef4444',
-                  backgroundColor: 'transparent',
-                  color: '#ef4444',
+              onClick={() => handleDeleteLesson(moduleId, index)}
+              style={{
+                border: '1px solid #ef4444',
+                backgroundColor: 'transparent',
+                color: '#ef4444',
                   borderRadius: '10px',
                   padding: '8px 16px',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  opacity: isSaving ? 0.7 : 1
+              }}
+              disabled={isSaving}
+            >
+              Excluir aula
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleMoveLesson(moduleId, index)}
+              style={{
+                border: '1px solid #0ea5e9',
+                backgroundColor: openMoveLessonKey === lessonKey ? '#0ea5e9' : 'transparent',
+                color: openMoveLessonKey === lessonKey ? '#ffffff' : '#0ea5e9',
+                borderRadius: '10px',
+                padding: '8px 16px',
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: isSaving ? 'not-allowed' : 'pointer',
+                opacity: isSaving ? 0.7 : 1
+              }}
+              disabled={isSaving}
+            >
+              {openMoveLessonKey === lessonKey ? 'Fechar movimentação' : 'Mover aula'}
+            </button>
+          </div>
+        )}
+
+        {isAdmin && !isEditing && !viewAsStudent && openMoveLessonKey === lessonKey && (
+          <form
+            onSubmit={event => handleSubmitMoveLesson(event, moduleId, index)}
+            style={{
+              marginTop: '12px',
+              display: 'grid',
+              gap: '12px',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              backgroundColor: '#e0f2fe',
+              borderRadius: '12px',
+              border: '1px solid #bae6fd',
+              padding: '16px'
+            }}
+          >
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+              Módulo de destino
+              <select
+                value={moveForm.moduleId}
+                onChange={event => handleMoveLessonModuleChange(moduleId, index, event.target.value)}
+                style={{
+                  borderRadius: '10px',
+                  border: '1px solid #94a3b8',
+                  padding: '10px 14px',
+                  fontSize: '14px'
+                }}
+              >
+                {modules.map(optionModule => (
+                  <option key={optionModule.id} value={optionModule.id}>
+                    {optionModule.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+              Posição no módulo
+              <input
+                type="number"
+                min={1}
+                max={maxMovePosition}
+                value={moveForm.position}
+                onChange={event => handleMoveLessonPositionChange(moduleId, index, event.target.value)}
+                style={{
+                  borderRadius: '10px',
+                  border: '1px solid #94a3b8',
+                  padding: '10px 14px',
+                  fontSize: '14px'
+                }}
+                required
+              />
+              <span style={{ fontSize: '12px', color: '#475569' }}>
+                Valores permitidos: 1 até {maxMovePosition}
+              </span>
+            </label>
+            {moveError && (
+              <div style={{ gridColumn: '1 / -1', color: '#b91c1c', fontSize: '13px' }}>{moveError}</div>
+            )}
+            <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => handleToggleMoveLesson(moduleId, index)}
+                style={{
+                  border: '1px solid #0f172a',
+                  backgroundColor: 'transparent',
+                  color: '#0f172a',
+                  borderRadius: '10px',
+                  padding: '10px 18px',
                   fontWeight: 600,
                   fontSize: '14px',
                   cursor: isSaving ? 'not-allowed' : 'pointer',
@@ -1450,25 +1777,52 @@ const handleUpdateModule = React.useCallback(
                 }}
                 disabled={isSaving}
               >
-                Excluir aula
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                style={{
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  opacity: isSaving ? 0.85 : 1
+                }}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Salvando...' : 'Salvar nova posição'}
               </button>
             </div>
-          )}
-        </div>
+          </form>
+        )}
+      </div>
       );
     },
     [
+      handleMoveLessonModuleChange,
+      handleMoveLessonPositionChange,
+      handleSubmitMoveLesson,
       editLessonError,
       editLessonForm,
       editingLessonKey,
       handleCancelEditLesson,
       handleDeleteLesson,
+      handleToggleMoveLesson,
       handleEditLessonFieldChange,
       handleStartEditLesson,
       handleUpdateLesson,
       compactVideoStyles,
       isAdmin,
-      isSaving
+      isSaving,
+      modules,
+      moveLessonErrors,
+      moveLessonForms,
+      openMoveLessonKey,
+      viewAsStudent
     ]
   );
 
