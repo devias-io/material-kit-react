@@ -7,7 +7,9 @@ export const runtime = 'nodejs';
 
 const BRAPI_TOKEN = process.env.BRAPI_TOKEN?.trim() || 'jJrMYVy9MATGEicx3GxBp8';
 const CACHE_DURATION = 5 * 60 * 1000;
+const PROVENTOS_CACHE_DURATION = 5 * 60 * 1000;
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
+const PROVENTOS_API_BASE_URL_ENV = process.env.PROVENTOS_API_BASE_URL?.trim();
 
 type DividendYieldResult = {
   dy12Meses: number;
@@ -23,6 +25,13 @@ type CacheEntry = {
 };
 
 const cache = new Map<string, CacheEntry>();
+
+type ProventosCacheEntry = {
+  timestamp: number;
+  dy: number;
+};
+
+const proventosCache = new Map<string, ProventosCacheEntry>();
 
 const normalizarTicker = (symbol?: string) => {
   if (!symbol) return '';
@@ -40,16 +49,36 @@ const chunkArray = <T,>(items: T[], size: number) => {
 
 /**
  * Calcula DY a partir dos proventos da API interna
- * ATENÇÃO: Só funciona em desenvolvimento (localhost)
  */
-async function calcularDyDeProventos(ticker: string, precoAtual: number): Promise<number | null> {
-  // Só tentar em desenvolvimento
-  if (!IS_DEVELOPMENT) {
+async function calcularDyDeProventos(
+  ticker: string,
+  precoAtual: number,
+  baseUrlFromRequest?: string
+): Promise<number | null> {
+  if (!ticker) {
     return null;
   }
 
+  const resolvedBaseUrl = PROVENTOS_API_BASE_URL_ENV || baseUrlFromRequest;
+
+  if (!resolvedBaseUrl) {
+    if (IS_DEVELOPMENT) {
+      console.warn(`⚠️ [PROVENTOS-API] Base URL não configurada para ${ticker}`);
+    }
+    return null;
+  }
+
+  const cacheKey = `${ticker.toUpperCase()}|${resolvedBaseUrl}`;
+  const cached = proventosCache.get(cacheKey);
+
+  if (cached && Date.now() - cached.timestamp < PROVENTOS_CACHE_DURATION) {
+    console.log(`♻️ [PROVENTOS-API] ${ticker}: usando DY em cache ${(cached.dy * 100).toFixed(2)}%`);
+    return cached.dy;
+  }
+
   try {
-    const response = await fetch(`http://localhost:3000/api/proventos/${ticker}`, {
+    const url = new URL(`/api/proventos/${ticker}`, resolvedBaseUrl);
+    const response = await fetch(url, {
       headers: {
         'Cache-Control': 'no-cache'
       },
@@ -57,12 +86,16 @@ async function calcularDyDeProventos(ticker: string, precoAtual: number): Promis
     });
 
     if (!response.ok) {
+      console.error(
+        `❌ [PROVENTOS-API] ${ticker}: resposta HTTP ${response.status} (${response.statusText})`
+      );
       return null;
     }
 
     const proventos = await response.json();
-    
+
     if (!Array.isArray(proventos) || proventos.length === 0) {
+      console.info(`ℹ️ [PROVENTOS-API] ${ticker}: nenhum provento encontrado nos últimos 12 meses`);
       return null;
     }
 
@@ -83,15 +116,14 @@ async function calcularDyDeProventos(ticker: string, precoAtual: number): Promis
     if (somaDividendos > 0 && precoAtual > 0) {
       const dy = somaDividendos / precoAtual;
       console.log(`📊 [PROVENTOS-API] ${ticker}: DY calculado = ${(dy * 100).toFixed(2)}% (soma=${somaDividendos.toFixed(2)}, preço=${precoAtual.toFixed(2)})`);
+      proventosCache.set(cacheKey, { dy, timestamp: Date.now() });
       return dy;
     }
 
+    console.info(`ℹ️ [PROVENTOS-API] ${ticker}: proventos encontrados mas insuficientes para DY > 0`);
     return null;
   } catch (error) {
-    // Silenciar erros em produção
-    if (IS_DEVELOPMENT) {
-      console.error(`❌ [PROVENTOS-API] Erro ao buscar proventos de ${ticker}:`, error);
-    }
+    console.error(`🚫 [PROVENTOS-API] ${ticker}: falha ao buscar dados de proventos`, error);
     return null;
   }
 }
@@ -167,7 +199,14 @@ async function fetchWithFallback(tickersString: string): Promise<any> {
   throw lastError || new Error('Todas as estratégias de busca falharam');
 }
 
-async function fetchBatchFromBrapi(tickers: string[]): Promise<Record<string, DividendYieldResult>> {
+type FetchBatchOptions = {
+  proventosBaseUrl?: string;
+};
+
+async function fetchBatchFromBrapi(
+  tickers: string[],
+  options: FetchBatchOptions = {}
+): Promise<Record<string, DividendYieldResult>> {
   const results: Record<string, DividendYieldResult> = {};
   if (tickers.length === 0) {
     return results;
@@ -224,13 +263,17 @@ async function fetchBatchFromBrapi(tickers: string[]): Promise<Record<string, Di
         let dy12Meses = valorBrapi && valorBrapi > 0 ? valorBrapi : 0;
         let fonte = `brapi_${strategy} | ${origemBrapi}`;
 
-        // Se BRAPI não retornou DY E estamos em desenvolvimento, tentar API de proventos interna
-        if ((dy12Meses === 0 || origemBrapi === 'nao_encontrado') && IS_DEVELOPMENT) {
+        // Se BRAPI não retornou DY, tentar API de proventos interna
+        if (dy12Meses === 0 || origemBrapi === 'nao_encontrado') {
           const precoAtual = quote?.regularMarketPrice || quote?.regularMarketPreviousClose || 0;
-          
+
           if (precoAtual > 0) {
-            const dyProventos = await calcularDyDeProventos(symbolNormalizado, precoAtual);
-            
+            const dyProventos = await calcularDyDeProventos(
+              symbolNormalizado,
+              precoAtual,
+              options.proventosBaseUrl
+            );
+
             if (dyProventos && dyProventos > 0) {
               dy12Meses = dyProventos;
               fonte = 'proventos_api | calc:12m';
@@ -306,7 +349,9 @@ export async function POST(request: NextRequest) {
 
     const uniqueTickers = Array.from(new Set(sanitizedTickers));
 
-    const batchResults = await fetchBatchFromBrapi(uniqueTickers);
+    const proventosBaseUrl = PROVENTOS_API_BASE_URL_ENV || request.nextUrl?.origin;
+
+    const batchResults = await fetchBatchFromBrapi(uniqueTickers, { proventosBaseUrl });
 
     return NextResponse.json({
       success: true,
