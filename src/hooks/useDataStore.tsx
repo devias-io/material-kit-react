@@ -1035,30 +1035,40 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       }
 
       const query = carteirasQueries[carteira as keyof typeof carteirasQueries];
-      const dadosBanco = query?.data || [];
-      const dadosLocal = dados[carteira] || [];
-      
-      // 🔥 LÓGICA MELHORADA: 
-      // - Se tem mutação em andamento, usa local
-      // - Se query é mais recente que local, usa query
-      // - Senão, usa local
-      
-      const temMutacaoPendente = reordenarMutation.isPending || 
-                                adicionarMutation.isPending || 
-                                editarMutation.isPending || 
-                                removerMutation.isPending;
-      
-      if (temMutacaoPendente) {
-        acc[carteira] = dadosLocal;
-        console.log(`⏳ ${carteira}: Local (mutação pendente)`);
-      } else if (query?.isSuccess && dadosBanco.length >= 0) {
-        acc[carteira] = dadosBanco;
-        console.log(`✅ ${carteira}: Banco (${dadosBanco.length} itens)`);
-      } else {
-        acc[carteira] = dadosLocal;
-        console.log(`📁 ${carteira}: Local (${dadosLocal.length} itens)`);
-      }
-      
+      const dadosBanco = Array.isArray(query?.data) ? query.data : [];
+      const dadosLocal = Array.isArray(dados[carteira]) ? dados[carteira] : [];
+      const dadosFallback = DADOS_INICIAIS[carteira] || [];
+
+      const temMutacaoPendente =
+        reordenarMutation.isPending ||
+        adicionarMutation.isPending ||
+        editarMutation.isPending ||
+        removerMutation.isPending;
+
+      const escolherFonte = () => {
+        if (temMutacaoPendente) {
+          console.log(`⏳ ${carteira}: Local (mutação pendente)`);
+          return dadosLocal.length > 0 ? dadosLocal : dadosBanco.length > 0 ? dadosBanco : dadosFallback;
+        }
+
+        if (query?.isSuccess && dadosBanco.length > 0) {
+          console.log(`✅ ${carteira}: Banco (${dadosBanco.length} itens)`);
+          return dadosBanco;
+        }
+
+        if (dadosLocal.length > 0) {
+          console.log(`📁 ${carteira}: Local (${dadosLocal.length} itens)`);
+          return dadosLocal;
+        }
+
+        if (dadosBanco.length === 0 && query?.isSuccess) {
+          console.log(`⚠️ ${carteira}: Banco vazio, usando fallback (${dadosFallback.length} itens)`);
+        }
+
+        return dadosFallback;
+      };
+
+      acc[carteira] = escolherFonte();
       return acc;
     }, {} as any);
 
