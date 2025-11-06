@@ -606,7 +606,12 @@ function useFiisIntegradas() {
   // Estados para garantir que TODOS os dados estejam prontos
   const [cotacoesCompletas, setCotacoesCompletas] = React.useState<Map<string, any>>(new Map());
   const [dyCompletos, setDyCompletos] = React.useState<Map<string, string>>(new Map());
-  const [proventosCompletos, setProventosCompletos] = React.useState<Map<string, number>>(new Map());
+  type ProventosResumo = {
+    totalDesdeEntrada: number;
+    totalUltimos12Meses: number;
+  };
+
+  const [proventosCompletos, setProventosCompletos] = React.useState<Map<string, ProventosResumo>>(new Map());
   const [todosOsDadosProntos, setTodosOsDadosProntos] = React.useState(false);
   
   // Loading states granulares
@@ -616,13 +621,13 @@ function useFiisIntegradas() {
   const [error, setError] = React.useState<string | null>(null);
 
   const isMobile = useDeviceDetection();
-  const [proventosMap, setProventosMap] = React.useState<Map<string, number>>(new Map());
+  const [proventosMap, setProventosMap] = React.useState<Map<string, ProventosResumo>>(new Map());
   const fiisData = dados.fiis || [];
 
   // Função otimizada para buscar proventos
   const buscarProventosAtivos = React.useCallback(async (ativosData: any[]) => {
     setLoadingProventos(true);
-    const novosProventos = new Map<string, number>();
+    const novosProventos = new Map<string, ProventosResumo>();
     
     debugLog('💰 Iniciando busca de proventos para', ativosData.length, 'FIIs');
     
@@ -643,18 +648,43 @@ function useFiisIntegradas() {
         
         if (response.ok) {
           const proventosRaw = await response.json();
-          
+
           if (Array.isArray(proventosRaw)) {
             const dataEntradaDate = new Date(dataEntradaISO + 'T00:00:00');
+            const limite12Meses = new Date();
+            limite12Meses.setFullYear(limite12Meses.getFullYear() - 1);
+
             const proventosFiltrados = proventosRaw.filter((p: any) => {
               if (!p.dataObj) return false;
               const dataProvento = new Date(p.dataObj);
               return dataProvento >= dataEntradaDate;
             });
-            
-            const total = proventosFiltrados.reduce((sum: number, p: any) => sum + (p.valor || 0), 0);
-            debugLog(`💰 ${ativo.ticker}: R$ ${total.toFixed(2)} (${proventosFiltrados.length} proventos)`);
-            return { ticker: ativo.ticker, valor: total };
+
+            const totais = proventosFiltrados.reduce(
+              (acc: ProventosResumo, p: any) => {
+                const valor = typeof p.valor === 'number' ? p.valor : 0;
+                if (valor <= 0) {
+                  return acc;
+                }
+
+                acc.totalDesdeEntrada += valor;
+
+                const dataValor = new Date(p.dataObj);
+                if (!Number.isNaN(dataValor.getTime()) && dataValor >= limite12Meses) {
+                  acc.totalUltimos12Meses += valor;
+                }
+
+                return acc;
+              },
+              { totalDesdeEntrada: 0, totalUltimos12Meses: 0 } as ProventosResumo
+            );
+
+            debugLog(
+              `💰 ${ativo.ticker}: R$ ${totais.totalDesdeEntrada.toFixed(2)} (${proventosFiltrados.length} proventos, ` +
+                `R$ ${totais.totalUltimos12Meses.toFixed(2)} nos últimos 12 meses)`
+            );
+
+            return { ticker: ativo.ticker, totais };
           }
         } else {
           debugLog(`💰 ${ativo.ticker}: Erro HTTP ${response.status}`);
@@ -662,8 +692,8 @@ function useFiisIntegradas() {
       } catch (error) {
         debugLog(`💰 ${ativo.ticker}: Erro -`, error instanceof Error ? error.message : 'Erro desconhecido');
       }
-      
-      return { ticker: ativo.ticker, valor: 0 };
+
+      return { ticker: ativo.ticker, totais: { totalDesdeEntrada: 0, totalUltimos12Meses: 0 } };
     };
 
     // Buscar proventos em paralelo
@@ -675,14 +705,14 @@ function useFiisIntegradas() {
       if (resultado.status === 'fulfilled') {
         const tickerNormalizado = normalizarTicker(resultado.value.ticker) || resultado.value.ticker;
 
-        novosProventos.set(tickerNormalizado, resultado.value.valor);
+        novosProventos.set(tickerNormalizado, resultado.value.totais);
 
         if (tickerNormalizado !== resultado.value.ticker) {
-          novosProventos.set(resultado.value.ticker, resultado.value.valor);
+          novosProventos.set(resultado.value.ticker, resultado.value.totais);
         }
       }
     });
-    
+
     debugLog('💰 Proventos finais:', Object.fromEntries(novosProventos));
     setProventosMap(novosProventos);
     setLoadingProventos(false);
@@ -797,7 +827,7 @@ function useFiisIntegradas() {
       const cotacao = cotacoesCompletas.get(tickerNormalizado);
 
       // 🔍 DEBUG DY ASSIGNMENT
-      const dyAPI = dyCompletos.get(tickerNormalizado) || '0,00%';
+      let dyAPI = dyCompletos.get(tickerNormalizado) || '0,00%';
       debugLog(`🔍 [ASSIGN-DEBUG] ${ativo.ticker}:`);
       debugLog(`  - dyCompletos.size: ${dyCompletos.size}`);
       debugLog(`  - dyCompletos.has('${ativo.ticker}'): ${dyCompletos.has(tickerNormalizado)}`);
@@ -805,23 +835,39 @@ function useFiisIntegradas() {
       debugLog(`  - dyAPI final: ${dyAPI}`);
       debugLog(`  - loadingDY: ${loadingDY}`);
       
-      const proventosAtivo = proventosCompletos.get(tickerNormalizado) || proventosCompletos.get(ativo.ticker) || 0;
+      const proventosInfo =
+        proventosCompletos.get(tickerNormalizado) || proventosCompletos.get(ativo.ticker) || {
+          totalDesdeEntrada: 0,
+          totalUltimos12Meses: 0
+        };
+
+      const proventosTotal = proventosInfo.totalDesdeEntrada;
+      const proventos12Meses = proventosInfo.totalUltimos12Meses;
 
       if (cotacao && cotacao.precoAtual > 0) {
         // ✅ ATIVO COM COTAÇÃO REAL
         const precoAtualNum = cotacao.precoAtual;
         const performanceAcao = ((precoAtualNum - ativo.precoEntrada) / ativo.precoEntrada) * 100;
-        const performanceProventos = ativo.precoEntrada > 0 ? (proventosAtivo / ativo.precoEntrada) * 100 : 0;
+        const performanceProventos = ativo.precoEntrada > 0 ? (proventosTotal / ativo.precoEntrada) * 100 : 0;
         const performanceTotal = performanceAcao + performanceProventos;
-        
+
         novasCotacoes[tickerNormalizado] = precoAtualNum;
 
         if (tickerNormalizado !== ativo.ticker) {
           novasCotacoes[ativo.ticker] = precoAtualNum;
         }
-        
+
+        const dyNumero = Number.parseFloat(dyAPI.replace('%', '').replace(',', '.'));
+        if ((!Number.isFinite(dyNumero) || dyNumero <= 0) && precoAtualNum > 0 && proventos12Meses > 0) {
+          const dyCalculado = (proventos12Meses / precoAtualNum) * 100;
+          if (dyCalculado > 0) {
+            dyAPI = `${dyCalculado.toFixed(2).replace('.', ',')}%`;
+            debugLog(`🏆 ${ativo.ticker}: DY calculado via proventos = ${dyAPI}`);
+          }
+        }
+
         debugLog(`🏆 ${ativo.ticker}: DY final que será usado = ${dyAPI}`);
-        
+
         return {
           ...ativo,
           id: String(ativo.id || index + 1),
@@ -829,7 +875,7 @@ function useFiisIntegradas() {
           performance: performanceTotal,
           performanceAcao: performanceAcao,
           performanceProventos: performanceProventos,
-          proventosAtivo: proventosAtivo,
+          proventosAtivo: proventosTotal,
           variacao: cotacao.variacao,
           variacaoPercent: cotacao.variacaoPercent,
           volume: cotacao.volume,
@@ -845,10 +891,25 @@ function useFiisIntegradas() {
         };
       } else {
         // ⚠️ ATIVO SEM COTAÇÃO REAL
-        const performanceProventos = ativo.precoEntrada > 0 ? (proventosAtivo / ativo.precoEntrada) * 100 : 0;
-        
+        const performanceProventos = ativo.precoEntrada > 0 ? (proventosTotal / ativo.precoEntrada) * 100 : 0;
+
+        const precoReferencia = ativo.precoEntrada > 0 ? ativo.precoEntrada : null;
+        const dyNumero = Number.parseFloat(dyAPI.replace('%', '').replace(',', '.'));
+        if (
+          (!Number.isFinite(dyNumero) || dyNumero <= 0) &&
+          precoReferencia &&
+          proventos12Meses > 0 &&
+          precoReferencia > 0
+        ) {
+          const dyCalculado = (proventos12Meses / precoReferencia) * 100;
+          if (dyCalculado > 0) {
+            dyAPI = `${dyCalculado.toFixed(2).replace('.', ',')}%`;
+            debugLog(`🏆 ${ativo.ticker}: DY calculado via proventos (sem cotação) = ${dyAPI}`);
+          }
+        }
+
         debugLog(`🏆 ${ativo.ticker}: (sem cotação) DY final que será usado = ${dyAPI}`);
-        
+
         return {
           ...ativo,
           id: String(ativo.id || index + 1),
@@ -856,7 +917,7 @@ function useFiisIntegradas() {
           performance: performanceProventos,
           performanceAcao: 0,
           performanceProventos: performanceProventos,
-          proventosAtivo: proventosAtivo,
+          proventosAtivo: proventosTotal,
           variacao: 0,
           variacaoPercent: 0,
           volume: 0,
