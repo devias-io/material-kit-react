@@ -3678,41 +3678,49 @@ visibleModules.map(module => {
               const isToday = isLiveToday(live.eventDate);
 
               return (
-                <div
-                  key={live.id}
-                  style={{
-                    padding: blockPadding,
-                    borderRadius: '12px',
-border: `2px solid ${
-  live.isCancelled ? '#fecaca' : isToday ? '#22c55e' : isPast ? '#e2e8f0' : '#d1d5db'
-}`,
-backgroundColor: live.isCancelled
-  ? '#fef2f2'
-  : isToday
-  ? '#f0fdf4'
-  : isPast
-  ? '#f8fafc'
-  : '#f9fafb',
-                    opacity: isPast && !isToday ? 0.7 : 1
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
-                          {live.title}
-                        </h3>
-                        {live.isCancelled && (
-                          <span
-                            style={{
-                              padding: '4px 10px',
-                              borderRadius: '9999px',
-                              backgroundColor: '#fee2e2',
-                              color: '#b91c1c',
-                              fontSize: '12px',
-                              fontWeight: 600
-                            }}
-                          >
+<div
+  key={live.id}
+  style={{
+    padding: blockPadding,
+    borderRadius: '12px',
+    border: `2px solid ${
+      live.isCancelled ? '#fecaca' : isToday ? '#22c55e' : isPast ? '#e2e8f0' : '#d1d5db'
+    }`,
+    backgroundColor: live.isCancelled
+      ? '#fef2f2'
+      : isToday
+      ? '#f0fdf4'
+      : isPast
+      ? '#f8fafc'
+      : '#f9fafb',
+    opacity: isPast && !isToday ? 0.7 : 1
+  }}
+>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+          <h3 style={{ 
+            margin: 0, 
+            fontSize: '18px', 
+            fontWeight: 700, 
+            color: '#0f172a',
+            wordBreak: 'break-word',
+            lineHeight: 1.3
+          }}>
+            {live.title}
+          </h3>
+          {live.isCancelled && (
+            <span
+              style={{
+                padding: '4px 10px',
+                borderRadius: '9999px',
+                backgroundColor: '#fee2e2',
+                color: '#b91c1c',
+                fontSize: '12px',
+                fontWeight: 600
+              }}
+            >
                             CANCELADA
                           </span>
                         )}
@@ -3782,8 +3790,8 @@ backgroundColor: live.isCancelled
                       )}
                     </div>
 
-                    {isAdmin && (
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+  {isAdmin && (
+  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', width: '100%', justifyContent: 'flex-end' }}>
                         <button
                           type="button"
                           onClick={() => handleToggleLiveCancellation(live.id, live.isCancelled)}
