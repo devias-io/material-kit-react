@@ -113,6 +113,62 @@ function renderTextWithLineBreaks(text: string): React.ReactNode {
   ));
 }
 
+function isBase64DataUrl(url: string): boolean {
+  return /^data:[^;]+;base64,/i.test(url);
+}
+
+function openMaterialFileInNewTab(fileUrl: string) {
+  if (typeof window === 'undefined' || !fileUrl) {
+    return;
+  }
+
+  if (!isBase64DataUrl(fileUrl)) {
+    window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    return;
+  }
+
+  try {
+    const commaIndex = fileUrl.indexOf(',');
+
+    if (commaIndex === -1) {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    const metadata = fileUrl.slice(0, commaIndex);
+    const base64Payload = fileUrl.slice(commaIndex + 1);
+    const mimeMatch = metadata.match(/^data:([^;]+)(;base64)?$/i);
+    const mimeType = mimeMatch?.[1] ?? 'application/octet-stream';
+
+    const binaryString = window.atob(base64Payload);
+    const binaryLength = binaryString.length;
+    const bytes = new Uint8Array(binaryLength);
+
+    for (let index = 0; index < binaryLength; index += 1) {
+      bytes[index] = binaryString.charCodeAt(index);
+    }
+
+    const blob = new Blob([bytes], { type: mimeType });
+    const blobUrl = URL.createObjectURL(blob);
+
+    const openedWindow = window.open(blobUrl, '_blank', 'noopener,noreferrer');
+
+    if (openedWindow) {
+      const revokeObjectUrl = () => {
+        URL.revokeObjectURL(blobUrl);
+        openedWindow.removeEventListener('beforeunload', revokeObjectUrl);
+      };
+
+      openedWindow.addEventListener('beforeunload', revokeObjectUrl);
+    } else {
+      URL.revokeObjectURL(blobUrl);
+    }
+  } catch (error) {
+    console.error('Erro ao abrir material em nova aba:', error);
+    window.open(fileUrl, '_blank', 'noopener,noreferrer');
+  }
+}
+
 // ========== FUNÇÃO HELPER PARA FORMATAR DATA/HORA ==========
 function formatLiveDateTime(isoDate: string): { date: string; time: string; dayOfWeek: string } {
   const date = new Date(isoDate);
@@ -864,6 +920,21 @@ const visibleModules = React.useMemo(() => {
             error: error instanceof Error ? error.message : 'Erro ao anexar material. Tente novamente.'
           }
         }));
+      }
+    },
+    []
+  );
+
+  const handlePreviewMaterial = React.useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>, material: LessonMaterial) => {
+      if (!material.fileUrl) {
+        event.preventDefault();
+        return;
+      }
+
+      if (isBase64DataUrl(material.fileUrl)) {
+        event.preventDefault();
+        openMaterialFileInNewTab(material.fileUrl);
       }
     },
     []
@@ -1816,77 +1887,63 @@ const handleUpdateModule = React.useCallback(
                     padding: '12px 16px'
                   }}
                 >
-<span style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>
-  Materiais para download
-</span>
-<ul
-  style={{
-    margin: 0,
-    paddingLeft: '18px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-    color: '#0369a1',
-    fontSize: '14px'
-  }}
->
-  {lesson.materials.map(material => (
-    <li key={material.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
-      
-        href={material.fileUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ 
-          color: '#0ea5e9', 
-          fontWeight: 600, 
-          textDecoration: 'none',
-          flex: 1
-        }}
-      >
-        {material.title}
-      </a>
-      
-      
-        href={material.fileUrl}
-        download={material.title}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: '6px 12px',
-          backgroundColor: '#3b82f6',
-          color: 'white',
-          borderRadius: '8px',
-          fontSize: '12px',
-          textDecoration: 'none',
-          fontWeight: 600,
-          whiteSpace: 'nowrap'
-        }}
-      >
-        📥 Baixar
-      </a>
-      
-      {isAdmin && !viewAsStudent && typeof lesson.id === 'number' && (
-        <button
-          type="button"
-          onClick={() => handleDeleteMaterial(lesson.id!, material.id)}
-          style={{
-            border: 'none',
-            background: 'transparent',
-            color: '#ef4444',
-            fontSize: '12px',
-            cursor: isMaterialUploading ? 'not-allowed' : 'pointer',
-            opacity: isMaterialUploading ? 0.6 : 1,
-            whiteSpace: 'nowrap'
-          }}
-          disabled={isMaterialUploading}
-        >
-          Remover
-        </button>
-      )}
-    </li>
-  ))}
-</ul>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>
+                    Materiais para download
+                  </span>
+                  <ul
+                    style={{
+                      margin: 0,
+                      paddingLeft: '18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px',
+                      color: '#0369a1',
+                      fontSize: '14px'
+                    }}
+                  >
+                    {lesson.materials.map(material => (
+                      <li
+                        key={material.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          justifyContent: 'space-between'
+                        }}
+                      >
+                        <a
+                          href={material.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={event => handlePreviewMaterial(event, material)}
+                          style={{
+                            color: '#0ea5e9',
+                            fontWeight: 600,
+                            textDecoration: 'none',
+                            flex: 1
+                          }}
+                        >
+                          {material.title}
+                        </a>
+                        <a
+                          href={material.fileUrl}
+                          download={material.title}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '6px 12px',
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            textDecoration: 'none',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          📥 Baixar
+                        </a>
                         {isAdmin && !viewAsStudent && typeof lesson.id === 'number' && (
                           <button
                             type="button"
@@ -1897,7 +1954,8 @@ const handleUpdateModule = React.useCallback(
                               color: '#ef4444',
                               fontSize: '12px',
                               cursor: isMaterialUploading ? 'not-allowed' : 'pointer',
-                              opacity: isMaterialUploading ? 0.6 : 1
+                              opacity: isMaterialUploading ? 0.6 : 1,
+                              whiteSpace: 'nowrap'
                             }}
                             disabled={isMaterialUploading}
                           >
