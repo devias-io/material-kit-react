@@ -84,6 +84,45 @@ function createEmptyLiveForm(): LiveFormState {
   };
 }
 
+interface MentoriaMaterial {
+  id: number;
+  title: string;
+  fileUrl: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface Mentoria {
+  id: number;
+  title: string;
+  description?: string;
+  content?: string;
+  videoUrl?: string;
+  recordedAt: string;
+  durationMinutes?: number;
+  materials: MentoriaMaterial[];
+}
+
+interface MentoriaFormState {
+  title: string;
+  description: string;
+  content: string;
+  videoUrl: string;
+  recordedAt: string;
+  durationMinutes: string;
+}
+
+function createEmptyMentoriaForm(): MentoriaFormState {
+  return {
+    title: '',
+    description: '',
+    content: '',
+    videoUrl: '',
+    recordedAt: '',
+    durationMinutes: ''
+  };
+}
+
 function createEmptyLessonForm(): LessonFormState {
   return {
     title: '',
@@ -193,6 +232,45 @@ function formatLiveDateTime(isoDate: string): { date: string; time: string; dayO
     time: timeStr,
     dayOfWeek: dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1)
   };
+}
+
+function formatMentoriaDate(isoDate: string): { date: string; dayOfWeek: string; time: string } {
+  const date = new Date(isoDate);
+
+  if (Number.isNaN(date.getTime())) {
+    return { date: 'Data inválida', dayOfWeek: '', time: '' };
+  }
+
+  const dayOfWeek = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(date);
+  const dateStr = new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  }).format(date);
+  const timeStr = new Intl.DateTimeFormat('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
+
+  return {
+    date: dateStr,
+    dayOfWeek: dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1),
+    time: timeStr
+  };
+}
+
+function toInputDateTimeValue(isoDate: string): string {
+  const date = new Date(isoDate);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const pad = (value: number) => String(value).padStart(2, '0');
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(
+    date.getMinutes()
+  )}`;
 }
 
 function isLivePast(eventDate: string): boolean {
@@ -416,6 +494,19 @@ function sortMaterialsByDate(materials: LessonMaterial[] = []): LessonMaterial[]
   });
 }
 
+function sortMentoriaMaterialsByDate(materials: MentoriaMaterial[] = []): MentoriaMaterial[] {
+  return [...materials].sort((materialA, materialB) => {
+    const dateA = materialA.createdAt ? new Date(materialA.createdAt).getTime() : 0;
+    const dateB = materialB.createdAt ? new Date(materialB.createdAt).getTime() : 0;
+
+    if (dateA !== dateB) {
+      return dateA - dateB;
+    }
+
+    return materialA.title.localeCompare(materialB.title);
+  });
+}
+
 function sortLessonsByOrder(lessons: Lesson[]): Lesson[] {
   return [...lessons].sort((lessonA, lessonB) => {
     const orderA = lessonA.sortOrder ?? Number.MAX_SAFE_INTEGER;
@@ -456,6 +547,19 @@ function sortModulesBySchedule(modules: Module[]): Module[] {
     }
 
     return moduleA.title.localeCompare(moduleB.title);
+  });
+}
+
+function sortMentoriasByDate(mentorias: Mentoria[]): Mentoria[] {
+  return [...mentorias].sort((mentoriaA, mentoriaB) => {
+    const dateA = new Date(mentoriaA.recordedAt).getTime();
+    const dateB = new Date(mentoriaB.recordedAt).getTime();
+
+    if (dateA !== dateB) {
+      return dateB - dateA;
+    }
+
+    return mentoriaA.title.localeCompare(mentoriaB.title);
   });
 }
 
@@ -554,6 +658,21 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const [isLoadingLives, setIsLoadingLives] = React.useState(true);
   const isEditingLive = editingLiveId !== null;
 
+  const [mentorias, setMentorias] = React.useState<Mentoria[]>([]);
+  const [isLoadingMentorias, setIsLoadingMentorias] = React.useState(true);
+  const [mentoriaFetchError, setMentoriaFetchError] = React.useState<string | null>(null);
+  const [showMentoriaForm, setShowMentoriaForm] = React.useState(false);
+  const [mentoriaForm, setMentoriaForm] = React.useState<MentoriaFormState>(createEmptyMentoriaForm());
+  const [mentoriaFormError, setMentoriaFormError] = React.useState<string | null>(null);
+  const [editingMentoriaId, setEditingMentoriaId] = React.useState<number | null>(null);
+  const [editMentoriaForm, setEditMentoriaForm] = React.useState<MentoriaFormState>(createEmptyMentoriaForm());
+  const [editMentoriaError, setEditMentoriaError] = React.useState<string | null>(null);
+  const [mentoriaMaterialState, setMentoriaMaterialState] = React.useState<
+    Record<number, { isUploading: boolean; error: string | null }>
+  >({});
+  const [isSavingMentoria, setIsSavingMentoria] = React.useState(false);
+  const isEditingMentoria = editingMentoriaId !== null;
+
   const normalizeModule = React.useCallback((module: Module): Module => ({
     ...module,
     highlight: module.highlight ?? '',
@@ -642,6 +761,49 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
     }
 
     void fetchLiveEvents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    async function fetchMentorias(): Promise<void> {
+      setIsLoadingMentorias(true);
+      setMentoriaFetchError(null);
+
+      try {
+        const response = await fetch('/api/cf-renda-turbinada/mentorias');
+        const data = (await response.json().catch(() => null)) as { mentorias?: Mentoria[]; error?: string } | null;
+
+        if (!response.ok || !data || !Array.isArray(data.mentorias)) {
+          throw new Error(data?.error ?? 'Erro ao carregar mentorias.');
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        setMentorias(sortMentoriasByDate(data.mentorias));
+      } catch (error) {
+        console.error('Erro ao carregar mentorias gravadas:', error);
+
+        if (isMounted) {
+          setMentorias([]);
+          setMentoriaFetchError(
+            error instanceof Error ? error.message : 'Erro ao carregar mentorias gravadas.'
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingMentorias(false);
+        }
+      }
+    }
+
+    void fetchMentorias();
 
     return () => {
       isMounted = false;
@@ -807,6 +969,314 @@ const visibleModules = React.useMemo(() => {
     []
   );
 
+  const handleMentoriaFieldChange = React.useCallback((field: keyof MentoriaFormState, value: string) => {
+    setMentoriaForm(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleCreateMentoria = React.useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setMentoriaFormError(null);
+
+      if (!mentoriaForm.title.trim() || !mentoriaForm.recordedAt) {
+        setMentoriaFormError('Título e data da mentoria são obrigatórios.');
+        return;
+      }
+
+      const recordedDate = new Date(mentoriaForm.recordedAt);
+
+      if (Number.isNaN(recordedDate.getTime())) {
+        setMentoriaFormError('Informe uma data válida.');
+        return;
+      }
+
+      let parsedDuration: number | null = null;
+      const durationValue = mentoriaForm.durationMinutes.trim();
+
+      if (durationValue) {
+        const durationNumber = Number.parseInt(durationValue, 10);
+
+        if (!Number.isFinite(durationNumber) || durationNumber <= 0) {
+          setMentoriaFormError('Informe a duração em minutos usando apenas números positivos.');
+          return;
+        }
+
+        parsedDuration = durationNumber;
+      }
+
+      setIsSavingMentoria(true);
+
+      try {
+        const response = await fetch('/api/cf-renda-turbinada/mentorias', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: mentoriaForm.title.trim(),
+            description: mentoriaForm.description.trim() || undefined,
+            content: mentoriaForm.content.trim() || undefined,
+            videoUrl: mentoriaForm.videoUrl.trim() || undefined,
+            recordedAt: recordedDate.toISOString(),
+            durationMinutes: parsedDuration ?? undefined
+          })
+        });
+
+        const data = (await response.json().catch(() => null)) as { mentoria?: Mentoria; error?: string } | null;
+
+        if (!response.ok || !data?.mentoria) {
+          throw new Error(data?.error ?? 'Erro ao criar mentoria.');
+        }
+
+        setMentorias(prev => sortMentoriasByDate([...prev, data.mentoria]));
+        setMentoriaForm(createEmptyMentoriaForm());
+        setShowMentoriaForm(false);
+      } catch (error) {
+        console.error('Erro ao criar mentoria gravada:', error);
+        setMentoriaFormError(error instanceof Error ? error.message : 'Erro ao criar mentoria.');
+      } finally {
+        setIsSavingMentoria(false);
+      }
+    },
+    [mentoriaForm]
+  );
+
+  const handleStartEditMentoria = React.useCallback((mentoria: Mentoria) => {
+    setEditingMentoriaId(mentoria.id);
+    setEditMentoriaForm({
+      title: mentoria.title,
+      description: mentoria.description ?? '',
+      content: mentoria.content ?? '',
+      videoUrl: mentoria.videoUrl ?? '',
+      recordedAt: toInputDateTimeValue(mentoria.recordedAt),
+      durationMinutes: mentoria.durationMinutes ? String(mentoria.durationMinutes) : ''
+    });
+    setEditMentoriaError(null);
+    setShowMentoriaForm(false);
+  }, []);
+
+  const handleEditMentoriaFieldChange = React.useCallback((field: keyof MentoriaFormState, value: string) => {
+    setEditMentoriaForm(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleCancelEditMentoria = React.useCallback(() => {
+    setEditingMentoriaId(null);
+    setEditMentoriaForm(createEmptyMentoriaForm());
+    setEditMentoriaError(null);
+  }, []);
+
+  const handleUpdateMentoria = React.useCallback(
+    async (event: React.FormEvent<HTMLFormElement>, mentoriaId: number) => {
+      event.preventDefault();
+      setEditMentoriaError(null);
+
+      if (!editMentoriaForm.title.trim() || !editMentoriaForm.recordedAt) {
+        setEditMentoriaError('Título e data da mentoria são obrigatórios.');
+        return;
+      }
+
+      const recordedDate = new Date(editMentoriaForm.recordedAt);
+
+      if (Number.isNaN(recordedDate.getTime())) {
+        setEditMentoriaError('Informe uma data válida.');
+        return;
+      }
+
+      let parsedDuration: number | null = null;
+      const durationValue = editMentoriaForm.durationMinutes.trim();
+
+      if (durationValue) {
+        const durationNumber = Number.parseInt(durationValue, 10);
+
+        if (!Number.isFinite(durationNumber) || durationNumber <= 0) {
+          setEditMentoriaError('Informe a duração em minutos usando apenas números positivos.');
+          return;
+        }
+
+        parsedDuration = durationNumber;
+      }
+
+      setIsSavingMentoria(true);
+
+      try {
+        const response = await fetch(`/api/cf-renda-turbinada/mentorias/${mentoriaId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: editMentoriaForm.title.trim(),
+            description: editMentoriaForm.description.trim() || null,
+            content: editMentoriaForm.content.trim() || null,
+            videoUrl: editMentoriaForm.videoUrl.trim() || null,
+            recordedAt: recordedDate.toISOString(),
+            durationMinutes: parsedDuration ?? null
+          })
+        });
+
+        const data = (await response.json().catch(() => null)) as { mentoria?: Mentoria; error?: string } | null;
+
+        if (!response.ok || !data?.mentoria) {
+          throw new Error(data?.error ?? 'Erro ao atualizar mentoria.');
+        }
+
+        setMentorias(prev => sortMentoriasByDate(prev.map(item => (item.id === mentoriaId ? data.mentoria : item))));
+        handleCancelEditMentoria();
+      } catch (error) {
+        console.error('Erro ao atualizar mentoria gravada:', error);
+        setEditMentoriaError(error instanceof Error ? error.message : 'Erro ao atualizar mentoria.');
+      } finally {
+        setIsSavingMentoria(false);
+      }
+    },
+    [editMentoriaForm, handleCancelEditMentoria]
+  );
+
+  const handleDeleteMentoria = React.useCallback(
+    async (mentoriaId: number) => {
+      if (!confirm('Tem certeza que deseja excluir esta mentoria gravada?')) {
+        return;
+      }
+
+      setIsSavingMentoria(true);
+
+      try {
+        const response = await fetch(`/api/cf-renda-turbinada/mentorias/${mentoriaId}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao excluir mentoria.');
+        }
+
+        setMentorias(prev => prev.filter(mentoria => mentoria.id !== mentoriaId));
+        setMentoriaMaterialState(prev => {
+          const { [mentoriaId]: _removed, ...remaining } = prev;
+          return remaining;
+        });
+
+        if (editingMentoriaId === mentoriaId) {
+          handleCancelEditMentoria();
+        }
+      } catch (error) {
+        console.error('Erro ao excluir mentoria gravada:', error);
+        alert(error instanceof Error ? error.message : 'Erro ao excluir mentoria. Tente novamente.');
+      } finally {
+        setIsSavingMentoria(false);
+      }
+    },
+    [editingMentoriaId, handleCancelEditMentoria]
+  );
+
+  const handleUploadMentoriaMaterial = React.useCallback(
+    async (event: React.FormEvent<HTMLFormElement>, mentoriaId: number) => {
+      event.preventDefault();
+
+      setMentoriaMaterialState(prev => ({
+        ...prev,
+        [mentoriaId]: { isUploading: true, error: null }
+      }));
+
+      try {
+        const formData = new FormData(event.currentTarget);
+        const file = formData.get('file');
+
+        if (!(file instanceof File) || file.size === 0) {
+          throw new Error('Selecione um arquivo para anexar.');
+        }
+
+        const title = formData.get('title');
+        if (typeof title === 'string') {
+          formData.set('title', title.trim());
+        }
+
+        const response = await fetch(`/api/cf-renda-turbinada/mentorias/${mentoriaId}/materials`, {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = (await response.json().catch(() => null)) as
+          | { material?: MentoriaMaterial; error?: string }
+          | null;
+
+        if (!response.ok || !data?.material) {
+          throw new Error(data?.error ?? 'Erro ao anexar material.');
+        }
+
+        setMentorias(prev =>
+          prev.map(mentoria =>
+            mentoria.id === mentoriaId
+              ? {
+                  ...mentoria,
+                  materials: sortMentoriaMaterialsByDate([...mentoria.materials, data.material])
+                }
+              : mentoria
+          )
+        );
+
+        event.currentTarget.reset();
+
+        setMentoriaMaterialState(prev => ({
+          ...prev,
+          [mentoriaId]: { isUploading: false, error: null }
+        }));
+      } catch (error) {
+        console.error('Erro ao anexar material da mentoria:', error);
+        setMentoriaMaterialState(prev => ({
+          ...prev,
+          [mentoriaId]: {
+            isUploading: false,
+            error: error instanceof Error ? error.message : 'Erro ao anexar material. Tente novamente.'
+          }
+        }));
+      }
+    },
+    []
+  );
+
+  const handleDeleteMentoriaMaterial = React.useCallback(
+    async (mentoriaId: number, materialId: number) => {
+      setMentoriaMaterialState(prev => ({
+        ...prev,
+        [mentoriaId]: { isUploading: true, error: null }
+      }));
+
+      try {
+        const response = await fetch(`/api/cf-renda-turbinada/mentorias/materials/${materialId}`, {
+          method: 'DELETE'
+        });
+
+        const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
+
+        if (!response.ok || !data?.success) {
+          throw new Error(data?.error ?? 'Erro ao remover material.');
+        }
+
+        setMentorias(prev =>
+          prev.map(mentoria =>
+            mentoria.id === mentoriaId
+              ? {
+                  ...mentoria,
+                  materials: mentoria.materials.filter(material => material.id !== materialId)
+                }
+              : mentoria
+          )
+        );
+
+        setMentoriaMaterialState(prev => ({
+          ...prev,
+          [mentoriaId]: { isUploading: false, error: null }
+        }));
+      } catch (error) {
+        console.error('Erro ao remover material da mentoria:', error);
+        setMentoriaMaterialState(prev => ({
+          ...prev,
+          [mentoriaId]: {
+            isUploading: false,
+            error: error instanceof Error ? error.message : 'Erro ao remover material. Tente novamente.'
+          }
+        }));
+      }
+    },
+    []
+  );
+
   const handleToggleModuleVisibility = React.useCallback(
     async (moduleId: string, currentIsHidden: boolean) => {
       setIsSaving(true);
@@ -926,7 +1396,7 @@ const visibleModules = React.useMemo(() => {
   );
 
   const handlePreviewMaterial = React.useCallback(
-    (event: React.MouseEvent<HTMLAnchorElement>, material: LessonMaterial) => {
+    (event: React.MouseEvent<HTMLAnchorElement>, material: LessonMaterial | MentoriaMaterial) => {
       if (!material.fileUrl) {
         event.preventDefault();
         return;
@@ -3322,6 +3792,785 @@ visibleModules.map(module => {
                       </div>
                     )}
                   </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* ========== SEÇÃO DE MENTORIAS GRAVADAS ========== */}
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e2e8f0',
+          padding: cardPadding,
+          maxWidth: '1100px',
+          margin: '0 auto 64px',
+          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px'
+        }}
+      >
+        <div>
+          <h2 style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>
+            Mentorias Gravadas
+          </h2>
+          <p style={{ margin: 0, color: '#64748b', fontSize: '16px', lineHeight: 1.6 }}>
+            Reviva encontros ao vivo com especialistas, acesse gravações completas e baixe os materiais extras
+            compartilhados durante as mentorias.
+          </p>
+        </div>
+
+        {isAdmin && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowMentoriaForm(prev => !prev);
+                if (showMentoriaForm) {
+                  setMentoriaForm(createEmptyMentoriaForm());
+                  setMentoriaFormError(null);
+                }
+              }}
+              style={{
+                alignSelf: 'flex-start',
+                border: '1px solid #0ea5e9',
+                backgroundColor: showMentoriaForm ? '#0ea5e9' : 'transparent',
+                color: showMentoriaForm ? '#ffffff' : '#0ea5e9',
+                borderRadius: '9999px',
+                padding: '10px 20px',
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: isSavingMentoria ? 'not-allowed' : 'pointer',
+                opacity: isSavingMentoria ? 0.7 : 1
+              }}
+              disabled={isSavingMentoria}
+            >
+              {showMentoriaForm ? 'Cancelar' : '+ Cadastrar mentoria gravada'}
+            </button>
+
+            {showMentoriaForm && (
+              <form
+                onSubmit={handleCreateMentoria}
+                style={{
+                  display: 'grid',
+                  gap: '16px',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                  backgroundColor: '#f8fafc',
+                  padding: blockPadding,
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0'
+                }}
+              >
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                  Título da mentoria
+                  <input
+                    type="text"
+                    value={mentoriaForm.title}
+                    onChange={event => handleMentoriaFieldChange('title', event.target.value)}
+                    placeholder="Ex.: Mentoria com especialista convidado"
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                    required
+                  />
+                </label>
+
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                  Data e horário da gravação
+                  <input
+                    type="datetime-local"
+                    value={mentoriaForm.recordedAt}
+                    onChange={event => handleMentoriaFieldChange('recordedAt', event.target.value)}
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                    required
+                  />
+                </label>
+
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                  Duração (minutos)
+                  <input
+                    type="number"
+                    min={10}
+                    max={480}
+                    value={mentoriaForm.durationMinutes}
+                    onChange={event => handleMentoriaFieldChange('durationMinutes', event.target.value)}
+                    placeholder="60"
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </label>
+
+                <label
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                    fontSize: '14px',
+                    color: '#0f172a',
+                    gridColumn: '1 / -1'
+                  }}
+                >
+                  Link do vídeo (opcional)
+                  <input
+                    type="url"
+                    value={mentoriaForm.videoUrl}
+                    onChange={event => handleMentoriaFieldChange('videoUrl', event.target.value)}
+                    placeholder="https://..."
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </label>
+
+                <label
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                    fontSize: '14px',
+                    color: '#0f172a',
+                    gridColumn: '1 / -1'
+                  }}
+                >
+                  Resumo rápido (opcional)
+                  <textarea
+                    value={mentoriaForm.description}
+                    onChange={event => handleMentoriaFieldChange('description', event.target.value)}
+                    placeholder="Liste os principais tópicos abordados na mentoria."
+                    rows={3}
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px',
+                      resize: 'vertical'
+                    }}
+                  />
+                </label>
+
+                <div
+                  style={{
+                    gridColumn: '1 / -1',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px'
+                  }}
+                >
+                  <RichTextEditor
+                    value={mentoriaForm.content}
+                    onChange={value => handleMentoriaFieldChange('content', value)}
+                    label="Conteúdo complementar (opcional)"
+                    placeholder="Cole a transcrição, notas ou links extras citados durante a mentoria."
+                    minHeight="200px"
+                  />
+                </div>
+
+                {mentoriaFormError && (
+                  <div style={{ gridColumn: '1 / -1', color: '#be123c', fontSize: '13px' }}>{mentoriaFormError}</div>
+                )}
+
+                <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMentoriaForm(false);
+                      setMentoriaForm(createEmptyMentoriaForm());
+                      setMentoriaFormError(null);
+                    }}
+                    style={{
+                      border: '1px solid #cbd5f5',
+                      backgroundColor: 'transparent',
+                      color: '#0f172a',
+                      borderRadius: '10px',
+                      padding: '10px 18px',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                      border: 'none',
+                      color: '#ffffff',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      padding: '12px 20px',
+                      borderRadius: '10px',
+                      cursor: isSavingMentoria ? 'not-allowed' : 'pointer',
+                      opacity: isSavingMentoria ? 0.85 : 1
+                    }}
+                    disabled={isSavingMentoria}
+                  >
+                    {isSavingMentoria ? 'Salvando...' : 'Salvar mentoria'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {isLoadingMentorias ? (
+            <div
+              style={{
+                padding: '40px 20px',
+                borderRadius: '12px',
+                border: '1px dashed #cbd5f5',
+                backgroundColor: '#f8fafc',
+                textAlign: 'center',
+                color: '#64748b'
+              }}
+            >
+              Carregando mentorias gravadas...
+            </div>
+          ) : mentoriaFetchError ? (
+            <div
+              style={{
+                padding: '40px 20px',
+                borderRadius: '12px',
+                border: '1px solid #fecaca',
+                backgroundColor: '#fef2f2',
+                textAlign: 'center',
+                color: '#b91c1c',
+                fontSize: '14px'
+              }}
+            >
+              {mentoriaFetchError}
+            </div>
+          ) : mentorias.length === 0 ? (
+            <div
+              style={{
+                padding: '40px 20px',
+                borderRadius: '12px',
+                border: '1px dashed #cbd5f5',
+                backgroundColor: '#f8fafc',
+                textAlign: 'center',
+                color: '#475569'
+              }}
+            >
+              {isAdmin
+                ? 'Nenhuma mentoria gravada cadastrada ainda. Utilize o botão acima para adicionar a primeira gravação.'
+                : 'As mentorias gravadas ficarão disponíveis aqui assim que forem publicadas.'}
+            </div>
+          ) : (
+            mentorias.map(mentoria => {
+              const embedConfig = getVideoEmbedConfig(mentoria.videoUrl);
+              const enhancedEmbedSrc = embedConfig ? enhanceEmbedSrc(embedConfig) : null;
+              const { date, dayOfWeek, time } = formatMentoriaDate(mentoria.recordedAt);
+              const uploadState = mentoriaMaterialState[mentoria.id] ?? { isUploading: false, error: null };
+              const isMaterialUploading = uploadState.isUploading;
+              const materialError = uploadState.error;
+              const isEditing = editingMentoriaId === mentoria.id;
+
+              return (
+                <div
+                  key={mentoria.id}
+                  style={{
+                    padding: blockPadding,
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: '#f8fafc',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px'
+                  }}
+                >
+                  {isEditing ? (
+                    <form
+                      onSubmit={event => handleUpdateMentoria(event, mentoria.id)}
+                      style={{
+                        display: 'grid',
+                        gap: '16px',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))'
+                      }}
+                    >
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                        Título da mentoria
+                        <input
+                          type="text"
+                          value={editMentoriaForm.title}
+                          onChange={event => handleEditMentoriaFieldChange('title', event.target.value)}
+                          style={{
+                            borderRadius: '10px',
+                            border: '1px solid #cbd5f5',
+                            padding: '10px 14px',
+                            fontSize: '14px'
+                          }}
+                          required
+                        />
+                      </label>
+
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                        Data e horário
+                        <input
+                          type="datetime-local"
+                          value={editMentoriaForm.recordedAt}
+                          onChange={event => handleEditMentoriaFieldChange('recordedAt', event.target.value)}
+                          style={{
+                            borderRadius: '10px',
+                            border: '1px solid #cbd5f5',
+                            padding: '10px 14px',
+                            fontSize: '14px'
+                          }}
+                          required
+                        />
+                      </label>
+
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                        Duração (minutos)
+                        <input
+                          type="number"
+                          min={10}
+                          max={480}
+                          value={editMentoriaForm.durationMinutes}
+                          onChange={event => handleEditMentoriaFieldChange('durationMinutes', event.target.value)}
+                          style={{
+                            borderRadius: '10px',
+                            border: '1px solid #cbd5f5',
+                            padding: '10px 14px',
+                            fontSize: '14px'
+                          }}
+                        />
+                      </label>
+
+                      <label
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                          fontSize: '14px',
+                          color: '#0f172a',
+                          gridColumn: '1 / -1'
+                        }}
+                      >
+                        Link do vídeo (opcional)
+                        <input
+                          type="url"
+                          value={editMentoriaForm.videoUrl}
+                          onChange={event => handleEditMentoriaFieldChange('videoUrl', event.target.value)}
+                          style={{
+                            borderRadius: '10px',
+                            border: '1px solid #cbd5f5',
+                            padding: '10px 14px',
+                            fontSize: '14px'
+                          }}
+                        />
+                      </label>
+
+                      <label
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                          fontSize: '14px',
+                          color: '#0f172a',
+                          gridColumn: '1 / -1'
+                        }}
+                      >
+                        Resumo rápido (opcional)
+                        <textarea
+                          value={editMentoriaForm.description}
+                          onChange={event => handleEditMentoriaFieldChange('description', event.target.value)}
+                          rows={3}
+                          style={{
+                            borderRadius: '10px',
+                            border: '1px solid #cbd5f5',
+                            padding: '10px 14px',
+                            fontSize: '14px',
+                            resize: 'vertical'
+                          }}
+                        />
+                      </label>
+
+                      <div
+                        style={{
+                          gridColumn: '1 / -1',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px'
+                        }}
+                      >
+                        <RichTextEditor
+                          value={editMentoriaForm.content}
+                          onChange={value => handleEditMentoriaFieldChange('content', value)}
+                          label="Conteúdo complementar (opcional)"
+                          minHeight="200px"
+                        />
+                      </div>
+
+                      {editMentoriaError && (
+                        <div style={{ gridColumn: '1 / -1', color: '#be123c', fontSize: '13px' }}>{editMentoriaError}</div>
+                      )}
+
+                      <div
+                        style={{
+                          gridColumn: '1 / -1',
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          gap: '12px',
+                          flexWrap: 'wrap'
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={handleCancelEditMentoria}
+                          style={{
+                            border: '1px solid #cbd5f5',
+                            backgroundColor: 'transparent',
+                            color: '#0f172a',
+                            borderRadius: '10px',
+                            padding: '10px 18px',
+                            fontWeight: 600,
+                            fontSize: '14px',
+                            cursor: isSavingMentoria ? 'not-allowed' : 'pointer',
+                            opacity: isSavingMentoria ? 0.7 : 1
+                          }}
+                          disabled={isSavingMentoria}
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="submit"
+                          style={{
+                            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                            border: 'none',
+                            color: '#ffffff',
+                            fontWeight: 600,
+                            fontSize: '14px',
+                            padding: '12px 20px',
+                            borderRadius: '10px',
+                            cursor: isSavingMentoria ? 'not-allowed' : 'pointer',
+                            opacity: isSavingMentoria ? 0.85 : 1
+                          }}
+                          disabled={isSavingMentoria}
+                        >
+                          {isSavingMentoria ? 'Salvando...' : 'Salvar alterações'}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          gap: '16px',
+                          flexWrap: 'wrap'
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                          <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>
+                            {mentoria.title}
+                          </h3>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '14px', color: '#475569' }}>
+                            <span>
+                              📅 {dayOfWeek}, {date}
+                            </span>
+                            <span>
+                              🕑 {time}
+                              {mentoria.durationMinutes ? ` • ${mentoria.durationMinutes} min` : ''}
+                            </span>
+                          </div>
+                        </div>
+
+                        {isAdmin && (
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditMentoria(mentoria)}
+                              style={{
+                                border: '1px solid #2563eb',
+                                backgroundColor: 'transparent',
+                                color: '#2563eb',
+                                borderRadius: '9999px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: isSavingMentoria ? 'not-allowed' : 'pointer',
+                                opacity: isSavingMentoria ? 0.7 : 1
+                              }}
+                              disabled={isSavingMentoria}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMentoria(mentoria.id)}
+                              style={{
+                                border: '1px solid #ef4444',
+                                backgroundColor: 'transparent',
+                                color: '#ef4444',
+                                borderRadius: '9999px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: isSavingMentoria ? 'not-allowed' : 'pointer',
+                                opacity: isSavingMentoria ? 0.7 : 1
+                              }}
+                              disabled={isSavingMentoria}
+                            >
+                              Excluir
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {mentoria.description && mentoria.description.trim().length > 0 && (
+                        <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
+                          {renderTextWithLineBreaks(mentoria.description)}
+                        </p>
+                      )}
+
+                      {enhancedEmbedSrc && (
+                        <div
+                          style={{
+                            width: '100%',
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            backgroundColor: '#010101',
+                            ...(compactVideoStyles ?? {})
+                          }}
+                        >
+                          <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+                            <iframe
+                              src={enhancedEmbedSrc}
+                              title={`Mentoria ${mentoria.title}`}
+                              allow="autoplay; fullscreen; picture-in-picture"
+                              allowFullScreen
+                              loading="lazy"
+                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {!enhancedEmbedSrc && mentoria.videoUrl && (
+                        <a
+                          href={mentoria.videoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            alignSelf: 'flex-start',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 16px',
+                            borderRadius: '10px',
+                            backgroundColor: '#0ea5e9',
+                            color: '#ffffff',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            textDecoration: 'none'
+                          }}
+                        >
+                          ▶️ Assistir gravação
+                        </a>
+                      )}
+
+                      {mentoria.content && mentoria.content.trim().length > 0 && (
+                        <div
+                          style={{
+                            backgroundColor: '#e0f2fe',
+                            borderRadius: '10px',
+                            padding: '12px 16px'
+                          }}
+                        >
+                          <div
+                            style={{ margin: 0, color: '#0f172a', fontSize: '14px', lineHeight: 1.6 }}
+                            dangerouslySetInnerHTML={{ __html: mentoria.content }}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {mentoria.materials.length > 0 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        backgroundColor: '#f1f5f9',
+                        borderRadius: '10px',
+                        padding: '12px 16px'
+                      }}
+                    >
+                      <span style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>
+                        Materiais compartilhados
+                      </span>
+                      <ul
+                        style={{
+                          margin: 0,
+                          paddingLeft: '18px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                          color: '#0369a1',
+                          fontSize: '14px'
+                        }}
+                      >
+                        {mentoria.materials.map(material => (
+                          <li
+                            key={material.id}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              justifyContent: 'space-between'
+                            }}
+                          >
+                            <a
+                              href={material.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={event => handlePreviewMaterial(event, material)}
+                              style={{
+                                color: '#0ea5e9',
+                                fontWeight: 600,
+                                textDecoration: 'none',
+                                flex: 1
+                              }}
+                            >
+                              {material.title}
+                            </a>
+                            <a
+                              href={material.fileUrl}
+                              download={material.title}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '6px 12px',
+                                backgroundColor: '#3b82f6',
+                                color: 'white',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                textDecoration: 'none',
+                                fontWeight: 600,
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              📥 Baixar
+                            </a>
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteMentoriaMaterial(mentoria.id, material.id)}
+                                style={{
+                                  border: 'none',
+                                  background: 'transparent',
+                                  color: '#ef4444',
+                                  fontSize: '12px',
+                                  cursor: isMaterialUploading ? 'not-allowed' : 'pointer',
+                                  opacity: isMaterialUploading ? 0.6 : 1,
+                                  whiteSpace: 'nowrap'
+                                }}
+                                disabled={isMaterialUploading}
+                              >
+                                Remover
+                              </button>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {isAdmin && !isEditing && (
+                    <form
+                      onSubmit={event => handleUploadMentoriaMaterial(event, mentoria.id)}
+                      style={{
+                        display: 'grid',
+                        gap: '12px',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                        alignItems: 'center',
+                        backgroundColor: '#ffffff',
+                        borderRadius: '10px',
+                        padding: '12px 16px',
+                        border: '1px dashed #93c5fd'
+                      }}
+                    >
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#010101' }}>
+                        Título do material (opcional)
+                        <input
+                          type="text"
+                          name="title"
+                          placeholder="Ex.: Slides da mentoria"
+                          style={{
+                            borderRadius: '10px',
+                            border: '1px solid #cbd5f5',
+                            padding: '10px 14px',
+                            fontSize: '14px'
+                          }}
+                          disabled={isMaterialUploading}
+                        />
+                      </label>
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#010101' }}>
+                        Arquivo
+                        <input
+                          type="file"
+                          name="file"
+                          accept=".pdf,.ppt,.pptx,image/*"
+                          style={{
+                            borderRadius: '10px',
+                            border: '1px solid #cbd5f5',
+                            padding: '10px 14px',
+                            fontSize: '14px',
+                            backgroundColor: '#f8fafc'
+                          }}
+                          required
+                          disabled={isMaterialUploading}
+                        />
+                      </label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', gridColumn: '1 / -1' }}>
+                        <button
+                          type="submit"
+                          style={{
+                            alignSelf: 'flex-start',
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                            border: 'none',
+                            color: '#ffffff',
+                            fontWeight: 600,
+                            fontSize: '14px',
+                            padding: '10px 18px',
+                            borderRadius: '10px',
+                            cursor: isMaterialUploading ? 'not-allowed' : 'pointer',
+                            opacity: isMaterialUploading ? 0.7 : 1
+                          }}
+                          disabled={isMaterialUploading}
+                        >
+                          {isMaterialUploading ? 'Enviando material...' : 'Anexar material'}
+                        </button>
+                        {materialError && (
+                          <span style={{ color: '#dc2626', fontSize: '13px' }}>{materialError}</span>
+                        )}
+                      </div>
+                    </form>
+                  )}
                 </div>
               );
             })

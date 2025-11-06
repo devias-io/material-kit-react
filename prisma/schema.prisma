@@ -844,6 +844,33 @@ model CfRendaTurbinadaLiveEvent {
   @@map("live_events")
 }
 
+model CfRendaTurbinadaMentoria {
+  id              Int                               @id @default(autoincrement())
+  title           String
+  description     String?
+  content         String?
+  videoUrl        String?                           @map("video_url")
+  recordedAt      DateTime                          @map("recorded_at")
+  durationMinutes Int?                              @map("duration_minutes")
+  createdAt       DateTime                          @default(now()) @map("created_at")
+  updatedAt       DateTime                          @updatedAt @map("updated_at")
+  materials       CfRendaTurbinadaMentoriaMaterial[]
+
+  @@map("mentorias")
+}
+
+model CfRendaTurbinadaMentoriaMaterial {
+  id         Int                     @id @default(autoincrement())
+  mentoriaId Int                     @map("mentoria_id")
+  title      String
+  fileUrl    String                  @map("file_url")
+  createdAt  DateTime                @default(now()) @map("created_at")
+  updatedAt  DateTime                @updatedAt @map("updated_at")
+  mentoria   CfRendaTurbinadaMentoria @relation(fields: [mentoriaId], references: [id], onDelete: Cascade)
+
+  @@map("mentoria_materials")
+}
+
 model BastidoresDaBolsaModule {
   id          String                        @id @default(cuid())
   title       String
