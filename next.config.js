@@ -10,7 +10,11 @@ const nextConfig = {
   
   experimental: {
     forceSwcTransforms: true,
-    serverComponentsExternalPackages: ['sharp']
+    serverComponentsExternalPackages: ['sharp'],
+    // ✅ ADICIONAR ISSO
+    serverActions: {
+      bodySizeLimit: '50mb',
+    },
   },
   
   images: {
@@ -20,9 +24,17 @@ const nextConfig = {
     ],
   },
   
+  // ✅ ADICIONAR ISSO
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+    responseLimit: false,
+  },
+  
   // Configurações para upload de arquivos
   serverRuntimeConfig: {
-    maxFileSize: '10mb'
+    maxFileSize: '50mb' // ✅ AUMENTAR DE 10mb PARA 50mb
   },
   
   async headers() {
