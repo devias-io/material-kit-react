@@ -2742,14 +2742,13 @@ const handleUpdateModule = React.useCallback(
   );
 
   return (
-    <>
-      <div
-        style={{
-          minHeight: '100vh',
-          backgroundColor: '#f5f5f5',
-          padding: pagePadding
-        }}
-      >
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundColor: '#f5f5f5',
+        padding: pagePadding
+      }}
+    >
       <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <button
           type="button"
@@ -4668,10 +4667,10 @@ visibleModules.map(module => {
           }
 
           .live-card-actions button {
-            flex: 1 1 140px;
+            flex: 1 1 100%;
           }
         }
       `}</style>
-    </>
+    </div>
   );
 }
