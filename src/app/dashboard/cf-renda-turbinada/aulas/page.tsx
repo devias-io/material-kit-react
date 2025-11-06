@@ -3653,7 +3653,7 @@ visibleModules.map(module => {
                     padding: blockPadding,
                     borderRadius: '12px',
                     border: `2px solid ${
-                      live.isCancelled ? '#fecaca' : isToday ? '#22c55e' : isPast ? '#e2e8f0' : '#bfdbfe'
+                      live.isCancelled ? '#fecaca' : isToday ? '#22c55e' : isPast ? '#e2e8f0' : '#e5e7eb'
                     }`,
                     backgroundColor: live.isCancelled
                       ? '#fef2f2'
