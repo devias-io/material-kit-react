@@ -813,8 +813,21 @@ model CfRendaTurbinadaLesson {
   createdAt   DateTime                @default(now())
   updatedAt   DateTime                @updatedAt
   module      CfRendaTurbinadaModule  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  materials   CfRendaTurbinadaLessonMaterial[]
 
   @@map("lessons")
+}
+
+model CfRendaTurbinadaLessonMaterial {
+  id        Int                    @id @default(autoincrement())
+  lessonId  Int
+  title     String
+  fileUrl   String
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  lesson    CfRendaTurbinadaLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("lesson_materials")
 }
 
 model CfRendaTurbinadaLiveEvent {

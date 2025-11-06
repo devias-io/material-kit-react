@@ -38,7 +38,15 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           orderBy: [
             { sortOrder: 'asc' },
             { createdAt: 'asc' }
-          ]
+          ],
+          include: {
+            materials: {
+              orderBy: [
+                { createdAt: 'asc' },
+                { id: 'asc' }
+              ]
+            }
+          }
         }
       }
     });
@@ -128,7 +136,15 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           orderBy: [
             { sortOrder: 'asc' },
             { createdAt: 'asc' }
-          ]
+          ],
+          include: {
+            materials: {
+              orderBy: [
+                { createdAt: 'asc' },
+                { id: 'asc' }
+              ]
+            }
+          }
         }
       }
     });
