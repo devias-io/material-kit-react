@@ -2742,13 +2742,14 @@ const handleUpdateModule = React.useCallback(
   );
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
-        padding: pagePadding
-      }}
-    >
+    <>
+      <div
+        style={{
+          minHeight: '100vh',
+          backgroundColor: '#f5f5f5',
+          padding: pagePadding
+        }}
+      >
       <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <button
           type="button"
@@ -3678,26 +3679,35 @@ visibleModules.map(module => {
               const isToday = isLiveToday(live.eventDate);
 
               return (
-<div
-  key={live.id}
-  style={{
-    padding: blockPadding,
-    borderRadius: '12px',
-    border: `2px solid ${
-      live.isCancelled ? '#fecaca' : isToday ? '#22c55e' : isPast ? '#e2e8f0' : '#d1d5db'
-    }`,
-    backgroundColor: live.isCancelled
-      ? '#fef2f2'
-      : isToday
-      ? '#f0fdf4'
-      : isPast
-      ? '#f8fafc'
-      : '#f9fafb',
-    opacity: isPast && !isToday ? 0.7 : 1
-  }}
->
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                <div
+                  key={live.id}
+                  style={{
+                    padding: blockPadding,
+                    borderRadius: '12px',
+                    border: `2px solid ${
+                      live.isCancelled ? '#fecaca' : isToday ? '#22c55e' : isPast ? '#e2e8f0' : '#d1d5db'
+                    }`,
+                    backgroundColor: live.isCancelled
+                      ? '#fef2f2'
+                      : isToday
+                      ? '#f0fdf4'
+                      : isPast
+                      ? '#f8fafc'
+                      : '#f9fafb',
+                    opacity: isPast && !isToday ? 0.7 : 1
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div
+                      className="live-card-header"
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        gap: '12px',
+                        flexWrap: 'wrap'
+                      }}
+                    >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
           <h3 style={{ 
@@ -3790,8 +3800,11 @@ visibleModules.map(module => {
                       )}
                     </div>
 
-  {isAdmin && (
-  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', width: '100%', justifyContent: 'flex-end' }}>
+                      {isAdmin && (
+                        <div
+                          className="live-card-actions"
+                          style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}
+                        >
                         <button
                           type="button"
                           onClick={() => handleToggleLiveCancellation(live.id, live.isCancelled)}
@@ -4616,7 +4629,25 @@ visibleModules.map(module => {
           )}
         </div>
       </div>
-
     </div>
+    <style jsx>{`
+      @media (max-width: 640px) {
+        .live-card-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .live-card-actions {
+          width: 100%;
+          justify-content: flex-start;
+          gap: 12px;
+        }
+
+        .live-card-actions button {
+          flex: 1 1 140px;
+        }
+      }
+    `}</style>
+    </>
   );
 }
