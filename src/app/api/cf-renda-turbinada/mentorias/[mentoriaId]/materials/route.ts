@@ -13,7 +13,7 @@ import {
   isFileLike,
   processUploadedFile,
   validateFile
-} from '../../upload-utils';
+} from '../../../upload-utils';
 
 export async function POST(request: NextRequest, { params }: { params: { mentoriaId: string } }) {
   const mentoriaId = Number(params.mentoriaId);
