@@ -2,6 +2,8 @@
 'use client';
 
 import * as React from 'react';
+import { debugLog, debugWarn, debugError } from '@/utils/logger';
+import { DEFAULT_IFIX_CURRENT, IFIX_HISTORICAL_VALUES, createStaticIfixFallbackPayload } from '@/utils/ifixConstants';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
