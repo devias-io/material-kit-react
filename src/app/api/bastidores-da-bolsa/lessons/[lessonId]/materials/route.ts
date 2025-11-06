@@ -61,7 +61,18 @@ export async function POST(request: NextRequest, { params }: { params: { lessonI
     const file = formData.get('file');
     const title = formData.get('title');
 
-    if (!(file instanceof File)) {
+    type FileFormDataEntry = Blob & { name?: string; type?: string };
+
+    const isFileFormDataEntry = (value: unknown): value is FileFormDataEntry => {
+      return (
+        typeof value === 'object' &&
+        value !== null &&
+        typeof (value as Blob).arrayBuffer === 'function' &&
+        typeof (value as Blob).size === 'number'
+      );
+    };
+
+    if (!isFileFormDataEntry(file)) {
       return NextResponse.json({ error: 'Arquivo é obrigatório' }, { status: 400 });
     }
 
@@ -83,7 +94,8 @@ export async function POST(request: NextRequest, { params }: { params: { lessonI
     const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'bastidores-da-bolsa');
     await mkdir(uploadDir, { recursive: true });
 
-    const originalExtension = path.extname(file.name) || '';
+    const originalName = typeof file.name === 'string' && file.name.trim().length > 0 ? file.name : 'material';
+    const originalExtension = path.extname(originalName) || '';
     const filename = `${randomUUID()}${originalExtension}`;
     const filePath = path.join(uploadDir, filename);
 
@@ -92,7 +104,7 @@ export async function POST(request: NextRequest, { params }: { params: { lessonI
     const material = await prisma.bastidoresDaBolsaLessonMaterial.create({
       data: {
         lessonId,
-        title: typeof title === 'string' && title.trim().length > 0 ? title.trim() : file.name,
+        title: typeof title === 'string' && title.trim().length > 0 ? title.trim() : originalName,
         fileUrl: `/uploads/bastidores-da-bolsa/${filename}`
       }
     });
