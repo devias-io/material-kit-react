@@ -1816,76 +1816,77 @@ const handleUpdateModule = React.useCallback(
                     padding: '12px 16px'
                   }}
                 >
-                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>
-                    Materiais para download
-                  </span>
-                  <ul
-                    style={{
-                      margin: 0,
-                      paddingLeft: '18px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px',
-                      color: '#0369a1',
-                      fontSize: '14px'
-                    }}
-                  >
-{lesson.materials.map(material => (
-  <li key={material.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
-    
-      href={material.fileUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{ 
-        color: '#0ea5e9', 
-        fontWeight: 600, 
-        textDecoration: 'none',
-        flex: 1
-      }}
-    >
-      {material.title}
-    </a>
-    
-    
-      href={material.fileUrl}
-      download={material.title}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '4px',
-        padding: '6px 12px',
-        backgroundColor: '#3b82f6',
-        color: 'white',
-        borderRadius: '8px',
-        fontSize: '12px',
-        textDecoration: 'none',
-        fontWeight: 600,
-        whiteSpace: 'nowrap'
-      }}
-    >
-      📥 Baixar
-    </a>
-    
-    {isAdmin && !viewAsStudent && typeof lesson.id === 'number' && (
-      <button
-        type="button"
-        onClick={() => handleDeleteMaterial(lesson.id!, material.id)}
+<span style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>
+  Materiais para download
+</span>
+<ul
+  style={{
+    margin: 0,
+    paddingLeft: '18px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+    color: '#0369a1',
+    fontSize: '14px'
+  }}
+>
+  {lesson.materials.map(material => (
+    <li key={material.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
+      
+        href={material.fileUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ 
+          color: '#0ea5e9', 
+          fontWeight: 600, 
+          textDecoration: 'none',
+          flex: 1
+        }}
+      >
+        {material.title}
+      </a>
+      
+      
+        href={material.fileUrl}
+        download={material.title}
         style={{
-          border: 'none',
-          background: 'transparent',
-          color: '#ef4444',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          padding: '6px 12px',
+          backgroundColor: '#3b82f6',
+          color: 'white',
+          borderRadius: '8px',
           fontSize: '12px',
-          cursor: isMaterialUploading ? 'not-allowed' : 'pointer',
-          opacity: isMaterialUploading ? 0.6 : 1,
+          textDecoration: 'none',
+          fontWeight: 600,
           whiteSpace: 'nowrap'
         }}
-        disabled={isMaterialUploading}
       >
-        Remover
-      </button>
-    )}
-  </li>
-))}
+        📥 Baixar
+      </a>
+      
+      {isAdmin && !viewAsStudent && typeof lesson.id === 'number' && (
+        <button
+          type="button"
+          onClick={() => handleDeleteMaterial(lesson.id!, material.id)}
+          style={{
+            border: 'none',
+            background: 'transparent',
+            color: '#ef4444',
+            fontSize: '12px',
+            cursor: isMaterialUploading ? 'not-allowed' : 'pointer',
+            opacity: isMaterialUploading ? 0.6 : 1,
+            whiteSpace: 'nowrap'
+          }}
+          disabled={isMaterialUploading}
+        >
+          Remover
+        </button>
+      )}
+    </li>
+  ))}
+</ul>
                         {isAdmin && !viewAsStudent && typeof lesson.id === 'number' && (
                           <button
                             type="button"
