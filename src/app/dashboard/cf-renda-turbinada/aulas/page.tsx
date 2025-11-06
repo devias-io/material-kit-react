@@ -2387,7 +2387,7 @@ const handleUpdateModule = React.useCallback(
                           rel="noopener noreferrer"
                           onClick={event => handlePreviewMaterial(event, material)}
                           style={{
-                            color: '#0ea5e9',
+                            color: '#010101',
                             fontWeight: 600,
                             textDecoration: 'none',
                             flex: 1
@@ -2517,7 +2517,7 @@ const handleUpdateModule = React.useCallback(
                     alignSelf: 'flex-start',
                     fontSize: '14px',
                     fontWeight: 600,
-                    color: '#0ea5e9'
+                    color: '#010101'
                   }}
                 >
                   Assistir vídeo da aula →
@@ -2568,9 +2568,9 @@ const handleUpdateModule = React.useCallback(
                 type="button"
                 onClick={() => handleToggleMoveLesson(moduleId, index)}
                 style={{
-                  border: '1px solid #0ea5e9',
-                  backgroundColor: openMoveLessonKey === lessonKey ? '#0ea5e9' : 'transparent',
-                  color: openMoveLessonKey === lessonKey ? '#ffffff' : '#0ea5e9',
+                  border: '1px solid #010101',
+                  backgroundColor: openMoveLessonKey === lessonKey ? '#010101' : 'transparent',
+                  color: openMoveLessonKey === lessonKey ? '#ffffff' : '#010101',
                   borderRadius: '10px',
                   padding: '8px 16px',
                   fontWeight: 600,
@@ -3250,7 +3250,7 @@ visibleModules.map(module => {
                     style={{
                       alignSelf: 'flex-start',
                       border: '1px solid #010101',
-                      backgroundColor: openLessonModule === module.id ? '#0ea5e9' : 'transparent',
+                      backgroundColor: openLessonModule === module.id ? '#010101' : 'transparent',
                       color: openLessonModule === module.id ? '#010101' : '#010101',
                       borderRadius: '9999px',
                       padding: '10px 18px',
@@ -3449,9 +3449,9 @@ visibleModules.map(module => {
                 }
               }}
               style={{
-                border: '1px solid #0ea5e9',
-                backgroundColor: showLiveForm ? '#0ea5e9' : 'transparent',
-                color: showLiveForm ? '#ffffff' : '#0ea5e9',
+                border: '1px solid #010101',
+                backgroundColor: showLiveForm ? '#010101' : 'transparent',
+                color: showLiveForm ? '#ffffff' : '#010101',
                 borderRadius: '9999px',
                 padding: '10px 20px',
                 fontWeight: 600,
@@ -3739,7 +3739,7 @@ visibleModules.map(module => {
                             display: 'inline-block',
                             padding: '10px 18px',
                             borderRadius: '10px',
-                            backgroundColor: '#0ea5e9',
+                            backgroundColor: '#010101',
                             color: '#ffffff',
                             fontSize: '14px',
                             fontWeight: 600,
@@ -3837,9 +3837,9 @@ visibleModules.map(module => {
               }}
               style={{
                 alignSelf: 'flex-start',
-                border: '1px solid #0ea5e9',
-                backgroundColor: showMentoriaForm ? '#0ea5e9' : 'transparent',
-                color: showMentoriaForm ? '#ffffff' : '#0ea5e9',
+                border: '1px solid #010101',
+                backgroundColor: showMentoriaForm ? '#010101' : 'transparent',
+                color: showMentoriaForm ? '#ffffff' : '#010101',
                 borderRadius: '9999px',
                 padding: '10px 20px',
                 fontWeight: 600,
@@ -4380,7 +4380,7 @@ visibleModules.map(module => {
                             gap: '8px',
                             padding: '10px 16px',
                             borderRadius: '10px',
-                            backgroundColor: '#0ea5e9',
+                            backgroundColor: '#010101',
                             color: '#ffffff',
                             fontSize: '14px',
                             fontWeight: 600,
@@ -4449,7 +4449,7 @@ visibleModules.map(module => {
                               rel="noopener noreferrer"
                               onClick={event => handlePreviewMaterial(event, material)}
                               style={{
-                                color: '#0ea5e9',
+                                color: '#010101',
                                 fontWeight: 600,
                                 textDecoration: 'none',
                                 flex: 1
