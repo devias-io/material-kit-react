@@ -33,7 +33,7 @@ const ALLOWED_MIME_TYPES = new Set([
 ]);
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25MB
-const LIMITE_BASE64 = 3 * 1024 * 1024; // 3MB - Arquivos menores salvos em base64
+const LIMITE_BASE64 = 10 * 1024 * 1024; // 3MB - Arquivos menores salvos em base64
 
 // ✅ FUNÇÃO PARA PROCESSAR ARQUIVO (Base64)
 async function processarArquivoBase64(file: FileLike): Promise<{
