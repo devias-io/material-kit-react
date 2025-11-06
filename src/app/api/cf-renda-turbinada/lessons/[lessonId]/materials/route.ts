@@ -4,7 +4,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { serializeMaterial } from '../../../utils';
+import { serializeLessonMaterial } from '../../../utils';
 
 type FileLike = {
   arrayBuffer: () => Promise<ArrayBuffer>;
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest, { params }: { params: { lessonI
       }
     });
 
-    return NextResponse.json({ material: serializeMaterial(material) }, { status: 201 });
+    return NextResponse.json({ material: serializeLessonMaterial(material) }, { status: 201 });
     
   } catch (error) {
     console.error('Erro ao anexar material no CF Renda Turbinada:', error);

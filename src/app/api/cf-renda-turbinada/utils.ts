@@ -2,6 +2,8 @@ import {
   CfRendaTurbinadaLesson,
   CfRendaTurbinadaLessonMaterial,
   CfRendaTurbinadaLiveEvent,
+  CfRendaTurbinadaMentoria,
+  CfRendaTurbinadaMentoriaMaterial,
   CfRendaTurbinadaModule
 } from '@prisma/client';
 
@@ -13,7 +15,11 @@ type LessonWithMaterials = CfRendaTurbinadaLesson & {
   materials: CfRendaTurbinadaLessonMaterial[];
 };
 
-export function serializeMaterial(material: CfRendaTurbinadaLessonMaterial) {
+type MentoriaWithMaterials = CfRendaTurbinadaMentoria & {
+  materials: CfRendaTurbinadaMentoriaMaterial[];
+};
+
+export function serializeLessonMaterial(material: CfRendaTurbinadaLessonMaterial) {
   return {
     id: material.id,
     title: material.title,
@@ -32,7 +38,7 @@ export function serializeLesson(lesson: LessonWithMaterials) {
     videoUrl: lesson.videoUrl ?? undefined,
     content: lesson.content ?? undefined,
     sortOrder: lesson.sortOrder ?? undefined,
-    materials: lesson.materials.map(serializeMaterial)
+    materials: lesson.materials.map(serializeLessonMaterial)
   };
 }
 
@@ -57,5 +63,28 @@ export function serializeLiveEvent(event: CfRendaTurbinadaLiveEvent) {
     durationMinutes: event.durationMinutes,
     meetingUrl: event.meetingUrl ?? undefined,
     isCancelled: event.isCancelled
+  };
+}
+
+export function serializeMentoriaMaterial(material: CfRendaTurbinadaMentoriaMaterial) {
+  return {
+    id: material.id,
+    title: material.title,
+    fileUrl: material.fileUrl,
+    createdAt: material.createdAt.toISOString(),
+    updatedAt: material.updatedAt.toISOString()
+  };
+}
+
+export function serializeMentoria(mentoria: MentoriaWithMaterials) {
+  return {
+    id: mentoria.id,
+    title: mentoria.title,
+    description: mentoria.description ?? undefined,
+    content: mentoria.content ?? undefined,
+    videoUrl: mentoria.videoUrl ?? undefined,
+    recordedAt: mentoria.recordedAt.toISOString(),
+    durationMinutes: mentoria.durationMinutes ?? undefined,
+    materials: mentoria.materials.map(serializeMentoriaMaterial)
   };
 }
