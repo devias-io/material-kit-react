@@ -1,14 +1,29 @@
 import {
   CfRendaTurbinadaLesson,
+  CfRendaTurbinadaLessonMaterial,
   CfRendaTurbinadaLiveEvent,
   CfRendaTurbinadaModule
 } from '@prisma/client';
 
 type ModuleWithLessons = CfRendaTurbinadaModule & {
-  lessons: CfRendaTurbinadaLesson[];
+  lessons: (CfRendaTurbinadaLesson & { materials: CfRendaTurbinadaLessonMaterial[] })[];
 };
 
-export function serializeLesson(lesson: CfRendaTurbinadaLesson) {
+type LessonWithMaterials = CfRendaTurbinadaLesson & {
+  materials: CfRendaTurbinadaLessonMaterial[];
+};
+
+export function serializeMaterial(material: CfRendaTurbinadaLessonMaterial) {
+  return {
+    id: material.id,
+    title: material.title,
+    fileUrl: material.fileUrl,
+    createdAt: material.createdAt.toISOString(),
+    updatedAt: material.updatedAt.toISOString()
+  };
+}
+
+export function serializeLesson(lesson: LessonWithMaterials) {
   return {
     id: lesson.id,
     title: lesson.title,
@@ -16,7 +31,8 @@ export function serializeLesson(lesson: CfRendaTurbinadaLesson) {
     description: lesson.description ?? undefined,
     videoUrl: lesson.videoUrl ?? undefined,
     content: lesson.content ?? undefined,
-    sortOrder: lesson.sortOrder ?? undefined
+    sortOrder: lesson.sortOrder ?? undefined,
+    materials: lesson.materials.map(serializeMaterial)
   };
 }
 
