@@ -3,7 +3,16 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 
+import { RichTextEditor } from '@/components/rich-text-editor';
 import { useAuthAccess } from '@/hooks/use-auth-access';
+
+interface LessonMaterial {
+  id: number;
+  title: string;
+  fileUrl: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 interface Lesson {
   id?: number;
@@ -13,6 +22,7 @@ interface Lesson {
   videoUrl?: string;
   content?: string;
   sortOrder?: number;
+  materials: LessonMaterial[];
 }
 
 interface Module {
@@ -23,7 +33,7 @@ interface Module {
   isHidden?: boolean;
   sortOrder?: number;
   lessons: Lesson[];
-    isReleased?: boolean;
+  isReleased?: boolean;
 }
 
 interface LessonFormState {
@@ -337,6 +347,19 @@ function formatReleaseDate(isoDate: string): string {
   }).format(date);
 }
 
+function sortMaterialsByDate(materials: LessonMaterial[] = []): LessonMaterial[] {
+  return [...materials].sort((materialA, materialB) => {
+    const dateA = materialA.createdAt ? new Date(materialA.createdAt).getTime() : 0;
+    const dateB = materialB.createdAt ? new Date(materialB.createdAt).getTime() : 0;
+
+    if (dateA !== dateB) {
+      return dateA - dateB;
+    }
+
+    return materialA.title.localeCompare(materialB.title);
+  });
+}
+
 function sortLessonsByOrder(lessons: Lesson[]): Lesson[] {
   return [...lessons].sort((lessonA, lessonB) => {
     const orderA = lessonA.sortOrder ?? Number.MAX_SAFE_INTEGER;
@@ -391,6 +414,9 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const [modules, setModules] = React.useState<Module[]>([]);
   const [lessonForms, setLessonForms] = React.useState<Record<string, LessonFormState>>({});
   const [lessonErrors, setLessonErrors] = React.useState<Record<string, string | null>>({});
+  const [materialUploadState, setMaterialUploadState] = React.useState<
+    Record<number, { isUploading: boolean; error: string | null }>
+  >({});
   const [openLessonModule, setOpenLessonModule] = React.useState<string | null>(null);
   const [newModuleForm, setNewModuleForm] = React.useState<NewModuleFormState>({
     title: '',
@@ -476,7 +502,12 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
     ...module,
     highlight: module.highlight ?? '',
     isHidden: Boolean(module.isHidden),
-    lessons: sortLessonsByOrder(module.lessons ?? [])
+    lessons: sortLessonsByOrder(module.lessons ?? []).map(lesson => ({
+      ...lesson,
+      description: lesson.description ?? '',
+      content: lesson.content ?? '',
+      materials: sortMaterialsByDate(lesson.materials ?? [])
+    }))
   }), []);
 
   React.useEffect(() => {
@@ -763,6 +794,132 @@ const visibleModules = React.useMemo(() => {
     }));
   }, []);
 
+  const handleUploadMaterial = React.useCallback(
+    async (event: React.FormEvent<HTMLFormElement>, lessonId: number) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+
+      setMaterialUploadState(prev => ({
+        ...prev,
+        [lessonId]: { isUploading: true, error: null }
+      }));
+
+      try {
+        const formData = new FormData(form);
+        const file = formData.get('file');
+
+        if (!(file instanceof File) || file.size === 0) {
+          throw new Error('Selecione um arquivo para anexar.');
+        }
+
+        const title = formData.get('title');
+        if (typeof title === 'string') {
+          formData.set('title', title.trim());
+        }
+
+        const response = await fetch(`/api/cf-renda-turbinada/lessons/${lessonId}/materials`, {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = (await response.json().catch(() => null)) as
+          | { material?: LessonMaterial; error?: string }
+          | null;
+
+        if (!response.ok || !data?.material) {
+          const message = data?.error ?? 'Erro ao anexar material.';
+          throw new Error(message);
+        }
+
+        const normalizedMaterial: LessonMaterial = {
+          ...data.material
+        };
+
+        setModules(prevModules =>
+          prevModules.map(module => ({
+            ...module,
+            lessons: module.lessons.map(lesson =>
+              lesson.id === lessonId
+                ? {
+                    ...lesson,
+                    materials: sortMaterialsByDate([...lesson.materials, normalizedMaterial])
+                  }
+                : lesson
+            )
+          }))
+        );
+
+        form.reset();
+
+        setMaterialUploadState(prev => ({
+          ...prev,
+          [lessonId]: { isUploading: false, error: null }
+        }));
+      } catch (error) {
+        console.error('Erro ao anexar material:', error);
+        setMaterialUploadState(prev => ({
+          ...prev,
+          [lessonId]: {
+            isUploading: false,
+            error: error instanceof Error ? error.message : 'Erro ao anexar material. Tente novamente.'
+          }
+        }));
+      }
+    },
+    []
+  );
+
+  const handleDeleteMaterial = React.useCallback(
+    async (lessonId: number, materialId: number) => {
+      setMaterialUploadState(prev => ({
+        ...prev,
+        [lessonId]: { isUploading: true, error: null }
+      }));
+
+      try {
+        const response = await fetch(`/api/cf-renda-turbinada/materials/${materialId}`, {
+          method: 'DELETE'
+        });
+
+        const data = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
+
+        if (!response.ok || !data?.success) {
+          const message = data?.error ?? 'Erro ao remover material.';
+          throw new Error(message);
+        }
+
+        setModules(prevModules =>
+          prevModules.map(module => ({
+            ...module,
+            lessons: module.lessons.map(lesson =>
+              lesson.id === lessonId
+                ? {
+                    ...lesson,
+                    materials: lesson.materials.filter(material => material.id !== materialId)
+                  }
+                : lesson
+            )
+          }))
+        );
+
+        setMaterialUploadState(prev => ({
+          ...prev,
+          [lessonId]: { isUploading: false, error: null }
+        }));
+      } catch (error) {
+        console.error('Erro ao remover material:', error);
+        setMaterialUploadState(prev => ({
+          ...prev,
+          [lessonId]: {
+            isUploading: false,
+            error: error instanceof Error ? error.message : 'Erro ao remover material. Tente novamente.'
+          }
+        }));
+      }
+    },
+    []
+  );
+
   const handleAddLesson = React.useCallback(
     async (event: React.FormEvent<HTMLFormElement>, moduleId: string) => {
       event.preventDefault();
@@ -800,12 +957,19 @@ const visibleModules = React.useMemo(() => {
           throw new Error(message);
         }
 
+        const normalizedLesson: Lesson = {
+          ...data.lesson,
+          description: data.lesson.description ?? '',
+          content: data.lesson.content ?? '',
+          materials: sortMaterialsByDate(data.lesson.materials ?? [])
+        };
+
         setModules(prevModules =>
           prevModules.map(module =>
             module.id === moduleId
               ? {
                   ...module,
-                  lessons: sortLessonsByOrder([...module.lessons, data.lesson])
+                  lessons: sortLessonsByOrder([...module.lessons, normalizedLesson])
                 }
               : module
           )
@@ -1101,6 +1265,13 @@ const handleUpdateModule = React.useCallback(
           throw new Error(message);
         }
 
+        const normalizedLesson: Lesson = {
+          ...data.lesson,
+          description: data.lesson.description ?? '',
+          content: data.lesson.content ?? '',
+          materials: sortMaterialsByDate(data.lesson.materials ?? [])
+        };
+
         setModules(prevModules =>
           prevModules.map(currentModule =>
             currentModule.id === moduleId
@@ -1108,7 +1279,7 @@ const handleUpdateModule = React.useCallback(
                   ...currentModule,
                   lessons: sortLessonsByOrder(
                     currentModule.lessons.map(existingLesson =>
-                      existingLesson.id === lesson.id ? data.lesson : existingLesson
+                      existingLesson.id === lesson.id ? normalizedLesson : existingLesson
                     )
                   )
                 }
@@ -1401,6 +1572,10 @@ const handleUpdateModule = React.useCallback(
       const isSameModuleTarget = selectedModule?.id === moduleId;
       const maxMovePosition = Math.max(1, isSameModuleTarget ? targetCount : targetCount + 1);
       const moveError = moveLessonErrors[lessonKey] ?? null;
+      const uploadState =
+        typeof lesson.id === 'number' ? materialUploadState[lesson.id] : undefined;
+      const isMaterialUploading = uploadState?.isUploading ?? false;
+      const materialError = uploadState?.error ?? null;
 
       return (
         <div
@@ -1454,30 +1629,21 @@ const handleUpdateModule = React.useCallback(
                   required
                 />
               </label>
-              <label
+              <div
                 style={{
+                  gridColumn: '1 / -1',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '6px',
-                  fontSize: '14px',
-                  color: '#010101',
-                  gridColumn: '1 / -1'
+                  gap: '6px'
                 }}
               >
-                Descrição
-                <textarea
+                <RichTextEditor
                   value={editLessonForm.description}
-                  onChange={event => handleEditLessonFieldChange('description', event.target.value)}
-                  rows={3}
-                  style={{
-                    borderRadius: '10px',
-                    border: '1px solid #cbd5f5',
-                    padding: '10px 14px',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
+                  onChange={value => handleEditLessonFieldChange('description', value)}
+                  label="Descrição"
+                  minHeight="180px"
                 />
-              </label>
+              </div>
               <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
                 Link do vídeo (opcional)
                 <input
@@ -1492,30 +1658,21 @@ const handleUpdateModule = React.useCallback(
                   }}
                 />
               </label>
-              <label
+              <div
                 style={{
+                  gridColumn: '1 / -1',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '6px',
-                  fontSize: '14px',
-                  color: '#010101',
-                  gridColumn: '1 / -1'
+                  gap: '6px'
                 }}
               >
-                Conteúdo escrito (opcional)
-                <textarea
+                <RichTextEditor
                   value={editLessonForm.content}
-                  onChange={event => handleEditLessonFieldChange('content', event.target.value)}
-                  rows={4}
-                  style={{
-                    borderRadius: '10px',
-                    border: '1px solid #cbd5f5',
-                    padding: '10px 14px',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
+                  onChange={value => handleEditLessonFieldChange('content', value)}
+                  label="Conteúdo escrito (opcional)"
+                  minHeight="200px"
                 />
-              </label>
+              </div>
               {editLessonError && (
                 <div style={{ gridColumn: '1 / -1', color: '#be123c', fontSize: '13px' }}>{editLessonError}</div>
               )}
@@ -1577,14 +1734,34 @@ const handleUpdateModule = React.useCallback(
             </form>
           ) : (
             <>
-<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#010101' }}>{lesson.title}</h3>
-</div>
-{lesson.description && (
-  <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
-    {renderTextWithLineBreaks(lesson.description)}
-  </p>
-)}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}
+              >
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#010101' }}>{lesson.title}</h3>
+                <span
+                  style={{
+                    fontSize: '13px',
+                    color: '#2563eb',
+                    backgroundColor: '#dbeafe',
+                    padding: '4px 10px',
+                    borderRadius: '9999px',
+                    fontWeight: 600
+                  }}
+                >
+                  {lesson.duration}
+                </span>
+              </div>
+              {lesson.description && lesson.description.trim().length > 0 && (
+                <div
+                  style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}
+                  dangerouslySetInnerHTML={{ __html: lesson.description }}
+                />
+              )}
               {enhancedEmbedSrc && (
                 <div
                   style={{
@@ -1614,19 +1791,148 @@ const handleUpdateModule = React.useCallback(
                   </div>
                 </div>
               )}
-{lesson.content && (
-  <div
-    style={{
-      backgroundColor: '#e0f2fe',
-      borderRadius: '10px',
-      padding: '12px 16px'
-    }}
-  >
-    <p style={{ margin: 0, color: '#010101', fontSize: '14px', lineHeight: 1.6 }}>
-      {renderTextWithLineBreaks(lesson.content)}
-    </p>
-  </div>
-)}
+              {lesson.content && lesson.content.trim().length > 0 && (
+                <div
+                  style={{
+                    backgroundColor: '#e0f2fe',
+                    borderRadius: '10px',
+                    padding: '12px 16px'
+                  }}
+                >
+                  <div
+                    style={{ margin: 0, color: '#010101', fontSize: '14px', lineHeight: 1.6 }}
+                    dangerouslySetInnerHTML={{ __html: lesson.content }}
+                  />
+                </div>
+              )}
+              {lesson.materials.length > 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    backgroundColor: '#f1f5f9',
+                    borderRadius: '10px',
+                    padding: '12px 16px'
+                  }}
+                >
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>
+                    Materiais para download
+                  </span>
+                  <ul
+                    style={{
+                      margin: 0,
+                      paddingLeft: '18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px',
+                      color: '#0369a1',
+                      fontSize: '14px'
+                    }}
+                  >
+                    {lesson.materials.map(material => (
+                      <li key={material.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <a
+                          href={material.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#0ea5e9', fontWeight: 600, textDecoration: 'none' }}
+                        >
+                          {material.title}
+                        </a>
+                        {isAdmin && !viewAsStudent && typeof lesson.id === 'number' && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMaterial(lesson.id!, material.id)}
+                            style={{
+                              border: 'none',
+                              background: 'transparent',
+                              color: '#ef4444',
+                              fontSize: '12px',
+                              cursor: isMaterialUploading ? 'not-allowed' : 'pointer',
+                              opacity: isMaterialUploading ? 0.6 : 1
+                            }}
+                            disabled={isMaterialUploading}
+                          >
+                            Remover
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {isAdmin && !isEditing && !viewAsStudent && typeof lesson.id === 'number' && (
+                <form
+                  onSubmit={event => handleUploadMaterial(event, lesson.id!)}
+                  style={{
+                    display: 'grid',
+                    gap: '12px',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                    alignItems: 'center',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '10px',
+                    padding: '12px 16px',
+                    border: '1px dashed #93c5fd'
+                  }}
+                >
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#010101' }}>
+                    Título do material (opcional)
+                    <input
+                      type="text"
+                      name="title"
+                      placeholder="Ex.: PDF de apoio da aula"
+                      style={{
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5f5',
+                        padding: '10px 14px',
+                        fontSize: '14px'
+                      }}
+                      disabled={isMaterialUploading}
+                    />
+                  </label>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#010101' }}>
+                    Arquivo
+                    <input
+                      type="file"
+                      name="file"
+                      accept=".pdf,.ppt,.pptx,image/*"
+                      style={{
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5f5',
+                        padding: '10px 14px',
+                        fontSize: '14px',
+                        backgroundColor: '#f8fafc'
+                      }}
+                      required
+                      disabled={isMaterialUploading}
+                    />
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', gridColumn: '1 / -1' }}>
+                    <button
+                      type="submit"
+                      style={{
+                        alignSelf: 'flex-start',
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                        border: 'none',
+                        color: '#ffffff',
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        padding: '10px 18px',
+                        borderRadius: '10px',
+                        cursor: isMaterialUploading ? 'not-allowed' : 'pointer',
+                        opacity: isMaterialUploading ? 0.7 : 1
+                      }}
+                      disabled={isMaterialUploading}
+                    >
+                      {isMaterialUploading ? 'Enviando material...' : 'Anexar material'}
+                    </button>
+                    {materialError && (
+                      <span style={{ color: '#dc2626', fontSize: '13px' }}>{materialError}</span>
+                    )}
+                  </div>
+                </form>
+              )}
               {!enhancedEmbedSrc && lesson.videoUrl && (
                 <a
                   href={lesson.videoUrl}
@@ -1641,16 +1947,16 @@ const handleUpdateModule = React.useCallback(
                 >
                   Assistir vídeo da aula →
                 </a>
-            )}
-          </>
-        )}
+              )}
+            </>
+          )}
 
-        {isAdmin && !isEditing && !viewAsStudent && (
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={() => handleStartEditLesson(moduleId, index)}
-              style={{
+          {isAdmin && !isEditing && !viewAsStudent && (
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => handleStartEditLesson(moduleId, index)}
+                style={{
                   border: '1px solid #010101',
                   backgroundColor: 'transparent',
                   color: '#010101',
@@ -1667,109 +1973,31 @@ const handleUpdateModule = React.useCallback(
               </button>
               <button
                 type="button"
-              onClick={() => handleDeleteLesson(moduleId, index)}
-              style={{
-                border: '1px solid #ef4444',
-                backgroundColor: 'transparent',
-                color: '#ef4444',
+                onClick={() => handleDeleteLesson(moduleId, index)}
+                style={{
+                  border: '1px solid #ef4444',
+                  backgroundColor: 'transparent',
+                  color: '#ef4444',
                   borderRadius: '10px',
                   padding: '8px 16px',
                   fontWeight: 600,
                   fontSize: '14px',
                   cursor: isSaving ? 'not-allowed' : 'pointer',
                   opacity: isSaving ? 0.7 : 1
-              }}
-              disabled={isSaving}
-            >
-              Excluir aula
-            </button>
-            <button
-              type="button"
-              onClick={() => handleToggleMoveLesson(moduleId, index)}
-              style={{
-                border: '1px solid #0ea5e9',
-                backgroundColor: openMoveLessonKey === lessonKey ? '#0ea5e9' : 'transparent',
-                color: openMoveLessonKey === lessonKey ? '#ffffff' : '#0ea5e9',
-                borderRadius: '10px',
-                padding: '8px 16px',
-                fontWeight: 600,
-                fontSize: '14px',
-                cursor: isSaving ? 'not-allowed' : 'pointer',
-                opacity: isSaving ? 0.7 : 1
-              }}
-              disabled={isSaving}
-            >
-              {openMoveLessonKey === lessonKey ? 'Fechar movimentação' : 'Mover aula'}
-            </button>
-          </div>
-        )}
-
-        {isAdmin && !isEditing && !viewAsStudent && openMoveLessonKey === lessonKey && (
-          <form
-            onSubmit={event => handleSubmitMoveLesson(event, moduleId, index)}
-            style={{
-              marginTop: '12px',
-              display: 'grid',
-              gap: '12px',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              backgroundColor: '#e0f2fe',
-              borderRadius: '12px',
-              border: '1px solid #bae6fd',
-              padding: '16px'
-            }}
-          >
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
-              Módulo de destino
-              <select
-                value={moveForm.moduleId}
-                onChange={event => handleMoveLessonModuleChange(moduleId, index, event.target.value)}
-                style={{
-                  borderRadius: '10px',
-                  border: '1px solid #94a3b8',
-                  padding: '10px 14px',
-                  fontSize: '14px'
                 }}
+                disabled={isSaving}
               >
-                {modules.map(optionModule => (
-                  <option key={optionModule.id} value={optionModule.id}>
-                    {optionModule.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
-              Posição no módulo
-              <input
-                type="number"
-                min={1}
-                max={maxMovePosition}
-                value={moveForm.position}
-                onChange={event => handleMoveLessonPositionChange(moduleId, index, event.target.value)}
-                style={{
-                  borderRadius: '10px',
-                  border: '1px solid #94a3b8',
-                  padding: '10px 14px',
-                  fontSize: '14px'
-                }}
-                required
-              />
-              <span style={{ fontSize: '12px', color: '#475569' }}>
-                Valores permitidos: 1 até {maxMovePosition}
-              </span>
-            </label>
-            {moveError && (
-              <div style={{ gridColumn: '1 / -1', color: '#b91c1c', fontSize: '13px' }}>{moveError}</div>
-            )}
-            <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                Excluir aula
+              </button>
               <button
                 type="button"
                 onClick={() => handleToggleMoveLesson(moduleId, index)}
                 style={{
-                  border: '1px solid #0f172a',
-                  backgroundColor: 'transparent',
-                  color: '#0f172a',
+                  border: '1px solid #0ea5e9',
+                  backgroundColor: openMoveLessonKey === lessonKey ? '#0ea5e9' : 'transparent',
+                  color: openMoveLessonKey === lessonKey ? '#ffffff' : '#0ea5e9',
                   borderRadius: '10px',
-                  padding: '10px 18px',
+                  padding: '8px 16px',
                   fontWeight: 600,
                   fontSize: '14px',
                   cursor: isSaving ? 'not-allowed' : 'pointer',
@@ -1777,29 +2005,107 @@ const handleUpdateModule = React.useCallback(
                 }}
                 disabled={isSaving}
               >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                style={{
-                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                  border: 'none',
-                  color: '#ffffff',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  padding: '10px 20px',
-                  borderRadius: '10px',
-                  cursor: isSaving ? 'not-allowed' : 'pointer',
-                  opacity: isSaving ? 0.85 : 1
-                }}
-                disabled={isSaving}
-              >
-                {isSaving ? 'Salvando...' : 'Salvar nova posição'}
+                {openMoveLessonKey === lessonKey ? 'Fechar movimentação' : 'Mover aula'}
               </button>
             </div>
-          </form>
-        )}
-      </div>
+          )}
+
+          {isAdmin && !isEditing && !viewAsStudent && openMoveLessonKey === lessonKey && (
+            <form
+              onSubmit={event => handleSubmitMoveLesson(event, moduleId, index)}
+              style={{
+                marginTop: '12px',
+                display: 'grid',
+                gap: '12px',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                backgroundColor: '#e0f2fe',
+                borderRadius: '12px',
+                border: '1px solid #bae6fd',
+                padding: '16px'
+              }}
+            >
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                Módulo de destino
+                <select
+                  value={moveForm.moduleId}
+                  onChange={event => handleMoveLessonModuleChange(moduleId, index, event.target.value)}
+                  style={{
+                    borderRadius: '10px',
+                    border: '1px solid #94a3b8',
+                    padding: '10px 14px',
+                    fontSize: '14px'
+                  }}
+                >
+                  {modules.map(optionModule => (
+                    <option key={optionModule.id} value={optionModule.id}>
+                      {optionModule.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                Posição no módulo
+                <input
+                  type="number"
+                  min={1}
+                  max={maxMovePosition}
+                  value={moveForm.position}
+                  onChange={event => handleMoveLessonPositionChange(moduleId, index, event.target.value)}
+                  style={{
+                    borderRadius: '10px',
+                    border: '1px solid #94a3b8',
+                    padding: '10px 14px',
+                    fontSize: '14px'
+                  }}
+                  required
+                />
+                <span style={{ fontSize: '12px', color: '#475569' }}>
+                  Valores permitidos: 1 até {maxMovePosition}
+                </span>
+              </label>
+              {moveError && (
+                <div style={{ gridColumn: '1 / -1', color: '#b91c1c', fontSize: '13px' }}>{moveError}</div>
+              )}
+              <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => handleToggleMoveLesson(moduleId, index)}
+                  style={{
+                    border: '1px solid #0f172a',
+                    backgroundColor: 'transparent',
+                    color: '#0f172a',
+                    borderRadius: '10px',
+                    padding: '10px 18px',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.7 : 1
+                  }}
+                  disabled={isSaving}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    padding: '10px 20px',
+                    borderRadius: '10px',
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    opacity: isSaving ? 0.85 : 1
+                  }}
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Salvando...' : 'Salvar nova posição'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       );
     },
     [
@@ -1811,13 +2117,16 @@ const handleUpdateModule = React.useCallback(
       editingLessonKey,
       handleCancelEditLesson,
       handleDeleteLesson,
+      handleDeleteMaterial,
       handleToggleMoveLesson,
       handleEditLessonFieldChange,
       handleStartEditLesson,
       handleUpdateLesson,
+      handleUploadMaterial,
       compactVideoStyles,
       isAdmin,
       isSaving,
+      materialUploadState,
       modules,
       moveLessonErrors,
       moveLessonForms,
@@ -2425,31 +2734,22 @@ visibleModules.map(module => {
                           required
                         />
                       </label>
-                      <label
+                      <div
                         style={{
+                          gridColumn: '1 / -1',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: '6px',
-                          fontSize: '14px',
-                          color: '#010101',
-                          gridColumn: '1 / -1'
+                          gap: '6px'
                         }}
                       >
-                        Descrição
-                        <textarea
+                        <RichTextEditor
                           value={lessonForms[module.id]?.description ?? ''}
-                          onChange={event => handleLessonFieldChange(module.id, 'description', event.target.value)}
+                          onChange={value => handleLessonFieldChange(module.id, 'description', value)}
+                          label="Descrição"
+                          minHeight="180px"
                           placeholder="Explique o que será abordado nesta aula."
-                          rows={3}
-                          style={{
-                            borderRadius: '10px',
-                            border: '1px solid #cbd5f5',
-                            padding: '10px 14px',
-                            fontSize: '14px',
-                            resize: 'vertical'
-                          }}
                         />
-                      </label>
+                      </div>
                       <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#010101' }}>
                         Link do vídeo (opcional)
                         <input
@@ -2465,31 +2765,22 @@ visibleModules.map(module => {
                           }}
                         />
                       </label>
-                      <label
+                      <div
                         style={{
+                          gridColumn: '1 / -1',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: '6px',
-                          fontSize: '14px',
-                          color: '#010101',
-                          gridColumn: '1 / -1'
+                          gap: '6px'
                         }}
                       >
-                        Conteúdo escrito (opcional)
-                        <textarea
+                        <RichTextEditor
                           value={lessonForms[module.id]?.content ?? ''}
-                          onChange={event => handleLessonFieldChange(module.id, 'content', event.target.value)}
+                          onChange={value => handleLessonFieldChange(module.id, 'content', value)}
+                          label="Conteúdo escrito (opcional)"
+                          minHeight="200px"
                           placeholder="Cole aqui materiais de apoio, links e observações importantes."
-                          rows={4}
-                          style={{
-                            borderRadius: '10px',
-                            border: '1px solid #cbd5f5',
-                            padding: '10px 14px',
-                            fontSize: '14px',
-                            resize: 'vertical'
-                          }}
                         />
-                      </label>
+                      </div>
                       {lessonErrors[module.id] && (
                         <div style={{ gridColumn: '1 / -1', color: '#be123c', fontSize: '13px' }}>{lessonErrors[module.id]}</div>
                       )}
