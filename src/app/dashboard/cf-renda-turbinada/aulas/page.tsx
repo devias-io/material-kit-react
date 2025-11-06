@@ -743,11 +743,28 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
 
         if (!isMounted) return;
 
-        setLiveEvents(
-          [...data.events].sort(
-            (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
-          )
-        );
+setLiveEvents(
+  [...data.events].sort((a, b) => {
+    const dateA = new Date(a.eventDate);
+    const dateB = new Date(b.eventDate);
+    const now = new Date();
+    
+    const isPastA = dateA < now;
+    const isPastB = dateB < now;
+    
+    // Se uma é passada e outra não, passada vai pro final
+    if (isPastA && !isPastB) return 1;
+    if (!isPastA && isPastB) return -1;
+    
+    // Se ambas são passadas, ordena da mais recente pra mais antiga
+    if (isPastA && isPastB) {
+      return dateB.getTime() - dateA.getTime();
+    }
+    
+    // Se ambas são futuras, ordena da mais próxima pra mais distante
+    return dateA.getTime() - dateB.getTime();
+  })
+);
       } catch (error) {
         console.error('Erro ao carregar lives:', error);
         if (isMounted) {
@@ -895,11 +912,25 @@ const visibleModules = React.useMemo(() => {
           throw new Error(data?.error ?? 'Erro ao criar live.');
         }
 
-        setLiveEvents(prev =>
-          [...prev, data.event].sort(
-            (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
-          )
-        );
+setLiveEvents(prev =>
+  [...prev, data.event].sort((a, b) => {
+    const dateA = new Date(a.eventDate);
+    const dateB = new Date(b.eventDate);
+    const now = new Date();
+    
+    const isPastA = dateA < now;
+    const isPastB = dateB < now;
+    
+    if (isPastA && !isPastB) return 1;
+    if (!isPastA && isPastB) return -1;
+    
+    if (isPastA && isPastB) {
+      return dateB.getTime() - dateA.getTime();
+    }
+    
+    return dateA.getTime() - dateB.getTime();
+  })
+);
         setLiveForm(createEmptyLiveForm());
         setShowLiveForm(false);
         setEditingLiveId(null);
