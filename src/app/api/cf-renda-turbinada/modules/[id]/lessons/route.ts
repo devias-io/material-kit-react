@@ -89,6 +89,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         videoUrl: trimmedVideoUrl && trimmedVideoUrl.length > 0 ? trimmedVideoUrl : null,
         content: trimmedContent && trimmedContent.length > 0 ? trimmedContent : null,
         sortOrder: nextSortOrder
+      },
+      include: {
+        materials: {
+          orderBy: [
+            { createdAt: 'asc' },
+            { id: 'asc' }
+          ]
+        }
       }
     });
 

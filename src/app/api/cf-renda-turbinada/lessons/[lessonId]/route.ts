@@ -128,7 +128,15 @@ export async function PATCH(request: NextRequest, { params }: { params: { lesson
 
     const updated = await prisma.cfRendaTurbinadaLesson.update({
       where: { id: lessonId },
-      data
+      data,
+      include: {
+        materials: {
+          orderBy: [
+            { createdAt: 'asc' },
+            { id: 'asc' }
+          ]
+        }
+      }
     });
 
     return NextResponse.json({ lesson: serializeLesson(updated) });
