@@ -1,70 +1,19 @@
-import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+
 import { serializeLessonMaterial } from '../../../utils';
-
-type FileLike = {
-  arrayBuffer: () => Promise<ArrayBuffer>;
-  size: number;
-  type?: string;
-  name?: string;
-};
-
-function isFileLike(value: unknown): value is FileLike {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as FileLike).arrayBuffer === 'function' &&
-    typeof (value as FileLike).size === 'number'
-  );
-}
-
-const ALLOWED_MIME_TYPES = new Set([
-  'application/pdf',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif'
-]);
-
-const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25MB
-const LIMITE_BASE64 = 10 * 1024 * 1024; // 3MB - Arquivos menores salvos em base64
-
-// ✅ FUNÇÃO PARA PROCESSAR ARQUIVO (Base64)
-async function processarArquivoBase64(file: FileLike): Promise<{
-  fileUrl: string;
-  fileName: string;
-  fileSize: number;
-  storageType: string;
-}> {
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-  
-  if (file.size <= LIMITE_BASE64) {
-    // ✅ Arquivo pequeno: converter para base64
-    const base64 = buffer.toString('base64');
-    const mimeType = file.type || 'application/octet-stream';
-    const dataUrl = `data:${mimeType};base64,${base64}`;
-    
-    return {
-      fileUrl: dataUrl,
-      fileName: file.name || 'material',
-      fileSize: file.size,
-      storageType: 'base64'
-    };
-  } else {
-    // ❌ Arquivo grande: não suportado (precisa Vercel Blob ou Cloudinary)
-    throw new Error(
-      `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). ` +
-      `Limite: 3MB. Configure Vercel Blob ou Cloudinary para arquivos maiores.`
-    );
-  }
-}
+import {
+  DEFAULT_ALLOWED_MIME_TYPES,
+  MAX_FILE_SIZE_BYTES,
+  isFileLike,
+  processUploadedFile,
+  validateFile
+} from '../../../upload-utils';
 
 export async function POST(request: NextRequest, { params }: { params: { lessonId: string } }) {
   const lessonId = Number(params.lessonId);
@@ -108,29 +57,26 @@ export async function POST(request: NextRequest, { params }: { params: { lessonI
       return NextResponse.json({ error: 'Arquivo é obrigatório' }, { status: 400 });
     }
 
-    if (file.size <= 0) {
-      return NextResponse.json({ error: 'Arquivo vazio' }, { status: 400 });
+    const validationError = validateFile(file, {
+      allowedMimeTypes: DEFAULT_ALLOWED_MIME_TYPES,
+      maxFileSizeBytes: MAX_FILE_SIZE_BYTES
+    });
+
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      return NextResponse.json({ error: 'Arquivo maior que 25MB' }, { status: 400 });
-    }
+    const processedFile = await processUploadedFile(file, {
+      uploadFolder: 'cf-renda-turbinada/lessons-materials'
+    });
 
-    if (file.type && !ALLOWED_MIME_TYPES.has(file.type)) {
-      return NextResponse.json({ error: 'Formato de arquivo não suportado' }, { status: 400 });
-    }
-
-    // ✅ PROCESSAR ARQUIVO EM BASE64
-    const dadosArquivo = await processarArquivoBase64(file);
-
-    // ✅ SALVAR NO BANCO (fileUrl agora é base64 data URL)
     const material = await prisma.cfRendaTurbinadaLessonMaterial.create({
       data: {
         lessonId,
-        title: typeof title === 'string' && title.trim().length > 0 
-          ? title.trim() 
-          : dadosArquivo.fileName,
-        fileUrl: dadosArquivo.fileUrl // Base64 data URL
+        title: typeof title === 'string' && title.trim().length > 0
+          ? title.trim()
+          : processedFile.fileName,
+        fileUrl: processedFile.fileUrl
       }
     });
 

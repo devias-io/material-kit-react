@@ -7,59 +7,13 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 import { serializeMentoriaMaterial } from '../../../utils';
-
-type FileLike = {
-  arrayBuffer: () => Promise<ArrayBuffer>;
-  size: number;
-  type?: string;
-  name?: string;
-};
-
-function isFileLike(value: unknown): value is FileLike {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as FileLike).arrayBuffer === 'function' &&
-    typeof (value as FileLike).size === 'number'
-  );
-}
-
-const ALLOWED_MIME_TYPES = new Set([
-  'application/pdf',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif'
-]);
-
-const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
-const BASE64_LIMIT_BYTES = 10 * 1024 * 1024;
-
-async function processBase64File(file: FileLike): Promise<{
-  fileUrl: string;
-  fileName: string;
-}> {
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-
-  if (file.size > BASE64_LIMIT_BYTES) {
-    throw new Error(
-      `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). ` +
-        'Limite: 10MB. Configure um provedor de arquivos (ex.: Vercel Blob) para suportar uploads maiores.'
-    );
-  }
-
-  const base64 = buffer.toString('base64');
-  const mimeType = file.type || 'application/octet-stream';
-  const dataUrl = `data:${mimeType};base64,${base64}`;
-
-  return {
-    fileUrl: dataUrl,
-    fileName: file.name || 'material'
-  };
-}
+import {
+  DEFAULT_ALLOWED_MIME_TYPES,
+  MAX_FILE_SIZE_BYTES,
+  isFileLike,
+  processUploadedFile,
+  validateFile
+} from '../../../upload-utils';
 
 export async function POST(request: NextRequest, { params }: { params: { mentoriaId: string } }) {
   const mentoriaId = Number(params.mentoriaId);
@@ -104,19 +58,18 @@ export async function POST(request: NextRequest, { params }: { params: { mentori
       return NextResponse.json({ error: 'Arquivo é obrigatório' }, { status: 400 });
     }
 
-    if (file.size <= 0) {
-      return NextResponse.json({ error: 'Arquivo vazio' }, { status: 400 });
+    const validationError = validateFile(file, {
+      allowedMimeTypes: DEFAULT_ALLOWED_MIME_TYPES,
+      maxFileSizeBytes: MAX_FILE_SIZE_BYTES
+    });
+
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      return NextResponse.json({ error: 'Arquivo maior que 25MB' }, { status: 400 });
-    }
-
-    if (file.type && !ALLOWED_MIME_TYPES.has(file.type)) {
-      return NextResponse.json({ error: 'Formato de arquivo não suportado' }, { status: 400 });
-    }
-
-    const processedFile = await processBase64File(file);
+    const processedFile = await processUploadedFile(file, {
+      uploadFolder: 'cf-renda-turbinada/mentorias-materials'
+    });
 
     const material = await prisma.cfRendaTurbinadaMentoriaMaterial.create({
       data: {
