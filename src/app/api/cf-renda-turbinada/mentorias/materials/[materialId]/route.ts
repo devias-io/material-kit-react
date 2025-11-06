@@ -1,3 +1,5 @@
+import { unlink } from 'fs/promises';
+import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -44,6 +46,16 @@ export async function DELETE(request: NextRequest, { params }: { params: { mater
     await prisma.cfRendaTurbinadaMentoriaMaterial.delete({
       where: { id: materialId }
     });
+
+    if (material.fileUrl.startsWith('/uploads/')) {
+      const filePath = path.join(process.cwd(), 'public', material.fileUrl.replace(/^\//, ''));
+
+      try {
+        await unlink(filePath);
+      } catch (error) {
+        console.warn('Não foi possível remover arquivo de material de mentoria gravada:', error);
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
