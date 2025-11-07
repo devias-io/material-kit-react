@@ -10,12 +10,13 @@
  * - Botões com largura completa no mobile
  * - Hook useIsMobile para detectar mobile sem causar problemas de hidratação
  * - Smooth scrolling no modal
+ * - Ícone X padronizado do lucide-react
  */
 
 'use client';
 
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
-import { Eye, TrendingUp, TrendingDown, BarChart3, Target, AlertCircle, ExternalLink, Download, FileText } from 'lucide-react';
+import { Eye, TrendingUp, TrendingDown, BarChart3, Target, AlertCircle, ExternalLink, Download, FileText, X } from 'lucide-react';
 import { AnaliseTrimestreData, MetricaTrimestreData } from '@/types/quarterly-metrics';
 import { formatNumberPtBr, formatValueWithUnit, normalizeUnitString } from '@/utils/quarterly-metrics';
 
@@ -552,15 +553,18 @@ const ModalAnaliseCompleta = memo(({
               style={{
                 background: 'none',
                 border: 'none',
-                fontSize: isMobile ? '20px' : '24px',
                 cursor: 'pointer',
                 color: '#64748b',
                 padding: '8px',
                 borderRadius: '8px',
-                marginLeft: '8px'
+                marginLeft: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
+              aria-label="Fechar"
             >
-              ✕
+              <X size={isMobile ? 24 : 28} />
             </button>
           </div>
           
@@ -572,14 +576,14 @@ const ModalAnaliseCompleta = memo(({
             flexWrap: 'wrap' 
           }}>
             {getBadgeRecomendacao(analise.recomendacao)}
-{analise.nota && (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-    <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Nota:</span>
-    <span style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '600', color: '#1e293b' }}>
-      {analise.nota}/10
-    </span>
-  </div>
-)}
+            {analise.nota && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>Nota:</span>
+                <span style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '600', color: '#1e293b' }}>
+                  {analise.nota}/10
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -616,7 +620,6 @@ const ModalAnaliseCompleta = memo(({
                     <div style={{ fontSize: '20px', fontWeight: '700', color: '#166534' }}>
                       {formatarValorMetrica(analise.metricas.receita)}
                     </div>
-                    {/* CORRIGIDO: Usar variacaoYoY em vez de variacao */}
                     {analise.metricas.receita.variacaoYoY !== undefined && typeof analise.metricas.receita.variacaoYoY === 'number' && (
                       <div style={{ fontSize: '12px', color: '#15803d', marginTop: '4px' }}>
                         {analise.metricas.receita.variacaoYoY >= 0 ? '↗' : '↘'} {analise.metricas.receita.variacaoYoY.toFixed(1)}% A/A
@@ -636,7 +639,6 @@ const ModalAnaliseCompleta = memo(({
                         Margem: {analise.metricas.ebitda.margem.toFixed(1)}%
                       </div>
                     )}
-                    {/* CORRIGIDO: Usar variacaoYoY */}
                     {analise.metricas.ebitda.variacaoYoY !== undefined && typeof analise.metricas.ebitda.variacaoYoY === 'number' && (
                       <div style={{ fontSize: '11px', color: '#0c4a6e', marginTop: '2px' }}>
                         {analise.metricas.ebitda.variacaoYoY >= 0 ? '↗' : '↘'} {analise.metricas.ebitda.variacaoYoY.toFixed(1)}% A/A
@@ -651,7 +653,6 @@ const ModalAnaliseCompleta = memo(({
                     <div style={{ fontSize: '20px', fontWeight: '700', color: '#92400e' }}>
                       {formatarValorMetrica(analise.metricas.lucroLiquido)}
                     </div>
-                    {/* CORRIGIDO: Usar variacaoYoY */}
                     {analise.metricas.lucroLiquido.variacaoYoY !== undefined && typeof analise.metricas.lucroLiquido.variacaoYoY === 'number' && (
                       <div style={{ fontSize: '12px', color: '#7c2d12', marginTop: '4px' }}>
                         {analise.metricas.lucroLiquido.variacaoYoY >= 0 ? '↗' : '↘'} {analise.metricas.lucroLiquido.variacaoYoY.toFixed(1)}% A/A
@@ -666,7 +667,6 @@ const ModalAnaliseCompleta = memo(({
                     <div style={{ fontSize: '20px', fontWeight: '700', color: '#dc2626' }}>
                       {typeof analise.metricas.roe.valor === 'number' ? analise.metricas.roe.valor.toFixed(1) : analise.metricas.roe.valor}%
                     </div>
-                    {/* CORRIGIDO: Usar variacaoYoY para ROE também */}
                     {analise.metricas.roe.variacaoYoY !== undefined && typeof analise.metricas.roe.variacaoYoY === 'number' && (
                       <div style={{ fontSize: '12px', color: '#991b1b', marginTop: '4px' }}>
                         {analise.metricas.roe.variacaoYoY >= 0 ? '↗' : '↘'} {analise.metricas.roe.variacaoYoY.toFixed(1)}p.p. A/A
@@ -807,6 +807,8 @@ const ModalAnaliseCompleta = memo(({
     </div>
   );
 });
+
+ModalAnaliseCompleta.displayName = 'ModalAnaliseCompleta';
 
 // Componente Principal - CORRIGIDO E RESPONSIVO
 const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
@@ -1153,11 +1155,11 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
                       {analise.recomendacao === 'COMPRA' ? '🟢' : analise.recomendacao === 'VENDA' ? '🔴' : '🟡'} {analise.recomendacao}
                     </div>
                     
-{analise.nota && (
-  <div style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>
-    Nota: {analise.nota}/10
-  </div>
-)}
+                    {analise.nota && (
+                      <div style={{ fontSize: isMobile ? '12px' : '14px', color: '#64748b' }}>
+                        Nota: {analise.nota}/10
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1368,5 +1370,7 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
     </>
   );
 });
+
+AnalisesTrimesestrais.displayName = 'AnalisesTrimesestrais';
 
 export default AnalisesTrimesestrais;
