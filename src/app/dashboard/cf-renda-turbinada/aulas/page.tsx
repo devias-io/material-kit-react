@@ -2340,8 +2340,7 @@ const handleUpdateModule = React.useCallback(
                     width: '100%',
                     borderRadius: '12px',
                     overflow: 'hidden',
-                    backgroundColor: '#010101',
-                    ...(compactVideoStyles ?? {})
+                    backgroundColor: '#010101'
                   }}
                 >
                   <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
