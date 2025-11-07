@@ -880,6 +880,10 @@ const visibleModules = React.useMemo(() => {
     });
 }, [isAdmin, modules, viewAsStudent]);
 
+  const handleToggleShowAllLives = React.useCallback(() => {
+    setShowAllLives(prev => !prev);
+  }, []);
+
   const handleLiveFieldChange = React.useCallback((field: keyof LiveFormState, value: string) => {
     setLiveForm(prev => ({ ...prev, [field]: value }));
   }, []);
@@ -3522,7 +3526,7 @@ visibleModules.map(module => {
                   <input
                     type="text"
                     value={liveForm.title}
-                    onChange={e => handleLiveFieldChange('title', e.target.value)}
+                    onChange={event => handleLiveFieldChange('title', event.target.value)}
                     placeholder="Ex.: Live semanal - Análise de mercado"
                     style={{
                       borderRadius: '10px',
@@ -3539,7 +3543,7 @@ visibleModules.map(module => {
                   <input
                     type="datetime-local"
                     value={liveForm.eventDate}
-                    onChange={e => handleLiveFieldChange('eventDate', e.target.value)}
+                    onChange={event => handleLiveFieldChange('eventDate', event.target.value)}
                     style={{
                       borderRadius: '10px',
                       border: '1px solid #cbd5f5',
@@ -3555,7 +3559,7 @@ visibleModules.map(module => {
                   <input
                     type="number"
                     value={liveForm.durationMinutes}
-                    onChange={e => handleLiveFieldChange('durationMinutes', e.target.value)}
+                    onChange={event => handleLiveFieldChange('durationMinutes', event.target.value)}
                     placeholder="60"
                     min="15"
                     max="240"
@@ -3581,7 +3585,7 @@ visibleModules.map(module => {
                   Descrição
                   <textarea
                     value={liveForm.description}
-                    onChange={e => handleLiveFieldChange('description', e.target.value)}
+                    onChange={event => handleLiveFieldChange('description', event.target.value)}
                     placeholder="Descreva o que será abordado nesta live..."
                     rows={3}
                     style={{
@@ -3608,7 +3612,7 @@ visibleModules.map(module => {
                   <input
                     type="url"
                     value={liveForm.meetingUrl}
-                    onChange={e => handleLiveFieldChange('meetingUrl', e.target.value)}
+                    onChange={event => handleLiveFieldChange('meetingUrl', event.target.value)}
                     placeholder="https://zoom.us/..."
                     style={{
                       borderRadius: '10px',
@@ -3706,174 +3710,198 @@ visibleModules.map(module => {
                     }}
                   >
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div
-                      className="live-card-header"
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-start',
-                        gap: '16px',
-                        flexWrap: 'wrap'
-                      }}
-                    >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginBottom: '8px',
-                            flexWrap: 'wrap'
-                          }}
-                        >
-                          <h3
+                      <div
+                        className="live-card-header"
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          gap: '16px',
+                          flexWrap: 'wrap'
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
                             style={{
-                              margin: 0,
-                              fontSize: '18px',
-                              fontWeight: 700,
-                              color: '#0f172a',
-                              wordBreak: 'break-word',
-                              lineHeight: 1.3
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              marginBottom: '8px',
+                              flexWrap: 'wrap'
                             }}
                           >
-                            {live.title}
-                          </h3>
-                          {live.isCancelled && (
-                            <span
+                            <h3
                               style={{
-                                padding: '4px 10px',
-                                borderRadius: '9999px',
-                                backgroundColor: '#fee2e2',
-                                color: '#b91c1c',
-                                fontSize: '12px',
-                                fontWeight: 600
+                                margin: 0,
+                                fontSize: '18px',
+                                fontWeight: 700,
+                                color: '#0f172a',
+                                wordBreak: 'break-word',
+                                lineHeight: 1.3
                               }}
                             >
-                              CANCELADA
+                              {live.title}
+                            </h3>
+                            {live.isCancelled && (
+                              <span
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '9999px',
+                                  backgroundColor: '#fee2e2',
+                                  color: '#b91c1c',
+                                  fontSize: '12px',
+                                  fontWeight: 600
+                                }}
+                              >
+                                CANCELADA
+                              </span>
+                            )}
+                            {isToday && !live.isCancelled && (
+                              <span
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '9999px',
+                                  backgroundColor: '#22c55e',
+                                  color: '#ffffff',
+                                  fontSize: '12px',
+                                  fontWeight: 600
+                                }}
+                              >
+                                HOJE
+                              </span>
+                            )}
+                            {isPast && !isToday && !live.isCancelled && (
+                              <span
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '9999px',
+                                  backgroundColor: '#e2e8f0',
+                                  color: '#475569',
+                                  fontSize: '12px',
+                                  fontWeight: 600
+                                }}
+                              >
+                                REALIZADA
+                              </span>
+                            )}
+                          </div>
+
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '16px',
+                              marginBottom: '8px',
+                              flexWrap: 'wrap'
+                            }}
+                          >
+                            <span style={{ fontSize: '14px', color: '#475569', fontWeight: 600 }}>
+                              📅 {dayOfWeek}, {date}
                             </span>
+                            <span style={{ fontSize: '14px', color: '#475569', fontWeight: 600 }}>
+                              🕐 {time} ({live.durationMinutes} min)
+                            </span>
+                          </div>
+
+                          {live.description && (
+                            <p style={{ margin: '0 0 12px 0', color: '#64748b', fontSize: '14px', lineHeight: 1.6 }}>
+                              {renderTextWithLineBreaks(live.description)}
+                            </p>
                           )}
-                          {isToday && !live.isCancelled && (
-                            <span
+
+                          {live.meetingUrl && !isPast && !live.isCancelled && (
+                            <a
+                              href={live.meetingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               style={{
-                                padding: '4px 10px',
-                                borderRadius: '9999px',
-                                backgroundColor: '#22c55e',
+                                display: 'inline-block',
+                                padding: '10px 18px',
+                                borderRadius: '10px',
+                                backgroundColor: '#010101',
                                 color: '#ffffff',
-                                fontSize: '12px',
-                                fontWeight: 600
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                textDecoration: 'none'
                               }}
                             >
-                              HOJE
-                            </span>
-                          )}
-                          {isPast && !isToday && !live.isCancelled && (
-                            <span
-                              style={{
-                                padding: '4px 10px',
-                                borderRadius: '9999px',
-                                backgroundColor: '#e2e8f0',
-                                color: '#475569',
-                                fontSize: '12px',
-                                fontWeight: 600
-                              }}
-                            >
-                              REALIZADA
-                            </span>
+                              🎥 Entrar na Live →
+                            </a>
                           )}
                         </div>
 
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '16px',
-                            marginBottom: '8px',
-                            flexWrap: 'wrap'
-                          }}
-                        >
-                          <span style={{ fontSize: '14px', color: '#475569', fontWeight: 600 }}>
-                            📅 {dayOfWeek}, {date}
-                          </span>
-                          <span style={{ fontSize: '14px', color: '#475569', fontWeight: 600 }}>
-                            🕐 {time} ({live.durationMinutes} min)
-                          </span>
-                        </div>
-
-                        {live.description && (
-                          <p style={{ margin: '0 0 12px 0', color: '#64748b', fontSize: '14px', lineHeight: 1.6 }}>
-                            {renderTextWithLineBreaks(live.description)}
-                          </p>
-                        )}
-
-                        {live.meetingUrl && !isPast && !live.isCancelled && (
-                          <a
-                            href={live.meetingUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              display: 'inline-block',
-                              padding: '10px 18px',
-                              borderRadius: '10px',
-                              backgroundColor: '#010101',
-                              color: '#ffffff',
-                              fontSize: '14px',
-                              fontWeight: 600,
-                              textDecoration: 'none'
-                            }}
+                        {isAdmin && (
+                          <div
+                            className="live-card-actions"
+                            style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}
                           >
-                            🎥 Entrar na Live →
-                          </a>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleLiveCancellation(live.id, live.isCancelled)}
+                              style={{
+                                border: `1px solid ${live.isCancelled ? '#22c55e' : '#f59e0b'}`,
+                                backgroundColor: 'transparent',
+                                color: live.isCancelled ? '#22c55e' : '#f59e0b',
+                                borderRadius: '9999px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: isSaving ? 'not-allowed' : 'pointer',
+                                opacity: isSaving ? 0.7 : 1
+                              }}
+                              disabled={isSaving}
+                            >
+                              {live.isCancelled ? 'Reativar' : 'Cancelar'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteLive(live.id)}
+                              style={{
+                                border: '1px solid #ef4444',
+                                backgroundColor: 'transparent',
+                                color: '#ef4444',
+                                borderRadius: '9999px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: isSaving ? 'not-allowed' : 'pointer',
+                                opacity: isSaving ? 0.7 : 1
+                              }}
+                              disabled={isSaving}
+                            >
+                              Excluir
+                            </button>
+                          </div>
                         )}
                       </div>
-
-                      {isAdmin && (
-                        <div
-                          className="live-card-actions"
-                          style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => handleToggleLiveCancellation(live.id, live.isCancelled)}
-                            style={{
-                              border: `1px solid ${live.isCancelled ? '#22c55e' : '#f59e0b'}`,
-                              backgroundColor: 'transparent',
-                              color: live.isCancelled ? '#22c55e' : '#f59e0b',
-                              borderRadius: '9999px',
-                              padding: '8px 16px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              cursor: isSaving ? 'not-allowed' : 'pointer',
-                              opacity: isSaving ? 0.7 : 1
-                            }}
-                            disabled={isSaving}
-                          >
-                            {live.isCancelled ? 'Reativar' : 'Cancelar'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteLive(live.id)}
-                            style={{
-                              border: '1px solid #ef4444',
-                              backgroundColor: 'transparent',
-                              color: '#ef4444',
-                              borderRadius: '9999px',
-                              padding: '8px 16px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              cursor: isSaving ? 'not-allowed' : 'pointer',
-                              opacity: isSaving ? 0.7 : 1
-                            }}
-                            disabled={isSaving}
-                          >
-                            Excluir
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </div>
+                );
+              })}
+
+              {hasMoreLiveEvents && (
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={handleToggleShowAllLives}
+                    style={{
+                      border: '1px solid #010101',
+                      backgroundColor: showAllLives ? '#010101' : 'transparent',
+                      color: showAllLives ? '#ffffff' : '#010101',
+                      borderRadius: '9999px',
+                      padding: '10px 22px',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease-in-out'
+                    }}
+                    aria-expanded={showAllLives}
+                  >
+                    {showAllLives ? 'Ver menos' : 'Ver mais'}
+                  </button>
                 </div>
-              );
-            })
+              )}
+            </>
           )}
         </div>
       </div>
@@ -4648,32 +4676,10 @@ visibleModules.map(module => {
                         )}
                       </div>
                     </form>
-                        )}
-                      </div>
-                    );
-              })}
-
-              {hasMoreLiveEvents && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllLives(prev => !prev)}
-                  style={{
-                    marginTop: '8px',
-                    justifySelf: 'center',
-                    border: '1px solid #cbd5f5',
-                    backgroundColor: '#ffffff',
-                    color: '#1d4ed8',
-                    borderRadius: '9999px',
-                    padding: '10px 24px',
-                    fontWeight: 600,
-                    fontSize: '14px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {showAllLives ? 'Ver menos' : 'Ver mais'}
-                </button>
-              )}
-            </>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </div>
