@@ -133,10 +133,10 @@ function createEmptyLessonForm(): LessonFormState {
   };
 }
 
-const pageHorizontalPadding = 'clamp(12px, 4vw, 24px)';
-const sectionHorizontalPadding = 'clamp(14px, 4vw, 24px)';
-const cardHorizontalPadding = 'clamp(16px, 4vw, 28px)';
-const blockHorizontalPadding = 'clamp(12px, 4vw, 20px)';
+const pageHorizontalPadding = 'clamp(8px, 2vw, 24px)';
+const sectionHorizontalPadding = 'clamp(8px, 2vw, 24px)';
+const cardHorizontalPadding = 'clamp(12px, 2vw, 28px)';
+const blockHorizontalPadding = 'clamp(8px, 2vw, 20px)';
 const pagePadding = `24px ${pageHorizontalPadding}`;
 const sectionPadding = `24px ${sectionHorizontalPadding}`;
 const cardPadding = `28px ${cardHorizontalPadding}`;
