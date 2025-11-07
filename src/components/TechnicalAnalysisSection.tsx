@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ExternalLink, ShieldAlert } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState, memo } from 'react';
+import { ExternalLink, ShieldAlert, X } from 'lucide-react';
 
 const useMediaQuery = (query: string) => {
   const [matches, setMatches] = useState(false);
@@ -17,6 +17,23 @@ const useMediaQuery = (query: string) => {
   }, [matches, query]);
 
   return matches;
+};
+
+// Hook para detectar mobile - evita problemas de hidratação
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+  
+  return isMobile;
 };
 
 interface AutorInfo {
@@ -112,6 +129,237 @@ const fallbackResumo = (conteudo: string, limite = 280) => {
   return `${texto.slice(0, limite).trim()}...`;
 };
 
+// Modal de Análise Completa - NOVO COMPONENTE
+const ModalAnaliseCompleta = memo(({ 
+  analise, 
+  isOpen, 
+  onClose,
+  disclosureText 
+}: { 
+  analise: AnaliseTecnica | null;
+  isOpen: boolean;
+  onClose: () => void;
+  disclosureText: string | null;
+}) => {
+  const isMobile = useIsMobile();
+  const isTablet = useMediaQuery('(max-width: 1024px)');
+  
+  if (!isOpen || !analise) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      zIndex: 9999,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: isMobile ? '0' : '20px'
+    }}>
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: isMobile ? '16px 16px 0 0' : '16px',
+        width: isMobile ? '100%' : isTablet ? '95%' : '90%',
+        height: isMobile ? '95%' : isTablet ? '90%' : '85%',
+        maxWidth: isMobile ? 'none' : '1200px',
+        maxHeight: isMobile ? 'none' : '900px',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
+        position: isMobile ? 'fixed' : 'relative',
+        bottom: isMobile ? '0' : 'auto',
+        left: isMobile ? '0' : 'auto'
+      }}>
+        {/* Header do Modal - RESPONSIVO */}
+        <div style={{
+          padding: isMobile ? '16px 20px' : '24px 32px',
+          borderBottom: '1px solid #e2e8f0',
+          backgroundColor: '#f8fafc',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: '12px'
+        }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: isMobile ? '8px' : '12px', 
+              marginBottom: '8px',
+              flexWrap: 'wrap'
+            }}>
+              <h2 style={{ 
+                margin: 0, 
+                fontSize: isMobile ? '20px' : '24px', 
+                fontWeight: '700', 
+                color: '#1e293b' 
+              }}>
+                {analise.ticker.toUpperCase()}
+              </h2>
+              {analise.destaque && (
+                <span style={{
+                  backgroundColor: 'rgba(77, 251, 1, 0.2)',
+                  color: '#0f172a',
+                  padding: isMobile ? '3px 8px' : '4px 12px',
+                  borderRadius: '8px',
+                  fontSize: isMobile ? '11px' : '12px',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em'
+                }}>
+                  Destaque
+                </span>
+              )}
+            </div>
+            
+            <h3 style={{ 
+              margin: '0 0 12px 0', 
+              fontSize: isMobile ? '16px' : '18px', 
+              fontWeight: '600', 
+              color: '#374151',
+              lineHeight: '1.4'
+            }}>
+              {analise.titulo}
+            </h3>
+            
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: isMobile ? '8px' : '12px',
+              fontSize: isMobile ? '12px' : '14px',
+              color: '#64748b',
+              flexWrap: 'wrap'
+            }}>
+              <span>Atualizado em {formataData(analise.updatedAt)}</span>
+            </div>
+          </div>
+          
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: isMobile ? '20px' : '24px',
+              cursor: 'pointer',
+              color: '#64748b',
+              padding: '8px',
+              borderRadius: '8px',
+              marginLeft: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            aria-label="Fechar"
+          >
+            <X size={isMobile ? 24 : 28} />
+          </button>
+        </div>
+
+        {/* Conteúdo Scrollável - RESPONSIVO */}
+        <div style={{ 
+          flex: 1, 
+          overflow: 'auto', 
+          padding: isMobile ? '20px 16px' : '32px',
+          WebkitOverflowScrolling: 'touch'
+        }}>
+          {/* Imagem de Capa */}
+          {analise.imagemCapa && (
+            <div style={{ marginBottom: isMobile ? '20px' : '24px' }}>
+              <img
+                src={analise.imagemCapa}
+                alt={`Imagem ilustrativa da análise técnica ${analise.titulo}`}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  maxHeight: isMobile ? '220px' : '360px',
+                  objectFit: 'cover',
+                  borderRadius: '12px'
+                }}
+              />
+            </div>
+          )}
+
+          {/* Resumo */}
+          {analise.resumo && (
+            <div style={{ marginBottom: isMobile ? '20px' : '24px' }}>
+              <p style={{
+                margin: 0,
+                color: '#475569',
+                fontSize: isMobile ? '15px' : '16px',
+                lineHeight: 1.7,
+                fontWeight: 500
+              }}>
+                {analise.resumo}
+              </p>
+            </div>
+          )}
+
+          {/* Conteúdo Completo */}
+          {analise.conteudo && (
+            <div
+              className="technical-analysis-content"
+              style={{
+                color: '#1e293b',
+                lineHeight: 1.7,
+                fontSize: isMobile ? '14px' : '15px',
+                wordBreak: 'break-word',
+                overflowWrap: 'anywhere',
+                maxWidth: '100%',
+                width: '100%',
+                marginBottom: isMobile ? '20px' : '24px'
+              }}
+              dangerouslySetInnerHTML={{
+                __html: analise.conteudo
+              }}
+            />
+          )}
+
+          {/* Disclosure */}
+          {disclosureText && (
+            <div
+              style={{
+                padding: isMobile ? '16px' : '20px',
+                borderRadius: isMobile ? '12px' : '14px',
+                background: '#f1f5f9',
+                border: '1px solid #cbd5e1',
+                color: '#0f172a',
+                fontSize: isMobile ? '12px' : '13px',
+                lineHeight: 1.6,
+                display: 'grid',
+                gap: isMobile ? '10px' : '12px',
+                width: '100%',
+                boxSizing: 'border-box'
+              }}
+            >
+              <span
+                style={{
+                  fontSize: isMobile ? '12px' : '13px',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: '#0f172a'
+                }}
+              >
+                Disclosure
+              </span>
+              <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                {disclosureText}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+ModalAnaliseCompleta.displayName = 'ModalAnaliseCompleta';
+
 export default function TechnicalAnalysisSection({
   ticker
 }: TechnicalAnalysisSectionProps) {
@@ -120,8 +368,11 @@ export default function TechnicalAnalysisSection({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [expanded, setExpanded] = useState<boolean>(false);
+  const [modalAberto, setModalAberto] = useState<boolean>(false);
+  
   const isTablet = useMediaQuery('(max-width: 1024px)');
   const isMobile = useMediaQuery('(max-width: 640px)');
+  const isMobileModal = useIsMobile();
 
   const carregarAnalises = useCallback(async () => {
     if (!ticker) {
@@ -155,6 +406,7 @@ export default function TechnicalAnalysisSection({
       setAnalises(lista);
       setSelecionadaId(lista[0]?.id ?? null);
       setExpanded(false);
+      setModalAberto(false);
     } catch (err) {
       console.error('Erro ao carregar análises técnicas:', err);
       setError(
@@ -198,6 +450,20 @@ export default function TechnicalAnalysisSection({
 
     return `${TECHNICAL_ANALYSIS_DISCLOSURE_BASE} ${formatFontes(analiseSelecionada.fonte)} Data de elaboração do relatório de análise: será a data que a análise foi postada.`;
   }, [analiseSelecionada]);
+
+  const handleVerMais = useCallback(() => {
+    if (isMobileModal) {
+      // No mobile, abre o modal
+      setModalAberto(true);
+    } else {
+      // No desktop, expande inline
+      setExpanded((prev) => !prev);
+    }
+  }, [isMobileModal]);
+
+  const handleFecharModal = useCallback(() => {
+    setModalAberto(false);
+  }, []);
 
   const containerPadding = isMobile
     ? '20px 16px'
@@ -484,10 +750,11 @@ export default function TechnicalAnalysisSection({
                     </p>
                   </div>
 
+                  {/* Botão Ver Mais - ADAPTADO PARA MODAL NO MOBILE */}
                   {analiseSelecionada.conteudo && conteudoLength > 480 && (
                     <button
                       type="button"
-                      onClick={() => setExpanded((prev) => !prev)}
+                      onClick={handleVerMais}
                       style={{
                         background: '#0f172a',
                         color: '#f8fafc',
@@ -500,13 +767,18 @@ export default function TechnicalAnalysisSection({
                         width: isMobile ? '100%' : 'auto',
                         marginTop: isMobile ? '12px' : '14px'
                       }}
-                      aria-expanded={expanded}
+                      aria-expanded={isMobileModal ? modalAberto : expanded}
                     >
-                      {expanded ? 'Mostrar menos' : 'Mostrar mais'}
+                      {isMobileModal 
+                        ? 'Ver análise completa' 
+                        : expanded 
+                          ? 'Mostrar menos' 
+                          : 'Mostrar mais'}
                     </button>
                   )}
 
-                  {analiseSelecionada.conteudo &&
+                  {/* Conteúdo expandido - APENAS NO DESKTOP */}
+                  {!isMobileModal && analiseSelecionada.conteudo &&
                     (expanded || conteudoLength <= 480) && (
                       <div
                         style={{
@@ -570,7 +842,6 @@ export default function TechnicalAnalysisSection({
                             </p>
                           </div>
                         )}
-
                       </div>
                     )}
                 </div>
@@ -614,6 +885,7 @@ export default function TechnicalAnalysisSection({
                         onClick={() => {
                           setSelecionadaId(analise.id);
                           setExpanded(false);
+                          setModalAberto(false);
                         }}
                         style={{
                           textAlign: 'left',
@@ -680,6 +952,15 @@ export default function TechnicalAnalysisSection({
           )}
         </div>
       </section>
+
+      {/* Modal de Análise Completa - APENAS NO MOBILE */}
+      <ModalAnaliseCompleta 
+        analise={analiseSelecionada}
+        isOpen={modalAberto}
+        onClose={handleFecharModal}
+        disclosureText={disclosureText}
+      />
+
       <style jsx global>{`
         @keyframes pulse {
           0%, 100% {
