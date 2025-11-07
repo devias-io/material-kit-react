@@ -651,12 +651,21 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const [editModuleError, setEditModuleError] = React.useState<string | null>(null);
   
   const [liveEvents, setLiveEvents] = React.useState<LiveEvent[]>([]);
+  const [showAllLives, setShowAllLives] = React.useState(false);
   const [liveForm, setLiveForm] = React.useState<LiveFormState>(createEmptyLiveForm());
   const [liveError, setLiveError] = React.useState<string | null>(null);
   const [showLiveForm, setShowLiveForm] = React.useState(false);
   const [editingLiveId, setEditingLiveId] = React.useState<number | null>(null);
   const [isLoadingLives, setIsLoadingLives] = React.useState(true);
   const isEditingLive = editingLiveId !== null;
+  const hasMoreLiveEvents = liveEvents.length > 2;
+  const visibleLiveEvents = showAllLives || !hasMoreLiveEvents ? liveEvents : liveEvents.slice(0, 2);
+
+  React.useEffect(() => {
+    if (!hasMoreLiveEvents && showAllLives) {
+      setShowAllLives(false);
+    }
+  }, [hasMoreLiveEvents, showAllLives]);
 
   const [mentorias, setMentorias] = React.useState<Mentoria[]>([]);
   const [isLoadingMentorias, setIsLoadingMentorias] = React.useState(true);
@@ -3671,31 +3680,32 @@ visibleModules.map(module => {
               </p>
             </div>
           ) : (
-            liveEvents.map(live => {
-              const { date, time, dayOfWeek } = formatLiveDateTime(live.eventDate);
-              const isPast = isLivePast(live.eventDate);
-              const isToday = isLiveToday(live.eventDate);
+            <>
+              {visibleLiveEvents.map(live => {
+                const { date, time, dayOfWeek } = formatLiveDateTime(live.eventDate);
+                const isPast = isLivePast(live.eventDate);
+                const isToday = isLiveToday(live.eventDate);
 
-              return (
-                <div
-                  key={live.id}
-                  style={{
-                    padding: blockPadding,
-                    borderRadius: '12px',
-                    border: `2px solid ${
-                      live.isCancelled ? '#fecaca' : isToday ? '#22c55e' : isPast ? '#e2e8f0' : '#d1d5db'
-                    }`,
-                    backgroundColor: live.isCancelled
-                      ? '#fef2f2'
-                      : isToday
-                      ? '#f0fdf4'
-                      : isPast
-                      ? '#f8fafc'
-                      : '#f9fafb',
-                    opacity: isPast && !isToday ? 0.7 : 1
-                  }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                return (
+                  <div
+                    key={live.id}
+                    style={{
+                      padding: blockPadding,
+                      borderRadius: '12px',
+                      border: `2px solid ${
+                        live.isCancelled ? '#fecaca' : isToday ? '#22c55e' : isPast ? '#e2e8f0' : '#d1d5db'
+                      }`,
+                      backgroundColor: live.isCancelled
+                        ? '#fef2f2'
+                        : isToday
+                        ? '#f0fdf4'
+                        : isPast
+                        ? '#f8fafc'
+                        : '#f9fafb',
+                      opacity: isPast && !isToday ? 0.7 : 1
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div
                       className="live-card-header"
                       style={{
@@ -4638,10 +4648,32 @@ visibleModules.map(module => {
                         )}
                       </div>
                     </form>
-                  )}
-                </div>
-              );
-            })
+                        )}
+                      </div>
+                    );
+              })}
+
+              {hasMoreLiveEvents && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllLives(prev => !prev)}
+                  style={{
+                    marginTop: '8px',
+                    justifySelf: 'center',
+                    border: '1px solid #cbd5f5',
+                    backgroundColor: '#ffffff',
+                    color: '#1d4ed8',
+                    borderRadius: '9999px',
+                    padding: '10px 24px',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {showAllLives ? 'Ver menos' : 'Ver mais'}
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
