@@ -290,7 +290,30 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   );
 
   const removeFormatting = useCallback(() => {
-    document.execCommand('removeFormat', false);
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    
+    // Se nada estiver selecionado, não faz nada
+    if (range.collapsed) return;
+
+    // Pega o texto sem formatação
+    const plainText = range.toString();
+    
+    // Remove o conteúdo selecionado
+    range.deleteContents();
+    
+    // Insere o texto puro
+    const textNode = document.createTextNode(plainText);
+    range.insertNode(textNode);
+    
+    // Move o cursor para o final do texto inserido
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
     editorRef.current?.focus();
     if (editorRef.current) {
       onChange(editorRef.current.innerHTML);
