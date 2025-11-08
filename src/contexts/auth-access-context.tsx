@@ -5,6 +5,7 @@ import * as React from 'react';
 import type { User } from '@/types/user';
 import type { AdminPermissions } from '@/lib/permissions';
 import { PLAN_PERMISSIONS } from '@/lib/permissions';
+import { normalizeCustomPermissions as normalizeUserCustomPermissions } from '@/lib/custom-permissions';
 import { useUser } from '@/hooks/use-user';
 
 export interface AuthAccessPlanInfo {
@@ -135,7 +136,7 @@ function derivePlanInfo(user: User | null): AuthAccessPlanInfo {
   const allConfigs = [planConfig, ...entitlementConfigs].filter(Boolean);
   const adminPermissions = allConfigs.find(config => config?.adminPermissions)?.adminPermissions ?? null;
   const isAdmin = allConfigs.some(config => config?.isAdmin);
-  const customPermissions = user.customPermissions ?? [];
+  const customPermissions = normalizeUserCustomPermissions(user.customPermissions);
 
   const pages = ensureGuaranteedPages([...basePages, ...addonPages, ...customPermissions], { planKey: user.plan });
 
@@ -160,7 +161,7 @@ export function AuthAccessProvider({ children }: AuthAccessProviderProps): React
   const planInfo = React.useMemo(() => derivePlanInfo(user), [user]);
   const userEmail = user?.email ?? null;
   const userPlan = user?.plan;
-  const customPermissions = user?.customPermissions;
+  const customPermissions = normalizeUserCustomPermissions(user?.customPermissions);
   const activeEntitlements = user?.activeEntitlements ?? planInfo.activeEntitlements;
 
   const hasInstagramAdminAccess = React.useCallback(() => {

@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic'; // 👈 ADICIONAR ESTA LINHA AQUI
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
+import { normalizeCustomPermissions } from '@/lib/custom-permissions';
+
 const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
@@ -62,7 +64,7 @@ export async function GET(request: NextRequest) {
       name: `${user.firstName} ${user.lastName}`,
       plan: user.plan,
       status: user.status,
-      customPermissions: user.customPermissions || [],
+      customPermissions: normalizeCustomPermissions(user.customPermissions),
       expirationDate: user.expirationDate?.toISOString(),
       avatar: user.avatar
     };
