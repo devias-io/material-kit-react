@@ -104,20 +104,22 @@
 }
 
 /* NOVO: Estilo especial para o botão "Responder dúvida" */
+
 .responseButton {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 8px 18px;
+  padding: 10px 22px;
   font-size: 14px;
   font-weight: 600;
-  color: white;
+  color: #ffffff;
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   border: none;
-  border-radius: 8px;
+  border-radius: 999px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 18px rgba(37, 99, 235, 0.25);
   position: relative;
   overflow: hidden;
 }
@@ -125,18 +127,16 @@
 .responseButton::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   opacity: 0;
   transition: opacity 0.2s ease;
+  z-index: 0;
 }
 
 .responseButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 20px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 16px 24px rgba(37, 99, 235, 0.35);
 }
 
 .responseButton:hover::before {
@@ -171,8 +171,9 @@
 /* NOVO: Footer do card onde fica o botão */
 .questionFooter {
   display: flex;
+  justify-content: flex-end;
   align-items: center;
-  justify-content: flex-start;
+  gap: 12px;
   padding: 18px 24px 22px;
   background: linear-gradient(to bottom, rgba(248, 250, 252, 0), rgba(248, 250, 252, 0.4));
   border-top: 1px solid rgba(226, 232, 240, 0.4);
