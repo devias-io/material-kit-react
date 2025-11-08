@@ -17,6 +17,7 @@ import {
   ListOrdered,
   Loader2,
   PlusCircle,
+  RemoveFormatting,
   Save,
   ShieldAlert,
   Star,
@@ -288,6 +289,15 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     [onChange, updateSelectionToolbarPosition]
   );
 
+  const removeFormatting = useCallback(() => {
+    document.execCommand('removeFormat', false);
+    editorRef.current?.focus();
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+    updateSelectionToolbarPosition();
+  }, [onChange, updateSelectionToolbarPosition]);
+
   const insertLink = useCallback(() => {
     const url = prompt('Informe a URL do link');
     if (url) {
@@ -422,6 +432,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         <button type="button" onClick={insertImage} style={toolbarButtonStyle}>
           <ImageIcon size={16} />
         </button>
+        <span style={{ width: '1px', background: '#e2e8f0', margin: '0 4px' }} />
+        <button type="button" onClick={removeFormatting} style={toolbarButtonStyle} title="Remover formatação">
+          <RemoveFormatting size={16} />
+        </button>
       </div>
 
       <div
@@ -487,6 +501,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <span style={{ width: '1px', background: 'rgba(148, 163, 184, 0.45)' }} />
           <button type="button" onClick={insertLink} style={floatingButtonStyle}>
             <LinkIcon size={15} />
+          </button>
+          <span style={{ width: '1px', background: 'rgba(148, 163, 184, 0.45)' }} />
+          <button type="button" onClick={removeFormatting} style={floatingButtonStyle} title="Remover formatação">
+            <RemoveFormatting size={15} />
           </button>
         </div>
       )}
