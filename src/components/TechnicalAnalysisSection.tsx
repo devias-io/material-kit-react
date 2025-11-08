@@ -979,7 +979,6 @@ export default function TechnicalAnalysisSection({
 
         .technical-analysis-content > * {
           max-width: 100% !important;
-          width: 100% !important;
           margin-left: 0 !important;
           margin-right: 0 !important;
         }
@@ -996,7 +995,32 @@ export default function TechnicalAnalysisSection({
           margin-bottom: 1rem;
         }
 
-        .technical-analysis-content img,
+        /* Imagens no DESKTOP - qualidade preservada */
+        @media (min-width: 641px) {
+          .technical-analysis-content img {
+            width: auto !important;
+            max-width: 100% !important;
+            height: auto !important;
+            display: block;
+            margin: 20px auto;
+            border-radius: 12px;
+            object-fit: contain;
+          }
+        }
+
+        /* Imagens no MOBILE - width 100% */
+        @media (max-width: 640px) {
+          .technical-analysis-content img {
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            display: block;
+            margin: 12px auto;
+            border-radius: 10px;
+            object-fit: cover;
+          }
+        }
+
         .technical-analysis-content video,
         .technical-analysis-content canvas,
         .technical-analysis-content svg {
@@ -1012,6 +1036,11 @@ export default function TechnicalAnalysisSection({
           width: 100% !important;
           max-width: 100% !important;
           margin: 16px auto;
+          text-align: center;
+        }
+
+        .technical-analysis-content figure img {
+          margin: 0 auto;
         }
 
         .technical-analysis-content iframe {
@@ -1079,7 +1108,6 @@ export default function TechnicalAnalysisSection({
         }
 
         @media (max-width: 640px) {
-          .technical-analysis-content img,
           .technical-analysis-content video,
           .technical-analysis-content canvas,
           .technical-analysis-content svg {
