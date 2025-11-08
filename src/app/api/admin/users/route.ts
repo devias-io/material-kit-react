@@ -6,6 +6,7 @@ import { enviarEmailCredenciais } from '@/lib/auth/email';
 import { hashPassword, gerarSenhaSegura } from '@/lib/auth/password'; // ✅ ADICIONADO
 import { auth } from '@/lib/auth';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
+import { normalizeCustomPermissions, serializeCustomPermissions } from '@/lib/custom-permissions';
 
 const prisma = new PrismaClient({
   datasourceUrl: process.env.NODE_ENV === 'production' 
@@ -322,38 +323,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400, headers });
     }
     
-    const normalizeCustomPermissions = (value: unknown): string[] => {
-      if (!value) {
-        return [];
-      }
-
-      if (Array.isArray(value)) {
-        return value.map(permission => String(permission).trim()).filter(Boolean);
-      }
-
-      if (typeof value === 'string') {
-        const trimmed = value.trim();
-
-        if (!trimmed) {
-          return [];
-        }
-
-        try {
-          const parsed = JSON.parse(trimmed);
-          if (Array.isArray(parsed)) {
-            return parsed.map(permission => String(permission).trim()).filter(Boolean);
-          }
-        } catch (error) {
-          // trataremos como permissão simples
-        }
-
-        return [trimmed];
-      }
-
-      return [];
-    };
-
-    const normalizedCustomPermissions = Array.from(new Set(normalizeCustomPermissions(customPermissionsInput)));
+    const normalizedCustomPermissions = normalizeCustomPermissions(customPermissionsInput);
     const effectiveCustomPermissions = normalizedCustomPermissions;
 
     // Conectar ao banco
@@ -411,7 +381,7 @@ export async function POST(request: NextRequest) {
         mustChangePassword: true, // ✅ FORÇA MUDANÇA NO PRIMEIRO ACESSO
         hotmartCustomerId: hotmartCustomerId || null,
         expirationDate: normalizedExpirationDate,
-        customPermissions: JSON.stringify(effectiveCustomPermissions)
+        customPermissions: serializeCustomPermissions(effectiveCustomPermissions)
       }
     });
 

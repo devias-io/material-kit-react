@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { getActiveEntitlementCodes } from '@/lib/entitlements';
+import { normalizeCustomPermissions } from '@/lib/custom-permissions';
 
 const prisma = new PrismaClient();
 
@@ -46,6 +47,7 @@ export async function GET(_request: NextRequest) {
       avatar: user.avatar,
       plan: user.plan,
       status: user.status,
+      customPermissions: normalizeCustomPermissions(user.customPermissions),
       expirationDate: user.expirationDate,
       createdAt: user.createdAt,
       lastLogin: user.lastLogin,

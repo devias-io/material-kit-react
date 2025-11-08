@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
 import jwt from 'jsonwebtoken'
 import { prisma } from './prisma'
+import { normalizeCustomPermissions } from './custom-permissions'
 
 export async function auth() {
   try {
@@ -62,16 +63,7 @@ export async function auth() {
     const isAnalyst = user.plan === 'ANALISTA'
     
     // Verificar se tem acesso à análise de carteira
-    let customPermissions: string[] = []
-
-    if (user.customPermissions) {
-      try {
-        customPermissions = JSON.parse(user.customPermissions || '[]')
-      } catch (error) {
-        console.error('Erro ao interpretar permissões personalizadas:', error)
-        customPermissions = []
-      }
-    }
+    const customPermissions = normalizeCustomPermissions(user.customPermissions)
 
     const activeEntitlements = (user.entitlements ?? []).filter(entitlement => {
       if (entitlement.status !== 'ACTIVE') {
