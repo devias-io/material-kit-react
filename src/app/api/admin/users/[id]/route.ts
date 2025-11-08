@@ -170,14 +170,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
     }
 
-    const normalizeCustomPermissions = (plan: string | null | undefined, value: unknown): string => {
+    const normalizeCustomPermissions = (_plan: string | null | undefined, value: unknown): string => {
       const parsed = parseCustomPermissions(value);
 
-      const allowedPermissions = plan === 'ANALISTA'
-        ? parsed.filter(permission => permission.startsWith('admin'))
-        : parsed;
-
-      return JSON.stringify(allowedPermissions);
+      return JSON.stringify(parsed);
     };
 
     // Preparar dados para atualização
