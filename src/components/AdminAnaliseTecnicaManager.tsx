@@ -83,6 +83,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     top: 0,
     left: 0,
     widthPercent: 100,
+    alignment: 'center' as 'left' | 'center' | 'right',
   });
 
   const hideSelectionToolbar = useCallback(() => {
@@ -208,6 +209,18 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           }
         }
 
+        // Capturar alinhamento atual
+        let currentAlignment: 'left' | 'center' | 'right' = 'center';
+        if (img.dataset.alignment) {
+          currentAlignment = img.dataset.alignment as 'left' | 'center' | 'right';
+        } else if (img.style.marginLeft === '0px' || img.style.marginLeft === '0') {
+          currentAlignment = 'left';
+        } else if (img.style.marginRight === '0px' || img.style.marginRight === '0') {
+          currentAlignment = 'right';
+        } else {
+          currentAlignment = 'center';
+        }
+
         const rect = img.getBoundingClientRect();
         const top = Math.max(rect.top, 12);
         const left = rect.left + rect.width / 2;
@@ -218,6 +231,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           top,
           left,
           widthPercent: Number.isFinite(widthPercent) ? widthPercent : 100,
+          alignment: currentAlignment,
         });
         return;
       }
@@ -400,6 +414,44 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     [onChange, updateImageToolbarPosition]
   );
 
+  const handleImageAlignmentChange = useCallback(
+    (alignment: 'left' | 'center' | 'right') => {
+      const img = selectedImageRef.current;
+      if (!img) return;
+
+      // Configurar alinhamento
+      img.dataset.alignment = alignment;
+      
+      if (alignment === 'left') {
+        img.style.marginLeft = '0';
+        img.style.marginRight = 'auto';
+        img.style.display = 'block';
+      } else if (alignment === 'right') {
+        img.style.marginLeft = 'auto';
+        img.style.marginRight = '0';
+        img.style.display = 'block';
+      } else {
+        img.style.marginLeft = 'auto';
+        img.style.marginRight = 'auto';
+        img.style.display = 'block';
+      }
+
+      setImageToolbar(prev => ({
+        ...prev,
+        alignment,
+      }));
+
+      if (editorRef.current) {
+        onChange(editorRef.current.innerHTML);
+      }
+
+      requestAnimationFrame(() => {
+        updateImageToolbarPosition();
+      });
+    },
+    [onChange, updateImageToolbarPosition]
+  );
+
   return (
     <div
       style={{
@@ -545,7 +597,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             padding: '12px 16px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '8px',
+            gap: '12px',
             boxShadow: '0 10px 25px rgba(15, 23, 42, 0.18)',
             zIndex: 1000,
             border: '1px solid rgba(148, 163, 184, 0.35)',
@@ -557,18 +609,66 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             }
           }}
         >
-          <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '0.04em' }}>
-            Ajustar tamanho
-          </span>
-          <input
-            type="range"
-            min={20}
-            max={100}
-            step={5}
-            value={imageToolbar.widthPercent}
-            onChange={event => handleImageWidthChange(Number(event.target.value))}
-            style={{ cursor: 'pointer' }}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '0.04em' }}>
+              Alinhamento
+            </span>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button
+                type="button"
+                onClick={() => handleImageAlignmentChange('left')}
+                style={{
+                  ...floatingButtonStyle,
+                  background: imageToolbar.alignment === 'left' ? 'rgba(77, 251, 1, 0.2)' : 'transparent',
+                  flex: 1,
+                }}
+                title="Alinhar à esquerda"
+              >
+                <AlignLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleImageAlignmentChange('center')}
+                style={{
+                  ...floatingButtonStyle,
+                  background: imageToolbar.alignment === 'center' ? 'rgba(77, 251, 1, 0.2)' : 'transparent',
+                  flex: 1,
+                }}
+                title="Centralizar"
+              >
+                <AlignCenter size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleImageAlignmentChange('right')}
+                style={{
+                  ...floatingButtonStyle,
+                  background: imageToolbar.alignment === 'right' ? 'rgba(77, 251, 1, 0.2)' : 'transparent',
+                  flex: 1,
+                }}
+                title="Alinhar à direita"
+              >
+                <AlignRight size={16} />
+              </button>
+            </div>
+          </div>
+          
+          <div style={{ width: '100%', height: '1px', background: 'rgba(148, 163, 184, 0.3)' }} />
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '0.04em' }}>
+              Tamanho ({imageToolbar.widthPercent}%)
+            </span>
+            <input
+              type="range"
+              min={20}
+              max={100}
+              step={5}
+              value={imageToolbar.widthPercent}
+              onChange={event => handleImageWidthChange(Number(event.target.value))}
+              style={{ cursor: 'pointer' }}
+            />
+          </div>
         </div>
       )}
     </div>
