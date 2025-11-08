@@ -1,9 +1,145 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+
+import { useAuthAccess } from '@/hooks/use-auth-access';
+
+interface AdminCard {
+  title: string;
+  description: string;
+  icon: string;
+  href: string;
+  status: 'active' | 'development';
+  permission: string;
+  isNew?: boolean;
+}
+
+const ADMIN_CARDS: AdminCard[] = [
+  {
+    title: 'Gestão de Usuários',
+    description: 'Administre contas de usuários, permissões e níveis de acesso ao sistema.',
+    icon: '👥',
+    href: '/dashboard/admin/usuarios',
+    status: 'active',
+    permission: 'admin-usuarios'
+  },
+  {
+    title: 'Instagram Close Friends',
+    description: 'Gerencie cadastros de Instagram dos usuários para conteúdos exclusivos do Close Friends.',
+    icon: '📱',
+    href: '/dashboard/admin/instagram-cadastros',
+    status: 'active',
+    permission: 'admin-instagram'
+  },
+  {
+    title: 'Integrações',
+    description: 'Central de gerenciamento das integrações com APIs externas e sistemas terceiros.',
+    icon: '🔗',
+    href: '/dashboard/admin/integracoes',
+    status: 'active',
+    permission: 'admin-integracoes'
+  },
+  {
+    title: 'Renovações',
+    description: 'Controle e monitore renovações de assinaturas, vencimentos e status de pagamentos.',
+    icon: '🔄',
+    href: '/dashboard/admin/renovacoes',
+    status: 'active',
+    permission: 'admin-renovacoes'
+  },
+  {
+    title: 'Gestão de Empresas',
+    description: 'Gerencie cadastro de empresas listadas na bolsa, setores e informações corporativas.',
+    icon: '🏭',
+    href: '/dashboard/gerenciamento',
+    status: 'active',
+    permission: 'admin-empresas'
+  },
+  {
+    title: 'Central de Proventos',
+    description: 'Gerencie dividendos, JCP e outros proventos das empresas listadas na bolsa.',
+    icon: '💰',
+    href: '/dashboard/central-proventos',
+    status: 'active',
+    permission: 'admin-proventos'
+  },
+  {
+    title: 'Gestão de Relatórios',
+    description: 'Centralize publicações, relatórios e materiais estratégicos da plataforma.',
+    icon: '📑',
+    href: '/dashboard/central-relatorios',
+    status: 'active',
+    permission: 'admin-relatorios'
+  },
+  {
+    title: 'Envio de Notificações',
+    description: 'Dispare comunicados personalizados para planos específicos da base.',
+    icon: '📣',
+    href: '/dashboard/admin/notificacoes',
+    status: 'active',
+    permission: 'admin'
+  },
+  {
+    title: 'Relatório Semanal',
+    description: 'Produza e publique o relatório semanal com destaques e insights do mercado.',
+    icon: '🗞️',
+    href: '/dashboard/admin/relatorio-semanal',
+    status: 'active',
+    permission: 'admin-relatorio-semanal'
+  },
+  {
+    title: 'Análises Trimestrais',
+    description: 'Gerencie as análises trimestrais com dados financeiros e comentários estratégicos.',
+    icon: '📆',
+    href: '/dashboard/admin/analises-trimesestrais',
+    status: 'active',
+    permission: 'admin-analises-trimesestrais'
+  },
+  {
+    title: 'Análises Técnicas',
+    description: 'Cadastre e organize estudos técnicos, gráficos e sinais operacionais.',
+    icon: '📈',
+    href: '/dashboard/admin/analise-tecnica',
+    status: 'active',
+    permission: 'admin-analise-tecnica'
+  },
+  {
+    title: 'Agenda Corporativa',
+    description: 'Insira informações, notícias e eventos importantes sobre os ativos.',
+    icon: '📅',
+    href: '/dashboard/central-agenda',
+    status: 'active',
+    permission: 'admin-integracoes'
+  },
+  {
+    title: 'Analisar Carteiras',
+    description: 'Analise e monitore as carteiras de investimentos dos usuários com ferramentas avançadas.',
+    icon: '🧾',
+    href: '/dashboard/admin/carteiras',
+    status: 'active',
+    permission: 'admin-carteiras'
+  },
+  {
+    title: 'Central de Dúvidas',
+    description: 'Gerencie os conteúdos da base de conhecimento e acompanhe as dúvidas recebidas.',
+    icon: '❓',
+    href: '/dashboard/admin/central-duvidas',
+    status: 'active',
+    permission: 'admin-central-duvidas'
+  }
+];
 
 export default function AdminDashboard() {
   const [notification, setNotification] = useState('');
+  const { loading: isAccessLoading, hasAccessSync } = useAuthAccess();
+
+  const visibleAdminCards = useMemo(() => {
+    if (isAccessLoading) {
+      return ADMIN_CARDS;
+    }
+
+    return ADMIN_CARDS.filter(card => hasAccessSync(card.permission));
+  }, [isAccessLoading, hasAccessSync]);
 
   const navigateTo = (url: string) => {
     if (url.startsWith('/')) {
@@ -52,107 +188,6 @@ export default function AdminDashboard() {
     }, 100);
     return () => clearTimeout(timer);
   }, []);
-
-  const adminCards = [
-    {
-      title: 'Gestão de Usuários',
-      description: 'Administre contas de usuários, permissões e níveis de acesso ao sistema.',
-      icon: '👥',
-      href: '/dashboard/admin/usuarios',
-      status: 'active'
-    },
-    {
-      title: 'Instagram Close Friends',
-      description: 'Gerencie cadastros de Instagram dos usuários para conteúdos exclusivos do Close Friends.',
-      icon: '📱',
-      href: '/dashboard/admin/instagram-cadastros',
-      status: 'active'
-    },
-    {
-      title: 'Integrações',
-      description: 'Central de gerenciamento das integrações com APIs externas e sistemas terceiros.',
-      icon: '🔗',
-      href: '/dashboard/admin/integracoes',
-      status: 'active'
-    },
-    {
-      title: 'Renovações',
-      description: 'Controle e monitore renovações de assinaturas, vencimentos e status de pagamentos.',
-      icon: '🔄',
-      href: '/dashboard/admin/renovacoes',
-      status: 'active'
-    },
-    {
-      title: 'Gestão de Empresas',
-      description: 'Gerencie cadastro de empresas listadas na bolsa, setores e informações corporativas.',
-      icon: '🏭',
-      href: '/dashboard/gerenciamento',
-      status: 'active'
-    },
-    {
-      title: 'Central de Proventos',
-      description: 'Gerencie dividendos, JCP e outros proventos das empresas listadas na bolsa.',
-      icon: '💰',
-      href: '/dashboard/central-proventos',
-      status: 'active'
-    },
-    {
-      title: 'Gestão de Relatórios',
-      description: 'Centralize publicações, relatórios e materiais estratégicos da plataforma.',
-      icon: '📑',
-      href: '/dashboard/central-relatorios',
-      status: 'active'
-    },
-    {
-      title: 'Envio de Notificações',
-      description: 'Dispare comunicados personalizados para planos específicos da base.',
-      icon: '📣',
-      href: '/dashboard/admin/notificacoes',
-      status: 'active'
-    },
-    {
-      title: 'Relatório Semanal',
-      description: 'Produza e publique o relatório semanal com destaques e insights do mercado.',
-      icon: '🗞️',
-      href: '/dashboard/admin/relatorio-semanal',
-      status: 'active'
-    },
-    {
-      title: 'Análises Trimestrais',
-      description: 'Gerencie as análises trimestrais com dados financeiros e comentários estratégicos.',
-      icon: '📆',
-      href: '/dashboard/admin/analises-trimesestrais',
-      status: 'active'
-    },
-    {
-      title: 'Análises Técnicas',
-      description: 'Cadastre e organize estudos técnicos, gráficos e sinais operacionais.',
-      icon: '📈',
-      href: '/dashboard/admin/analise-tecnica',
-      status: 'active'
-    },
-    {
-      title: 'Agenda Corporativa',
-      description: 'Insira informações, notícias e eventos importantes sobre os ativos.',
-      icon: '📅',
-      href: '/dashboard/central-agenda',
-      status: 'active'
-    },
-    {
-      title: 'Analisar Carteiras',
-      description: 'Analise e monitore as carteiras de investimentos dos usuários com ferramentas avançadas.',
-      icon: '🧾',
-      href: '/dashboard/admin/carteiras',
-      status: 'active'
-    },
-    {
-      title: 'Central de Dúvidas',
-      description: 'Gerencie os conteúdos da base de conhecimento e acompanhe as dúvidas recebidas.',
-      icon: '❓',
-      href: '/dashboard/admin/central-duvidas',
-      status: 'active'
-    }
-  ];
 
   const styles = {
     container: {
@@ -414,7 +449,23 @@ export default function AdminDashboard() {
         </div>
 
         <div style={styles.grid}>
-          {adminCards.map((card, index) => (
+          {visibleAdminCards.length === 0 && !isAccessLoading && (
+            <div
+              style={{
+                gridColumn: '1 / -1',
+                padding: '48px',
+                borderRadius: '16px',
+                background: 'rgba(0, 0, 0, 0.05)',
+                border: '1px dashed rgba(15, 23, 42, 0.2)',
+                textAlign: 'center',
+                color: '#475569',
+                fontWeight: 500
+              }}
+            >
+              Você não possui permissões administrativas para acessar estas ferramentas.
+            </div>
+          )}
+          {visibleAdminCards.map((card, index) => (
             <div
               key={index}
               className="admin-card"
