@@ -543,22 +543,39 @@ export default function AdminCentralDuvidas() {
     }
   };
 
-  const statusCounts = useMemo(
-    () =>
-      questions.reduce(
-        (acc, question) => {
-          acc.total += 1;
-          if (question.status === 'NOVA') {
-            acc.NOVA += 1;
-          } else {
-            acc.RESPONDIDA += 1;
+  const statusCounts = useMemo(() => {
+    if (stats?.breakdown?.byStatus?.length) {
+      return stats.breakdown.byStatus.reduce(
+        (acc, item) => {
+          acc.total += item.count;
+
+          if (item.status === 'NOVA') {
+            acc.NOVA += item.count;
           }
+
+          if (item.status === 'RESPONDIDA' || item.status === 'FECHADA') {
+            acc.RESPONDIDA += item.count;
+          }
+
           return acc;
         },
         { total: 0, NOVA: 0, RESPONDIDA: 0 } as Record<'total' | 'NOVA' | 'RESPONDIDA', number>,
-      ),
-    [questions],
-  );
+      );
+    }
+
+    return questions.reduce(
+      (acc, question) => {
+        acc.total += 1;
+        if (question.status === 'NOVA') {
+          acc.NOVA += 1;
+        } else {
+          acc.RESPONDIDA += 1;
+        }
+        return acc;
+      },
+      { total: 0, NOVA: 0, RESPONDIDA: 0 } as Record<'total' | 'NOVA' | 'RESPONDIDA', number>,
+    );
+  }, [questions, stats]);
 
   const filteredQuestions = useMemo(() => {
     let data = [...questions];
