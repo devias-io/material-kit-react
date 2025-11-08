@@ -43,6 +43,53 @@ interface AuthAccessContextValue {
 const GUARANTEED_PAGES = ['recursos-suporte'] as const;
 const DEFAULT_OPEN_PAGES = ['relatorio-semanal'] as const;
 
+function normalizeCustomPermissions(value: unknown): string[] {
+  if (!value) {
+    return [];
+  }
+
+  const normalize = (permission: unknown): string => String(permission).trim();
+
+  if (Array.isArray(value)) {
+    return Array.from(
+      new Set(
+        value
+          .map(normalize)
+          .filter(permission => permission.length > 0)
+      )
+    );
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+
+    if (!trimmed) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(trimmed);
+
+      if (Array.isArray(parsed)) {
+        return Array.from(
+          new Set(
+            parsed
+              .map(normalize)
+              .filter(permission => permission.length > 0)
+          )
+        );
+      }
+    } catch (error) {
+      // Não é JSON válido – tratar como permissão única
+    }
+
+    const normalized = normalize(trimmed);
+    return normalized ? [normalized] : [];
+  }
+
+  return [];
+}
+
 const FALLBACK_PLAN_INFO: AuthAccessPlanInfo = {
   displayName: 'Visitante',
   pages: [...GUARANTEED_PAGES],
@@ -135,7 +182,7 @@ function derivePlanInfo(user: User | null): AuthAccessPlanInfo {
   const allConfigs = [planConfig, ...entitlementConfigs].filter(Boolean);
   const adminPermissions = allConfigs.find(config => config?.adminPermissions)?.adminPermissions ?? null;
   const isAdmin = allConfigs.some(config => config?.isAdmin);
-  const customPermissions = user.customPermissions ?? [];
+  const customPermissions = normalizeCustomPermissions(user.customPermissions);
 
   const pages = ensureGuaranteedPages([...basePages, ...addonPages, ...customPermissions], { planKey: user.plan });
 
@@ -160,7 +207,7 @@ export function AuthAccessProvider({ children }: AuthAccessProviderProps): React
   const planInfo = React.useMemo(() => derivePlanInfo(user), [user]);
   const userEmail = user?.email ?? null;
   const userPlan = user?.plan;
-  const customPermissions = user?.customPermissions;
+  const customPermissions = normalizeCustomPermissions(user?.customPermissions);
   const activeEntitlements = user?.activeEntitlements ?? planInfo.activeEntitlements;
 
   const hasInstagramAdminAccess = React.useCallback(() => {
