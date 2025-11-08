@@ -44,6 +44,53 @@ interface AuthAccessContextValue {
 const GUARANTEED_PAGES = ['recursos-suporte'] as const;
 const DEFAULT_OPEN_PAGES = ['relatorio-semanal'] as const;
 
+function normalizeCustomPermissions(value: unknown): string[] {
+  if (!value) {
+    return [];
+  }
+
+  const normalize = (permission: unknown): string => String(permission).trim();
+
+  if (Array.isArray(value)) {
+    return Array.from(
+      new Set(
+        value
+          .map(normalize)
+          .filter(permission => permission.length > 0)
+      )
+    );
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+
+    if (!trimmed) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(trimmed);
+
+      if (Array.isArray(parsed)) {
+        return Array.from(
+          new Set(
+            parsed
+              .map(normalize)
+              .filter(permission => permission.length > 0)
+          )
+        );
+      }
+    } catch (error) {
+      // Não é JSON válido – tratar como permissão única
+    }
+
+    const normalized = normalize(trimmed);
+    return normalized ? [normalized] : [];
+  }
+
+  return [];
+}
+
 const FALLBACK_PLAN_INFO: AuthAccessPlanInfo = {
   displayName: 'Visitante',
   pages: [...GUARANTEED_PAGES],
