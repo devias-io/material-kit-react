@@ -354,10 +354,7 @@ export async function POST(request: NextRequest) {
     };
 
     const normalizedCustomPermissions = Array.from(new Set(normalizeCustomPermissions(customPermissionsInput)));
-    const effectiveCustomPermissions =
-      plan === 'ANALISTA'
-        ? normalizedCustomPermissions.filter(permission => permission.startsWith('admin'))
-        : normalizedCustomPermissions;
+    const effectiveCustomPermissions = normalizedCustomPermissions;
 
     // Conectar ao banco
     await prisma.$connect();
