@@ -733,7 +733,7 @@ const buildPdfImagesHtml = (images: PdfPreviewImage[]): string => {
         >
           <img
             src="${image.dataUrl}"
-            alt="Página ${image.page} do PDF"
+            alt="Imagem da página ${image.page} do PDF"
             style="width: 100%; border-radius: 12px;"
             data-editor-image="true"
             data-width-percent="100"
@@ -823,7 +823,7 @@ export default function AdminAnaliseTecnicaManager() {
       case 'text':
         return `Lendo texto: página ${pdfProgress.currentPage} de ${pdfProgress.totalPages}`;
       case 'image':
-        return `Renderizando imagens: página ${pdfProgress.currentPage} de ${pdfProgress.totalPages}`;
+        return `Extraindo imagens: página ${pdfProgress.currentPage} de ${pdfProgress.totalPages}`;
       case 'done':
         return 'Extração concluída';
       default:
@@ -1002,7 +1002,16 @@ export default function AdminAnaliseTecnicaManager() {
           };
         });
 
-        setPdfUploadSuccess('PDF processado com sucesso. Revise o conteúdo antes de publicar.');
+        const totalImagens = resultado.images.length;
+        setPdfUploadSuccess(
+          totalImagens > 0
+            ? `PDF processado com sucesso. ${
+                totalImagens === 1
+                  ? 'Uma imagem embutida foi extraída.'
+                  : `${totalImagens} imagens embutidas foram extraídas.`
+              } Revise o conteúdo antes de publicar.`
+            : 'PDF processado com sucesso. Nenhuma imagem embutida foi encontrada. Revise o conteúdo antes de publicar.'
+        );
       } catch (err) {
         console.error(err);
         setPdfPreviewImages([]);
@@ -1506,7 +1515,7 @@ export default function AdminAnaliseTecnicaManager() {
                     >
                       <img
                         src={image.dataUrl}
-                        alt={`Página ${image.page} do PDF`}
+                        alt={`Imagem da página ${image.page} do PDF`}
                         style={{ width: '100%', height: '160px', objectFit: 'cover' }}
                       />
                       <button
@@ -1531,7 +1540,7 @@ export default function AdminAnaliseTecnicaManager() {
                         <Trash2 size={14} />
                       </button>
                       <div style={{ padding: '8px 12px', fontSize: '12px', color: '#475569', fontWeight: 600 }}>
-                        Página {image.page}
+                        Imagem da página {image.page}
                       </div>
                     </div>
                   ))}
