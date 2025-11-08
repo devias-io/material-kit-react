@@ -789,13 +789,13 @@ export default function AdminCentralDuvidas() {
                     </div>
 
                     {/* Botão fora da área expandida para perguntas sem expansão */}
-                    {question.status === 'NOVA' && 
-                     activeResponseQuestionId !== question.id && 
+                    {question.status === 'NOVA' &&
+                     activeResponseQuestionId !== question.id &&
                      expandedQuestion !== question.id && (
-                      <div className={styles.responseActions}>
+                      <div className={styles.questionFooter}>
                         <button
                           type="button"
-                          className={styles.primaryButton}
+                          className={styles.responseButton}
                           onClick={() => handleStartResponse(question)}
                         >
                           Responder dúvida
@@ -842,10 +842,10 @@ export default function AdminCentralDuvidas() {
                         
                         {/* Botão dentro da área expandida */}
                         {question.status === 'NOVA' && activeResponseQuestionId !== question.id && (
-                          <div className={styles.responseActions} style={{ marginTop: '1rem' }}>
+                          <div className={styles.questionFooter}>
                             <button
                               type="button"
-                              className={styles.primaryButton}
+                              className={styles.responseButton}
                               onClick={() => handleStartResponse(question)}
                             >
                               Responder dúvida
