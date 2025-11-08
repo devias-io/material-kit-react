@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import type { KeyboardEvent, MouseEvent } from 'react';
 
-import { useUser } from '@/hooks/use-user';
+import { useAuthAccess } from '@/hooks/use-auth-access';
 
 interface Recurso {
   key: string;
@@ -12,6 +12,7 @@ interface Recurso {
   href: string;
   icon: string;
   badge?: string;
+  permission: string;
 }
 
 const RECURSOS: Recurso[] = [
@@ -21,7 +22,8 @@ const RECURSOS: Recurso[] = [
     description: 'Estratégias e insights exclusivos para maximizar seus retornos no mercado financeiro',
     href: '/dashboard/recursos-exclusivos/dicas-de-investimentos',
     icon: '💡',
-    badge: 'NOVO'
+    badge: 'NOVO',
+    permission: 'recursos-dicas'
   },
   {
     key: 'recursos-analise',
@@ -29,14 +31,16 @@ const RECURSOS: Recurso[] = [
     description: 'Relatórios detalhados e análises personalizadas da sua carteira de investimentos',
     href: '/dashboard/recursos-exclusivos/analise-de-carteira',
     icon: '📊',
-    badge: 'NOVO'
+    badge: 'NOVO',
+    permission: 'recursos-analise'
   },
   {
     key: 'recursos-reserva',
     title: 'Reserva de Emergência',
     description: 'Guia completo com as melhores opções de investimento para sua reserva de emergência',
     href: '/dashboard/recursos-exclusivos/reserva-emergencia',
-    icon: '🏦'
+    icon: '🏦',
+    permission: 'recursos-reserva'
   },
   {
     key: 'recursos-imposto',
@@ -44,7 +48,8 @@ const RECURSOS: Recurso[] = [
     description: 'Ferramentas, calculadoras e guias completos para declaração do IR com investimentos',
     href: '/dashboard/recursos-exclusivos/imposto-de-renda',
     icon: '📋',
-    badge: 'NOVIDADE'
+    badge: 'NOVIDADE',
+    permission: 'recursos-imposto'
   },
   {
     key: 'recursos-telegram',
@@ -52,28 +57,32 @@ const RECURSOS: Recurso[] = [
     description: 'Entre no nosso grupo exclusivo para dicas, análises e discussões sobre investimentos',
     href: '/dashboard/recursos-exclusivos/telegram',
     icon: '💬',
-    badge: 'ATIVO'
+    badge: 'ATIVO',
+    permission: 'recursos-telegram'
   },
   {
     key: 'recursos-lives',
     title: 'Lives e Aulas',
     description: 'Biblioteca completa de vídeos educativos, webinars e aulas ao vivo gravadas',
     href: '/dashboard/recursos-exclusivos/lives-e-aulas',
-    icon: '🎥'
+    icon: '🎥',
+    permission: 'recursos-lives'
   },
   {
     key: 'recursos-milhas',
     title: 'Milhas Aéreas',
     description: 'Estratégias e dicas para acumular milhas através de investimentos e cartões de crédito',
     href: '/dashboard/recursos-exclusivos/milhas-aereas',
-    icon: '✈️'
+    icon: '✈️',
+    permission: 'recursos-milhas'
   },
   {
     key: 'recursos-ebooks',
     title: 'Ebooks',
     description: 'Material de estudo em PDF sobre investimentos, análise fundamentalista e estratégias',
     href: '/dashboard/recursos-exclusivos/ebooks',
-    icon: '📚'
+    icon: '📚',
+    permission: 'recursos-ebooks'
   },
   {
     key: 'recursos-planilhas',
@@ -81,29 +90,31 @@ const RECURSOS: Recurso[] = [
     description: 'Templates exclusivos para controle de carteira, análise de ações e planejamento financeiro',
     href: '/dashboard/recursos-exclusivos/planilhas',
     icon: '📈',
-    badge: 'POPULAR'
+    badge: 'POPULAR',
+    permission: 'recursos-planilhas'
   },
   {
     key: 'recursos-suporte',
     title: 'Suporte',
     description: 'Fale diretamente com o nosso time para tirar dúvidas e receber orientação personalizada.',
     href: '/dashboard/recursos-exclusivos/central-duvidas',
-    icon: '🤝'
+    icon: '🤝',
+    permission: 'recursos-suporte'
   }
 ];
 
 export default function RecursosExclusivos(): React.JSX.Element {
-  const { user } = useUser();
+  const { planInfo, loading: isAccessLoading } = useAuthAccess();
 
   const recursosFiltrados = useMemo(() => {
-    if (user?.plan === 'RENDA_TURBINADA') {
-      return RECURSOS.filter(recurso =>
-        ['recursos-suporte', 'recursos-telegram'].includes(recurso.key)
-      );
+    if (isAccessLoading) {
+      return RECURSOS;
     }
 
-    return RECURSOS;
-  }, [user?.plan]);
+    const allowedPermissions = new Set(planInfo.pages);
+
+    return RECURSOS.filter(recurso => allowedPermissions.has(recurso.permission));
+  }, [isAccessLoading, planInfo.pages]);
 
   const handleNavigation = (href: string): void => {
     window.location.href = href;
