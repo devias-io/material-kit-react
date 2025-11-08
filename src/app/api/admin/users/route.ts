@@ -71,7 +71,8 @@ export async function GET(request: NextRequest) {
     
     // Estratégia: tentar diferentes abordagens até uma funcionar
     let users;
-    let hotmartDataMap = new Map();
+    const hotmartDataMap = new Map();
+    const purchasesMap = new Map();
     
     try {
       // 1. Primeiro, buscar usuários básicos
@@ -98,7 +99,6 @@ export async function GET(request: NextRequest) {
       
       // 3. Tentar buscar purchases separadamente
       console.log('🔄 Buscando purchases...');
-      let purchasesMap = new Map();
       try {
         const purchases = await prisma.purchase.findMany();
         console.log(`✅ Encontradas ${purchases.length} purchases`);
