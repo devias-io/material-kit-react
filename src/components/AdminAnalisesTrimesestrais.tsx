@@ -27,6 +27,7 @@ import {
   inferLegacyUnitForKey,
   stripOriginalMetric
 } from '@/utils/quarterly-metrics';
+import { extractPdfContent, loadPdfJs } from '@/utils/pdf/extractPdfContent';
 
 // ============================================================================
 // SERVIÇOS DE API REAIS
@@ -655,47 +656,15 @@ const usePDFProcessor = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedData, setExtractedData] = useState<DadosExtraidosPDF | null>(null);
 
-  const loadPdfJs = useCallback(async (): Promise<any> => {
-    return new Promise((resolve, reject) => {
-      if ((window as any).pdfjsLib) {
-        resolve((window as any).pdfjsLib);
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-      script.onload = () => {
-        (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = 
-          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        resolve((window as any).pdfjsLib);
-      };
-      script.onerror = () => reject(new Error('Falha ao carregar PDF.js'));
-      document.head.appendChild(script);
-    });
-  }, []);
-
   const extractTextFromPDF = useCallback(async (file: File, pdfjsLib: any): Promise<string> => {
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      
-      let textoCompleto = '';
-      const maxPages = Math.min(pdf.numPages, 10);
-      
-      for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
-        
-        const pageText = textContent.items
-          .filter((item: any) => item.str && item.str.trim().length > 0)
-          .map((item: any) => item.str.trim())
-          .join(' ');
-        
-        textoCompleto += `\n--- PÁGINA ${pageNum} ---\n${pageText}\n`;
-      }
-      
-      return textoCompleto;
-      
+      const resultado = await extractPdfContent(file, {
+        pdfjsLib,
+        maxPages: 10,
+        captureImages: false,
+      });
+
+      return resultado.textContent;
     } catch (error) {
       console.error('❌ Erro na extração de texto:', error);
       throw new Error('Falha na extração de texto do PDF: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));

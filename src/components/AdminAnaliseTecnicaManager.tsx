@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AlignCenter,
@@ -31,6 +31,12 @@ import Link from 'next/link';
 import { useAuthAccess } from '@/hooks/use-auth-access';
 import { slugify } from '@/utils/slugify';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import {
+  buildResumoFromPages,
+  extractPdfContent,
+  type ExtractedPdfImage,
+  type PdfExtractionProgress,
+} from '@/utils/pdf/extractPdfContent';
 
 interface AutorInfo {
   id: string;
@@ -714,6 +720,46 @@ const emptyForm = {
 
 type FormState = typeof emptyForm & { id?: string };
 
+type PdfPreviewImage = ExtractedPdfImage & { id: string };
+
+const buildPdfImagesHtml = (images: PdfPreviewImage[]): string => {
+  return images
+    .map(
+      image => `
+        <figure
+          data-pdf-image-id="${image.id}"
+          data-pdf-page="${image.page}"
+          style="margin: 20px 0; text-align: center;"
+        >
+          <img
+            src="${image.dataUrl}"
+            alt="Página ${image.page} do PDF"
+            style="width: 100%; border-radius: 12px;"
+            data-editor-image="true"
+            data-width-percent="100"
+          />
+        </figure>
+      `
+    )
+    .join('');
+};
+
+const removePdfImageHtml = (html: string, imageId: string): string => {
+  if (typeof window === 'undefined') {
+    return html;
+  }
+
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  const target = container.querySelector(`[data-pdf-image-id="${imageId}"]`);
+  if (target) {
+    target.remove();
+    return container.innerHTML;
+  }
+
+  return html;
+};
+
 const cardLabelStyle: React.CSSProperties = {
   display: 'block',
   fontSize: '12px',
@@ -753,13 +799,37 @@ export default function AdminAnaliseTecnicaManager() {
   const [success, setSuccess] = useState<string>('');
   const [formState, setFormState] = useState<FormState>(emptyForm);
   const [slugManual, setSlugManual] = useState<boolean>(false);
+  const [pdfProcessing, setPdfProcessing] = useState<boolean>(false);
+  const [pdfProgress, setPdfProgress] = useState<PdfExtractionProgress | null>(null);
+  const [pdfUploadError, setPdfUploadError] = useState<string>('');
+  const [pdfUploadSuccess, setPdfUploadSuccess] = useState<string>('');
+  const [pdfPreviewImages, setPdfPreviewImages] = useState<PdfPreviewImage[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pdfInputRef = useRef<HTMLInputElement | null>(null);
 
   const isTablet = useMediaQuery('(max-width: 1024px)');
   const isMobile = useMediaQuery('(max-width: 640px)');
 
   const isEditando = Boolean(formState.id);
+  const pdfProgressLabel = useMemo(() => {
+    if (!pdfProgress) {
+      return '';
+    }
+
+    switch (pdfProgress.stage) {
+      case 'loading':
+        return 'Carregando PDF...';
+      case 'text':
+        return `Lendo texto: página ${pdfProgress.currentPage} de ${pdfProgress.totalPages}`;
+      case 'image':
+        return `Renderizando imagens: página ${pdfProgress.currentPage} de ${pdfProgress.totalPages}`;
+      case 'done':
+        return 'Extração concluída';
+      default:
+        return '';
+    }
+  }, [pdfProgress]);
 
   const carregarAnalises = useCallback(async () => {
     if (!planInfo.isAdmin) {
@@ -785,6 +855,14 @@ export default function AdminAnaliseTecnicaManager() {
   const resetForm = useCallback(() => {
     setFormState(emptyForm);
     setSlugManual(false);
+    setPdfPreviewImages([]);
+    setPdfUploadError('');
+    setPdfUploadSuccess('');
+    setPdfProgress(null);
+    setPdfProcessing(false);
+    if (pdfInputRef.current) {
+      pdfInputRef.current.value = '';
+    }
     router.replace('/dashboard/admin/analise-tecnica');
   }, [router]);
 
@@ -802,6 +880,14 @@ export default function AdminAnaliseTecnicaManager() {
       destaque: analise.destaque,
     });
     setSlugManual(true);
+    setPdfPreviewImages([]);
+    setPdfUploadError('');
+    setPdfUploadSuccess('');
+    setPdfProgress(null);
+    setPdfProcessing(false);
+    if (pdfInputRef.current) {
+      pdfInputRef.current.value = '';
+    }
   }, []);
 
   useEffect(() => {
@@ -859,6 +945,102 @@ export default function AdminAnaliseTecnicaManager() {
     },
     [formState.id, resetForm]
   );
+
+  const handlePdfFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) {
+        return;
+      }
+
+      setPdfUploadError('');
+      setPdfUploadSuccess('');
+
+      if (file.type !== 'application/pdf') {
+        setPdfUploadError('Por favor, selecione um arquivo PDF válido.');
+        event.target.value = '';
+        return;
+      }
+
+      if (file.size > 20 * 1024 * 1024) {
+        setPdfUploadError('Arquivo muito grande. O limite é de 20MB.');
+        event.target.value = '';
+        return;
+      }
+
+      setPdfProcessing(true);
+      setPdfProgress({ stage: 'loading', currentPage: 0, totalPages: 0 });
+
+      try {
+        const resultado = await extractPdfContent(file, {
+          maxPages: 12,
+          onProgress: progress => setPdfProgress(progress),
+        });
+
+        const imagensComId: PdfPreviewImage[] = resultado.images.map(image => ({
+          ...image,
+          id: `pdf-image-${image.page}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        }));
+
+        setPdfPreviewImages(imagensComId);
+
+        setFormState(prev => {
+          const resumoExistente = prev.resumo?.trim();
+          const resumoGerado = buildResumoFromPages(resultado.textByPage);
+          const imagensHtml = buildPdfImagesHtml(imagensComId);
+          const conteudoGerado = [resultado.structuredTextHtml, imagensHtml]
+            .filter(Boolean)
+            .join('');
+
+          const primeiraImagem = imagensComId[0]?.dataUrl ?? '';
+
+          return {
+            ...prev,
+            resumo: resumoExistente ? prev.resumo : resumoGerado,
+            conteudo: conteudoGerado || prev.conteudo,
+            imagemCapa: prev.imagemCapa || primeiraImagem,
+          };
+        });
+
+        setPdfUploadSuccess('PDF processado com sucesso. Revise o conteúdo antes de publicar.');
+      } catch (err) {
+        console.error(err);
+        setPdfPreviewImages([]);
+        setPdfUploadError(
+          err instanceof Error ? err.message : 'Falha ao processar o PDF selecionado.'
+        );
+      } finally {
+        setPdfProcessing(false);
+        setPdfProgress(null);
+        event.target.value = '';
+      }
+    },
+    [buildPdfImagesHtml, buildResumoFromPages]
+  );
+
+  const handleRemovePdfImage = useCallback((imageId: string) => {
+    setPdfPreviewImages(prev => {
+      const imageToRemove = prev.find(image => image.id === imageId);
+      const remaining = prev.filter(image => image.id !== imageId);
+
+      setFormState(current => {
+        const conteudoAtualizado = removePdfImageHtml(current.conteudo, imageId);
+
+        let imagemCapaAtualizada = current.imagemCapa;
+        if (imageToRemove && current.imagemCapa === imageToRemove.dataUrl) {
+          imagemCapaAtualizada = remaining[0]?.dataUrl || '';
+        }
+
+        return {
+          ...current,
+          conteudo: conteudoAtualizado,
+          imagemCapa: imagemCapaAtualizada,
+        };
+      });
+
+      return remaining;
+    });
+  }, [removePdfImageHtml]);
 
   const handleInputChange = useCallback(
     (field: keyof FormState, value: string | boolean) => {
@@ -1189,6 +1371,173 @@ export default function AdminAnaliseTecnicaManager() {
                 style={inputStyle}
               />
             </div>
+          </div>
+
+          <div
+            style={{
+              border: '1px dashed #cbd5f5',
+              borderRadius: '16px',
+              padding: isMobile ? '16px' : '20px',
+              background: '#f8fafc',
+              display: 'grid',
+              gap: '12px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                justifyContent: 'space-between',
+                alignItems: isMobile ? 'flex-start' : 'center',
+                gap: '12px',
+              }}
+            >
+              <div style={{ display: 'grid', gap: '4px' }}>
+                <span style={{ ...cardLabelStyle }}>Importar PDF da análise</span>
+                <span style={{ color: '#475569', fontSize: '13px' }}>
+                  Extraia texto estruturado e imagens automaticamente de um relatório em PDF.
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => pdfInputRef.current?.click()}
+                  style={{
+                    border: '1px solid #0f172a',
+                    background: '#0f172a',
+                    color: '#f8fafc',
+                    borderRadius: '999px',
+                    padding: isMobile ? '10px 18px' : '12px 20px',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    boxShadow: '0 10px 18px rgba(15, 23, 42, 0.18)',
+                  }}
+                  disabled={pdfProcessing}
+                >
+                  {pdfProcessing ? (
+                    <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                  ) : (
+                    <Upload size={16} />
+                  )}
+                  {pdfProcessing ? 'Processando PDF...' : 'Selecionar PDF'}
+                </button>
+
+                <input
+                  ref={pdfInputRef}
+                  id="analise-tecnica-pdf-upload"
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={handlePdfFileChange}
+                  style={{ display: 'none' }}
+                />
+              </div>
+            </div>
+
+            {pdfProcessing && (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', color: '#0f172a', fontSize: '13px' }}>
+                <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                <span>{pdfProgressLabel || 'Processando PDF...'}</span>
+              </div>
+            )}
+
+            {!pdfProcessing && pdfProgressLabel && (
+              <span style={{ fontSize: '13px', color: '#334155' }}>{pdfProgressLabel}</span>
+            )}
+
+            {pdfUploadError && (
+              <div
+                style={{
+                  borderRadius: '14px',
+                  border: '1px solid #fecaca',
+                  background: '#fef2f2',
+                  color: '#b91c1c',
+                  padding: '10px 14px',
+                  display: 'flex',
+                  gap: '8px',
+                  alignItems: 'center',
+                }}
+              >
+                <ShieldAlert size={16} /> {pdfUploadError}
+              </div>
+            )}
+
+            {pdfUploadSuccess && (
+              <div
+                style={{
+                  borderRadius: '14px',
+                  border: '1px solid #bbf7d0',
+                  background: '#f0fdf4',
+                  color: '#15803d',
+                  padding: '10px 14px',
+                  display: 'flex',
+                  gap: '8px',
+                  alignItems: 'center',
+                }}
+              >
+                <CheckCircle2 size={16} /> {pdfUploadSuccess}
+              </div>
+            )}
+
+            {pdfPreviewImages.length > 0 && (
+              <div style={{ display: 'grid', gap: '12px' }}>
+                <span style={{ ...cardLabelStyle }}>Pré-visualização das imagens extraídas</span>
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: '12px',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                  }}
+                >
+                  {pdfPreviewImages.map(image => (
+                    <div
+                      key={image.id}
+                      style={{
+                        position: 'relative',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        background: '#ffffff',
+                        boxShadow: '0 12px 24px rgba(15, 23, 42, 0.12)',
+                      }}
+                    >
+                      <img
+                        src={image.dataUrl}
+                        alt={`Página ${image.page} do PDF`}
+                        style={{ width: '100%', height: '160px', objectFit: 'cover' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePdfImage(image.id)}
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          border: 'none',
+                          background: 'rgba(15, 23, 42, 0.88)',
+                          color: '#f8fafc',
+                          borderRadius: '999px',
+                          padding: '6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                        }}
+                        aria-label={`Remover imagem extraída da página ${image.page}`}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                      <div style={{ padding: '8px 12px', fontSize: '12px', color: '#475569', fontWeight: 600 }}>
+                        Página {image.page}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
