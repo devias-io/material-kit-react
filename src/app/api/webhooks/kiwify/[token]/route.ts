@@ -41,11 +41,50 @@ function parseKiwifyAmount(value: unknown): number | undefined {
 
   if (typeof value === 'string') {
     const cleaned = value.replace(/[^0-9,.-]/g, '').replace(',', '.');
+    if (!cleaned) {
+      return undefined;
+    }
+
     const parsed = Number(cleaned);
     return Number.isFinite(parsed) ? parsed : undefined;
   }
 
   return undefined;
+}
+
+function normalizeKiwifyAmounts(value: unknown): number[] {
+  const parsed = parseKiwifyAmount(value);
+  if (parsed === undefined) {
+    return [];
+  }
+
+  const normalized: number[] = [parsed];
+
+  if (Math.abs(parsed) >= 10000) {
+    const divided = parsed / 100;
+    if (Number.isFinite(divided) && Math.abs(divided) >= 1) {
+      normalized.push(Number(divided.toFixed(2)));
+    }
+  }
+
+  return normalized;
+}
+
+function selectBestKiwifyAmount(values: unknown[]): number | undefined {
+  const normalizedValues = values
+    .flatMap(normalizeKiwifyAmounts)
+    .filter((value) => typeof value === 'number' && Number.isFinite(value)) as number[];
+
+  if (normalizedValues.length === 0) {
+    return undefined;
+  }
+
+  const realisticValue = normalizedValues.find((value) => Math.abs(value) > 0 && Math.abs(value) < 10000);
+  if (realisticValue !== undefined) {
+    return realisticValue;
+  }
+
+  return normalizedValues.find((value) => Math.abs(value) > 0) ?? normalizedValues[0];
 }
 
 function extractProductNameFromKiwifyPayload(webhookData: any): { rawName: string; cleanedName: string } {
@@ -187,9 +226,7 @@ function detectarPlanoKiwify(webhookData: any): { plan: string; productName: str
       orderData?.Commissions?.product_base_price,
     ];
 
-    const valor = valorCandidates
-      .map(parseKiwifyAmount)
-      .find((candidate) => typeof candidate === 'number' && candidate > 0);
+    const valor = selectBestKiwifyAmount(valorCandidates);
 
     console.log(`💰 Valor da compra: R$ ${valor ?? 0}`);
 
@@ -325,9 +362,7 @@ export async function POST(
       webhookData?.value,
     ];
 
-    const amount = amountCandidates
-      .map(parseKiwifyAmount)
-      .find((candidate) => typeof candidate === 'number') || 0;
+    const amount = selectBestKiwifyAmount(amountCandidates) ?? 0;
 
     console.log('🔍 Dados extraídos do Kiwify:', {
       event, buyerEmail, buyerName, transactionId, amount,
