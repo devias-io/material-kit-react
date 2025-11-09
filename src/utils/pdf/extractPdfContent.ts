@@ -146,10 +146,11 @@ const extractEmbeddedImagesFromPage = async (
 
   try {
     const viewport = page.getViewport({ scale });
+    const operatorList = await page.getOperatorList();
     const svgGraphics = new SVGGraphics(page.commonObjs, page.objs);
     svgGraphics.embedFonts = true;
 
-    const svg = (await svgGraphics.getSVG(viewport)) as SVGElement;
+    const svg = (await svgGraphics.getSVG(operatorList, viewport)) as SVGElement;
     const imageElements = Array.from(svg.querySelectorAll('image')) as SVGImageElement[];
 
     if (imageElements.length === 0) {
