@@ -808,12 +808,18 @@ const CompanyAvatar = React.memo(({ symbol, companyName, size = 120 }) => {
     const isFII = normalizedSymbol.includes('11') || normalizedSymbol.endsWith('11');
 
     if (isFII) {
-      const localPath = `/assets/${normalizedSymbol}.png`;
+      const sanitizedSymbol = normalizedSymbol.replace(/\s+/g, '');
+      const tickerBase = sanitizedSymbol.replace(/11$/, '');
+
       return [
-        localPath,
-        `https://www.ivalor.com.br/media/emp/logos/${normalizedSymbol.replace('11', '')}.png`,
-        `https://ui-avatars.com/api/?name=${normalizedSymbol}&size=128&background=8b5cf6&color=ffffff&bold=true&format=png`
-      ];
+        `/logos-fiis/${sanitizedSymbol}.png`,
+        tickerBase && tickerBase !== sanitizedSymbol
+          ? `/logos-fiis/${tickerBase}.png`
+          : null,
+        `/assets/${sanitizedSymbol}.png`,
+        `https://www.ivalor.com.br/media/emp/logos/${tickerBase || sanitizedSymbol}.png`,
+        `https://ui-avatars.com/api/?name=${sanitizedSymbol}&size=128&background=8b5cf6&color=ffffff&bold=true&format=png`
+      ].filter((value): value is string => Boolean(value));
     }
 
     const isBrazilian = normalizedSymbol.match(/\d$/);
