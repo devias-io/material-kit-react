@@ -2853,12 +2853,14 @@ export default function AtivoPage() {
   // ✅ FUNÇÃO CALCULAR PERCENTUAL CARTEIRA (MEMOIZADA)
   const calcularPercentualCarteira = useCallback((nomeCarteira) => {
     if (!dados || !dados[nomeCarteira]) return 'N/A';
-    
-    const ativosCarteira = dados[nomeCarteira];
-    const numeroAtivos = Array.isArray(ativosCarteira) ? ativosCarteira.length : 0;
-    
+
+    const ativosCarteira = Array.isArray(dados[nomeCarteira]) ? dados[nomeCarteira] : [];
+    const ativosAbertos = ativosCarteira.filter((item) => !item?.posicaoEncerrada);
+
+    const numeroAtivos = ativosAbertos.length;
+
     if (numeroAtivos === 0) return '0%';
-    
+
     const percentual = (100 / numeroAtivos).toFixed(1);
     return `${percentual}%`;
   }, [dados]);
