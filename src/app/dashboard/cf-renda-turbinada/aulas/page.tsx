@@ -273,8 +273,21 @@ function toInputDateTimeValue(isoDate: string): string {
   )}`;
 }
 
-function isLivePast(eventDate: string): boolean {
-  return new Date(eventDate) < new Date();
+function isLivePast(eventDate: string, durationMinutes?: number): boolean {
+  const startDate = new Date(eventDate);
+
+  if (Number.isNaN(startDate.getTime())) {
+    return false;
+  }
+
+  const effectiveDuration =
+    typeof durationMinutes === 'number' && Number.isFinite(durationMinutes) && durationMinutes > 0
+      ? durationMinutes
+      : 60;
+
+  const endDate = new Date(startDate.getTime() + effectiveDuration * 60 * 1000);
+
+  return endDate < new Date();
 }
 
 function isLiveToday(eventDate: string): boolean {
@@ -3687,7 +3700,7 @@ visibleModules.map(module => {
             <>
               {visibleLiveEvents.map(live => {
                 const { date, time, dayOfWeek } = formatLiveDateTime(live.eventDate);
-                const isPast = isLivePast(live.eventDate);
+                const isPast = isLivePast(live.eventDate, live.durationMinutes);
                 const isToday = isLiveToday(live.eventDate);
 
                 return (
