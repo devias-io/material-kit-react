@@ -360,12 +360,50 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '18px', color: '#0f172a' }}>
-                    {operacao.ativoBase}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {/* Logo do Ativo */}
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    backgroundColor: '#f1f5f9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid #e2e8f0',
+                    flexShrink: 0
+                  }}>
+                    <img 
+                      src={`https://www.ivalor.com.br/media/emp/logos/${operacao.ativoBase.replace(/\d+$/, '')}.png`}
+                      alt={`Logo ${operacao.ativoBase}`}
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        objectFit: 'contain'
+                      }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.style.backgroundColor = operacao.status === 'Encerrada' ? '#e2e8f0' : '#dbeafe';
+                          parent.style.color = operacao.status === 'Encerrada' ? '#64748b' : '#1e40af';
+                          parent.style.fontWeight = '700';
+                          parent.style.fontSize = '14px';
+                          parent.textContent = operacao.ativoBase.slice(0, 2);
+                        }
+                      }}
+                    />
                   </div>
-                  <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
-                    {operacao.codigoOpcao}
+                  
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '18px', color: '#0f172a' }}>
+                      {operacao.ativoBase}
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
+                      {operacao.codigoOpcao}
+                    </div>
                   </div>
                 </div>
                 <span
@@ -441,9 +479,49 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                 }}
               >
                 <td style={{ padding: '16px' }}>
-                  <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '15px' }}>{operacao.ativoBase}</div>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                    Ref: {formatCurrency(operacao.precoReferencia)}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {/* Logo do Ativo */}
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      backgroundColor: '#f1f5f9',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '1px solid #e2e8f0',
+                      flexShrink: 0
+                    }}>
+                      <img 
+                        src={`https://www.ivalor.com.br/media/emp/logos/${operacao.ativoBase.replace(/\d+$/, '')}.png`}
+                        alt={`Logo ${operacao.ativoBase}`}
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          objectFit: 'contain'
+                        }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.style.backgroundColor = operacao.status === 'Encerrada' ? '#e2e8f0' : '#dbeafe';
+                            parent.style.color = operacao.status === 'Encerrada' ? '#64748b' : '#1e40af';
+                            parent.style.fontWeight = '700';
+                            parent.style.fontSize = '14px';
+                            parent.textContent = operacao.ativoBase.slice(0, 2);
+                          }
+                        }}
+                      />
+                    </div>
+                    
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '15px' }}>{operacao.ativoBase}</div>
+                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                        Ref: {formatCurrency(operacao.precoReferencia)}
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td style={{ padding: '16px', color: '#0f172a', fontSize: '14px', fontFamily: 'monospace' }}>
