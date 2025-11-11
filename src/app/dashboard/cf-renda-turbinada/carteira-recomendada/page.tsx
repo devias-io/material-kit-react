@@ -699,48 +699,6 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
           </div>
         </section>
 
-        {/* Botão de gerenciamento */}
-        <div
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '20px',
-            display: 'flex',
-            flexDirection: isMobile ? 'column' : 'row',
-            gap: '16px',
-            alignItems: isMobile ? 'stretch' : 'center',
-            justifyContent: 'space-between'
-          }}
-        >
-          <div>
-            <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
-              Gerenciar operações
-            </h3>
-            <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
-              Adicione, edite ou remova operações através do painel de gerenciamento
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => router.push('/dashboard/gerenciamento')}
-            style={{
-              backgroundColor: '#2563eb',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '12px 24px',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              alignSelf: isMobile ? 'stretch' : 'center'
-            }}
-          >
-            Ir para gerenciamento →
-          </button>
-        </div>
-
         {/* Disclaimer */}
         <div
           style={{
