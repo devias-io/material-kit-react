@@ -19,34 +19,50 @@ type CarteiraResumo = {
   helper?: string;
 };
 
+type CarteiraOperacao = {
+  id: string;
+  ordem: number;
+  ativoBase: string;
+  codigoOpcao: string;
+  strike: number | null;
+  premio: number | null;
+  rendaPercentual: number | null;
+  garantia: number | null;
+  precoReferencia: number | null;
+  vencimento: string;
+  tipoOperacao: string;
+  status: 'Aberta' | 'Encerrada';
+  observacao?: string;
+};
+
 const weeklySteps: StepCard[] = [
   {
-    title: 'Segunda-feira – Preparação',
+    title: 'Segunda-feira – Preparação do Terreno',
     description:
-      'Revise o panorama do índice, volatilidade implícita e o calendário da semana.',
+      'Reúna os insumos para a semana de operações, garantindo que capital, garantias e plataformas estejam prontos.',
     items: [
       'Checar agenda de eventos relevantes (resultados, dividendos, FED).',
-      'Atualizar watchlist com ativos elegíveis e strikes preferenciais.',
-      'Definir o capital disponível e a meta de prêmio para a semana.'
+      'Atualizar watchlist com ativos elegíveis, strikes preferenciais e margens necessárias.',
+      'Validar garantias disponíveis e separar o capital destinado às operações da carteira.'
     ]
   },
   {
-    title: 'Terça a Quinta-feira – Execução',
+    title: 'Terça a Quinta-feira – Execução das Recomendações',
     description:
       'Acompanhe as recomendações liberadas e ajuste o preço de entrada conforme o mercado.',
     items: [
       'Abrir posições recomendadas respeitando os limites de margem informados.',
-      'Atualizar o controle de operações com preço de disparo, alvo e plano de ajuste.',
+      'Atualizar o controle de operações com prêmio recebido, ponto de ajuste e plano de recompra.',
       'Configurar alertas no Profit para cada ponto de atenção (stop, ajuste, rolagem).'
     ]
   },
   {
-    title: 'Sexta-feira – Revisão',
+    title: 'Sexta-feira – Revisão e Planejamento',
     description:
-      'Encerramento das operações e planejamento para o próximo ciclo.',
+      'Encerramento das operações, avaliação de riscos e preparação para o próximo ciclo.',
     items: [
       'Revisar posições abertas e decidir entre manter, ajustar ou encerrar.',
-      'Registrar resultados, prêmios recebidos e lições aprendidas na semana.',
+      'Registrar prêmios recebidos, garantias utilizadas e lições aprendidas na semana.',
       'Enviar dúvidas com prints/timestamps das aulas para receber orientação personalizada.'
     ]
   }
@@ -57,6 +73,34 @@ const quickActions = [
   'Utilizar a planilha de controle (download disponível no grupo) para registrar cada operação.',
   'Rever a aula correspondente sempre que surgir uma situação não prevista.',
   'Avisar o suporte em até 30 minutos após um evento inesperado para receber plano de ação.'
+];
+
+const reportHighlights = [
+  {
+    title: 'Estratégias de Opções de Mercado',
+    summary:
+      'Venda estruturada de puts e calls em um cenário de alta, priorizando ativos baratos e de qualidade. Reforço para iniciar com posições pequenas e utilizar os códigos enviados para operar em qualquer corretora.'
+  },
+  {
+    title: 'Procedimentos de Opções Financeiras',
+    summary:
+      'São necessárias cinco operações mensais, executadas em dias diferentes. Para vender put é preciso manter a garantia na Clear; para calls, o ativo deve estar custodiado.'
+  },
+  {
+    title: 'Opções e Estratégias de Venda',
+    summary:
+      'Encerrar a operação exige recompra das opções antes do vencimento, que costuma ocorrer a cada vinte dias úteis. As taxas variam conforme o patrimônio e podem ser negociadas com o assessor.'
+  },
+  {
+    title: 'Estratégia de Opções Financeiras',
+    summary:
+      'Exemplo prático: ativo de R$30 para R$32 com put desvalorizando de R$1 para R$0,30, garantindo lucro de R$0,70 sem a taxa de exercício de 0,5%. Recomendações são enviadas após a atualização dos preços.'
+  },
+  {
+    title: 'Profit Pro – Compra e Venda de Opções',
+    summary:
+      'Demonstração de uso do Profit Pro, incluindo Delta 30 e comparação com outras plataformas como Oblab e Opçõesnet. O sistema acompanha rentabilidade, mas stops devem ser configurados manualmente.'
+  }
 ];
 
 const useDeviceDetection = () => {
@@ -106,8 +150,8 @@ const formatPercentage = (value: number | null | undefined): string => {
 
 export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   const router = useRouter();
-  const { planInfo, loading: authLoading } = useAuthAccess();
-  const isAdmin = planInfo.isAdmin;
+  const { loading: authLoading, hasAccessSync } = useAuthAccess();
+  const hasCarteiraAccess = hasAccessSync('cf-renda-turbinada-carteira');
   const {
     dados,
     cotacoes,
@@ -119,15 +163,15 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   const isMobile = useDeviceDetection();
 
   const ativosOriginais = React.useMemo(() => {
-    if (!isAdmin) {
+    if (!hasCarteiraAccess) {
       return [];
     }
 
     return Array.isArray(dados?.cfRendaTurbinada) ? dados.cfRendaTurbinada : [];
-  }, [dados?.cfRendaTurbinada, isAdmin]);
+  }, [dados?.cfRendaTurbinada, hasCarteiraAccess]);
 
   React.useEffect(() => {
-    if (!isAdmin) {
+    if (!hasCarteiraAccess) {
       return;
     }
 
@@ -142,61 +186,117 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
     if (tickers.length > 0) {
       buscarCotacoes(tickers);
     }
-  }, [ativosOriginais, buscarCotacoes, isAdmin]);
+  }, [ativosOriginais, buscarCotacoes, hasCarteiraAccess]);
 
-  const ativosProcessados = React.useMemo(() => {
+  const operacoesProcessadas = React.useMemo<CarteiraOperacao[]>(() => {
     return ativosOriginais
       .map((ativo: any, index: number) => {
-        const precoEntrada = parseNumber(ativo?.precoEntrada);
-        const precoAtualCotacao = ativo?.ticker ? parseNumber(cotacoes?.[ativo.ticker]) : null;
-        const precoAtualInformado = parseNumber(ativo?.precoAtual);
-        const precoAtual = precoAtualCotacao ?? precoAtualInformado ?? null;
-        const precoTeto = parseNumber(ativo?.precoTeto);
-        const dy = ativo?.dy ?? ativo?.dy12m ?? null;
-        const vies = ativo?.vies ?? ativo?.viés ?? ativo?.bias ?? null;
+        const precoReferenciaInformado = parseNumber(
+          ativo?.precoReferencia ?? ativo?.precoEntrada
+        );
+        const precoReferenciaCotacao = ativo?.ticker
+          ? parseNumber(cotacoes?.[ativo.ticker])
+          : null;
+        const precoReferencia = precoReferenciaInformado ?? precoReferenciaCotacao ?? null;
 
-        let performance: number | null = null;
-        if (precoEntrada && precoAtual) {
-          performance = ((precoAtual - precoEntrada) / precoEntrada) * 100;
-        }
+        const garantiaInformada = parseNumber(
+          ativo?.garantia ?? ativo?.garantiaRequerida ?? ativo?.margemRequerida ?? ativo?.valorGarantia
+        );
+        const garantiaCalculada = precoReferencia !== null ? precoReferencia * 100 : null;
+        const garantia = garantiaInformada ?? garantiaCalculada;
+
+        const premioEntrada = parseNumber(ativo?.premioEntrada ?? ativo?.premio);
+        const premioTotal = premioEntrada !== null ? premioEntrada * 100 : null;
+
+        const rendaInformada = parseNumber(
+          ativo?.renda ?? ativo?.retorno ?? ativo?.yield ?? ativo?.rendaPercentual
+        );
+        const rendaPercentual = rendaInformada !== null
+          ? rendaInformada
+          : premioTotal !== null && garantia
+            ? (premioTotal / garantia) * 100
+            : null;
+
+        const strike = parseNumber(ativo?.strike ?? ativo?.strikePreco ?? ativo?.precoStrike);
+
+        const codigoOpcao =
+          ativo?.codigoOpcao ??
+          ativo?.tickerOpcao ??
+          ativo?.optionTicker ??
+          ativo?.opcao ??
+          ativo?.option ??
+          '';
 
         return {
           id: ativo?.id ?? `cf-${index}`,
-          posicao: ativo?.posicaoExibicao ?? ativo?.ordem ?? index + 1,
-          ticker: ativo?.ticker || '--',
-          setor: ativo?.setor || 'N/A',
-          dataEntrada: ativo?.dataEntrada || '--',
-          precoEntrada,
-          precoAtual,
-          precoTeto,
-          performance,
-          dy,
-          vies,
-          posicaoEncerrada: Boolean(ativo?.posicaoEncerrada)
+          ordem: Number(ativo?.posicaoExibicao ?? ativo?.ordem ?? index + 1) || index + 1,
+          ativoBase:
+            ativo?.ativoBase ??
+            ativo?.ativo ??
+            ativo?.tickerBase ??
+            ativo?.subjacente ??
+            ativo?.ticker ??
+            '--',
+          codigoOpcao: codigoOpcao || '--',
+          strike,
+          premio: premioEntrada,
+          rendaPercentual,
+          garantia,
+          precoReferencia,
+          vencimento: ativo?.vencimento || ativo?.dataVencimento || '--',
+          tipoOperacao: ativo?.tipoOperacao || ativo?.estrategia || 'Venda de opções',
+          status: ativo?.posicaoEncerrada ? 'Encerrada' : 'Aberta',
+          observacao: ativo?.observacao ?? ativo?.comentario ?? ativo?.notas ?? undefined
         };
       })
-      .sort((a, b) => a.posicao - b.posicao);
+      .sort((a, b) => a.ordem - b.ordem);
   }, [ativosOriginais, cotacoes]);
 
   const totaisCarteira = React.useMemo<CarteiraResumo[]>(() => {
-    const totalOperacoes = ativosProcessados.length;
-    const abertas = ativosProcessados.filter((ativo) => !ativo.posicaoEncerrada).length;
+    const totalOperacoes = operacoesProcessadas.length;
+    const abertas = operacoesProcessadas.filter((op) => op.status === 'Aberta').length;
     const encerradas = totalOperacoes - abertas;
-    const mediaPerformance = ativosProcessados.reduce<
-      { soma: number; count: number }
-    >(
-      (acc, ativo) => {
-        if (ativo.performance !== null && !Number.isNaN(ativo.performance)) {
-          acc.soma += ativo.performance;
-          acc.count += 1;
+
+    const agregados = operacoesProcessadas.reduce(
+      (acc, operacao) => {
+        if (operacao.premio !== null && !Number.isNaN(operacao.premio)) {
+          acc.totalPremio += operacao.premio * 100;
+          acc.countPremio += 1;
         }
+
+        if (operacao.garantia !== null && !Number.isNaN(operacao.garantia)) {
+          acc.totalGarantia += operacao.garantia;
+          acc.countGarantia += 1;
+        }
+
+        if (
+          operacao.rendaPercentual !== null &&
+          !Number.isNaN(operacao.rendaPercentual)
+        ) {
+          acc.totalRenda += operacao.rendaPercentual;
+          acc.countRenda += 1;
+        }
+
         return acc;
       },
-      { soma: 0, count: 0 }
+      {
+        totalPremio: 0,
+        countPremio: 0,
+        totalGarantia: 0,
+        countGarantia: 0,
+        totalRenda: 0,
+        countRenda: 0
+      }
     );
 
-    const performanceMedia = mediaPerformance.count > 0
-      ? mediaPerformance.soma / mediaPerformance.count
+    const premioMedio = agregados.countPremio > 0
+      ? agregados.totalPremio / agregados.countPremio
+      : null;
+    const garantiaMedia = agregados.countGarantia > 0
+      ? agregados.totalGarantia / agregados.countGarantia
+      : null;
+    const rendaMedia = agregados.countRenda > 0
+      ? agregados.totalRenda / agregados.countRenda
       : null;
 
     return [
@@ -208,20 +308,25 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
       {
         label: 'Operações encerradas',
         value: encerradas.toString(),
-        helper: 'Com controle de rolagens e encerramentos'
+        helper: 'Inclui rolagens já concluídas'
       },
       {
-        label: 'Performance média',
-        value: formatPercentage(performanceMedia),
-        helper: 'Calculada sobre entradas com preço atualizado'
+        label: 'Prêmio médio por contrato',
+        value: formatCurrency(premioMedio),
+        helper: 'Considerando lote padrão de 100 ações'
+      },
+      {
+        label: 'Renda média estimada',
+        value: formatPercentage(rendaMedia),
+        helper: 'Baseada em prêmio total ÷ garantia'
       }
     ];
-  }, [ativosProcessados]);
+  }, [operacoesProcessadas]);
 
   const isLoadingCarteira = loading || isLoading;
-  const carteiraVazia = !isLoadingCarteira && ativosProcessados.length === 0;
+  const carteiraVazia = !isLoadingCarteira && operacoesProcessadas.length === 0;
 
-  if (!authLoading && !isAdmin) {
+  if (!authLoading && !hasCarteiraAccess) {
     return (
       <div
         style={{
@@ -279,8 +384,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               lineHeight: 1.6
             }}
           >
-            Esta página ficará disponível para os assinantes a partir de{' '}
-            <strong>11/11/2025</strong>.
+            Esta página é exclusiva para assinantes do CF Renda Turbinada.
           </p>
 
           <p
@@ -290,7 +394,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               lineHeight: 1.6
             }}
           >
-           Em breve você poderá visualizar a carteira recomendada.
+            Solicite o upgrade com o nosso time de suporte para acompanhar as operações recomendadas.
           </p>
         </div>
       </div>
@@ -342,7 +446,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                 margin: '0 0 12px 0'
               }}
             >
-              Carteira Recomendada
+              Carteira Recomendada de Opções
             </h1>
             <p
               style={{
@@ -353,8 +457,8 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                 lineHeight: 1.6
               }}
             >
-              Acompanhe as operações sugeridas semanalmente para gerar renda com opções. Este painel concentra o status
-              das posições, métricas de performance e os próximos passos para execução disciplinada.
+              Acompanhe as vendas cobertas de puts e calls indicadas pelo CF Renda Turbinada. Aqui você encontra os códigos,
+              prêmios, garantias e orientações para executar cada operação com confiança.
             </p>
           </div>
         </div>
@@ -407,6 +511,46 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                 {item.helper && (
                   <div style={{ fontSize: '12px', opacity: 0.7, marginTop: '4px', lineHeight: 1.4 }}>{item.helper}</div>
                 )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            padding: '28px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px'
+          }}
+        >
+          <div>
+            <h2 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: 700, color: '#0f172a' }}>
+              Resumo do relatório
+            </h2>
+            <p style={{ margin: 0, color: '#475569', fontSize: '15px', lineHeight: 1.6 }}>
+              Destaques da última sessão com Davi e Caio para orientar a execução das estratégias com opções.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gap: '16px' }}>
+            {reportHighlights.map((highlight) => (
+              <div
+                key={highlight.title}
+                style={{
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  backgroundColor: '#f8fafc'
+                }}
+              >
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
+                  {highlight.title}
+                </h3>
+                <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>{highlight.summary}</p>
               </div>
             ))}
           </div>
@@ -524,9 +668,9 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               </div>
             ) : isMobile ? (
               <div style={{ display: 'grid', gap: '16px' }}>
-                {ativosProcessados.map((ativo) => (
+                {operacoesProcessadas.map((operacao) => (
                   <div
-                    key={ativo.id}
+                    key={operacao.id}
                     style={{
                       border: '1px solid #e2e8f0',
                       borderRadius: '12px',
@@ -535,57 +679,55 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontWeight: 700, fontSize: '16px', color: '#0f172a' }}>{ativo.ticker}</div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '16px', color: '#0f172a' }}>{operacao.ativoBase}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                          {operacao.codigoOpcao !== '--' ? `Opção ${operacao.codigoOpcao}` : 'Código da opção a confirmar'}
+                        </div>
+                      </div>
                       <span
                         style={{
                           fontSize: '12px',
-                          color: ativo.posicaoEncerrada ? '#ef4444' : '#0ea5e9',
+                          color: operacao.status === 'Encerrada' ? '#ef4444' : '#0ea5e9',
                           fontWeight: 600,
-                          backgroundColor: ativo.posicaoEncerrada ? '#fee2e2' : '#e0f2fe',
+                          backgroundColor: operacao.status === 'Encerrada' ? '#fee2e2' : '#e0f2fe',
                           padding: '2px 8px',
                           borderRadius: '999px'
                         }}
                       >
-                        {ativo.posicaoEncerrada ? 'Encerrada' : 'Aberta'}
+                        {operacao.status}
                       </span>
                     </div>
-                    <div style={{ color: '#475569', fontSize: '12px', marginTop: '4px' }}>{ativo.setor}</div>
+                    <div style={{ color: '#475569', fontSize: '12px', marginTop: '8px' }}>
+                      {operacao.tipoOperacao} • Vencimento {operacao.vencimento}
+                    </div>
                     <div style={{ display: 'grid', gap: '8px', marginTop: '12px', fontSize: '13px', color: '#0f172a' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Entrada</span>
-                        <strong>{ativo.dataEntrada}</strong>
+                        <span>Strike</span>
+                        <strong>{formatCurrency(operacao.strike)}</strong>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Preço inicial</span>
-                        <strong>{formatCurrency(ativo.precoEntrada)}</strong>
+                        <span>Prêmio (por ação)</span>
+                        <strong>{formatCurrency(operacao.premio)}</strong>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Preço atual</span>
-                        <strong>{formatCurrency(ativo.precoAtual)}</strong>
+                        <span>Renda estimada</span>
+                        <strong>{formatPercentage(operacao.rendaPercentual)}</strong>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Preço teto</span>
-                        <strong>{formatCurrency(ativo.precoTeto)}</strong>
+                        <span>Garantia</span>
+                        <strong>{formatCurrency(operacao.garantia)}</strong>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Performance</span>
-                        <strong
-                          style={{
-                            color: ativo.performance !== null && ativo.performance < 0 ? '#ef4444' : '#10b981'
-                          }}
-                        >
-                          {formatPercentage(ativo.performance)}
-                        </strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>DY 12M</span>
-                        <strong>{typeof ativo.dy === 'string' ? ativo.dy : formatPercentage(parseNumber(ativo.dy))}</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Viés</span>
-                        <strong>{ativo.vies || '--'}</strong>
+                        <span>Preço de referência</span>
+                        <strong>{formatCurrency(operacao.precoReferencia)}</strong>
                       </div>
                     </div>
+                    {operacao.observacao ? (
+                      <div style={{ marginTop: '12px', fontSize: '12px', color: '#475569', lineHeight: 1.6 }}>
+                        <strong>Observações:</strong> {operacao.observacao}
+                      </div>
+                    ) : null}
                   </div>
                 ))}
               </div>
@@ -596,22 +738,20 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                     <tr style={{ backgroundColor: '#f1f5f9' }}>
                       <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>#</th>
                       <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: '#374151', fontSize: '14px' }}>ATIVO</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>ENTRADA</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>PREÇO INICIAL</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>PREÇO ATUAL</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>PREÇO TETO</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>
-                        PERFORMANCE TOTAL
-                      </th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>DY 12M</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>VIÉS</th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>OPÇÃO</th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>STRIKE</th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>VENCIMENTO</th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>PRÊMIO (R$)</th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>RENDA</th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>GARANTIA</th>
+                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>TIPO</th>
                       <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>STATUS</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {ativosProcessados.map((ativo) => (
+                    {operacoesProcessadas.map((operacao) => (
                       <tr
-                        key={ativo.id}
+                        key={operacao.id}
                         style={{
                           borderBottom: '1px solid #f1f5f9',
                           transition: 'background-color 0.2s'
@@ -640,37 +780,35 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                               margin: '0 auto'
                             }}
                           >
-                            {ativo.posicao}
+                            {operacao.ordem}
                           </div>
                         </td>
                         <td style={{ padding: '16px', textAlign: 'left' }}>
-                          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '15px' }}>{ativo.ticker}</div>
-                          <div style={{ fontSize: '12px', color: '#64748b' }}>{ativo.setor}</div>
-                        </td>
-                        <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>{ativo.dataEntrada}</td>
-                        <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
-                          {formatCurrency(ativo.precoEntrada)}
+                          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '15px' }}>{operacao.ativoBase}</div>
+                          <div style={{ fontSize: '12px', color: '#64748b' }}>
+                            Preço ref.: {formatCurrency(operacao.precoReferencia)}
+                          </div>
                         </td>
                         <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
-                          {formatCurrency(ativo.precoAtual)}
+                          {operacao.codigoOpcao}
                         </td>
                         <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
-                          {formatCurrency(ativo.precoTeto)}
-                        </td>
-                        <td style={{
-                          padding: '16px',
-                          textAlign: 'center',
-                          fontSize: '14px',
-                          fontWeight: 700,
-                          color: ativo.performance !== null && ativo.performance < 0 ? '#ef4444' : '#10b981'
-                        }}>
-                          {formatPercentage(ativo.performance)}
+                          {formatCurrency(operacao.strike)}
                         </td>
                         <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
-                          {typeof ativo.dy === 'string' ? ativo.dy : formatPercentage(parseNumber(ativo.dy))}
+                          {operacao.vencimento}
                         </td>
                         <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
-                          {ativo.vies || '--'}
+                          {formatCurrency(operacao.premio)}
+                        </td>
+                        <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
+                          {formatPercentage(operacao.rendaPercentual)}
+                        </td>
+                        <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
+                          {formatCurrency(operacao.garantia)}
+                        </td>
+                        <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
+                          {operacao.tipoOperacao}
                         </td>
                         <td style={{ padding: '16px', textAlign: 'center' }}>
                           <span
@@ -682,11 +820,11 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                               borderRadius: '999px',
                               fontSize: '12px',
                               fontWeight: 600,
-                              color: ativo.posicaoEncerrada ? '#b91c1c' : '#0f766e',
-                              backgroundColor: ativo.posicaoEncerrada ? '#fee2e2' : '#ccfbf1'
+                              color: operacao.status === 'Encerrada' ? '#b91c1c' : '#0f766e',
+                              backgroundColor: operacao.status === 'Encerrada' ? '#fee2e2' : '#ccfbf1'
                             }}
                           >
-                            {ativo.posicaoEncerrada ? 'Encerrada' : 'Aberta'}
+                            {operacao.status}
                           </span>
                         </td>
                       </tr>
