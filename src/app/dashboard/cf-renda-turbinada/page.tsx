@@ -16,8 +16,7 @@ const navigationCards: NavigationCard[] = [
     title: 'Aulas',
     description: 'Domine as estratégias do CF Renda Turbinada com vídeos e materiais escritos completos.',
     href: '/dashboard/cf-renda-turbinada/aulas',
-    icon: '🎥',
-    badge: 'NOVO'
+    icon: '🎥'
   },
   {
     title: 'Bastidores da Bolsa',
@@ -29,7 +28,8 @@ const navigationCards: NavigationCard[] = [
     title: 'Carteira Recomendada',
     description: 'Acompanhe as operações sugeridas e o plano mensal para gerar renda com consistência.',
     href: '/dashboard/cf-renda-turbinada/carteira-recomendada',
-    icon: '📊'
+    icon: '📊',
+    badge: 'LIBERADO'
   }
 ];
 
