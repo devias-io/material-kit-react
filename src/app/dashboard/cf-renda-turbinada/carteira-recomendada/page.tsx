@@ -249,10 +249,6 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
         value: callAbertas.toString()
       },
       {
-        label: 'Prêmio médio/contrato',
-        value: formatCurrency(premioMedio)
-      },
-      {
         label: 'Renda média estimada',
         value: formatPercentage(rendaMedia)
       }
@@ -557,7 +553,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
             gap: '16px'
           }}
         >
@@ -623,6 +619,10 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
             </p>
           </div>
 
+          <div style={{ padding: '24px' }}>
+            {renderOperacoesTable(operacoesPUT, 'PUT')}
+          </div>
+
           {/* Alerta de risco PUTs */}
           <div
             style={{
@@ -630,7 +630,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               backgroundColor: '#fff7ed',
               border: '1px solid #fed7aa',
               borderLeft: '4px solid #f97316',
-              margin: '16px 24px',
+              margin: '0 24px 24px 24px',
               borderRadius: '8px',
               display: 'flex',
               gap: '12px',
@@ -642,10 +642,6 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               <strong>Importante:</strong> O lançador de PUT assume a obrigação de adquirir o ativo pelo preço de exercício (Strike) no vencimento. 
               É necessário ter como garantia, no mínimo, o valor necessário para comprar a quantidade de ações correspondentes às PUTs vendidas.
             </div>
-          </div>
-
-          <div style={{ padding: '24px' }}>
-            {renderOperacoesTable(operacoesPUT, 'PUT')}
           </div>
         </section>
 
@@ -673,6 +669,10 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
             </p>
           </div>
 
+          <div style={{ padding: '24px' }}>
+            {renderOperacoesTable(operacoesCALL, 'CALL')}
+          </div>
+
           {/* Alerta de risco CALLs */}
           <div
             style={{
@@ -680,7 +680,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               backgroundColor: '#fef2f2',
               border: '1px solid #fecaca',
               borderLeft: '4px solid #dc2626',
-              margin: '16px 24px',
+              margin: '0 24px 24px 24px',
               borderRadius: '8px',
               display: 'flex',
               gap: '12px',
@@ -692,10 +692,6 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               <strong>Importante:</strong> Para realizar a venda coberta de CALL é necessário ter como garantia, no mínimo, a quantidade de ações em carteira 
               correspondentes às CALLs vendidas. Evite realizar operações envolvendo ações que não estejam em sua posse para não ficar exposto sem cobertura.
             </div>
-          </div>
-
-          <div style={{ padding: '24px' }}>
-            {renderOperacoesTable(operacoesCALL, 'CALL')}
           </div>
         </section>
 
