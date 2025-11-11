@@ -2,16 +2,10 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock } from 'lucide-react';
+import { Lock, TrendingUp, AlertCircle } from 'lucide-react';
 
 import { useAuthAccess } from '@/hooks/use-auth-access';
 import { useDataStore } from '@/hooks/useDataStore';
-
-type StepCard = {
-  title: string;
-  description: string;
-  items: string[];
-};
 
 type CarteiraResumo = {
   label: string;
@@ -35,72 +29,10 @@ type CarteiraOperacao = {
   observacao?: string;
 };
 
-const weeklySteps: StepCard[] = [
-  {
-    title: 'Segunda-feira – Preparação do Terreno',
-    description:
-      'Reúna os insumos para a semana de operações, garantindo que capital, garantias e plataformas estejam prontos.',
-    items: [
-      'Checar agenda de eventos relevantes (resultados, dividendos, FED).',
-      'Atualizar watchlist com ativos elegíveis, strikes preferenciais e margens necessárias.',
-      'Validar garantias disponíveis e separar o capital destinado às operações da carteira.'
-    ]
-  },
-  {
-    title: 'Terça a Quinta-feira – Execução das Recomendações',
-    description:
-      'Acompanhe as recomendações liberadas e ajuste o preço de entrada conforme o mercado.',
-    items: [
-      'Abrir posições recomendadas respeitando os limites de margem informados.',
-      'Atualizar o controle de operações com prêmio recebido, ponto de ajuste e plano de recompra.',
-      'Configurar alertas no Profit para cada ponto de atenção (stop, ajuste, rolagem).'
-    ]
-  },
-  {
-    title: 'Sexta-feira – Revisão e Planejamento',
-    description:
-      'Encerramento das operações, avaliação de riscos e preparação para o próximo ciclo.',
-    items: [
-      'Revisar posições abertas e decidir entre manter, ajustar ou encerrar.',
-      'Registrar prêmios recebidos, garantias utilizadas e lições aprendidas na semana.',
-      'Enviar dúvidas com prints/timestamps das aulas para receber orientação personalizada.'
-    ]
-  }
-];
-
-const quickActions = [
-  'Configurar alertas de margem para não ser pego de surpresa pelo corretor.',
-  'Utilizar a planilha de controle (download disponível no grupo) para registrar cada operação.',
-  'Rever a aula correspondente sempre que surgir uma situação não prevista.',
-  'Avisar o suporte em até 30 minutos após um evento inesperado para receber plano de ação.'
-];
-
-const reportHighlights = [
-  {
-    title: 'Estratégias de Opções de Mercado',
-    summary:
-      'Venda estruturada de puts e calls em um cenário de alta, priorizando ativos baratos e de qualidade. Reforço para iniciar com posições pequenas e utilizar os códigos enviados para operar em qualquer corretora.'
-  },
-  {
-    title: 'Procedimentos de Opções Financeiras',
-    summary:
-      'São necessárias cinco operações mensais, executadas em dias diferentes. Para vender put é preciso manter a garantia na Clear; para calls, o ativo deve estar custodiado.'
-  },
-  {
-    title: 'Opções e Estratégias de Venda',
-    summary:
-      'Encerrar a operação exige recompra das opções antes do vencimento, que costuma ocorrer a cada vinte dias úteis. As taxas variam conforme o patrimônio e podem ser negociadas com o assessor.'
-  },
-  {
-    title: 'Estratégia de Opções Financeiras',
-    summary:
-      'Exemplo prático: ativo de R$30 para R$32 com put desvalorizando de R$1 para R$0,30, garantindo lucro de R$0,70 sem a taxa de exercício de 0,5%. Recomendações são enviadas após a atualização dos preços.'
-  },
-  {
-    title: 'Profit Pro – Compra e Venda de Opções',
-    summary:
-      'Demonstração de uso do Profit Pro, incluindo Delta 30 e comparação com outras plataformas como Oblab e Opçõesnet. O sistema acompanha rentabilidade, mas stops devem ser configurados manualmente.'
-  }
+const quickTips = [
+  'Configure alertas de margem no Profit para acompanhar suas posições',
+  'Sempre valide os preços antes de executar a operação',
+  'Dúvidas? Acesse o grupo ou reveja a aula correspondente'
 ];
 
 const useDeviceDetection = () => {
@@ -255,18 +187,12 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   const totaisCarteira = React.useMemo<CarteiraResumo[]>(() => {
     const totalOperacoes = operacoesProcessadas.length;
     const abertas = operacoesProcessadas.filter((op) => op.status === 'Aberta').length;
-    const encerradas = totalOperacoes - abertas;
 
     const agregados = operacoesProcessadas.reduce(
       (acc, operacao) => {
         if (operacao.premio !== null && !Number.isNaN(operacao.premio)) {
           acc.totalPremio += operacao.premio * 100;
           acc.countPremio += 1;
-        }
-
-        if (operacao.garantia !== null && !Number.isNaN(operacao.garantia)) {
-          acc.totalGarantia += operacao.garantia;
-          acc.countGarantia += 1;
         }
 
         if (
@@ -282,8 +208,6 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
       {
         totalPremio: 0,
         countPremio: 0,
-        totalGarantia: 0,
-        countGarantia: 0,
         totalRenda: 0,
         countRenda: 0
       }
@@ -292,33 +216,22 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
     const premioMedio = agregados.countPremio > 0
       ? agregados.totalPremio / agregados.countPremio
       : null;
-    const garantiaMedia = agregados.countGarantia > 0
-      ? agregados.totalGarantia / agregados.countGarantia
-      : null;
     const rendaMedia = agregados.countRenda > 0
       ? agregados.totalRenda / agregados.countRenda
       : null;
 
     return [
       {
-        label: 'Operações abertas',
-        value: abertas.toString(),
-        helper: 'Posições em acompanhamento nesta semana'
+        label: 'Operações em aberto',
+        value: abertas.toString()
       },
       {
-        label: 'Operações encerradas',
-        value: encerradas.toString(),
-        helper: 'Inclui rolagens já concluídas'
-      },
-      {
-        label: 'Prêmio médio por contrato',
-        value: formatCurrency(premioMedio),
-        helper: 'Considerando lote padrão de 100 ações'
+        label: 'Prêmio médio/contrato',
+        value: formatCurrency(premioMedio)
       },
       {
         label: 'Renda média estimada',
-        value: formatPercentage(rendaMedia),
-        helper: 'Baseada em prêmio total ÷ garantia'
+        value: formatPercentage(rendaMedia)
       }
     ];
   }, [operacoesProcessadas]);
@@ -373,7 +286,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               marginBottom: '16px'
             }}
           >
-            Em breve
+            Acesso Restrito
           </h1>
 
           <p
@@ -406,18 +319,19 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
       style={{
         minHeight: '100vh',
         backgroundColor: '#f5f5f5',
-        padding: '24px'
+        padding: isMobile ? '16px' : '24px'
       }}
     >
       <div
         style={{
-          maxWidth: '1200px',
+          maxWidth: '1280px',
           margin: '0 auto',
           display: 'flex',
           flexDirection: 'column',
           gap: '24px'
         }}
       >
+        {/* Header */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <button
             type="button"
@@ -431,195 +345,110 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '6px',
+              padding: 0
             }}
           >
-            ← Voltar para o plano
+            ← Voltar
           </button>
 
           <div>
             <h1
               style={{
-                fontSize: '42px',
+                fontSize: isMobile ? '28px' : '36px',
                 fontWeight: 800,
                 color: '#1e293b',
-                margin: '0 0 12px 0'
+                margin: '0 0 8px 0'
               }}
             >
-              Carteira Recomendada de Opções
+              Carteira Recomendada
             </h1>
             <p
               style={{
                 color: '#64748b',
-                fontSize: '18px',
+                fontSize: '16px',
                 margin: 0,
-                maxWidth: '760px',
-                lineHeight: 1.6
+                lineHeight: 1.5
               }}
             >
-              Acompanhe as vendas cobertas de puts e calls indicadas pelo CF Renda Turbinada. Aqui você encontra os códigos,
-              prêmios, garantias e orientações para executar cada operação com confiança.
+              Operações atualizadas semanalmente com códigos, prêmios e garantias
             </p>
           </div>
         </div>
 
-        <section
+        {/* Cards de resumo */}
+        <div
           style={{
-            backgroundColor: '#0f172a',
-            color: '#f8fafc',
-            borderRadius: '16px',
-            padding: '28px',
-            display: 'flex',
-            flexDirection: isMobile ? 'column' : 'row',
-            gap: '24px',
-            alignItems: isMobile ? 'flex-start' : 'center',
-            justifyContent: 'space-between'
-          }}
-        >
-          <div style={{ maxWidth: isMobile ? '100%' : '55%' }}>
-            <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 700 }}>Como funciona a carteira</h2>
-            <p style={{ margin: '12px 0 0 0', fontSize: '16px', lineHeight: 1.6 }}>
-              Todo ciclo começa com a análise macro + técnica apresentada nas aulas. As recomendações ficam disponíveis nos
-              canais oficiais do CF e são atualizadas sempre que houver oportunidade melhor ou necessidade de ajuste.
-            </p>
-            <ul style={{ margin: '16px 0 0 16px', padding: 0, fontSize: '14px', lineHeight: 1.6 }}>
-              <li>Operações priorizam riscos conhecidos, com foco em geração de prêmio consistente.</li>
-              <li>Você recebe aviso sempre que uma posição for aberta, ajustada ou encerrada.</li>
-              <li>Atenção ao limite de contratos indicado para evitar alavancagem excessiva.</li>
-            </ul>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gap: '12px',
-              minWidth: isMobile ? '100%' : '320px'
-            }}
-          >
-            {totaisCarteira.map((item) => (
-              <div
-                key={item.label}
-                style={{
-                  backgroundColor: 'rgba(15, 23, 42, 0.45)',
-                  border: '1px solid rgba(148, 163, 184, 0.3)',
-                  borderRadius: '12px',
-                  padding: '16px'
-                }}
-              >
-                <div style={{ fontSize: '12px', textTransform: 'uppercase', opacity: 0.8 }}>{item.label}</div>
-                <div style={{ fontSize: '28px', fontWeight: 700, marginTop: '4px' }}>{item.value}</div>
-                {item.helper && (
-                  <div style={{ fontSize: '12px', opacity: 0.7, marginTop: '4px', lineHeight: 1.4 }}>{item.helper}</div>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section
-          style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            padding: '28px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px'
-          }}
-        >
-          <div>
-            <h2 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: 700, color: '#0f172a' }}>
-              Resumo do relatório
-            </h2>
-            <p style={{ margin: 0, color: '#475569', fontSize: '15px', lineHeight: 1.6 }}>
-              Destaques da última sessão com Davi e Caio para orientar a execução das estratégias com opções.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gap: '16px' }}>
-            {reportHighlights.map((highlight) => (
-              <div
-                key={highlight.title}
-                style={{
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  backgroundColor: '#f8fafc'
-                }}
-              >
-                <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
-                  {highlight.title}
-                </h3>
-                <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>{highlight.summary}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section
-          style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            padding: '28px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px'
-          }}
-        >
-          <div>
-            <h2 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: 700, color: '#0f172a' }}>
-              Rotina semanal sugerida
-            </h2>
-            <p style={{ margin: 0, color: '#475569', fontSize: '15px' }}>
-              Siga este checklist para manter a disciplina e aproveitar cada operação com tranquilidade.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gap: '16px' }}>
-            {weeklySteps.map((step) => (
-              <div
-                key={step.title}
-                style={{
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  backgroundColor: '#f8fafc'
-                }}
-              >
-                <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>{step.title}</h3>
-                <p style={{ margin: '0 0 12px 0', color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
-                  {step.description}
-                </p>
-                <ul style={{ margin: 0, paddingLeft: '18px', color: '#1f2937', fontSize: '14px', lineHeight: 1.6 }}>
-                  {step.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section
-          style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            padding: '28px',
-            display: 'flex',
-            flexDirection: 'column',
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
             gap: '16px'
           }}
         >
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '16px', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between' }}>
+          {totaisCarteira.map((item) => (
+            <div
+              key={item.label}
+              style={{
+                backgroundColor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
+                padding: '20px'
+              }}
+            >
+              <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>
+                {item.label}
+              </div>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>
+                {item.value}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Banner de informação */}
+        <div
+          style={{
+            backgroundColor: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            display: 'flex',
+            gap: '12px',
+            alignItems: 'flex-start'
+          }}
+        >
+          <AlertCircle size={20} style={{ color: '#2563eb', flexShrink: 0, marginTop: '2px' }} />
+          <div style={{ fontSize: '14px', color: '#1e40af', lineHeight: 1.6 }}>
+            <strong>Como funciona:</strong> As recomendações são inseridas automaticamente via painel de gerenciamento.
+            Valide os preços antes de executar no Profit e configure alertas de margem para cada posição.
+          </div>
+        </div>
+
+        {/* Tabela de operações */}
+        <section
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            overflow: 'hidden'
+          }}
+        >
+          <div
+            style={{
+              padding: '24px',
+              borderBottom: '1px solid #e2e8f0',
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: '16px',
+              alignItems: isMobile ? 'flex-start' : 'center',
+              justifyContent: 'space-between'
+            }}
+          >
             <div>
-              <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0f172a' }}>
-                Operações do CF Renda Turbinada
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>
+                Operações Recomendadas
               </h2>
-              <p style={{ margin: '6px 0 0 0', color: '#475569', fontSize: '14px' }}>
-                Inseridas automaticamente via <strong>Dashboard &gt; Gerenciamento</strong>. Utilize esse painel para validar preços
-                antes de executar no Profit.
+              <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '14px' }}>
+                Acompanhe as posições e execute no momento adequado
               </p>
             </div>
             <button
@@ -629,105 +458,107 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                 backgroundColor: '#2563eb',
                 color: 'white',
                 border: 'none',
-                borderRadius: '999px',
-                padding: '10px 18px',
-                fontSize: '13px',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                fontSize: '14px',
                 fontWeight: 600,
                 cursor: 'pointer',
-                boxShadow: '0 8px 16px rgba(37, 99, 235, 0.25)'
+                whiteSpace: 'nowrap'
               }}
             >
-              Ir para gerenciamento →
+              Gerenciar operações
             </button>
           </div>
 
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+          <div style={{ padding: isMobile ? '16px' : '24px' }}>
             {isLoadingCarteira ? (
               <div
                 style={{
-                  padding: '32px',
+                  padding: '48px',
                   textAlign: 'center',
                   color: '#64748b',
                   fontSize: '14px'
                 }}
               >
-                Carregando operações do plano...
+                Carregando operações...
               </div>
             ) : carteiraVazia ? (
               <div
                 style={{
-                  padding: '32px',
+                  padding: '48px',
                   textAlign: 'center',
-                  color: '#94a3b8',
-                  fontSize: '14px',
-                  border: '1px dashed #cbd5f5',
+                  border: '2px dashed #e2e8f0',
                   borderRadius: '12px'
                 }}
               >
-                Nenhuma operação cadastrada ainda. Cadastre no painel de gerenciamento para ativar esta visualização.
+                <TrendingUp size={48} style={{ color: '#cbd5e1', margin: '0 auto 16px' }} />
+                <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>
+                  Nenhuma operação cadastrada. Use o painel de gerenciamento para adicionar recomendações.
+                </p>
               </div>
             ) : isMobile ? (
-              <div style={{ display: 'grid', gap: '16px' }}>
+              <div style={{ display: 'grid', gap: '12px' }}>
                 {operacoesProcessadas.map((operacao) => (
                   <div
                     key={operacao.id}
                     style={{
                       border: '1px solid #e2e8f0',
-                      borderRadius: '12px',
+                      borderRadius: '10px',
                       padding: '16px',
-                      backgroundColor: '#f8fafc'
+                      backgroundColor: operacao.status === 'Encerrada' ? '#f8fafc' : '#ffffff'
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: '16px', color: '#0f172a' }}>{operacao.ativoBase}</div>
-                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                          {operacao.codigoOpcao !== '--' ? `Opção ${operacao.codigoOpcao}` : 'Código da opção a confirmar'}
+                        <div style={{ fontWeight: 700, fontSize: '18px', color: '#0f172a' }}>
+                          {operacao.ativoBase}
+                        </div>
+                        <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
+                          {operacao.codigoOpcao}
                         </div>
                       </div>
                       <span
                         style={{
-                          fontSize: '12px',
-                          color: operacao.status === 'Encerrada' ? '#ef4444' : '#0ea5e9',
+                          fontSize: '11px',
                           fontWeight: 600,
-                          backgroundColor: operacao.status === 'Encerrada' ? '#fee2e2' : '#e0f2fe',
-                          padding: '2px 8px',
+                          color: operacao.status === 'Encerrada' ? '#dc2626' : '#16a34a',
+                          backgroundColor: operacao.status === 'Encerrada' ? '#fee2e2' : '#dcfce7',
+                          padding: '4px 10px',
                           borderRadius: '999px'
                         }}
                       >
                         {operacao.status}
                       </span>
                     </div>
-                    <div style={{ color: '#475569', fontSize: '12px', marginTop: '8px' }}>
-                      {operacao.tipoOperacao} • Vencimento {operacao.vencimento}
-                    </div>
-                    <div style={{ display: 'grid', gap: '8px', marginTop: '12px', fontSize: '13px', color: '#0f172a' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Strike</span>
-                        <strong>{formatCurrency(operacao.strike)}</strong>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px' }}>
+                      <div>
+                        <div style={{ color: '#64748b', marginBottom: '4px' }}>Strike</div>
+                        <div style={{ fontWeight: 600, color: '#0f172a' }}>{formatCurrency(operacao.strike)}</div>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Prêmio (por ação)</span>
-                        <strong>{formatCurrency(operacao.premio)}</strong>
+                      <div>
+                        <div style={{ color: '#64748b', marginBottom: '4px' }}>Prêmio</div>
+                        <div style={{ fontWeight: 600, color: '#0f172a' }}>{formatCurrency(operacao.premio)}</div>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Renda estimada</span>
-                        <strong>{formatPercentage(operacao.rendaPercentual)}</strong>
+                      <div>
+                        <div style={{ color: '#64748b', marginBottom: '4px' }}>Renda</div>
+                        <div style={{ fontWeight: 600, color: '#16a34a' }}>{formatPercentage(operacao.rendaPercentual)}</div>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Garantia</span>
-                        <strong>{formatCurrency(operacao.garantia)}</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Preço de referência</span>
-                        <strong>{formatCurrency(operacao.precoReferencia)}</strong>
+                      <div>
+                        <div style={{ color: '#64748b', marginBottom: '4px' }}>Garantia</div>
+                        <div style={{ fontWeight: 600, color: '#0f172a' }}>{formatCurrency(operacao.garantia)}</div>
                       </div>
                     </div>
-                    {operacao.observacao ? (
-                      <div style={{ marginTop: '12px', fontSize: '12px', color: '#475569', lineHeight: 1.6 }}>
-                        <strong>Observações:</strong> {operacao.observacao}
+
+                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #f1f5f9', fontSize: '12px', color: '#64748b' }}>
+                      {operacao.tipoOperacao} • Venc. {operacao.vencimento}
+                    </div>
+
+                    {operacao.observacao && (
+                      <div style={{ marginTop: '12px', fontSize: '12px', color: '#475569', lineHeight: 1.5, backgroundColor: '#f8fafc', padding: '8px', borderRadius: '6px' }}>
+                        💡 {operacao.observacao}
                       </div>
-                    ) : null}
+                    )}
                   </div>
                 ))}
               </div>
@@ -735,93 +566,60 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#f1f5f9' }}>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>#</th>
-                      <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: '#374151', fontSize: '14px' }}>ATIVO</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>OPÇÃO</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>STRIKE</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>VENCIMENTO</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>PRÊMIO (R$)</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>RENDA</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>GARANTIA</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>TIPO</th>
-                      <th style={{ padding: '16px', textAlign: 'center', fontWeight: 700, color: '#374151', fontSize: '14px' }}>STATUS</th>
+                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                      <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ativo</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Opção</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: '#475569', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Strike</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: '#475569', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Prêmio</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: '#475569', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Renda</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: '#475569', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Garantia</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#475569', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Vencimento</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#475569', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {operacoesProcessadas.map((operacao) => (
+                    {operacoesProcessadas.map((operacao, idx) => (
                       <tr
                         key={operacao.id}
                         style={{
                           borderBottom: '1px solid #f1f5f9',
-                          transition: 'background-color 0.2s'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f8fafc';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
+                          backgroundColor: operacao.status === 'Encerrada' ? '#f8fafc' : 'transparent'
                         }}
                       >
-                        <td style={{ padding: '16px', textAlign: 'center' }}>
-                          <div
-                            style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '50%',
-                              backgroundColor: '#f8fafc',
-                              border: '1px solid #e2e8f0',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: 700,
-                              fontSize: '14px',
-                              color: '#64748b',
-                              margin: '0 auto'
-                            }}
-                          >
-                            {operacao.ordem}
-                          </div>
-                        </td>
-                        <td style={{ padding: '16px', textAlign: 'left' }}>
+                        <td style={{ padding: '16px' }}>
                           <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '15px' }}>{operacao.ativoBase}</div>
-                          <div style={{ fontSize: '12px', color: '#64748b' }}>
-                            Preço ref.: {formatCurrency(operacao.precoReferencia)}
+                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                            Ref: {formatCurrency(operacao.precoReferencia)}
                           </div>
                         </td>
-                        <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
+                        <td style={{ padding: '16px', color: '#0f172a', fontSize: '14px', fontFamily: 'monospace' }}>
                           {operacao.codigoOpcao}
                         </td>
-                        <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
+                        <td style={{ padding: '16px', textAlign: 'right', color: '#0f172a', fontSize: '14px', fontWeight: 600 }}>
                           {formatCurrency(operacao.strike)}
                         </td>
-                        <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
-                          {operacao.vencimento}
-                        </td>
-                        <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
+                        <td style={{ padding: '16px', textAlign: 'right', color: '#0f172a', fontSize: '14px', fontWeight: 600 }}>
                           {formatCurrency(operacao.premio)}
                         </td>
-                        <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
+                        <td style={{ padding: '16px', textAlign: 'right', color: '#16a34a', fontSize: '14px', fontWeight: 700 }}>
                           {formatPercentage(operacao.rendaPercentual)}
                         </td>
-                        <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
+                        <td style={{ padding: '16px', textAlign: 'right', color: '#0f172a', fontSize: '14px', fontWeight: 600 }}>
                           {formatCurrency(operacao.garantia)}
                         </td>
-                        <td style={{ padding: '16px', textAlign: 'center', color: '#0f172a', fontSize: '14px' }}>
-                          {operacao.tipoOperacao}
+                        <td style={{ padding: '16px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                          {operacao.vencimento}
                         </td>
                         <td style={{ padding: '16px', textAlign: 'center' }}>
                           <span
                             style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              padding: '4px 10px',
+                              display: 'inline-block',
+                              padding: '4px 12px',
                               borderRadius: '999px',
                               fontSize: '12px',
                               fontWeight: 600,
-                              color: operacao.status === 'Encerrada' ? '#b91c1c' : '#0f766e',
-                              backgroundColor: operacao.status === 'Encerrada' ? '#fee2e2' : '#ccfbf1'
+                              color: operacao.status === 'Encerrada' ? '#dc2626' : '#16a34a',
+                              backgroundColor: operacao.status === 'Encerrada' ? '#fee2e2' : '#dcfce7'
                             }}
                           >
                             {operacao.status}
@@ -836,36 +634,36 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
           </div>
         </section>
 
-        <section
+        {/* Dicas rápidas */}
+        <div
           style={{
-            backgroundColor: '#0f172a',
-            color: '#f8fafc',
-            borderRadius: '16px',
-            padding: '28px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '18px'
+            backgroundColor: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            padding: '20px'
           }}
         >
-          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700 }}>Checklist de execução rápida</h2>
-          <div style={{ display: 'grid', gap: '12px' }}>
-            {quickActions.map((action) => (
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
+            Dicas de execução
+          </h3>
+          <div style={{ display: 'grid', gap: '8px' }}>
+            {quickTips.map((tip, idx) => (
               <div
-                key={action}
+                key={idx}
                 style={{
-                  backgroundColor: 'rgba(15, 23, 42, 0.55)',
-                  border: '1px solid rgba(148, 163, 184, 0.3)',
-                  borderRadius: '12px',
-                  padding: '14px 18px',
+                  display: 'flex',
+                  gap: '10px',
                   fontSize: '14px',
-                  lineHeight: 1.6
+                  color: '#475569',
+                  lineHeight: 1.5
                 }}
               >
-                {action}
+                <span style={{ color: '#2563eb' }}>•</span>
+                <span>{tip}</span>
               </div>
             ))}
           </div>
-        </section>
+        </div>
       </div>
     </div>
   );
