@@ -42,7 +42,7 @@ interface AuthAccessContextValue {
 }
 
 const GUARANTEED_PAGES = ['recursos-suporte'] as const;
-const DEFAULT_OPEN_PAGES = ['relatorio-semanal'] as const;
+const DEFAULT_OPEN_PAGES = ['relatorio-semanal', 'cf-renda-turbinada-carteira'] as const;
 
 function normalizeCustomPermissions(value: unknown): string[] {
   if (!value) {
