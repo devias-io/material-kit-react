@@ -63,7 +63,7 @@ const operacoesPUTFixas: CarteiraOperacao[] = [
     id: 'put-3',
     ordem: 3,
     ativoBase: 'PETR4',
-    codigoOpcao: 'PETRX330',
+    codigoOpcao: 'PETRX326',
     strike: 32.50,
     premio: null,
     premioCustom: 'R$ 0,62 e R$ 0,65',
