@@ -58,13 +58,24 @@ function normalizeKiwifyAmounts(value: unknown): number[] {
     return [];
   }
 
-  const normalized: number[] = [parsed];
+  const normalized: number[] = [];
+  let current = parsed;
 
-  if (Math.abs(parsed) >= 10000) {
-    const divided = parsed / 100;
-    if (Number.isFinite(divided) && Math.abs(divided) >= 1) {
-      normalized.push(Number(divided.toFixed(2)));
+  while (Number.isFinite(current)) {
+    normalized.push(Number(current.toFixed(2)));
+
+    if (Math.abs(current) < 10000) {
+      break;
     }
+
+    const divided = current / 100;
+    const rounded = Number(divided.toFixed(2));
+
+    if (!Number.isFinite(divided) || normalized.includes(rounded)) {
+      break;
+    }
+
+    current = divided;
   }
 
   return normalized;
