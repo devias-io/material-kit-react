@@ -273,6 +273,16 @@ function toInputDateTimeValue(isoDate: string): string {
   )}`;
 }
 
+function isLiveStarted(eventDate: string): boolean {
+  const startDate = new Date(eventDate);
+
+  if (Number.isNaN(startDate.getTime())) {
+    return false;
+  }
+
+  return startDate <= new Date();
+}
+
 function isLivePast(eventDate: string, durationMinutes?: number): boolean {
   const startDate = new Date(eventDate);
 
@@ -3819,7 +3829,7 @@ visibleModules.map(module => {
                             </p>
                           )}
 
-                          {live.meetingUrl && !isPast && !live.isCancelled && (
+{live.meetingUrl && isLiveStarted(live.eventDate) && !isPast && !live.isCancelled && (
                             <a
                               href={live.meetingUrl}
                               target="_blank"
