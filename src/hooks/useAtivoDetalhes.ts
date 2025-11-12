@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { extrairNumeroBrApi, calcularDyAPartirDoResultado } from '@/utils/dividendYield';
+import { isTickerFII } from '@/utils/tickers';
 
 // ========================================
 // INTERFACES E TIPOS
@@ -427,14 +428,14 @@ if (parsed.timestamp && (Date.now() - parsed.timestamp) < 6 * 60 * 60 * 1000) {
 
       // Fallback para dados estáticos
       const dadosEstaticos: DadosFinanceiros = {
-        precoAtual: ticker.includes('11') ? 100.00 : 85.75,
+        precoAtual: isTickerFII(ticker) ? 100.00 : 85.75,
         variacao: 1.50,
         variacaoPercent: 1.52,
         volume: 1000000,
-        dy: ticker.includes('11') ? 8.5 : 4.2,
-        marketCap: ticker.includes('11') ? 2200000000 : 15000000000,
-        pl: ticker.includes('11') ? undefined : 12.5,
-        regularMarketPrice: ticker.includes('11') ? 100.00 : 85.75
+        dy: isTickerFII(ticker) ? 8.5 : 4.2,
+        marketCap: isTickerFII(ticker) ? 2200000000 : 15000000000,
+        pl: isTickerFII(ticker) ? undefined : 12.5,
+        regularMarketPrice: isTickerFII(ticker) ? 100.00 : 85.75
       };
       
       setDadosFinanceiros(dadosEstaticos);
@@ -629,7 +630,7 @@ export function useHGBrasilAcoes(ticker: string | undefined) {
     }
 
     // Só para ações brasileiras (não FII, não BDR)
-    if (ticker.includes('11') || ticker.includes('34') || ticker.includes('35')) {
+    if (isTickerFII(ticker) || ticker.includes('34') || ticker.includes('35')) {
       setLoading(false);
       return;
     }
@@ -1039,7 +1040,7 @@ export function useYahooFinanceInternacional(ticker: string | undefined) {
     }
 
     // Só para ativos internacionais
-    if ((ticker.match(/\d$/) && !ticker.includes('34') && !ticker.includes('35')) || ticker.includes('11')) {
+    if ((ticker.match(/\d$/) && !ticker.includes('34') && !ticker.includes('35')) || isTickerFII(ticker)) {
       setLoading(false);
       return;
     }
@@ -1664,7 +1665,7 @@ export function useDividendYield(
       });
 
       // 🌍 DETECTAR SE É ATIVO INTERNACIONAL
-      const ehInternacional = !ticker.match(/\d$/) && !ticker.includes('11') && !ticker.includes('34') && !ticker.includes('35');
+      const ehInternacional = !ticker.match(/\d$/) && !isTickerFII(ticker) && !ticker.includes('34') && !ticker.includes('35');
       console.log(`🌍 ${ticker} é internacional?`, ehInternacional);
 
       // 1. PARA ATIVOS INTERNACIONAIS - BUSCAR VIA API

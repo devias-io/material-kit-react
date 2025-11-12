@@ -33,6 +33,7 @@ import {
   Trophy,
   Calculator
 } from '@phosphor-icons/react/dist/ssr';
+import { isTickerFII } from '@/utils/tickers';
 
 // 🏗️ SEUS DADOS REAIS INTEGRADOS
 interface AtivoEducacional {
@@ -152,7 +153,7 @@ function processarCarteira(dadosRaw: any[], valorInvestimentoSimulado: number = 
     let dividendosSimulados = 0;
     
     if (dyAnual > 0) {
-      if (ativo.ticker.includes('11')) {
+      if (isTickerFII(ativo.ticker)) {
         // FIIs: pagam mensalmente
         dividendosSimulados = (valorPorAtivo * dyAnual / 100) * tempoInvestidoAnos;
       } else {

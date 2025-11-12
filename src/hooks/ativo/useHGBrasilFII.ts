@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { isTickerFII } from '@/utils/tickers';
 
 // 🔥 HOOK OTIMIZADO PARA HG BRASIL API - DADOS REAIS DE FII
 export function useHGBrasilFII(ticker: string) {
@@ -7,7 +8,7 @@ export function useHGBrasilFII(ticker: string) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchDadosFIIHGBrasil = useCallback(async () => {
-    if (!ticker || !(ticker.includes('11') || ticker.endsWith('11'))) {
+    if (!ticker || !isTickerFII(ticker)) {
       setLoading(false);
       return;
     }
