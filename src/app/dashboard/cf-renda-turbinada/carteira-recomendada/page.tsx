@@ -40,7 +40,7 @@ const operacoesPUTFixas: CarteiraOperacao[] = [
     premioCustom: 'R$ 0,44 e R$ 0,47',
     rendaPercentual: 1.40,
     garantia: 3351.00,
-    precoReferencia: 33.51,
+    precoReferencia: 33.26,
     vencimento: '19/12/2025',
     tipoOperacao: 'PUT',
     status: 'Aberta'
@@ -69,7 +69,7 @@ const operacoesPUTFixas: CarteiraOperacao[] = [
     premioCustom: 'R$ 0,62 e R$ 0,65',
     rendaPercentual: 1.38,
     garantia: 3250.00,
-    precoReferencia: 32.50,
+    precoReferencia: 32.00,
     vencimento: '19/12/2025',
     tipoOperacao: 'PUT',
     status: 'Aberta'
@@ -84,7 +84,7 @@ const operacoesPUTFixas: CarteiraOperacao[] = [
     premioCustom: 'R$ 0,59 e R$ 0,63',
     rendaPercentual: 2.20,
     garantia: 2294.00,
-    precoReferencia: 22.94,
+    precoReferencia: 22.44,
     vencimento: '19/12/2025',
     tipoOperacao: 'PUT',
     status: 'Aberta'
