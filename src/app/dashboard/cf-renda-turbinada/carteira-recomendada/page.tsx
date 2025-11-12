@@ -24,7 +24,7 @@ type CarteiraOperacao = {
   precoReferencia: number | null;
   vencimento: string;
   tipoOperacao: 'PUT' | 'CALL';
-  status: 'Aberta' | 'Encerrada';
+  status: 'Aberta' | 'Fechada' | 'Encerrada';
   observacao?: string;
 };
 
@@ -57,7 +57,7 @@ const operacoesPUTFixas: CarteiraOperacao[] = [
     precoReferencia: 13.02,
     vencimento: '19/12/2025',
     tipoOperacao: 'PUT',
-    status: 'Aberta'
+    status: 'Fechada'
   },
   {
     id: 'put-3',
@@ -187,6 +187,17 @@ const formatPercentage = (value: number | null | undefined): string => {
   }
   const rounded = Number(value.toFixed(2));
   return `${rounded.toString().replace('.', ',')}%`;
+};
+
+const getStatusStyle = (status: 'Aberta' | 'Fechada' | 'Encerrada') => {
+  switch (status) {
+    case 'Aberta':
+      return { background: '#dbeafe', color: '#1e40af' };
+    case 'Fechada':
+      return { background: '#fef3c7', color: '#92400e' };
+    case 'Encerrada':
+      return { background: '#f1f5f9', color: '#64748b' };
+  }
 };
 
 export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
@@ -338,151 +349,152 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
     if (isMobile) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {operacoes.map((operacao) => (
-            <div
-              key={operacao.id}
-              style={{
-                background: 'white',
-                borderRadius: '12px',
-                padding: '16px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                border: '1px solid #e2e8f0'
-              }}
-            >
-              {/* Logo do Ativo */}
+          {operacoes.map((operacao) => {
+            const statusStyle = getStatusStyle(operacao.status);
+            return (
               <div
+                key={operacao.id}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  marginBottom: '12px',
-                  paddingBottom: '12px',
-                  borderBottom: '1px solid #f1f5f9'
+                  background: 'white',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  border: '1px solid #e2e8f0'
                 }}
               >
+                {/* Logo do Ativo */}
                 <div
                   style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    background: '#f8fafc',
-                    flexShrink: 0
+                    gap: '12px',
+                    marginBottom: '12px',
+                    paddingBottom: '12px',
+                    borderBottom: '1px solid #f1f5f9'
                   }}
                 >
-                  <img
-                    src={`https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/${operacao.ativoBase}.png`}
-                    alt={operacao.ativoBase}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const parent = target.parentElement;
-                      if (parent) {
-                        parent.style.backgroundColor =
-                          operacao.status === 'Encerrada' ? '#e2e8f0' : '#dbeafe';
-                        parent.style.color =
-                          operacao.status === 'Encerrada' ? '#64748b' : '#1e40af';
-                        parent.style.fontWeight = '700';
-                        parent.style.fontSize = '14px';
-                        parent.textContent = operacao.ativoBase.slice(0, 2);
-                      }
-                    }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
                   <div
                     style={{
-                      fontSize: '16px',
-                      fontWeight: '700',
-                      color: '#1e293b',
-                      marginBottom: '4px'
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: '#f8fafc',
+                      flexShrink: 0
                     }}
                   >
-                    {operacao.ativoBase}
+                    <img
+                      src={`https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/${operacao.ativoBase}.png`}
+                      alt={operacao.ativoBase}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          const style = getStatusStyle(operacao.status);
+                          parent.style.backgroundColor = style.background;
+                          parent.style.color = style.color;
+                          parent.style.fontWeight = '700';
+                          parent.style.fontSize = '14px';
+                          parent.textContent = operacao.ativoBase.slice(0, 2);
+                        }
+                      }}
+                    />
                   </div>
-                  <div style={{ fontSize: '13px', color: '#64748b' }}>
-                    {operacao.codigoOpcao}
+                  <div style={{ flex: 1 }}>
+                    <div
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: '700',
+                        color: '#1e293b',
+                        marginBottom: '4px'
+                      }}
+                    >
+                      {operacao.ativoBase}
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#64748b' }}>
+                      {operacao.codigoOpcao}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      background: statusStyle.background,
+                      color: statusStyle.color
+                    }}
+                  >
+                    {operacao.status}
                   </div>
                 </div>
-                <div
-                  style={{
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    background:
-                      operacao.status === 'Encerrada' ? '#f1f5f9' : '#dbeafe',
-                    color: operacao.status === 'Encerrada' ? '#64748b' : '#1e40af'
-                  }}
-                >
-                  {operacao.status}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+                  <span style={{ color: '#64748b', fontSize: '13px' }}>Strike</span>
+                  <strong style={{ fontSize: '14px' }}>{formatCurrency(operacao.strike)}</strong>
                 </div>
-              </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                <span style={{ color: '#64748b', fontSize: '13px' }}>Strike</span>
-                <strong style={{ fontSize: '14px' }}>{formatCurrency(operacao.strike)}</strong>
-              </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+                  <span style={{ color: '#64748b', fontSize: '13px' }}>Prêmio</span>
+                  <strong style={{ fontSize: '14px' }}>
+                    {operacao.premioCustom || formatCurrency(operacao.premio)}
+                  </strong>
+                </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                <span style={{ color: '#64748b', fontSize: '13px' }}>Prêmio</span>
-                <strong style={{ fontSize: '14px' }}>
-                  {operacao.premioCustom || formatCurrency(operacao.premio)}
-                </strong>
-              </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+                  <span style={{ color: '#64748b', fontSize: '13px' }}>Renda</span>
+                  <strong style={{ fontSize: '14px', color: '#10b981' }}>
+                    {formatPercentage(operacao.rendaPercentual)}
+                  </strong>
+                </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                <span style={{ color: '#64748b', fontSize: '13px' }}>Renda</span>
-                <strong style={{ fontSize: '14px', color: '#10b981' }}>
-                  {formatPercentage(operacao.rendaPercentual)}
-                </strong>
-              </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+                  <span style={{ color: '#64748b', fontSize: '13px' }}>Garantia</span>
+                  <strong style={{ fontSize: '14px' }}>
+                    {formatGarantia(operacao.garantia)}
+                  </strong>
+                </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                <span style={{ color: '#64748b', fontSize: '13px' }}>Garantia</span>
-                <strong style={{ fontSize: '14px' }}>
-                  {formatGarantia(operacao.garantia)}
-                </strong>
-              </div>
-
-              <div
-                style={{
-                  marginTop: '12px',
-                  paddingTop: '12px',
-                  borderTop: '1px solid #f1f5f9',
-                  fontSize: '13px',
-                  color: '#64748b',
-                  textAlign: 'center'
-                }}
-              >
-                Vencimento: {operacao.vencimento}
-              </div>
-
-              {operacao.observacao && (
                 <div
                   style={{
                     marginTop: '12px',
-                    padding: '12px',
-                    background: '#fef3c7',
-                    borderRadius: '8px',
+                    paddingTop: '12px',
+                    borderTop: '1px solid #f1f5f9',
                     fontSize: '13px',
-                    color: '#92400e',
-                    lineHeight: '1.5'
+                    color: '#64748b',
+                    textAlign: 'center'
                   }}
                 >
-                  💡 {operacao.observacao}
+                  Vencimento: {operacao.vencimento}
                 </div>
-              )}
-            </div>
-          ))}
+
+                {operacao.observacao && (
+                  <div
+                    style={{
+                      marginTop: '12px',
+                      padding: '12px',
+                      background: '#fef3c7',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      color: '#92400e',
+                      lineHeight: '1.5'
+                    }}
+                  >
+                    💡 {operacao.observacao}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       );
     }
@@ -607,142 +619,143 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
             </tr>
           </thead>
           <tbody>
-            {operacoes.map((operacao) => (
-              <tr
-                key={operacao.id}
-                style={{
-                  borderBottom: '1px solid #f1f5f9',
-                  transition: 'background 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f8fafc';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                }}
-              >
-                <td style={{ padding: '16px 12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {/* Logo do Ativo */}
-                    <div
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: '#f8fafc',
-                        flexShrink: 0
-                      }}
-                    >
-                      <img
-                        src={`https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/${operacao.ativoBase}.png`}
-                        alt={operacao.ativoBase}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.style.backgroundColor =
-                              operacao.status === 'Encerrada' ? '#e2e8f0' : '#dbeafe';
-                            parent.style.color =
-                              operacao.status === 'Encerrada' ? '#64748b' : '#1e40af';
-                            parent.style.fontWeight = '700';
-                            parent.style.fontSize = '14px';
-                            parent.textContent = operacao.ativoBase.slice(0, 2);
-                          }
-                        }}
-                      />
-                    </div>
-                    <div>
+            {operacoes.map((operacao) => {
+              const statusStyle = getStatusStyle(operacao.status);
+              return (
+                <tr
+                  key={operacao.id}
+                  style={{
+                    borderBottom: '1px solid #f1f5f9',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#f8fafc';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <td style={{ padding: '16px 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      {/* Logo do Ativo */}
                       <div
                         style={{
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          color: '#1e293b',
-                          marginBottom: '2px'
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: '#f8fafc',
+                          flexShrink: 0
                         }}
                       >
-                        {operacao.ativoBase}
+                        <img
+                          src={`https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/${operacao.ativoBase}.png`}
+                          alt={operacao.ativoBase}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              const style = getStatusStyle(operacao.status);
+                              parent.style.backgroundColor = style.background;
+                              parent.style.color = style.color;
+                              parent.style.fontWeight = '700';
+                              parent.style.fontSize = '14px';
+                              parent.textContent = operacao.ativoBase.slice(0, 2);
+                            }
+                          }}
+                        />
                       </div>
-                      <div style={{ fontSize: '12px', color: '#94a3b8' }}>
-                        Ref: {formatCurrency(operacao.precoReferencia)}
+                      <div>
+                        <div
+                          style={{
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            color: '#1e293b',
+                            marginBottom: '2px'
+                          }}
+                        >
+                          {operacao.ativoBase}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                          Ref: {formatCurrency(operacao.precoReferencia)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </td>
-                <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>
-                  {operacao.codigoOpcao}
-                </td>
-                <td
-                  style={{
-                    padding: '12px',
-                    textAlign: 'center',
-                    fontSize: '14px',
-                    fontWeight: '600'
-                  }}
-                >
-                  {formatCurrency(operacao.strike)}
-                </td>
-                <td
-                  style={{
-                    padding: '12px',
-                    textAlign: 'center',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#0ea5e9'
-                  }}
-                >
-                  {operacao.premioCustom || formatCurrency(operacao.premio)}
-                </td>
-                <td
-                  style={{
-                    padding: '12px',
-                    textAlign: 'center',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#10b981'
-                  }}
-                >
-                  {formatPercentage(operacao.rendaPercentual)}
-                </td>
-                <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>
-                  {formatGarantia(operacao.garantia)}
-                </td>
-                <td
-                  style={{
-                    padding: '12px',
-                    textAlign: 'center',
-                    fontSize: '14px',
-                    color: '#64748b'
-                  }}
-                >
-                  {operacao.vencimento}
-                </td>
-                <td style={{ padding: '12px', textAlign: 'center' }}>
-                  <span
+                  </td>
+                  <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>
+                    {operacao.codigoOpcao}
+                  </td>
+                  <td
                     style={{
-                      padding: '4px 12px',
-                      borderRadius: '20px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      background:
-                        operacao.status === 'Encerrada' ? '#f1f5f9' : '#dbeafe',
-                      color: operacao.status === 'Encerrada' ? '#64748b' : '#1e40af'
+                      padding: '12px',
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      fontWeight: '600'
                     }}
                   >
-                    {operacao.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
+                    {formatCurrency(operacao.strike)}
+                  </td>
+                  <td
+                    style={{
+                      padding: '12px',
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#0ea5e9'
+                    }}
+                  >
+                    {operacao.premioCustom || formatCurrency(operacao.premio)}
+                  </td>
+                  <td
+                    style={{
+                      padding: '12px',
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#10b981'
+                    }}
+                  >
+                    {formatPercentage(operacao.rendaPercentual)}
+                  </td>
+                  <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>
+                    {formatGarantia(operacao.garantia)}
+                  </td>
+                  <td
+                    style={{
+                      padding: '12px',
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      color: '#64748b'
+                    }}
+                  >
+                    {operacao.vencimento}
+                  </td>
+                  <td style={{ padding: '12px', textAlign: 'center' }}>
+                    <span
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        background: statusStyle.background,
+                        color: statusStyle.color
+                      }}
+                    >
+                      {operacao.status}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
