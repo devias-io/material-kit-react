@@ -1190,7 +1190,8 @@ export default function ProjetoAmericaPage() {
                         <div style={{ color: '#64748b' }}>
                           <span style={{ fontWeight: '500' }}>Preço Teto:</span><br />
                           <span style={{ fontWeight: '700', color: '#1e293b' }}>
-                            {ativo.precoTeto ? formatCurrency(ativo.precoTeto) : '-'}
+                            {/* ETFs não possuem preço teto definido */}
+                            -
                           </span>
                         </div>
                       </div>
@@ -1383,7 +1384,8 @@ export default function ProjetoAmericaPage() {
                             {formatCurrency(ativo.precoAtual)}
                           </td>
                           <td style={{ padding: '16px', textAlign: 'center', fontWeight: '600', color: '#1e293b' }}>
-                            {ativo.precoTeto ? formatCurrency(ativo.precoTeto) : '-'}
+                            {/* ETFs não possuem preço teto definido */}
+                            -
                           </td>
                           <td style={{ 
                             padding: '16px', 
@@ -1628,7 +1630,8 @@ export default function ProjetoAmericaPage() {
                         <div style={{ color: '#64748b' }}>
                           <span style={{ fontWeight: '500' }}>Preço Teto:</span><br />
                           <span style={{ fontWeight: '700', color: '#1e293b' }}>
-                            {ativo.precoTeto ? formatCurrency(ativo.precoTeto) : '-'}
+                            {/* ETFs não possuem preço teto definido */}
+                            -
                           </span>
                         </div>
                       </div>
@@ -1821,7 +1824,8 @@ export default function ProjetoAmericaPage() {
                             {formatCurrency(ativo.precoAtual)}
                           </td>
                           <td style={{ padding: '16px', textAlign: 'center', fontWeight: '600', color: '#1e293b' }}>
-                            {ativo.precoTeto ? formatCurrency(ativo.precoTeto) : '-'}
+                            {/* ETFs não possuem preço teto definido */}
+                            -
                           </td>
                           <td style={{ 
                             padding: '16px', 
