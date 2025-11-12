@@ -357,7 +357,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
     if (isMobile) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {operacoes.map((operacao) => {
+          {operacoesOrdenadas.map((operacao) => { 
             const statusStyle = getStatusStyle(operacao.status);
             return (
               <div
@@ -627,7 +627,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
             </tr>
           </thead>
           <tbody>
-            {operacoes.map((operacao) => {
+            {operacoesOrdenadas.map((operacao) => { 
               const statusStyle = getStatusStyle(operacao.status);
               return (
                 <tr
