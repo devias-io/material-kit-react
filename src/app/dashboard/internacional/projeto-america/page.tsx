@@ -789,6 +789,49 @@ export default function ProjetoAmericaPage() {
     return signal + value.toFixed(2) + '%';
   }, []);
 
+  const formatPrecoTeto = React.useCallback(
+    (precoTeto: number | string | null | undefined) => {
+      if (precoTeto === null || precoTeto === undefined) {
+        return '-';
+      }
+
+      if (typeof precoTeto === 'number' && Number.isFinite(precoTeto)) {
+        return formatCurrency(precoTeto);
+      }
+
+      if (typeof precoTeto === 'string') {
+        let normalized = precoTeto.trim();
+
+        if (normalized === '') {
+          return '-';
+        }
+
+        normalized = normalized.replace(/[^0-9.,-]/g, '');
+
+        if (!/[0-9]/.test(normalized)) {
+          return '-';
+        }
+
+        if (normalized.includes(',') && normalized.includes('.')) {
+          normalized = normalized.replace(/\./g, '').replace(',', '.');
+        } else {
+          normalized = normalized.replace(',', '.');
+        }
+
+        const parsed = Number(normalized);
+
+        if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
+          return formatCurrency(parsed);
+        }
+
+        return precoTeto.trim() || '-';
+      }
+
+      return '-';
+    },
+    [formatCurrency]
+  );
+
   const isETFAtivo = React.useCallback((ativo: any) => {
     const setorNormalizado = (ativo?.setor || '').toString().toUpperCase();
     return setorNormalizado.includes('ETF');
@@ -1190,7 +1233,7 @@ export default function ProjetoAmericaPage() {
                         <div style={{ color: '#64748b' }}>
                           <span style={{ fontWeight: '500' }}>Preço Teto:</span><br />
                           <span style={{ fontWeight: '700', color: '#1e293b' }}>
-                            {ativo.precoTeto ? formatCurrency(ativo.precoTeto) : '-'}
+                            {formatPrecoTeto(ativo.precoTeto)}
                           </span>
                         </div>
                       </div>
@@ -1383,7 +1426,7 @@ export default function ProjetoAmericaPage() {
                             {formatCurrency(ativo.precoAtual)}
                           </td>
                           <td style={{ padding: '16px', textAlign: 'center', fontWeight: '600', color: '#1e293b' }}>
-                            {ativo.precoTeto ? formatCurrency(ativo.precoTeto) : '-'}
+                            {formatPrecoTeto(ativo.precoTeto)}
                           </td>
                           <td style={{ 
                             padding: '16px', 
@@ -1628,7 +1671,8 @@ export default function ProjetoAmericaPage() {
                         <div style={{ color: '#64748b' }}>
                           <span style={{ fontWeight: '500' }}>Preço Teto:</span><br />
                           <span style={{ fontWeight: '700', color: '#1e293b' }}>
-                            {ativo.precoTeto ? formatCurrency(ativo.precoTeto) : '-'}
+                            {/* ETFs não possuem preço teto definido */}
+                            -
                           </span>
                         </div>
                       </div>
@@ -1821,7 +1865,8 @@ export default function ProjetoAmericaPage() {
                             {formatCurrency(ativo.precoAtual)}
                           </td>
                           <td style={{ padding: '16px', textAlign: 'center', fontWeight: '600', color: '#1e293b' }}>
-                            {ativo.precoTeto ? formatCurrency(ativo.precoTeto) : '-'}
+                            {/* ETFs não possuem preço teto definido */}
+                            -
                           </td>
                           <td style={{ 
                             padding: '16px', 
