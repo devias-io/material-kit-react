@@ -155,6 +155,10 @@ export default function AdminCentralDuvidas() {
   const [deleteFaqDialogOpen, setDeleteFaqDialogOpen] = useState(false);
   const [faqToDelete, setFaqToDelete] = useState<FAQ | null>(null);
 
+  const [deleteQuestionDialogOpen, setDeleteQuestionDialogOpen] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState<Question | null>(null);
+  const [deletingQuestion, setDeletingQuestion] = useState(false);
+
   const [showCreateFaqModal, setShowCreateFaqModal] = useState(false);
   const [createFaqData, setCreateFaqData] = useState({ title: '', content: '', faqOrder: 0 });
   const [creatingFaq, setCreatingFaq] = useState(false);
@@ -447,6 +451,49 @@ export default function AdminCentralDuvidas() {
     } catch (err) {
       setError('Erro ao remover FAQ');
     }
+  };
+
+  const handleDeleteQuestion = (question: Question) => {
+    setError('');
+    setSuccess('');
+    setQuestionToDelete(question);
+    setDeleteQuestionDialogOpen(true);
+  };
+
+  const confirmDeleteQuestion = async () => {
+    if (!questionToDelete) return;
+
+    setDeletingQuestion(true);
+
+    try {
+      const response = await fetch(`/api/questions/${questionToDelete.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const shouldGoToPreviousPage =
+          questions.length === 1 && currentPage > 1 && total - 1 <= (currentPage - 1) * limit;
+
+        setSuccess('Pergunta removida com sucesso!');
+        setDeleteQuestionDialogOpen(false);
+        setQuestionToDelete(null);
+
+        await loadData(shouldGoToPreviousPage ? currentPage - 1 : currentPage);
+      } else {
+        const data = await response.json().catch(() => null);
+        setError(data?.error || 'Erro ao remover pergunta');
+      }
+    } catch (err) {
+      setError('Erro ao remover pergunta');
+    } finally {
+      setDeletingQuestion(false);
+    }
+  };
+
+  const handleCloseDeleteQuestionDialog = () => {
+    setDeleteQuestionDialogOpen(false);
+    setQuestionToDelete(null);
   };
 
   const handleStartResponse = (question: Question) => {
@@ -775,9 +822,18 @@ export default function AdminCentralDuvidas() {
                           <span className={styles.expandIcon} aria-hidden="true" />
                           <span className={styles.questionTitle}>{question.title}</span>
                         </button>
-                        <span className={`${styles.statusBadge} ${getStatusBadgeClass(question.status)}`}>
-                          {statusLabels[question.status]}
-                        </span>
+                        <div className={styles.questionHeadingActions}>
+                          <span className={`${styles.statusBadge} ${getStatusBadgeClass(question.status)}`}>
+                            {statusLabels[question.status]}
+                          </span>
+                          <button
+                            type="button"
+                            className={styles.dangerGhostButton}
+                            onClick={() => handleDeleteQuestion(question)}
+                          >
+                            Excluir
+                          </button>
+                        </div>
                       </div>
                       <div className={styles.questionMeta}>
                         <span className={styles.questionMetaItem}>
@@ -1113,6 +1169,38 @@ export default function AdminCentralDuvidas() {
               </button>
               <button type="button" className={styles.primaryButton} onClick={submitFAQ}>
                 {selectedAnswer.isFaq ? 'Remover' : 'Adicionar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteQuestionDialogOpen && questionToDelete && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2>Excluir pergunta</h2>
+              <button type="button" onClick={handleCloseDeleteQuestionDialog} aria-label="Fechar">
+                ×
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <p>
+                Tem certeza de que deseja excluir a pergunta <strong>{questionToDelete.title}</strong>?
+              </p>
+              <p>Essa ação não pode ser desfeita.</p>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.secondaryButton} onClick={handleCloseDeleteQuestionDialog}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.dangerButton}
+                onClick={confirmDeleteQuestion}
+                disabled={deletingQuestion}
+              >
+                {deletingQuestion ? 'Excluindo...' : 'Excluir pergunta'}
               </button>
             </div>
           </div>
