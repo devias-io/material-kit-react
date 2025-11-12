@@ -25,8 +25,8 @@ const setCachedData = (key: string, data: any) => {
 
 const WHITE_LOGO_TICKERS = ['XP', 'UNH'];
 const CUSTOM_LOGO_URLS: Record<string, string> = {
-  XP: 'https://logo.clearbit.com/xpi.com.br',
-  UNH: 'https://logo.clearbit.com/unitedhealthgroup.com'
+  XP: 'https://upload.wikimedia.org/wikipedia/pt/0/0b/XP_Investimentos_logo.png',
+  UNH: 'https://s3-symbol-logo.tradingview.com/unitedhealth--600.png'
 };
 
 // 🔥 DETECÇÃO DE DISPOSITIVO SIMPLIFICADA E OTIMIZADA
