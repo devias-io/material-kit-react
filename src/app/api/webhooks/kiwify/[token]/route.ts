@@ -58,13 +58,24 @@ function normalizeKiwifyAmounts(value: unknown): number[] {
     return [];
   }
 
-  const normalized: number[] = [parsed];
+  const normalized: number[] = [];
+  let current = parsed;
 
-  if (Math.abs(parsed) >= 10000) {
-    const divided = parsed / 100;
-    if (Number.isFinite(divided) && Math.abs(divided) >= 1) {
-      normalized.push(Number(divided.toFixed(2)));
+  while (Number.isFinite(current)) {
+    normalized.push(Number(current.toFixed(2)));
+
+    if (Math.abs(current) < 10000) {
+      break;
     }
+
+    const divided = current / 100;
+    const rounded = Number(divided.toFixed(2));
+
+    if (!Number.isFinite(divided) || normalized.includes(rounded)) {
+      break;
+    }
+
+    current = divided;
   }
 
   return normalized;
@@ -85,6 +96,42 @@ function selectBestKiwifyAmount(values: unknown[]): number | undefined {
   }
 
   return normalizedValues.find((value) => Math.abs(value) > 0) ?? normalizedValues[0];
+}
+
+async function fixUnrealisticPurchaseAmounts(
+  prismaClient: PrismaClient,
+  userId: string
+): Promise<number> {
+  const purchasesToFix = await prismaClient.purchase.findMany({
+    where: {
+      userId,
+      OR: [
+        { amount: { gt: 10000 } },
+        { amount: { lt: -10000 } },
+      ],
+    },
+  });
+
+  let updatedCount = 0;
+
+  for (const purchase of purchasesToFix) {
+    const normalizedOptions = normalizeKiwifyAmounts(purchase.amount);
+    const correctedAmount = normalizedOptions.find(
+      (value) => Math.abs(value) > 0 && Math.abs(value) < 10000
+    );
+
+    if (correctedAmount !== undefined && correctedAmount !== purchase.amount) {
+      await prismaClient.purchase.update({
+        where: { id: purchase.id },
+        data: {
+          amount: correctedAmount,
+        },
+      });
+      updatedCount += 1;
+    }
+  }
+
+  return updatedCount;
 }
 
 function extractProductNameFromKiwifyPayload(webhookData: any): { rawName: string; cleanedName: string } {
@@ -362,10 +409,11 @@ export async function POST(
       webhookData?.value,
     ];
 
-    const amount = selectBestKiwifyAmount(amountCandidates) ?? 0;
+    const amount = selectBestKiwifyAmount(amountCandidates);
+    const normalizedAmount = amount ?? 0;
 
     console.log('🔍 Dados extraídos do Kiwify:', {
-      event, buyerEmail, buyerName, transactionId, amount,
+      event, buyerEmail, buyerName, transactionId, amount: normalizedAmount,
       plan: integrationData.plan, // ✅ CORRIGIDO
       integrationName: integrationData.name, // ✅ CORRIGIDO
       token: token
@@ -419,13 +467,20 @@ export async function POST(
           await prisma.purchase.create({
             data: {
               userId: user.id,
-              amount: -(amount || 0),
+              amount: -normalizedAmount,
               productName: `${integrationData.name} - REEMBOLSO`,
               hotmartTransactionId: transactionId,
               status: 'REFUNDED'
             }
           });
-          console.log(`💸 Reembolso Kiwify registrado: -${amount} - ${integrationData.name}`);
+          console.log(`💸 Reembolso Kiwify registrado: -${normalizedAmount} - ${integrationData.name}`);
+
+          const correctedPurchases = await fixUnrealisticPurchaseAmounts(prisma, user.id);
+          if (correctedPurchases > 0) {
+            console.log(
+              `🧹 Corrigidos ${correctedPurchases} lançamentos antigos com valores inconsistentes para ${user.email}`
+            );
+          }
         } catch (purchaseError) {
           console.error('⚠️ Erro ao registrar reembolso Kiwify:', purchaseError);
         }
@@ -583,16 +638,55 @@ export async function POST(
 
     // Registrar compra
     try {
-      await prisma.purchase.create({
-        data: {
-          userId: user.id,
-          amount: amount || 0,
-          productName: integrationData.name, // 🔥 NOME DETECTADO
-          hotmartTransactionId: transactionId,
-          status: 'COMPLETED'
+      let purchaseHandled = false;
+
+      if (transactionId) {
+        const existingPurchase = await prisma.purchase.findFirst({
+          where: {
+            hotmartTransactionId: transactionId,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        });
+
+        if (existingPurchase) {
+          await prisma.purchase.update({
+            where: { id: existingPurchase.id },
+            data: {
+              userId: user.id,
+              amount: normalizedAmount,
+              productName: integrationData.name,
+              status: 'COMPLETED',
+            },
+          });
+
+          console.log(
+            `♻️ Compra Kiwify existente atualizada: ${normalizedAmount} - ${integrationData.name}`
+          );
+          purchaseHandled = true;
         }
-      });
-      console.log(`💰 Compra Kiwify registrada: ${amount} - ${integrationData.name}`);
+      }
+
+      if (!purchaseHandled) {
+        await prisma.purchase.create({
+          data: {
+            userId: user.id,
+            amount: normalizedAmount,
+            productName: integrationData.name, // 🔥 NOME DETECTADO
+            hotmartTransactionId: transactionId,
+            status: 'COMPLETED',
+          },
+        });
+        console.log(`💰 Compra Kiwify registrada: ${normalizedAmount} - ${integrationData.name}`);
+      }
+
+      const correctedPurchases = await fixUnrealisticPurchaseAmounts(prisma, user.id);
+      if (correctedPurchases > 0) {
+        console.log(
+          `🧹 Corrigidos ${correctedPurchases} lançamentos antigos com valores inconsistentes para ${user.email}`
+        );
+      }
     } catch (purchaseError) {
       console.error('⚠️ Erro ao registrar compra Kiwify:', purchaseError);
     }
@@ -629,7 +723,7 @@ export async function POST(
         detectedPlan: integrationData.plan,
         detectedProductName: integrationData.name,
         originalProductName: rawProductName || webhookData.product_name || webhookData.name || 'N/A',
-        amount: amount
+        amount: normalizedAmount
       },
       user: {
         id: user.id,
@@ -643,7 +737,7 @@ export async function POST(
       },
       transaction: {
         id: transactionId,
-        amount: amount,
+        amount: normalizedAmount,
         product: integrationData.name
       },
       timestamp: new Date().toISOString()
