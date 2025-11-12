@@ -31,28 +31,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email ou senha inválidos' }, { status: 401 });
     }
 
-    // Verificar se conta está bloqueada
-    if (user.lockedUntil && user.lockedUntil > new Date()) {
-      return NextResponse.json({ 
-        error: 'Conta temporariamente bloqueada devido a muitas tentativas' 
-      }, { status: 423 });
-    }
-
     // Verificar senha
     const senhaValida = await verifyPassword(password, user.password || '');
     
     if (!senhaValida) {
       // Incrementar tentativas
       const tentativas = (user.loginAttempts || 0) + 1;
-      const bloqueado = tentativas >= 5;
-      
+      const solicitarRedefinicao = tentativas >= 5;
+
       await prisma.user.update({
         where: { id: user.id },
         data: {
           loginAttempts: tentativas,
-          lockedUntil: bloqueado ? new Date(Date.now() + 30 * 60 * 1000) : null // 30 min
+          lockedUntil: null
         }
       });
+
+      if (solicitarRedefinicao) {
+        return NextResponse.json({
+          error: 'Muitas tentativas inválidas. Clique em "Esqueci minha senha" para redefinir sua senha.'
+        }, { status: 401 });
+      }
 
       return NextResponse.json({ error: 'Email ou senha inválidos' }, { status: 401 });
     }
