@@ -27,8 +27,8 @@ const WHITE_LOGO_TICKERS = ['XP', 'UNH', 'QQQ', 'ARE','WPC'];
 const CUSTOM_LOGO_URLS: Record<string, string> = {
   XP: 'https://logo.clearbit.com/xpi.com.br',
   UNH: 'https://logo.clearbit.com/unitedhealthgroup.com',
-  QQQ: 'https://logo.clearbit.com/invesco.com',
-  WPC: 'https://logo.clearbit.com/wpcarey.com',
+  QQQ: 'https://s3-symbol-logo.tradingview.com/invesco--600.png',
+  WPC: 'https://investidor10.com.br/storage/stocks/images/NyC6ZUHq0vYM6Bsb.jpg',
   ARE: 'https://investidor10.com.br/storage/stocks/thumbnails/rbQCq2xzJWAfLgUdBYeJJAymyTHUU0Bn4lFs5jpw.jpg'
 };
 
