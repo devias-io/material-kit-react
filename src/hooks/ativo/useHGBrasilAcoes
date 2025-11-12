@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { isTickerFII } from '@/utils/tickers';
 
 // 🔥 HOOK OTIMIZADO PARA HG BRASIL API - DADOS DE AÇÕES BRASILEIRAS
 export function useHGBrasilAcoes(ticker: string) {
@@ -8,7 +9,7 @@ export function useHGBrasilAcoes(ticker: string) {
 
   const fetchDadosAcaoHGBrasil = useCallback(async () => {
     // Validar se é ação brasileira (termina com número, mas não é FII)
-    if (!ticker || !ticker.match(/\d$/) || ticker.includes('11') || ticker.endsWith('11')) {
+    if (!ticker || !ticker.match(/\d$/) || isTickerFII(ticker)) {
       setLoading(false);
       return;
     }

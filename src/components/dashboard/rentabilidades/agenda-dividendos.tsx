@@ -32,6 +32,7 @@ import {
   Target,
   Percent
 } from '@phosphor-icons/react/dist/ssr';
+import { isTickerFII } from '@/utils/tickers';
 
 // 📅 INTERFACES PARA DIVIDENDOS
 interface DividendoAgendado {
@@ -80,7 +81,7 @@ function gerarAgendaDividendos(carteira: any): DividendoAgendado[] {
   const hoje = new Date();
   
   carteira.ativos.forEach((ativo: any, index: number) => {
-    const isFII = ativo.ticker.includes('11');
+    const isFII = isTickerFII(ativo.ticker);
     const valorEstimadoPorCota = isFII ? 
       parseFloat(ativo.dy.replace('%', '')) * (ativo.valorInvestidoSimulado / 12 / 100) :
       parseFloat(ativo.dy.replace('%', '')) * (ativo.valorInvestidoSimulado / 100);

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { verifyToken } from '@/utils/auth';
+import { isTickerFII } from '@/utils/tickers';
 
 // Função auxiliar de autenticação centralizada
 async function authenticateAdmin(request: NextRequest) {
@@ -333,8 +334,10 @@ export async function DELETE(request: NextRequest) {
 }
 
 function determinarTipoAtivo(codigo: string): string {
-  if (codigo.endsWith('11')) return 'FII';
-  if (codigo.endsWith('3') || codigo.endsWith('4')) return 'ACAO';
-  if (codigo.includes('ETF')) return 'ETF';
+  const normalizedCodigo = (codigo || '').toUpperCase();
+
+  if (isTickerFII(normalizedCodigo)) return 'FII';
+  if (normalizedCodigo.endsWith('3') || normalizedCodigo.endsWith('4')) return 'ACAO';
+  if (normalizedCodigo.includes('ETF')) return 'ETF';
   return 'OUTRO';
 }

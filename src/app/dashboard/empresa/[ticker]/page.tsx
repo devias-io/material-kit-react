@@ -41,6 +41,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import { aplicarViesOverride, normalizeViesOverride } from '@/utils/vies';
 import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
+import { isTickerFII } from '@/utils/tickers';
 
 // ========================================
 // ÍCONES MOCK
@@ -1845,9 +1846,9 @@ function useDadosFinanceiros(ticker: string) {
         variacao: 1.50,
         variacaoPercent: 1.52,
         volume: 1000000,
-        dy: ticker.includes('11') ? 8.5 : 4.2, // FII vs Ação
-        marketCap: ticker.includes('11') ? 2200000000 : 15000000000,
-        pl: ticker.includes('11') ? undefined : 12.5
+        dy: isTickerFII(ticker) ? 8.5 : 4.2, // FII vs Ação
+        marketCap: isTickerFII(ticker) ? 2200000000 : 15000000000,
+        pl: isTickerFII(ticker) ? undefined : 12.5
       };
       
       setDadosFinanceiros(dadosEstaticos);

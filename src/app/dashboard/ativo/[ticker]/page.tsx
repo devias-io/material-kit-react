@@ -32,6 +32,7 @@ import {
   getCarteirasForTicker,
   type CarteiraKey
 } from '@/utils/carteira-access';
+import { isTickerFII } from '@/utils/tickers';
 
 // ✅ IMPORT ÚNICO CORRIGIDO
 import {
@@ -805,11 +806,11 @@ const CompanyAvatar = React.memo(({ symbol, companyName, size = 120 }) => {
 
   const strategies = useMemo(() => {
     const normalizedSymbol = (symbol ?? '').toUpperCase();
-    const isFII = normalizedSymbol.includes('11') || normalizedSymbol.endsWith('11');
+    const isFII = isTickerFII(normalizedSymbol);
 
     if (isFII) {
       const sanitizedSymbol = normalizedSymbol.replace(/\s+/g, '');
-      const tickerBase = sanitizedSymbol.replace(/11$/, '');
+      const tickerBase = sanitizedSymbol.replace(/11([A-Z])?$/, '');
 
       return [
         `/logos-fiis/${sanitizedSymbol}.png`,
@@ -1040,7 +1041,7 @@ const calcularViesBDR = (precoTetoBDR, precoBDR, cotacaoUSD, override) => {
 const FIISpecificCards = React.memo(({ ticker, dadosFII, loading, isFII }) => {
   const { isMobile, isMobileOrTablet } = useResponsive();
   const [containerRef, inView] = useInView();
-  const ehFII = isFII || ticker.includes('11') || ticker.endsWith('11');
+  const ehFII = isFII || isTickerFII(ticker);
   
   if (!ehFII) return null;
 
@@ -2764,7 +2765,7 @@ export default function AtivoPage() {
     const bdrCorrespondente = getBDRFromAmericano(ticker);
     const temBDR = !!bdrCorrespondente;
     const ehETF = isETF(ticker);
-    const ehFII = ticker.includes('11') || ticker.endsWith('11');
+    const ehFII = isTickerFII(ticker);
     const ehREIT = isREIT(ticker);
 
     return {
@@ -2791,7 +2792,7 @@ export default function AtivoPage() {
   );
   
   const { dadosHGBrasil, loading: loadingHGBrasil } = useHGBrasilAcoes(
-    (ticker?.match(/\d$/) && !ticker.includes('11')) ? ticker : ''
+    (ticker?.match(/\d$/) && !isTickerFII(ticker)) ? ticker : ''
   );
   
   const { dadosYahoo, loading: loadingYahoo } = useYahooFinanceInternacional(
@@ -3643,7 +3644,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
               <MetricCard
                 title="P/L"
                 value={(() => {
-                  if (ticker.match(/\d$/) && !ticker.includes('11')) {
+                  if (ticker.match(/\d$/) && !isTickerFII(ticker)) {
                     if (dadosHGBrasil?.pl && dadosHGBrasil.pl > 0 && dadosHGBrasil.pl < 1000) {
                       return dadosHGBrasil.pl.toFixed(2);
                     }
@@ -3684,7 +3685,7 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                 })()}
 
                 subtitle={(() => {
-                  if (ticker.match(/\d$/) && !ticker.includes('11')) {
+                  if (ticker.match(/\d$/) && !isTickerFII(ticker)) {
                     if (dadosHGBrasil?.pl && dadosHGBrasil.pl > 0 && dadosHGBrasil.pl < 1000) {
                       return "";
                     }
