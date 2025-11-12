@@ -397,6 +397,12 @@
   justify-content: space-between;
 }
 
+.questionHeadingActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .expandButton {
   display: inline-flex;
   align-items: center;
@@ -435,6 +441,37 @@
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
+}
+
+.dangerGhostButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  background: rgba(254, 226, 226, 0.6);
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.dangerGhostButton:hover {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: rgba(220, 38, 38, 0.4);
+  color: #991b1b;
+}
+
+.dangerGhostButton:focus-visible {
+  outline: 2px solid rgba(220, 38, 38, 0.3);
+  outline-offset: 2px;
+}
+
+.dangerGhostButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .statusUnread {
