@@ -218,7 +218,7 @@ export default function NovoUsuarioPage() {
 
   if (success) {
     return (
-      <Box sx={{ p: 4, backgroundColor: '#F8FAFC', minHeight: '100vh' }}>
+      <Box sx={{ p: { xs: 2, md: 4 }, backgroundColor: '#F8FAFC', minHeight: '100vh' }}>
         <Alert severity="success" sx={{ mb: 3 }}>
           ✅ Usuário criado com sucesso! Email enviado com as credenciais.
         </Alert>
@@ -227,7 +227,7 @@ export default function NovoUsuarioPage() {
   }
 
   return (
-    <Box sx={{ p: 4, backgroundColor: '#F8FAFC', minHeight: '100vh' }}>
+    <Box sx={{ p: { xs: 2, md: 4 }, backgroundColor: '#F8FAFC', minHeight: '100vh' }}>
       {/* Header */}
       <Box mb={4}>
         <Button 
@@ -260,14 +260,16 @@ export default function NovoUsuarioPage() {
         </Typography>
       </Alert>
 
-      <Card sx={{ 
-        backgroundColor: '#FFFFFF', 
-        borderRadius: 3, 
+      <Card sx={{
+        backgroundColor: '#FFFFFF',
+        borderRadius: 3,
         border: '1px solid #E2E8F0',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-        maxWidth: 700
+        maxWidth: 700,
+        width: '100%',
+        mx: 'auto'
       }}>
-        <CardContent sx={{ p: 4 }}>
+        <CardContent sx={{ p: { xs: 2, md: 4 } }}>
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
@@ -538,10 +540,15 @@ export default function NovoUsuarioPage() {
               </Grid>
               
               <Grid item xs={12}>
-                <Box display="flex" gap={2} justifyContent="flex-end">
+                <Box
+                  display="flex"
+                  gap={2}
+                  justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}
+                  flexDirection={{ xs: 'column', sm: 'row' }}
+                >
                   <Button
                     onClick={() => router.push('/dashboard/admin/usuarios')}
-                    sx={{ color: '#64748B' }}
+                    sx={{ color: '#64748B', width: { xs: '100%', sm: 'auto' } }}
                   >
                     Cancelar
                   </Button>
@@ -552,7 +559,8 @@ export default function NovoUsuarioPage() {
                     sx={{
                       bgcolor: '#3B82F6',
                       '&:hover': { bgcolor: '#2563EB' },
-                      px: 4
+                      px: 4,
+                      width: { xs: '100%', sm: 'auto' }
                     }}
                   >
                     {loading ? 'Criando...' : 'Criar Usuário'}

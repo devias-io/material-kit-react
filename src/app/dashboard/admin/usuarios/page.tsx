@@ -275,7 +275,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <Box sx={{ p: 4, backgroundColor: '#F8FAFC', minHeight: '100vh' }}>
+    <Box sx={{ p: { xs: 2, md: 4 }, backgroundColor: '#F8FAFC', minHeight: '100vh' }}>
       {/* Header */}
       <Box mb={5}>
         <Typography variant="h4" component="h1" gutterBottom sx={{ color: '#1E293B', fontWeight: '700', fontSize: '2rem' }}>
@@ -372,7 +372,14 @@ export default function AdminUsersPage() {
       )}
 
       {/* Busca e Botões */}
-      <Box mb={4} display="flex" justifyContent="space-between" alignItems="center" gap={3}>
+      <Box
+        mb={4}
+        display="flex"
+        justifyContent={{ xs: 'flex-start', lg: 'space-between' }}
+        alignItems={{ xs: 'stretch', lg: 'center' }}
+        flexDirection={{ xs: 'column', lg: 'row' }}
+        gap={2}
+      >
         <TextField
           placeholder="Buscar usuários..."
           value={searchTerm}
@@ -388,8 +395,9 @@ export default function AdminUsersPage() {
           sx={{ 
             backgroundColor: '#FFFFFF', 
             borderRadius: 2,
-            minWidth: '320px',
-            '& .MuiInputBase-input': { 
+            width: { xs: '100%', lg: 'auto' },
+            minWidth: { lg: '320px' },
+            '& .MuiInputBase-input': {
               color: '#1E293B',
               fontSize: '0.95rem'
             },
@@ -401,13 +409,19 @@ export default function AdminUsersPage() {
           }}
         />
         
-        <Box display="flex" gap={2}>
+        <Box
+          display="flex"
+          gap={2}
+          flexWrap="wrap"
+          justifyContent={{ xs: 'flex-start', lg: 'flex-end' }}
+          width={{ xs: '100%', lg: 'auto' }}
+        >
           <Button
             variant="outlined"
             disabled={loading}
-            sx={{ 
-              borderColor: '#10B981', 
-              color: '#10B981', 
+            sx={{
+              borderColor: '#10B981',
+              color: '#10B981',
               fontWeight: '600',
               '&:hover': { 
                 borderColor: '#059669', 
@@ -423,7 +437,8 @@ export default function AdminUsersPage() {
               py: 1.5,
               textTransform: 'none',
               fontSize: '0.95rem',
-              boxShadow: 'none'
+              boxShadow: 'none',
+              width: { xs: '100%', sm: 'auto' }
             }}
             onClick={() => router.push('/dashboard/admin/import-usuarios')}
           >
@@ -444,7 +459,8 @@ export default function AdminUsersPage() {
               py: 1.5,
               textTransform: 'none',
               fontSize: '0.95rem',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+              width: { xs: '100%', sm: 'auto' }
             }}
             onClick={() => router.push('/dashboard/admin/usuarios/novo')}
           >
@@ -563,14 +579,14 @@ export default function AdminUsersPage() {
       </Grid>
 
       {/* Tabela de Usuários */}
-      <Card sx={{ 
-        backgroundColor: '#FFFFFF', 
-        borderRadius: 3, 
+      <Card sx={{
+        backgroundColor: '#FFFFFF',
+        borderRadius: 3,
         border: '1px solid #E2E8F0',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
       }}>
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+          <Table sx={{ minWidth: 720 }}>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#F8FAFC' }}>
                 <TableCell sx={{ color: '#475569', fontWeight: '600', borderBottom: '1px solid #E2E8F0', py: 2 }}>
@@ -582,16 +598,48 @@ export default function AdminUsersPage() {
                 <TableCell sx={{ color: '#475569', fontWeight: '600', borderBottom: '1px solid #E2E8F0', py: 2 }}>
                   Status
                 </TableCell>
-                <TableCell sx={{ color: '#475569', fontWeight: '600', borderBottom: '1px solid #E2E8F0', py: 2 }}>
+                <TableCell
+                  sx={{
+                    color: '#475569',
+                    fontWeight: '600',
+                    borderBottom: '1px solid #E2E8F0',
+                    py: 2,
+                    display: { xs: 'none', lg: 'table-cell' }
+                  }}
+                >
                   Origem
                 </TableCell>
-                <TableCell sx={{ color: '#475569', fontWeight: '600', borderBottom: '1px solid #E2E8F0', py: 2 }}>
+                <TableCell
+                  sx={{
+                    color: '#475569',
+                    fontWeight: '600',
+                    borderBottom: '1px solid #E2E8F0',
+                    py: 2,
+                    display: { xs: 'none', md: 'table-cell' }
+                  }}
+                >
                   Criado em
                 </TableCell>
-                <TableCell sx={{ color: '#475569', fontWeight: '600', borderBottom: '1px solid #E2E8F0', py: 2 }}>
+                <TableCell
+                  sx={{
+                    color: '#475569',
+                    fontWeight: '600',
+                    borderBottom: '1px solid #E2E8F0',
+                    py: 2,
+                    display: { xs: 'none', md: 'table-cell' }
+                  }}
+                >
                   Último Login
                 </TableCell>
-                <TableCell sx={{ color: '#475569', fontWeight: '600', borderBottom: '1px solid #E2E8F0', py: 2 }}>
+                <TableCell
+                  sx={{
+                    color: '#475569',
+                    fontWeight: '600',
+                    borderBottom: '1px solid #E2E8F0',
+                    py: 2,
+                    display: { xs: 'none', md: 'table-cell' }
+                  }}
+                >
                   Compras
                 </TableCell>
                 <TableCell sx={{ color: '#475569', fontWeight: '600', borderBottom: '1px solid #E2E8F0', py: 2 }}>
@@ -690,16 +738,47 @@ export default function AdminUsersPage() {
                         sx={{ fontWeight: '500', fontSize: '0.75rem' }}
                       />
                     </TableCell>
-                    <TableCell sx={{ color: '#64748B', borderBottom: '1px solid #F1F5F9', py: 2, fontSize: '0.875rem' }}>
+                    <TableCell
+                      sx={{
+                        color: '#64748B',
+                        borderBottom: '1px solid #F1F5F9',
+                        py: 2,
+                        fontSize: '0.875rem',
+                        display: { xs: 'none', lg: 'table-cell' }
+                      }}
+                    >
                       {user.origin}
                     </TableCell>
-                    <TableCell sx={{ color: '#64748B', borderBottom: '1px solid #F1F5F9', py: 2, fontSize: '0.875rem' }}>
+                    <TableCell
+                      sx={{
+                        color: '#64748B',
+                        borderBottom: '1px solid #F1F5F9',
+                        py: 2,
+                        fontSize: '0.875rem',
+                        display: { xs: 'none', md: 'table-cell' }
+                      }}
+                    >
                       {formatDate(user.createdAt)}
                     </TableCell>
-                    <TableCell sx={{ color: '#64748B', borderBottom: '1px solid #F1F5F9', py: 2, fontSize: '0.875rem' }}>
+                    <TableCell
+                      sx={{
+                        color: '#64748B',
+                        borderBottom: '1px solid #F1F5F9',
+                        py: 2,
+                        fontSize: '0.875rem',
+                        display: { xs: 'none', md: 'table-cell' }
+                      }}
+                    >
                       {formatDate(user.lastLogin)}
                     </TableCell>
-                    <TableCell sx={{ color: '#64748B', borderBottom: '1px solid #F1F5F9', py: 2 }}>
+                    <TableCell
+                      sx={{
+                        color: '#64748B',
+                        borderBottom: '1px solid #F1F5F9',
+                        py: 2,
+                        display: { xs: 'none', md: 'table-cell' }
+                      }}
+                    >
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: '500', color: '#1E293B', fontSize: '0.875rem' }}>
                           {formatCurrency(user.totalPurchases)}
@@ -710,7 +789,7 @@ export default function AdminUsersPage() {
                       </Box>
                     </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #F1F5F9', py: 2 }}>
-                      <Box display="flex" gap={1}>
+                      <Box display="flex" gap={1} flexWrap="wrap" justifyContent={{ xs: 'flex-start', sm: 'center' }}>
                         <IconButton
                           size="small"
                           onClick={() => handleEditUser(user.id)}
