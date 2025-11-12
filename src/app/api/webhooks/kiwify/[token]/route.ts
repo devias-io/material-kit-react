@@ -35,67 +35,46 @@ function parseKiwifyAmount(value: unknown): number | undefined {
     return undefined;
   }
 
+  let numValue: number;
+
   if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : undefined;
-  }
-
-  if (typeof value === 'string') {
-    const cleaned = value.replace(/[^0-9,.-]/g, '').replace(',', '.');
-    if (!cleaned) {
-      return undefined;
-    }
-
-    const parsed = Number(cleaned);
-    return Number.isFinite(parsed) ? parsed : undefined;
-  }
-
-  return undefined;
-}
-
-function normalizeKiwifyAmounts(value: unknown): number[] {
-  const parsed = parseKiwifyAmount(value);
-  if (parsed === undefined) {
-    return [];
-  }
-
-  const normalized: number[] = [];
-  let current = parsed;
-
-  while (Number.isFinite(current)) {
-    normalized.push(Number(current.toFixed(2)));
-
-    if (Math.abs(current) < 10000) {
-      break;
-    }
-
-    const divided = current / 100;
-    const rounded = Number(divided.toFixed(2));
-
-    if (!Number.isFinite(divided) || normalized.includes(rounded)) {
-      break;
-    }
-
-    current = divided;
-  }
-
-  return normalized;
-}
-
-function selectBestKiwifyAmount(values: unknown[]): number | undefined {
-  const normalizedValues = values
-    .flatMap(normalizeKiwifyAmounts)
-    .filter((value) => typeof value === 'number' && Number.isFinite(value)) as number[];
-
-  if (normalizedValues.length === 0) {
+    numValue = value;
+  } else if (typeof value === 'string') {
+    // Remove TUDO exceto números
+    const cleaned = value.replace(/[^0-9]/g, '');
+    if (!cleaned) return undefined;
+    numValue = Number(cleaned);
+  } else {
     return undefined;
   }
 
-  const realisticValue = normalizedValues.find((value) => Math.abs(value) > 0 && Math.abs(value) < 10000);
-  if (realisticValue !== undefined) {
-    return realisticValue;
+  if (!Number.isFinite(numValue) || numValue <= 0) {
+    return undefined;
   }
 
-  return normalizedValues.find((value) => Math.abs(value) > 0) ?? normalizedValues[0];
+  // ✅ KIWIFY SEMPRE ENVIA EM CENTAVOS - DIVIDIR POR 100
+  // 119000 → 1190.00
+  // 147688 → 1476.88
+  const valorEmReais = numValue / 100;
+  
+  console.log(`💰 Kiwify: ${numValue} centavos → R$ ${valorEmReais.toFixed(2)}`);
+  
+  return Number(valorEmReais.toFixed(2));
+}
+
+function selectBestKiwifyAmount(values: unknown[]): number | undefined {
+  console.log('🔍 Candidatos:', values.slice(0, 5));
+  
+  for (const value of values) {
+    const parsed = parseKiwifyAmount(value);
+    if (parsed !== undefined && parsed > 0) {
+      console.log(`✅ Selecionado: R$ ${parsed.toFixed(2)}`);
+      return parsed;
+    }
+  }
+  
+  console.log('❌ Nenhum valor válido');
+  return undefined;
 }
 
 async function fixUnrealisticPurchaseAmounts(
