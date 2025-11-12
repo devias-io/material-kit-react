@@ -280,12 +280,9 @@ function isLivePast(eventDate: string, durationMinutes?: number): boolean {
     return false;
   }
 
-  const effectiveDuration =
-    typeof durationMinutes === 'number' && Number.isFinite(durationMinutes) && durationMinutes > 0
-      ? durationMinutes
-      : 60;
-
-  const endDate = new Date(startDate.getTime() + effectiveDuration * 60 * 1000);
+  // Mantém o botão "Entrar na Live" visível por 2 horas após o início da live
+  const twoHoursInMs = 2 * 60 * 60 * 1000;
+  const endDate = new Date(startDate.getTime() + twoHoursInMs);
 
   return endDate < new Date();
 }
