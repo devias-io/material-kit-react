@@ -628,20 +628,35 @@ export default function GerenciamentoPage() {
     }
 
     // 🔥 PREPARAR DADOS DO PREÇO TETO BASEADO NA MOEDA SELECIONADA
-    let dadosPrecoTeto = {};
-    
+    type CampoPrecoTeto = 'precoTeto' | 'precoTetoBDR';
+
+    const dadosPrecoTeto: Partial<Record<CampoPrecoTeto, number | null>> = {};
+
+    const limparCampoPrecoTeto = (campo: CampoPrecoTeto) => {
+      if (modoEdicao?.ativo) {
+        dadosPrecoTeto[campo] = null;
+      }
+    };
+
     if (mostraPrecoTeto) {
       if (isCarteiraInternacional) {
         // Para carteiras internacionais, permite ambos os valores
-        if (formData.precoTeto) {
+        if (formData.precoTeto && formData.precoTeto.trim() !== '') {
           dadosPrecoTeto.precoTeto = parseFloat(formData.precoTeto);
+        } else {
+          limparCampoPrecoTeto('precoTeto');
         }
-        if (formData.precoTetoBDR) {
+
+        if (formData.precoTetoBDR && formData.precoTetoBDR.trim() !== '') {
           dadosPrecoTeto.precoTetoBDR = parseFloat(formData.precoTetoBDR);
+        } else {
+          limparCampoPrecoTeto('precoTetoBDR');
         }
-      } else if (formData.precoTeto) {
+      } else if (formData.precoTeto && formData.precoTeto.trim() !== '') {
         // Para carteiras nacionais, apenas USD/BRL normal
         dadosPrecoTeto.precoTeto = parseFloat(formData.precoTeto);
+      } else {
+        limparCampoPrecoTeto('precoTeto');
       }
     }
 
