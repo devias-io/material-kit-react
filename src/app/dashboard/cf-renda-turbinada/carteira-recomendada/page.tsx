@@ -209,6 +209,13 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   // Usar os dados fixos diretamente
   const operacoesPUT = operacoesPUTFixas;
   const operacoesCALL = operacoesCALLFixas;
+  const ordenarOperacoes = (operacoes: CarteiraOperacao[]) => {
+  return [...operacoes].sort((a, b) => {
+    if (a.status === 'Aberta' && b.status !== 'Aberta') return -1;
+    if (a.status !== 'Aberta' && b.status === 'Aberta') return 1;
+    return a.ordem - b.ordem;
+  });
+};
   const operacoesProcessadas = [...operacoesPUTFixas, ...operacoesCALLFixas];
 
   const totaisCarteira = React.useMemo(() => {
@@ -331,7 +338,8 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   }
 
   const renderOperacoesTable = (operacoes: CarteiraOperacao[], tipo: 'PUT' | 'CALL') => {
-    if (operacoes.length === 0) {
+      const operacoesOrdenadas = ordenarOperacoes(operacoes);
+    if (operacoesOrdenadas.length === 0) {
       return (
         <div
           style={{
