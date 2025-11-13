@@ -608,9 +608,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const [modules, setModules] = React.useState<Module[]>([]);
   const [lessonForms, setLessonForms] = React.useState<Record<string, LessonFormState>>({});
   const [lessonErrors, setLessonErrors] = React.useState<Record<string, string | null>>({});
-const [materialUploadState, setMaterialUploadState] = React.useState
-  Record<number, { isUploading: boolean; error: string | null }>
->({});
+const [materialUploadState, setMaterialUploadState] = React.useState<Record<number, { isUploading: boolean; error: string | null }>>({});
   const [openLessonModule, setOpenLessonModule] = React.useState<string | null>(null);
   const [newModuleForm, setNewModuleForm] = React.useState<NewModuleFormState>({
     title: '',
