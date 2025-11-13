@@ -2484,47 +2484,48 @@ const handleUpdateModule = React.useCallback(
                     }}
                   >
                     {lesson.materials.map(material => (
-                      <li
-                        key={material.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          justifyContent: 'space-between'
-                        }}>
-                        
-                          href={material.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={event => handlePreviewMaterial(event, material)}
-                          style={{
-                            color: '#010101',
-                            fontWeight: 600,
-                            textDecoration: 'none',
-                            flex: 1
-                          }}
-                        >
-                          {material.title}
-                        </a>
-                        
-                          href={material.fileUrl}
-                          download={material.title}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '6px 12px',
-                            backgroundColor: '#3b82f6',
-                            color: 'white',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            textDecoration: 'none',
-                            fontWeight: 600,
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          📥 Baixar
-                        </a>
+<li
+  key={material.id}
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    justifyContent: 'space-between'
+  }}
+>
+  
+    href={material.fileUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    onClick={event => handlePreviewMaterial(event, material)}
+    style={{
+      color: '#010101',
+      fontWeight: 600,
+      textDecoration: 'none',
+      flex: 1
+    }}
+  >
+    {material.title}
+  </a>
+  
+    href={material.fileUrl}
+    download={material.title}
+    style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px',
+      padding: '6px 12px',
+      backgroundColor: '#3b82f6',
+      color: 'white',
+      borderRadius: '8px',
+      fontSize: '12px',
+      textDecoration: 'none',
+      fontWeight: 600,
+      whiteSpace: 'nowrap'
+    }}
+  >
+    📥 Baixar
+  </a>
                         {isAdmin && !viewAsStudent && typeof lesson.id === 'number' && (
                           <button
                             type="button"
@@ -2619,21 +2620,21 @@ const handleUpdateModule = React.useCallback(
                   </div>
                 </form>
               )}
-              {!enhancedEmbedSrc && lesson.videoUrl && (
-                
-                  href={lesson.videoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    alignSelf: 'flex-start',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: '#010101'
-                  }}
-                >
-                  Assistir vídeo da aula →
-                </a>
-              )}
+{!enhancedEmbedSrc && lesson.videoUrl && (
+  
+    href={lesson.videoUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{
+      alignSelf: 'flex-start',
+      fontSize: '14px',
+      fontWeight: 600,
+      color: '#010101'
+    }}
+  >
+    Assistir vídeo da aula →
+  </a>
+)}
             </>
           )}
 
@@ -3896,24 +3897,24 @@ visibleModules.map(module => {
                           )}
 
 {live.meetingUrl && isLiveStarted(live.eventDate) && !isPast && !live.isCancelled && (
-                            
-                              href={live.meetingUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                display: 'inline-block',
-                                padding: '10px 18px',
-                                borderRadius: '10px',
-                                backgroundColor: '#010101',
-                                color: '#ffffff',
-                                fontSize: '14px',
-                                fontWeight: 600,
-                                textDecoration: 'none'
-                              }}
-                            >
-                              🎥 Entrar na Live →
-                            </a>
-                          )}
+  
+    href={live.meetingUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{
+      display: 'inline-block',
+      padding: '10px 18px',
+      borderRadius: '10px',
+      backgroundColor: '#010101',
+      color: '#ffffff',
+      fontSize: '14px',
+      fontWeight: 600,
+      textDecoration: 'none'
+    }}
+  >
+    🎥 Entrar na Live →
+  </a>
+)}
                         </div>
 
                         {isAdmin && (
@@ -4600,28 +4601,28 @@ visibleModules.map(module => {
                         </div>
                       )}
 
-                      {!enhancedEmbedSrc && mentoria.videoUrl && (
-                        
-                          href={mentoria.videoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            alignSelf: 'flex-start',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '10px 16px',
-                            borderRadius: '10px',
-                            backgroundColor: '#010101',
-                            color: '#ffffff',
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            textDecoration: 'none'
-                          }}
-                        >
-                          ▶️ Assistir gravação
-                        </a>
-                      )}
+{!enhancedEmbedSrc && mentoria.videoUrl && (
+  
+    href={mentoria.videoUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{
+      alignSelf: 'flex-start',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '10px 16px',
+      borderRadius: '10px',
+      backgroundColor: '#010101',
+      color: '#ffffff',
+      fontSize: '14px',
+      fontWeight: 600,
+      textDecoration: 'none'
+    }}
+  >
+    ▶️ Assistir gravação
+  </a>
+)}
 
                       {mentoria.content && mentoria.content.trim().length > 0 && (
                         <div
@@ -4666,48 +4667,48 @@ visibleModules.map(module => {
                         }}
                       >
                         {mentoria.materials.map(material => (
-                          <li
-                            key={material.id}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '12px',
-                              justifyContent: 'space-between'
-                            }}
-                          >
-                            
-                              href={material.fileUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={event => handlePreviewMaterial(event, material)}
-                              style={{
-                                color: '#010101',
-                                fontWeight: 600,
-                                textDecoration: 'none',
-                                flex: 1
-                              }}
-                            >
-                              {material.title}
-                            </a>
-                            
-                              href={material.fileUrl}
-                              download={material.title}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                padding: '6px 12px',
-                                backgroundColor: '#3b82f6',
-                                color: 'white',
-                                borderRadius: '8px',
-                                fontSize: '12px',
-                                textDecoration: 'none',
-                                fontWeight: 600,
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              📥 Baixar
-                            </a>
+<li
+  key={material.id}
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    justifyContent: 'space-between'
+  }}
+>
+  
+    href={material.fileUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    onClick={event => handlePreviewMaterial(event, material)}
+    style={{
+      color: '#010101',
+      fontWeight: 600,
+      textDecoration: 'none',
+      flex: 1
+    }}
+  >
+    {material.title}
+  </a>
+  
+    href={material.fileUrl}
+    download={material.title}
+    style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px',
+      padding: '6px 12px',
+      backgroundColor: '#3b82f6',
+      color: 'white',
+      borderRadius: '8px',
+      fontSize: '12px',
+      textDecoration: 'none',
+      fontWeight: 600,
+      whiteSpace: 'nowrap'
+    }}
+  >
+    📥 Baixar
+  </a>
                             {isAdmin && (
                               <button
                                 type="button"
