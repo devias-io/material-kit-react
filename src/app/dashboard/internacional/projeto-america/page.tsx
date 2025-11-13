@@ -23,6 +23,42 @@ const setCachedData = (key: string, data: any) => {
   globalCache.set(key, { data, timestamp: Date.now() });
 };
 
+const getCachedDataWithTTL = (key: string, ttl: number) => {
+  const cached = globalCache.get(key);
+  if (cached && Date.now() - cached.timestamp < ttl) {
+    return cached.data;
+  }
+  return null;
+};
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const FINNHUB_CACHE_DURATION = 10 * 60 * 1000; // 10 minutos
+const FINNHUB_RATE_LIMIT_MS = 1100;
+let finnhubRateLimiter: Promise<unknown> = Promise.resolve();
+let lastFinnhubCall = 0;
+
+const withFinnhubRateLimit = <T,>(task: () => Promise<T>): Promise<T> => {
+  const run: Promise<T> = finnhubRateLimiter.then(async () => {
+    if (lastFinnhubCall > 0) {
+      const elapsed = Date.now() - lastFinnhubCall;
+      const waitTime = Math.max(0, FINNHUB_RATE_LIMIT_MS - elapsed);
+      if (waitTime > 0) {
+        await delay(waitTime);
+      }
+    }
+
+    try {
+      return await task();
+    } finally {
+      lastFinnhubCall = Date.now();
+    }
+  });
+
+  finnhubRateLimiter = run.catch(() => {});
+  return run;
+};
+
 const WHITE_LOGO_TICKERS = ['XP', 'UNH', 'QQQ', 'ARE','WPC'];
 const CUSTOM_LOGO_URLS: Record<string, string> = {
   XP: 'https://logo.clearbit.com/xpi.com.br',
@@ -388,43 +424,60 @@ function isETF(ticker: string): boolean {
 }
 
 async function buscarDYFinnhub(ticker: string): Promise<{ valor: number | null; origem: string }> {
+  const normalizedTicker = ticker.toUpperCase();
+  const cacheKey = `finnhub_metric:${normalizedTicker}`;
+  const cached = getCachedDataWithTTL(cacheKey, FINNHUB_CACHE_DURATION);
+
+  if (cached) {
+    return cached;
+  }
+
   try {
-    console.log(`📊 [FINNHUB] Buscando DY para ${ticker}...`);
+    console.log(`📊 [FINNHUB] Buscando DY para ${normalizedTicker}...`);
 
-    const controller = new AbortController();
-    setTimeout(() => controller.abort(), 5000);
+    const result = await withFinnhubRateLimit(async () => {
+      const controller = new AbortController();
+      const timeoutId: ReturnType<typeof setTimeout> = setTimeout(() => controller.abort(), 5000);
 
-    const response = await fetch(`/api/finnhub-metrics/${ticker}`, {
-      signal: controller.signal,
-      headers: { 'Content-Type': 'application/json' }
+      try {
+        const response = await fetch(`/api/finnhub-metrics/${normalizedTicker}`, {
+          signal: controller.signal,
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+          console.log(`📊 [FINNHUB] ${normalizedTicker}: API retornou ${response.status}`);
+          return { valor: null, origem: 'finnhub_error' } as const;
+        }
+
+        const data = await response.json();
+
+        console.log(`📊 [FINNHUB] ${normalizedTicker}: Response`, data);
+
+        const dividendYield = data.dividendYield;
+
+        if (!dividendYield || dividendYield <= 0) {
+          console.log(`📊 [FINNHUB] ${normalizedTicker}: DY = ${dividendYield}`);
+          return { valor: null, origem: 'finnhub_no_yield' } as const;
+        }
+
+        const valorDecimal = dividendYield > 0.01 ? dividendYield / 100 : dividendYield;
+
+        console.log(`✅ [FINNHUB] ${normalizedTicker}: DY = ${(valorDecimal * 100).toFixed(2)}%`);
+
+        return {
+          valor: valorDecimal,
+          origem: 'finnhub_ttm'
+        } as const;
+      } finally {
+        clearTimeout(timeoutId);
+      }
     });
 
-    if (!response.ok) {
-      console.log(`📊 [FINNHUB] ${ticker}: API retornou ${response.status}`);
-      return { valor: null, origem: 'finnhub_error' };
-    }
-
-    const data = await response.json();
-
-    console.log(`📊 [FINNHUB] ${ticker}: Response`, data);
-
-    const dividendYield = data.dividendYield;
-
-    if (!dividendYield || dividendYield <= 0) {
-      console.log(`📊 [FINNHUB] ${ticker}: DY = ${dividendYield}`);
-      return { valor: null, origem: 'finnhub_no_yield' };
-    }
-
-    const valorDecimal = dividendYield > 0.01 ? dividendYield / 100 : dividendYield;
-
-    console.log(`✅ [FINNHUB] ${ticker}: DY = ${(valorDecimal * 100).toFixed(2)}%`);
-
-    return {
-      valor: valorDecimal,
-      origem: 'finnhub_ttm'
-    };
+    setCachedData(cacheKey, result);
+    return result;
   } catch (error) {
-    console.log(`❌ [FINNHUB] ${ticker}:`, error instanceof Error ? error.message : 'Erro');
+    console.log(`❌ [FINNHUB] ${normalizedTicker}:`, error instanceof Error ? error.message : 'Erro');
     return { valor: null, origem: 'finnhub_timeout' };
   }
 }
@@ -537,20 +590,18 @@ async function buscarDYsComEstrategia(
   if (tickersSemDY.length > 0) {
     console.log(`🇺🇸 [FINNHUB] Buscando DY para ${tickersSemDY.length} tickers via Finnhub...`);
 
-    const promisesFinnhub = tickersSemDY.map(async (ticker, index) => {
-      await new Promise(resolve => setTimeout(resolve, index * 1100));
+    await Promise.allSettled(
+      tickersSemDY.map(async (ticker) => {
+        const { valor } = await buscarDYFinnhub(ticker);
 
-      const { valor } = await buscarDYFinnhub(ticker);
+        if (valor && valor > 0) {
+          dyMap.set(ticker, formatarDy(valor));
+          return { ticker, sucesso: true };
+        }
 
-      if (valor && valor > 0) {
-        dyMap.set(ticker, formatarDy(valor));
-        return { ticker, sucesso: true };
-      }
-
-      return { ticker, sucesso: false };
-    });
-
-    await Promise.allSettled(promisesFinnhub);
+        return { ticker, sucesso: false };
+      })
+    );
   }
 
   const tickersAindaSemDY = tickers.filter(ticker => !dyMap.has(ticker));
@@ -714,36 +765,42 @@ function useProjetoAmericaIntegradas() {
       setCotacoesCompletas(cotacoesMap);
       setLoadingCotacoes(false);
 
-      const [dyResult, proventosResult] = await Promise.allSettled([
-        buscarDYsComEstrategia(tickers, isMobile, cotacoesMap),
-        buscarProventosProjetoAmerica(projetoAmericaData)
-      ]);
+      const dyPromise = buscarDYsComEstrategia(tickers, isMobile, cotacoesMap)
+        .then((dyMap) => {
+          console.log('📈 DY obtidos (async):', dyMap.size, 'de', tickers.length);
+          console.log('🔍 [PARALLEL-DEBUG] dyMap conteúdo:', Object.fromEntries(dyMap));
+          setDyCompletos(dyMap);
+          return dyMap;
+        })
+        .catch((dyError) => {
+          console.error('❌ Erro ao buscar DY:', dyError);
+          const vazio = new Map<string, string>();
+          setDyCompletos(vazio);
+          return vazio;
+        })
+        .finally(() => {
+          setLoadingDY(false);
+        });
 
-      const dyMap = dyResult.status === 'fulfilled' ? dyResult.value : new Map();
-      const proventosData = proventosResult.status === 'fulfilled' ? proventosResult.value : new Map();
+      let proventosData = new Map<string, number>();
+      try {
+        proventosData = await buscarProventosProjetoAmerica(projetoAmericaData);
+      } catch (proventosError) {
+        console.error('❌ Erro ao buscar proventos:', proventosError);
+      }
 
-      const tempoTotal = performance.now() - inicioTempo;
-      console.log(`🎉 TODAS AS ETAPAS CONCLUÍDAS EM ${tempoTotal.toFixed(0)}ms!`);
+      setProventosCompletos(proventosData);
+      setLoadingProventos(false);
 
-      // Logs de debug
+      const tempoParcial = performance.now() - inicioTempo;
+      console.log(`⚡ Dados essenciais concluídos em ${tempoParcial.toFixed(0)}ms!`);
       console.log('📊 Cotações obtidas:', cotacoesMap.size, 'de', tickers.length);
-      console.log('📈 DY obtidos:', dyMap.size, 'de', tickers.length);
       console.log('💰 Proventos obtidos:', proventosData.size, 'de', projetoAmericaData.length);
 
-      // Debug do DY
-      console.log('🔍 [PARALLEL-DEBUG] dyMap processado:');
-      console.log('🔍 [PARALLEL-DEBUG] dyMap.size:', dyMap.size);
-      console.log('🔍 [PARALLEL-DEBUG] dyMap conteúdo:', Object.fromEntries(dyMap));
-
-      // Atualizar estados
-      setDyCompletos(dyMap);
-      setProventosCompletos(proventosData);
-
-      // Desativar loadings
-      setLoadingDY(false);
-      setLoadingProventos(false);
-      // Marcar como pronto para processamento final
+      // Marcar como pronto para processamento final (DY continua carregando em paralelo)
       setTodosOsDadosProntos(true);
+
+      await dyPromise;
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
