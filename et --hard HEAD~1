@@ -1,0 +1,369 @@
+[33me35e9aff[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Atualização da carteira de opções
+[33m0e1f2f3a[m Merge pull request #310 from Jacbdias/codex/ajustar-pagina-de-gerenciamento-de-ativos
+[33m73165427[m Refactor CF Renda Turbinada management
+[33m09adb755[m Adjust CF Renda Turbinada management data model
+[33m0427d2f6[m Merge pull request #309 from Jacbdias/codex/fix-displayed-price-ceiling-for-etfs-psyxb9
+[33m3a41ea63[m Merge branch 'main' into codex/fix-displayed-price-ceiling-for-etfs-psyxb9
+[33m09a1f20b[m Update page.tsx
+[33m1559cec7[m Update page.tsx
+[33m30218922[m Restore price ceiling display for non-ETF assets
+[33m7acd0607[m Update page.tsx
+[33me322e390[m Update page.tsx
+[33mba4bbff9[m Merge pull request #308 from Jacbdias/codex/fix-displayed-price-ceiling-for-etfs
+[33ma7988e8a[m Hide ETF price ceiling on Projeto América
+[33m3ed5f5e3[m Merge pull request #307 from Jacbdias/codex/remove-preco-teto-do-ativo
+[33me7bcf110[m Fix clearing price ceiling on asset management
+[33mc1b81110[m Update page.tsx
+[33m26f82542[m Update page.tsx
+[33m2da28250[m Merge pull request #306 from Jacbdias/codex/fix-responsiveness-for-usuarios-page
+[33m6c479d0c[m Improve admin user management responsiveness
+[33m273794b1[m Merge pull request #305 from Jacbdias/codex/corrigir-identificacao-de-ativos-para-alup11,-klbn11,-sanb11
+[33me1a18a0d[m Fix FII detection for Brazilian units
+[33ma7e7b932[m Update page.tsx
+[33m080ba77b[m Update page.tsx
+[33m3ad57f38[m Update route.ts
+[33m758681e0[m Update page.tsx
+[33m912a0e64[m Update page.tsx
+[33mcce5adf3[m Merge pull request #304 from Jacbdias/codex/find-account-lockout-error-threshold
+[33m6c933ce1[m Show password reset guidance after repeated login failures
+[33mecf5bf1d[m Merge pull request #303 from Jacbdias/codex/fix-incorrect-purchase-values-on-management-page-y1olqd
+[33mdab7e241[m Fix Kiwify purchase amount reconciliation
+[33mf66c79f9[m Merge pull request #302 from Jacbdias/codex/fix-incorrect-purchase-values-on-management-page
+[33m9b303174[m Fix Kiwify amount normalization
+[33me5c12646[m Merge pull request #301 from Jacbdias/codex/permitir-admin-excluir-perguntas
+[33m8482f337[m Allow admins to delete central duvidas questions
+[33m6c78cf2e[m Update page.tsx
+[33mb186fc74[m Update page.tsx
+[33m30ce0991[m Update page.tsx
+[33m3b2c29cd[m Update page.tsx
+[33meceaeaf1[m Update page.tsx
+[33mebb4e263[m Update auth-access-context.tsx
+[33m1619a89c[m Update page.tsx
+[33md541e08e[m Update page.tsx
+[33maf6c0566[m Update page.tsx
+[33ma0a8a933[m Merge pull request #300 from Jacbdias/codex/ajustar-pagina-da-carteira-recomendada
+[33m96d9be76[m feat: redesign renda turbinada options dashboard
+[33mc97c0b84[m Merge pull request #299 from Jacbdias/codex/permitir-botao-entrar-na-live-em-andamento
+[33m8541bf8d[m Keep live access button visible during ongoing sessions
+[33md2a938c1[m Merge pull request #298 from Jacbdias/codex/fix-percentage-display-for-fii-assets
+[33mbc204a71[m Corrige cálculo de percentual de carteira para FIIs
+[33mba6112f2[m Merge pull request #297 from Jacbdias/codex/add-fii-icon-support-to-dashboard
+[33m6d29e5cf[m Use FII logos from local directory
+[33m95b71787[m Descrição das alterações que você fez
+[33mad502043[m Merge pull request #296 from Jacbdias/codex/remove-calendario-de-lives
+[33mdc2e41dc[m Remove live calendar section from Bastidores da Bolsa
+[33mcc9bb5e3[m Add files via upload
+[33m45a9b6c1[m Delete public/logos-fiis/Logotipo minimalista moderno preto e verde.png
+[33m823eb720[m Add files via upload
+[33mf7ed46a8[m Delete public/logos-fiis/DEVA11.png
+[33maf273226[m Add files via upload
+[33me77f46c2[m Delete public/logos-fiis/DEVA11.png
+[33m9d975db1[m Merge pull request #295 from Jacbdias/codex/fix-incorrect-purchase-value-in-api
+[33m0ed7cf60[m Fix Kiwify webhook amount parsing
+[33m36589d88[m Merge pull request #294 from Jacbdias/codex/add-pdf-upload-and-extraction-features-dusca0
+[33mc0976016[m Merge branch 'main' into codex/add-pdf-upload-and-extraction-features-dusca0
+[33mc7e7fe91[m fix: pass operator list to svg extraction
+[33mf65f4846[m Merge pull request #293 from Jacbdias/codex/add-pdf-upload-and-extraction-features-63az8y
+[33m9a1df57d[m Merge branch 'main' into codex/add-pdf-upload-and-extraction-features-63az8y
+[33mbc267ec4[m Merge pull request #292 from Jacbdias/codex/check-card-access-by-user-plan-jbqzj9
+[33m5db0a747[m fix: extract embedded images from pdf imports
+[33m64ac5f4e[m Restrict admin dashboard cards by access permissions
+[33mefb405b9[m Merge pull request #291 from Jacbdias/codex/add-pdf-upload-and-extraction-features
+[33m79bc7b61[m feat: auto-fill technical analysis from PDF
+[33mcd845c0a[m Merge pull request #290 from Jacbdias/codex/check-card-access-by-user-plan
+[33md2c9986c[m Filter exclusive resources by user permissions
+[33mfb3f4cdd[m Update AdminAnaliseTecnicaManager.tsx
+[33mea6fb470[m Update TechnicalAnalysisSection.tsx
+[33m3f343130[m Update AdminAnaliseTecnicaManager.tsx
+[33m2ebfa92a[m Update AdminAnaliseTecnicaManager.tsx
+[33m7d5663c7[m Merge pull request #289 from Jacbdias/codex/fix-user-plan-customization-saving-issue-7rq08e
+[33m92732179[m Merge branch 'main' into codex/fix-user-plan-customization-saving-issue-7rq08e
+[33m364e04a9[m Avoid custom permission helper name collisions
+[33me012bc66[m Merge pull request #287 from Jacbdias/codex/fix-user-plan-customization-saving-issue-bhkq5o
+[33m54ccaceb[m Normalize custom permissions for end-user access
+[33m4bf394e8[m Merge pull request #286 from Jacbdias/codex/fix-user-plan-customization-saving-issue
+[33m780ef627[m Allow manual analyst users to retain custom permissions
+[33m943a0827[m Merge pull request #285 from Jacbdias/codex/fix-referenceerror-for-purchasesmap
+[33mcbf6c982[m Fix purchases map initialization in admin users route
+[33m2ac5addf[m Merge pull request #284 from Jacbdias/codex/fix-question-count-display-issue
+[33m772897e3[m Fix admin question counters using stats
+[33m268eaa49[m Merge pull request #283 from Jacbdias/codex/improve-button-positioning-on-dashboard
+[33m901d0c94[m Improve responder button layout on admin central duvidas
+[33mb807c07a[m Update AnalisesTrimesestrais.tsx
+[33m4bade9fd[m Update TechnicalAnalysisSection.tsx
+[33mf2fddf7d[m Merge pull request #282 from Jacbdias/codex/add-show-more-button-for-live-calendar
+[33mb0ec3a19[m Refine live calendar and show more toggle
+[33ma1e6eb2b[m Add expandable live calendar list
+[33m48093f17[m Update page.tsx
+[33m42d9d173[m Update page.tsx
+[33m784f6927[m Update page.tsx
+[33m3cfc8678[m Merge pull request #280 from Jacbdias/codex/ajustar-layout-de-titulos-grandes-no-mobile
+[33m5f6d7c39[m Fix mobile live card layout JSX structure
+[33m818a65d6[m Fix mobile layout of live cards
+[33mfe6403f0[m Improve mobile layout for live cards
+[33m2f489637[m Update page.tsx
+[33mccef5a3b[m Update page.tsx
+[33ma5cb88a4[m Update page.tsx
+[33md3d951e5[m Update page.tsx
+[33m6fbfb945[m Update page.tsx
+[33m1cceed7c[m Merge pull request #279 from Jacbdias/codex/corrigir-erro-ao-anexar-arquivos-nas-mentorias
+[33m06c851b3[m Redirecionar download do react-dropzone
+[33mad941116[m Corrigir importação do utilitário de upload
+[33ma30c00b2[m Refatorar upload de materiais das mentorias
+[33md8cb94ae[m Merge pull request #278 from Jacbdias/codex/add-section-for-recorded-mentorships-txaz9o
+[33m36f439e1[m Add migration for CF Renda Turbinada mentorias
+[33m8f7af77b[m Merge pull request #277 from Jacbdias/codex/add-section-for-recorded-mentorships
+[33m440295c7[m Fix mentorship API util import paths
+[33mfb88bf19[m Add recorded mentorships section and API support
+[33m5fbfab69[m Merge pull request #276 from Jacbdias/codex/corrigir-erro-de-sintaxe-em-page.tsx-9e62h3
+[33m52d78f9d[m Merge branch 'main' into codex/corrigir-erro-de-sintaxe-em-page.tsx-9e62h3
+[33mc3cbdc1b[m Fix inline material preview for CF Renda Turbinada lessons
+[33m0336f50c[m Merge pull request #275 from Jacbdias/codex/corrigir-erro-de-sintaxe-em-page.tsx
+[33mab2729a3[m Fix lesson materials list markup
+[33m15dc0e08[m Update page.tsx
+[33m2d1a22f2[m Update page.tsx
+[33m2538088c[m Update next.config.js
+[33mb91b34a6[m Update route.ts
+[33m764c4724[m Update route.ts
+[33m864ed818[m chore: atualizar dependências e resolver conflitos
+[33m3b00effe[m Merge pull request #274 from Jacbdias/codex/corrigir-erro-ao-anexar-pdf-nas-aulas
+[33mc2cead40[m Handle file uploads without relying on File constructor
+[33m1972ab38[m Merge pull request #273 from Jacbdias/codex/adicionar-anexos-e-editor-de-texto-as-aulas-a70t4a
+[33m0df2ba75[m Merge branch 'main' into codex/adicionar-anexos-e-editor-de-texto-as-aulas-a70t4a
+[33m2ac206c6[m Handle uploads without relying on File constructor
+[33m5d359d32[m Merge pull request #272 from Jacbdias/codex/adicionar-anexos-e-editor-de-texto-as-aulas-53kmc1
+[33m314f572f[m Add migration for CF Renda Turbinada lesson materials
+[33m9bc8830e[m Merge pull request #271 from Jacbdias/codex/adicionar-anexos-e-editor-de-texto-as-aulas
+[33mf9f99ab9[m Add lesson materials support to CF Renda Turbinada classes
+[33m93e11fdf[m Merge pull request #270 from Jacbdias/codex/fix-data-loading-issue-on-settings-page
+[33m26740325[m Compute DY fallback from local proventos data
+[33m96191da4[m Update page.tsx
+[33m10faceb8[m Merge pull request #269 from Jacbdias/codex/fix-page-load-error-on-/dashboard/settings-ca33oo
+[33m3f9436ee[m Merge branch 'main' into codex/fix-page-load-error-on-/dashboard/settings-ca33oo
+[33ma28858a5[m Add compatibility financial APIs to remove console errors
+[33ma8f1dc1e[m Merge pull request #268 from Jacbdias/codex/fix-page-load-error-on-/dashboard/settings
+[33m42455f11[m Add portfolio API endpoints and share default carteira data
+[33m69f6b635[m Merge pull request #267 from Jacbdias/codex/corrigir-carregamento-de-dados-da-pagina-/dashboard/settings
+[33mbcaa0628[m Ensure settings dashboard falls back to seeded data
+[33m4112cbe1[m Merge pull request #266 from Jacbdias/codex/create-server-side-fetcher-for-market-data
+[33mdb33de37[m Merge branch 'main' into codex/create-server-side-fetcher-for-market-data
+[33m582226e0[m Fix server market data module directive
+[33m31ca434d[m Merge pull request #265 from Jacbdias/codex/extract-static-values-to-utility-module
+[33m332e8220[m refactor: centralize market data fetching
+[33m185b2eb0[m Merge pull request #264 from Jacbdias/codex/implementar-melhorias-na-api-de-proventos
+[33m336fe1b2[m Refactor IFIX fallbacks into shared utilities
+[33mad35a037[m Improve proventos-based DY fallback
+[33m8510e94a[m Merge pull request #263 from Jacbdias/codex/corrigir-permissoes-do-plano-cf-renda-turbinada
+[33m5783baf1[m[33m ([m[1;31morigin/codex/corrigir-permissoes-do-plano-cf-renda-turbinada[m[33m)[m Add CF Renda Turbinada permission options to admin user editor
+[33m9106cb90[m Merge pull request #262 from Jacbdias/codex/add-function-to-reorder-classes
+[33mf5a5a92b[m[33m ([m[1;31morigin/codex/add-function-to-reorder-classes[m[33m)[m feat: allow reorganizing CF Renda Turbinada lessons
+[33m09513d14[m Merge pull request #261 from Jacbdias/codex/fix-email-sending-ratelimit-error
+[33ma4ba1330[m[33m ([m[1;31morigin/codex/fix-email-sending-ratelimit-error[m[33m)[m Handle SMTP rate limits with retries
+[33m7196c0dc[m Merge pull request #260 from Jacbdias/codex/add-user-profile-for-analista-re3oqt
+[33meb17d666[m[33m ([m[1;31morigin/codex/add-user-profile-for-analista-re3oqt[m[33m)[m Add missing central agenda styles module
+[33ma44ee45f[m Update central-duvidas.module.css
+[33m7d6add70[m Merge pull request #259 from Jacbdias/codex/add-user-profile-for-analista-2hre6a
+[33m8605d90d[m[33m ([m[1;31morigin/codex/add-user-profile-for-analista-2hre6a[m[33m)[m Sanitize Analista admin permissions
+[33ma23effc6[m Merge pull request #258 from Jacbdias/codex/add-user-profile-for-analista-d0hd4j
+[33me1be0bab[m[33m ([m[1;31morigin/codex/add-user-profile-for-analista-d0hd4j[m[33m)[m Allow configuring Analista admin access
+[33m943c6d25[m Update page.tsx
+[33maca90448[m Update central-duvidas.module.css
+[33mb7e3522a[m Update central-duvidas.module.css
+[33ma104f156[m Merge pull request #257 from Jacbdias/codex/add-user-profile-for-analista
+[33m6a3d9ff0[m[33m ([m[1;31morigin/codex/add-user-profile-for-analista[m[33m)[m Add Analista role with configurable access and central support
+[33m560d2aa4[m Update page.tsx
+[33m2fcc126d[m Merge pull request #256 from Jacbdias/codex/ajustar-links-clicaveis-em-respostas
+[33mfcfba2e2[m Merge pull request #255 from Jacbdias/codex/alterar-nome-do-administrador-para-fatos-da-bolsa-0ektxr
+[33m162b0f30[m[33m ([m[1;31morigin/codex/ajustar-links-clicaveis-em-respostas[m[33m)[m Render Central Dúvidas links as anchors
+[33m4aeaad05[m[33m ([m[1;31morigin/codex/alterar-nome-do-administrador-para-fatos-da-bolsa-0ektxr[m[33m)[m Ajusta autoria das notificações de respostas
+[33m0e3b6539[m Merge pull request #254 from Jacbdias/codex/alterar-nome-do-administrador-para-fatos-da-bolsa
+[33mb88963ba[m[33m ([m[1;31morigin/codex/alterar-nome-do-administrador-para-fatos-da-bolsa[m[33m)[m Atualiza exibição de nome nas respostas administrativas
+[33m66af9106[m Merge pull request #253 from Jacbdias/codex/ajustar-venimento-usuarios-plano-renda-turbinada-wapvlq
+[33m4354df6f[m[33m ([m[1;31morigin/codex/ajustar-venimento-usuarios-plano-renda-turbinada-wapvlq[m[33m)[m Add lifetime toggle to admin user expiration form
+[33m78bfe9d2[m Merge pull request #252 from Jacbdias/codex/ajustar-venimento-usuarios-plano-renda-turbinada
+[33m211d4536[m[33m ([m[1;31morigin/codex/ajustar-venimento-usuarios-plano-renda-turbinada[m[33m)[m Ensure Renda Turbinada plan grants lifetime access
+[33m5ff81dd4[m Merge pull request #251 from Jacbdias/codex/implementar-sistema-de-notificacoes
+[33m89d19be1[m[33m ([m[1;31morigin/codex/implementar-sistema-de-notificacoes[m[33m)[m Add admin broadcast notifications UI
+[33m3232d357[m Merge pull request #250 from Jacbdias/codex/adicionar-acesso-ao-telegram-no-menu-lateral-pvhcvf
+[33m3372d27b[m[33m ([m[1;31morigin/codex/adicionar-acesso-ao-telegram-no-menu-lateral-pvhcvf[m[33m)[m Rename Telegram menu entry for Renda Turbinada
+[33me46a8561[m Merge pull request #249 from Jacbdias/codex/adicionar-acesso-ao-telegram-no-menu-lateral
+[33m40dab218[m[33m ([m[1;31morigin/codex/adicionar-acesso-ao-telegram-no-menu-lateral[m[33m)[m Allow Renda Turbinada to access Telegram resource
+[33m3ce331f6[m Merge pull request #248 from Jacbdias/codex/ajuste-responsivo-para-mobile-na-pagina-aulas-qneue6
+[33m91b64fc8[m[33m ([m[1;31morigin/codex/ajuste-responsivo-para-mobile-na-pagina-aulas-qneue6[m[33m)[m Merge branch 'main' into codex/ajuste-responsivo-para-mobile-na-pagina-aulas-qneue6
+[33m7c553846[m Expand lesson videos on mobile
+[33m263b3dc5[m Merge pull request #247 from Jacbdias/codex/ajuste-responsivo-para-mobile-na-pagina-aulas
+[33m6cc465ba[m[33m ([m[1;31morigin/codex/ajuste-responsivo-para-mobile-na-pagina-aulas[m[33m)[m Adjust mobile padding for CF Renda Turbinada lessons
+[33m3f1bb4ae[m Merge pull request #246 from Jacbdias/codex/corrigir-erro-na-importacao-de-usuarios-gk8t5g
+[33md2a86abf[m[33m ([m[1;31morigin/codex/corrigir-erro-na-importacao-de-usuarios-gk8t5g[m[33m)[m Normalize plan and status in admin bulk import
+[33m271018a9[m Merge pull request #245 from Jacbdias/codex/corrigir-erro-na-importacao-de-usuarios
+[33m3d550b26[m[33m ([m[1;31morigin/codex/corrigir-erro-na-importacao-de-usuarios[m[33m)[m Fix bulk import route admin auth
+[33mc7eacd34[m Update page.tsx
+[33mcb4ffae0[m Update page.tsx
+[33m98098946[m Merge pull request #244 from Jacbdias/codex/modificar-exibicao-do-dashboard-para-renda-turbinada
+[33m513aa0c5[m[33m ([m[1;31morigin/codex/modificar-exibicao-do-dashboard-para-renda-turbinada[m[33m)[m Oculta Instagram no Telegram para plano Renda Turbinada
+[33m2fa5c2a5[m Update page.tsx
+[33m40c01e8d[m Merge pull request #243 from Jacbdias/codex/add-lock-icon-and-release-date
+[33md84f64e2[m Update page.tsx
+[33mf147050e[m[33m ([m[1;31morigin/codex/add-lock-icon-and-release-date[m[33m)[m Restrict carteira recomendada page to admins
+[33m7264ebd7[m Merge pull request #242 from Jacbdias/codex/add-card-for-telegram-access-instructions
+[33m5881c7c1[m[33m ([m[1;31morigin/codex/add-card-for-telegram-access-instructions[m[33m)[m Include telegram card for Renda Turbinada
+[33md0f310cf[m Update route.ts
+[33m9365523d[m Merge pull request #241 from Jacbdias/codex/new-task
+[33md178c467[m[33m ([m[1;31morigin/codex/new-task[m[33m)[m Improve SMTP config compatibility
+[33m8934274a[m Merge pull request #240 from Jacbdias/codex/fix-email-resend-error-on-user-page
+[33m9430bf9e[m[33m ([m[1;31morigin/codex/fix-email-resend-error-on-user-page[m[33m)[m Support SMTP password fallback
+[33m0df2a86d[m Merge pull request #239 from Jacbdias/codex/fix-access-instructions-email-error-kphirl
+[33m2bd0dc11[m[33m ([m[1;31morigin/codex/fix-access-instructions-email-error-kphirl[m[33m)[m Merge branch 'main' into codex/fix-access-instructions-email-error-kphirl
+[33mbd168c62[m Handle numeric SMTP_SECURE values
+[33m1f3b4681[m Merge pull request #238 from Jacbdias/codex/fix-access-instructions-email-error
+[33m9dda0fcb[m[33m ([m[1;31morigin/codex/fix-access-instructions-email-error[m[33m)[m Improve SMTP configuration validation
+[33m77ef450c[m Merge pull request #237 from Jacbdias/codex/implement-access-for-cf-renda-turbinada
+[33m301f9396[m[33m ([m[1;31morigin/codex/implement-access-for-cf-renda-turbinada[m[33m)[m Map Hotmart Renda Turbinada product to plan
+[33mef8f4696[m Merge pull request #235 from Jacbdias/codex/fix-exclusive-resources-on-cf-renda-turbinada
+[33mf324838f[m Merge pull request #236 from Jacbdias/codex/corrigir-erro-ao-mudar-plano-de-usuario
+[33m99b8acdd[m[33m ([m[1;31morigin/codex/fix-exclusive-resources-on-cf-renda-turbinada[m[33m)[m Merge branch 'main' into codex/fix-exclusive-resources-on-cf-renda-turbinada
+[33mc491dbb6[m[33m ([m[1;31morigin/codex/corrigir-erro-ao-mudar-plano-de-usuario[m[33m)[m fix: normalizar permissões personalizadas ao atualizar usuário
+[33m485f0637[m Merge pull request #234 from Jacbdias/codex/corrigir-permissoes-para-conteudo-cf-renda-passiva-lk8odh
+[33m8bbce2e0[m Restrict CF Renda Turbinada resources to support
+[33m3bc921ce[m[33m ([m[1;31morigin/codex/corrigir-permissoes-para-conteudo-cf-renda-passiva-lk8odh[m[33m)[m Restrict Turbinada exclusive resources to support
+[33m30d7ead4[m Merge pull request #233 from Jacbdias/codex/corrigir-permissoes-para-conteudo-cf-renda-passiva-24vbtx
+[33mcd240e2d[m[33m ([m[1;31morigin/codex/corrigir-permissoes-para-conteudo-cf-renda-passiva-24vbtx[m[33m)[m Merge branch 'main' into codex/corrigir-permissoes-para-conteudo-cf-renda-passiva-24vbtx
+[33m98193de7[m Restrict Turbinada access to exclusive content
+[33m5e516bcd[m Merge pull request #232 from Jacbdias/codex/corrigir-permissoes-para-conteudo-cf-renda-passiva
+[33m357ea1bb[m[33m ([m[1;31morigin/codex/corrigir-permissoes-para-conteudo-cf-renda-passiva[m[33m)[m Restrict Renda Passiva access and restore Bastidores icon
+[33m2283151a[m Merge pull request #231 from Jacbdias/codex/add-bastidores-da-bolsa-page
+[33m850a9f64[m[33m ([m[1;31morigin/codex/add-bastidores-da-bolsa-page[m[33m)[m Merge branch 'main' into codex/add-bastidores-da-bolsa-page
+[33m3a97aa2a[m feat: add Bastidores da Bolsa dashboard area with attachments
+[33m955a0550[m Merge pull request #230 from Jacbdias/codex/remove-view-permission-for-reports
+[33m22eb6697[m[33m ([m[1;31morigin/codex/remove-view-permission-for-reports[m[33m)[m Remove weekly report and exclusive resources from Renda Turbinada
+[33m890da807[m Merge pull request #229 from Jacbdias/codex/investigar-conteudo-bloqueado-no-dashboard-qtcb9s
+[33m0e246cec[m[33m ([m[1;31morigin/codex/investigar-conteudo-bloqueado-no-dashboard-qtcb9s[m[33m)[m Remove Próximos passos card from CF Renda Turbinada lessons
+[33mb29836ed[m Merge pull request #228 from Jacbdias/codex/investigar-conteudo-bloqueado-no-dashboard
+[33mbb527626[m[33m ([m[1;31morigin/codex/investigar-conteudo-bloqueado-no-dashboard[m[33m)[m Expose scheduled CF Renda Turbinada modules as locked
+[33md0cd6108[m Update page.tsx
+[33m0e7cec33[m Update page.tsx
+[33m4c11a915[m Update page.tsx
+[33mc42aa4d8[m Update page.tsx
+[33maf365eca[m Merge pull request #226 from Jacbdias/codex/add-live-event-calendar-to-dashboard
+[33m172a55de[m[33m ([m[1;31morigin/codex/add-live-event-calendar-to-dashboard[m[33m)[m Add CF Renda Turbinada live events API
+[33m76d8b83b[m Update page.tsx
+[33mf121eac7[m Update page.tsx
+[33m5ac111e9[m Update page.tsx
+[33m30084a96[m Update page.tsx
+[33mb92724ae[m Update page.tsx
+[33m0398c6d7[m Update page.tsx
+[33m797d836c[m Update page.tsx
+[33m4cfedc81[m Update page.tsx
+[33mf2a555d6[m Merge pull request #225 from Jacbdias/codex/add-video-insertion-to-aula-module
+[33mf088b0d1[m[33m ([m[1;31morigin/codex/add-video-insertion-to-aula-module[m[33m)[m Embed lesson videos in CF Renda Turbinada modules
+[33m9e0d51ac[m Merge pull request #224 from Jacbdias/codex/implement-database-persistence-for-cfrendaturbinada
+[33m0651e021[m[33m ([m[1;31morigin/codex/implement-database-persistence-for-cfrendaturbinada[m[33m)[m feat: persist cf renda turbinada content
+[33mb60e0a25[m Merge pull request #223 from Jacbdias/codex/add-content-visibility-options-for-admins-58ei9p
+[33m5f9ce054[m[33m ([m[1;31morigin/codex/add-content-visibility-options-for-admins-58ei9p[m[33m)[m Merge branch 'main' into codex/add-content-visibility-options-for-admins-58ei9p
+[33m54d71f3a[m Fix edit cancellation hook order
+[33m551c68c1[m Merge pull request #222 from Jacbdias/codex/add-content-visibility-options-for-admins-hmsq3w
+[33m1db43007[m[33m ([m[1;31morigin/codex/add-content-visibility-options-for-admins-hmsq3w[m[33m)[m Merge branch 'main' into codex/add-content-visibility-options-for-admins-hmsq3w
+[33ma659e893[m Add admin option to remove course modules
+[33m067e49f5[m Merge pull request #221 from Jacbdias/codex/add-content-visibility-options-for-admins-636z8g
+[33m9864bfd5[m[33m ([m[1;31morigin/codex/add-content-visibility-options-for-admins-636z8g[m[33m)[m Merge branch 'main' into codex/add-content-visibility-options-for-admins-636z8g
+[33mac94761f[m Fix duplicate lesson render return
+[33mcca9aa0d[m Add admin editing and deletion controls for lessons
+[33m5a4f7033[m Update page.tsx
+[33md748a7f9[m Merge pull request #220 from Jacbdias/codex/add-content-visibility-options-for-admins-g3z1vf
+[33m29c97209[m[33m ([m[1;31morigin/codex/add-content-visibility-options-for-admins-g3z1vf[m[33m)[m feat: add admin controls to CF Renda Turbinada aulas
+[33m46085663[m[33m ([m[1;31morigin/codex/add-content-visibility-options-for-admins[m[33m)[m Merge pull request #219 from Jacbdias/codex/corrigir-dados-de-dy-12m-no-dashboard-h7kl68
+[33m8922ddc7[m[33m ([m[1;31morigin/codex/corrigir-dados-de-dy-12m-no-dashboard-h7kl68[m[33m)[m Merge branch 'main' into codex/corrigir-dados-de-dy-12m-no-dashboard-h7kl68
+[33m5a40de58[m Refine dividend yield fallback heuristics
+[33m4914f2ed[m Merge pull request #218 from Jacbdias/codex/corrigir-dados-de-dy-12m-no-dashboard
+[33m6008e8a5[m[33m ([m[1;31morigin/codex/corrigir-dados-de-dy-12m-no-dashboard[m[33m)[m Fix dividend yield fetch fallback on settings dashboard
+[33m10059125[m Update route.ts
+[33m77ae7925[m Update route.ts
+[33m28495aa1[m Update route.ts
+[33md8ff214b[m Update route.ts
+[33m4ceeb701[m Update route.ts
+[33m78f892d7[m Merge pull request #217 from Jacbdias/codex/aumentar-velocidade-de-carregamento-da-pagina
+[33me5c42235[m[33m ([m[1;31morigin/codex/aumentar-velocidade-de-carregamento-da-pagina[m[33m)[m Optimize DY fetching on settings dashboard
+[33md678f4fd[m Merge pull request #216 from Jacbdias/codex/investigate-missing-dy-12m-data
+[33m3b3dff4d[m[33m ([m[1;31morigin/codex/investigate-missing-dy-12m-data[m[33m)[m Align settings FII DY calculation with asset detail logic
+[33m87731f4d[m Create useHGBrasilAcoes
+[33m0cbf80d5[m Merge pull request #215 from Jacbdias/codex/corrigir-erro-apresentado
+[33m1f69457b[m[33m ([m[1;31morigin/codex/corrigir-erro-apresentado[m[33m)[m Merge branch 'main' into codex/corrigir-erro-apresentado
+[33mce7a034f[m Separate type import for Vies override
+[33m0d20d7f6[m Update page.tsx
+[33ma48bbb0f[m Update page.tsx
+[33m07d2a668[m Merge pull request #214 from Jacbdias/codex/fix-invalid-summarydetail-module-for-brapi
+[33m9d91a3ee[m[33m ([m[1;31morigin/codex/fix-invalid-summarydetail-module-for-brapi[m[33m)[m Atualizar integrações de DY para usar endpoints válidos da BRAPI
+[33m658e32f1[m Merge pull request #213 from Jacbdias/codex/add-rate-limiting-for-api-requests-ix98c2
+[33mc2e0993a[m[33m ([m[1;31morigin/codex/add-rate-limiting-for-api-requests-ix98c2[m[33m)[m Merge branch 'main' into codex/add-rate-limiting-for-api-requests-ix98c2
+[33m2edf2804[m Improve rate limited fetch retries
+[33macb1df1e[m Merge pull request #212 from Jacbdias/codex/add-rate-limiting-for-api-requests
+[33m7c9056ee[m[33m ([m[1;31morigin/codex/add-rate-limiting-for-api-requests[m[33m)[m Add rate limiting to dividend yield fetches
+[33mc0ad97ba[m Merge pull request #211 from Jacbdias/codex/corrigir-dados-de-dy
+[33md63a9e93[m[33m ([m[1;31morigin/codex/corrigir-dados-de-dy[m[33m)[m Expand DY parsing to hooks and company page
+[33me285577a[m Merge pull request #210 from Jacbdias/codex/separar-etfs-em-tabela-distinta
+[33m65c65020[m[33m ([m[1;31morigin/codex/separar-etfs-em-tabela-distinta[m[33m)[m Separar ETFs em tabela dedicada no Projeto América
+[33mf7fcf1b8[m Merge pull request #209 from Jacbdias/codex/organize-logos-in-a-folder-48fg3f
+[33mdcf4f3f1[m[33m ([m[1;31morigin/codex/organize-logos-in-a-folder-48fg3f[m[33m)[m Merge branch 'main' into codex/organize-logos-in-a-folder-48fg3f
+[33m132d70d9[m Show local logos for closed FII positions
+[33m80e96238[m Merge pull request #208 from Jacbdias/codex/organize-logos-in-a-folder
+[33m5d26d757[m[33m ([m[1;31morigin/codex/organize-logos-in-a-folder[m[33m)[m Fix FII logo path to keep ticker digits
+[33m7fb6cb2c[m Update page.tsx
+[33mf96c1138[m Delete public/assets/BCRI11.png
+[33mfcb6912d[m Delete public/assets/BCRI11.png
+[33mfd79d0b4[m Delete public/assets/BCIA11.png
+[33mea652d5b[m Delete public/assets/ALZR11.png
+[33m150e1f19[m Delete public/assets/AFHI11.png
+[33m486da430[m Merge pull request #207 from Jacbdias/codex/align-card-layout-to-customers-page
+[33m68d0018e[m[33m ([m[1;31morigin/codex/align-card-layout-to-customers-page[m[33m)[m Align settings dashboard cards with customers layout
+[33m39a78c67[m Merge pull request #206 from Jacbdias/codex/fix-deployment-error-due-to-duplicate-imports
+[33m4b16b82c[m[33m ([m[1;31morigin/codex/fix-deployment-error-due-to-duplicate-imports[m[33m)[m Deduplicate vies utility imports
+[33m671f28c4[m Merge pull request #205 from Jacbdias/codex/adicionar-novo-formato-de-analise-de-vies-933loh
+[33m98987b15[m[33m ([m[1;31morigin/codex/adicionar-novo-formato-de-analise-de-vies-933loh[m[33m)[m Fix duplicate viés helper imports
+[33m82c29ba7[m Merge pull request #204 from Jacbdias/codex/adicionar-novo-formato-de-analise-de-vies-mkxdip
+[33m1b11ecfa[m[33m ([m[1;31morigin/codex/adicionar-novo-formato-de-analise-de-vies-mkxdip[m[33m)[m Fix viés override desync on asset detail
+[33m93ed1f6e[m Merge pull request #203 from Jacbdias/codex/fix-missing-asset-composition-chart
+[33m079a92c6[m[33m ([m[1;31morigin/codex/fix-missing-asset-composition-chart[m[33m)[m Add closed positions and composition sections to settings
+[33m805f5e0a[m Merge pull request #202 from Jacbdias/codex/adicionar-novo-formato-de-analise-de-vies
+[33m43af3ef1[m[33m ([m[1;31morigin/codex/adicionar-novo-formato-de-analise-de-vies[m[33m)[m Align asset detail bias display with global override logic
+[33m7a5fc921[m Merge pull request #201 from Jacbdias/codex/update-text-color-and-background-g1yaex
+[33m6a7b15a4[m[33m ([m[1;31morigin/codex/update-text-color-and-background-g1yaex[m[33m)[m Ajusta cores do viés 'Manter' para cinza
+[33mc0ffff9f[m Merge pull request #200 from Jacbdias/codex/corrigir-error-apresentado
+[33m876d64ec[m[33m ([m[1;31morigin/codex/corrigir-error-apresentado[m[33m)[m Fix hook order in DataStore provider
+[33m2608765a[m Merge pull request #199 from Jacbdias/codex/add-manual-bias-field-and-api
+[33m39ec9b7b[m[33m ([m[1;31morigin/codex/add-manual-bias-field-and-api[m[33m)[m Finalize manual bias override support
+[33mb101938e[m Merge pull request #198 from Jacbdias/codex/find-etf-identification-in-page.tsx
+[33mef4a46f8[m[33m ([m[1;31morigin/codex/find-etf-identification-in-page.tsx[m[33m)[m Fix ETF detection when BDR mapping exists
+[33mc4e38bac[m Merge pull request #197 from Jacbdias/codex/remover-card-de-analise-de-vies-para-etf-nfoikk
+[33m44ad7afc[m[33m ([m[1;31morigin/codex/remover-card-de-analise-de-vies-para-etf-nfoikk[m[33m)[m Merge branch 'main' into codex/remover-card-de-analise-de-vies-para-etf-nfoikk
+[33m6b73845f[m Fix ETF bias card visibility
+[33mc5898153[m Merge pull request #196 from Jacbdias/codex/remover-card-de-analise-de-vies-para-etf
+[33m0fb3e8da[m[33m ([m[1;31morigin/codex/remover-card-de-analise-de-vies-para-etf[m[33m)[m Hide bias analysis card for ETFs
+[33mdcc4aade[m Merge pull request #195 from Jacbdias/codex/add-inline-text-editing-tools-94845z
+[33mfde6cce9[m[33m ([m[1;31morigin/codex/add-inline-text-editing-tools-94845z[m[33m)[m Merge branch 'main' into codex/add-inline-text-editing-tools-94845z
+[33md8df0541[m Fix image resize slider interaction
+[33m94e50ac1[m Merge pull request #194 from Jacbdias/codex/add-inline-text-editing-tools
+[33m15965ed4[m[33m ([m[1;31morigin/codex/add-inline-text-editing-tools[m[33m)[m Enhance rich text editor usability
+[33mbdf9347c[m Merge pull request #193 from Jacbdias/codex/add-bdr-ceiling-price-to-dashboard/ativo-qrpwy9
+[33m3ff358b2[m[33m ([m[1;31morigin/codex/add-bdr-ceiling-price-to-dashboard/ativo-qrpwy9[m[33m)[m Ajustar exibição de Dividend Yield zerado para FIIs
+[33mae1435a4[m Merge pull request #192 from Jacbdias/codex/add-bdr-ceiling-price-to-dashboard/ativo-zbg455
+[33m29cb1c95[m[33m ([m[1;31morigin/codex/add-bdr-ceiling-price-to-dashboard/ativo-zbg455[m[33m)[m Remover fonte das métricas de valuation
+[33m12520d2b[m Merge pull request #191 from Jacbdias/codex/add-bdr-ceiling-price-to-dashboard/ativo-pxwmfd
+[33m97b16358[m[33m ([m[1;31morigin/codex/add-bdr-ceiling-price-to-dashboard/ativo-pxwmfd[m[33m)[m Mover percentual da carteira para os dados da posição
+[33m0a0f057f[m Merge pull request #190 from Jacbdias/codex/add-bdr-ceiling-price-to-dashboard/ativo
+[33m3701859f[m[33m ([m[1;31morigin/codex/add-bdr-ceiling-price-to-dashboard/ativo[m[33m)[m Exibir preço teto do BDR no painel do ativo
+[33m2475845a[m Update page.tsx
+[33mc53f67a6[m Update useAtivoDetalhes.ts
+[33m98956845[m Merge pull request #189 from Jacbdias/codex/investigar-dados-bdr-ausentes-no-dashboard-u05g9p
+[33m35c27182[m[33m ([m[1;31morigin/codex/investigar-dados-bdr-ausentes-no-dashboard-u05g9p[m[33m)[m Melhora exibição de dados de BDR
+[33m240aed95[m Merge pull request #188 from Jacbdias/codex/investigar-dados-bdr-ausentes-no-dashboard-ubq6om
+[33m41335571[m[33m ([m[1;31morigin/codex/investigar-dados-bdr-ausentes-no-dashboard-ubq6om[m[33m)[m Merge branch 'main' into codex/investigar-dados-bdr-ausentes-no-dashboard-ubq6om
+[33m3e748cb1[m Adiciona mapeamento de BDR para STX
+[33md723f3dc[m Merge pull request #187 from Jacbdias/codex/investigar-dados-bdr-ausentes-no-dashboard
+[33ma782f023[m[33m ([m[1;31morigin/codex/investigar-dados-bdr-ausentes-no-dashboard[m[33m)[m Atualiza mapeamento de BDRs com novos tickers
+[33m181dad89[m Update page.tsx
+[33m6598389b[m Update page.tsx
+[33m48411e0e[m Update page.tsx
+[33m74fd713f[m Update page.tsx
+[33m4111d8b6[m Update page.tsx
+[33m9edfed8f[m Update page.tsx
+[33mf264a718
