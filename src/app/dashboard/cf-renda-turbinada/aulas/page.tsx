@@ -702,6 +702,29 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const [isSavingMentoria, setIsSavingMentoria] = React.useState(false);
   const isEditingMentoria = editingMentoriaId !== null;
 
+  const copyLinkToClipboard = React.useCallback((hash: string) => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return;
+    }
+
+    const normalizedHash = hash.startsWith('#') ? hash : `#${hash}`;
+    const link = `${window.location.origin}${window.location.pathname}${normalizedHash}`;
+
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+      alert(`Copie manualmente este link: ${link}`);
+      return;
+    }
+
+    navigator.clipboard
+      .writeText(link)
+      .then(() => {
+        alert('Link copiado!');
+      })
+      .catch(() => {
+        alert(`Não foi possível copiar automaticamente. Copie manualmente: ${link}`);
+      });
+  }, []);
+
   const normalizeModule = React.useCallback((module: Module): Module => ({
     ...module,
     highlight: module.highlight ?? '',
@@ -879,6 +902,54 @@ setLiveEvents(
       return nextErrors;
     });
   }, [modules]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (!window.location.hash) {
+      return;
+    }
+
+    const elementId = window.location.hash.substring(1);
+    const element = document.getElementById(elementId);
+
+    if (!element) {
+      return;
+    }
+
+    let highlightCleanup: (() => void) | null = null;
+
+    const scrollTimeout = window.setTimeout(() => {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      const previousTransition = element.style.transition;
+      const previousBoxShadow = element.style.boxShadow;
+
+      element.style.transition = previousTransition
+        ? `${previousTransition}, box-shadow 0.3s ease`
+        : 'box-shadow 0.3s ease';
+      element.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.4)';
+
+      const highlightTimeout = window.setTimeout(() => {
+        element.style.boxShadow = previousBoxShadow;
+        element.style.transition = previousTransition;
+        highlightCleanup = null;
+      }, 2000);
+
+      highlightCleanup = () => {
+        window.clearTimeout(highlightTimeout);
+        element.style.boxShadow = previousBoxShadow;
+        element.style.transition = previousTransition;
+      };
+    }, 300);
+
+    return () => {
+      window.clearTimeout(scrollTimeout);
+      highlightCleanup?.();
+    };
+  }, [modules, mentorias, liveEvents]);
 
 const visibleModules = React.useMemo(() => {
   if (isAdmin && !viewAsStudent) {
@@ -3042,6 +3113,7 @@ visibleModules.map(module => {
   return (
     <div
       key={module.id}
+      id={`modulo-${module.id}`}
       style={{
         backgroundColor: '#ffffff',
         borderRadius: '16px',
@@ -3185,14 +3257,30 @@ visibleModules.map(module => {
                   >
                     {isHidden ? 'Oculto para alunos' : isReleased ? 'Disponível para alunos' : 'Agendado'}
                   </span>
-                  <span style={{ fontSize: '12px', color: '#475569' }}>
-                    Liberação: {formatReleaseDate(module.releaseDate)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleStartEditModule(module.id)}
-                    style={{
-                      border: '1px solid #3b82f6',
+              <span style={{ fontSize: '12px', color: '#475569' }}>
+                Liberação: {formatReleaseDate(module.releaseDate)}
+              </span>
+              <button
+                type="button"
+                onClick={() => copyLinkToClipboard(`modulo-${module.id}`)}
+                style={{
+                  border: '1px solid #3b82f6',
+                  backgroundColor: 'transparent',
+                  color: '#3b82f6',
+                  borderRadius: '9999px',
+                  padding: '8px 16px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                📋 Copiar link direto
+              </button>
+              <button
+                type="button"
+                onClick={() => handleStartEditModule(module.id)}
+                style={{
+                  border: '1px solid #3b82f6',
                       backgroundColor: 'transparent',
                       color: '#3b82f6',
                       borderRadius: '9999px',
@@ -3713,6 +3801,7 @@ visibleModules.map(module => {
                 return (
                   <div
                     key={live.id}
+                    id={`live-${live.id}`}
                     style={{
                       padding: blockPadding,
                       borderRadius: '12px',
@@ -3855,6 +3944,22 @@ visibleModules.map(module => {
                             className="live-card-actions"
                             style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}
                           >
+                            <button
+                              type="button"
+                              onClick={() => copyLinkToClipboard(`live-${live.id}`)}
+                              style={{
+                                border: '1px solid #3b82f6',
+                                backgroundColor: 'transparent',
+                                color: '#3b82f6',
+                                borderRadius: '9999px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              📋 Copiar link direto
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleToggleLiveCancellation(live.id, live.isCancelled)}
@@ -4215,6 +4320,7 @@ visibleModules.map(module => {
               return (
                 <div
                   key={mentoria.id}
+                  id={`mentoria-${mentoria.id}`}
                   style={{
                     padding: blockPadding,
                     borderRadius: '12px',
@@ -4426,6 +4532,22 @@ visibleModules.map(module => {
 
                         {isAdmin && (
                           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              onClick={() => copyLinkToClipboard(`mentoria-${mentoria.id}`)}
+                              style={{
+                                border: '1px solid #3b82f6',
+                                backgroundColor: 'transparent',
+                                color: '#3b82f6',
+                                borderRadius: '9999px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              📋 Copiar link direto
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleStartEditMentoria(mentoria)}
