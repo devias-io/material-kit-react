@@ -447,7 +447,71 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   return dyMap;
 }
 
-// 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL
+// ✅ NOVA FUNÇÃO: BUSCAR PROVENTOS PARA DIVIDENDOS INTERNACIONAIS (IGUAL AO BR)
+async function buscarProventosInternacionais(ativosData: any[]): Promise<Map<string, number>> {
+  const novosProventos = new Map<string, number>();
+  
+  console.log('💰 Iniciando busca de proventos INTERNACIONAIS para', ativosData.length, 'ativos');
+  
+  const buscarProventoAtivo = async (ativo: any) => {
+    try {
+      const [dia, mes, ano] = ativo.dataEntrada.split('/');
+      const dataEntradaISO = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+      
+      console.log(`💰 Buscando proventos INT para ${ativo.ticker} desde ${ativo.dataEntrada}`);
+      
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), 2000);
+      
+      const response = await fetch(`/api/proventos/${ativo.ticker}`, {
+        signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const proventosRaw = await response.json();
+        
+        if (Array.isArray(proventosRaw)) {
+          const dataEntradaDate = new Date(dataEntradaISO + 'T00:00:00');
+
+          const proventosFiltrados = proventosRaw.filter((p: any) => {
+            if (!p.dataObj) return false;
+            const dataProvento = new Date(p.dataObj);
+            
+            // Deve estar após a data de entrada
+            return dataProvento >= dataEntradaDate;
+          });
+          
+          const total = proventosFiltrados.reduce((sum: number, p: any) => sum + (p.valor || 0), 0);
+          console.log(`💰 ${ativo.ticker}: US$ ${total.toFixed(2)} (${proventosFiltrados.length} proventos)`);
+          return { ticker: ativo.ticker, valor: total };
+        }
+      } else {
+        console.log(`💰 ${ativo.ticker}: Erro HTTP ${response.status}`);
+      }
+    } catch (error) {
+      console.log(`💰 ${ativo.ticker}: Erro -`, error instanceof Error ? error.message : 'Erro desconhecido');
+    }
+    
+    return { ticker: ativo.ticker, valor: 0 };
+  };
+
+  // Buscar proventos em paralelo
+  const resultados = await Promise.allSettled(
+    ativosData.map(ativo => buscarProventoAtivo(ativo))
+  );
+
+  resultados.forEach((resultado) => {
+    if (resultado.status === 'fulfilled') {
+      novosProventos.set(resultado.value.ticker, resultado.value.valor);
+    }
+  });
+  
+  console.log('💰 Proventos INTERNACIONAIS finais:', Object.fromEntries(novosProventos));
+  return novosProventos;
+}
+
+// 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL + TOTAL RETURN
 function useDividendosInternacionaisIntegradas() {
   const { dados } = useDataStore();
   const [ativosAtualizados, setAtivosAtualizados] = React.useState<any[]>([]);
@@ -456,17 +520,19 @@ function useDividendosInternacionaisIntegradas() {
   // Estados para garantir que TODOS os dados estejam prontos
   const [cotacoesCompletas, setCotacoesCompletas] = React.useState<Map<string, any>>(new Map());
   const [dyCompletos, setDyCompletos] = React.useState<Map<string, string>>(new Map());
+  const [proventosCompletos, setProventosCompletos] = React.useState<Map<string, number>>(new Map()); // ✅ NOVO
   const [todosOsDadosProntos, setTodosOsDadosProntos] = React.useState(false);
   
   // Loading states granulares
   const [loadingCotacoes, setLoadingCotacoes] = React.useState(true);
   const [loadingDY, setLoadingDY] = React.useState(false);
+  const [loadingProventos, setLoadingProventos] = React.useState(false); // ✅ NOVO
   const [error, setError] = React.useState<string | null>(null);
 
   const isMobile = useDeviceDetection();
   const dividendosInternacionaisData = dados.dividendosInternacional || [];
 
-  // 🎯 FUNÇÃO PRINCIPAL REESCRITA - PARALELIZAÇÃO TOTAL
+  // 🎯 FUNÇÃO PRINCIPAL REESCRITA - PARALELIZAÇÃO TOTAL COM PROVENTOS
   const buscarDadosCompletos = React.useCallback(async () => {
     if (dividendosInternacionaisData.length === 0) {
       setAtivosAtualizados([]);
@@ -479,26 +545,29 @@ function useDividendosInternacionaisIntegradas() {
       setTodosOsDadosProntos(false);
       const tickers = dividendosInternacionaisData.map(ativo => ativo.ticker);
       
-      console.log('🚀 INICIANDO BUSCA STEP-BY-STEP ROBUSTA - ESTRATÉGIA MOBILE UNIVERSAL...');
+      console.log('🚀 INICIANDO BUSCA COM TOTAL RETURN - DIVIDENDOS INTERNACIONAIS...');
       
       // 🔄 RESET DOS ESTADOS
       setCotacoesCompletas(new Map());
       setDyCompletos(new Map());
+      setProventosCompletos(new Map());
 
-      // ⚡ PARALELIZAÇÃO TOTAL
-      console.log('⚡ EXECUTANDO TODAS AS ETAPAS EM PARALELO...');
+      // ⚡ PARALELIZAÇÃO TOTAL - AGORA COM PROVENTOS
+      console.log('⚡ EXECUTANDO TODAS AS ETAPAS EM PARALELO (COTAÇÕES + DY + PROVENTOS)...');
 
       // Ativar todos os loadings
       setLoadingCotacoes(true);
       setLoadingDY(true);
+      setLoadingProventos(true);
 
       // Medir tempo
       const inicioTempo = performance.now();
 
-      // EXECUTAR TUDO EM PARALELO
-      const [cotacoesResult, dyResult] = await Promise.allSettled([
+      // ✅ EXECUTAR TUDO EM PARALELO - AGORA COM PROVENTOS
+      const [cotacoesResult, dyResult, proventosResult] = await Promise.allSettled([
         buscarCotacoesParalelas(tickers, isMobile),
-        buscarDYsComEstrategia(tickers, isMobile)
+        buscarDYsComEstrategia(tickers, isMobile),
+        buscarProventosInternacionais(dividendosInternacionaisData) // ✅ NOVO
       ]);
 
       const tempoTotal = performance.now() - inicioTempo;
@@ -507,10 +576,12 @@ function useDividendosInternacionaisIntegradas() {
       // Processar resultados
       const cotacoesMap = cotacoesResult.status === 'fulfilled' ? cotacoesResult.value : new Map();
       const dyMap = dyResult.status === 'fulfilled' ? dyResult.value : new Map();
+      const proventosData = proventosResult.status === 'fulfilled' ? proventosResult.value : new Map(); // ✅ NOVO
 
       // Logs de debug
       console.log('📊 Cotações obtidas:', cotacoesMap.size, 'de', tickers.length);
       console.log('📈 DY obtidos:', dyMap.size, 'de', tickers.length);
+      console.log('💰 Proventos obtidos:', proventosData.size, 'de', dividendosInternacionaisData.length); // ✅ NOVO
 
       // Debug do DY
       console.log('🔍 [PARALLEL-DEBUG] dyMap processado:');
@@ -520,10 +591,12 @@ function useDividendosInternacionaisIntegradas() {
       // Atualizar estados
       setCotacoesCompletas(cotacoesMap);
       setDyCompletos(dyMap);
+      setProventosCompletos(proventosData); // ✅ NOVO
 
       // Desativar loadings
       setLoadingCotacoes(false);
       setLoadingDY(false);
+      setLoadingProventos(false); // ✅ NOVO
       
       // Marcar como pronto para processamento final
       setTodosOsDadosProntos(true);
@@ -536,53 +609,66 @@ function useDividendosInternacionaisIntegradas() {
     }
   }, [dividendosInternacionaisData, isMobile]);
 
-  // 🏆 USEEFFECT QUE SÓ EXECUTA QUANDO TODOS OS DADOS ESTÃO PRONTOS
+  // 🏆 USEEFFECT QUE SÓ EXECUTA QUANDO TODOS OS DADOS ESTÃO PRONTOS - AGORA COM TOTAL RETURN
   React.useEffect(() => {
     if (!todosOsDadosProntos || dividendosInternacionaisData.length === 0) return;
     
-    console.log('🏆 PROCESSANDO DIVIDENDOS INTERNACIONAIS - TODOS OS DADOS PRONTOS!');
+    console.log('🏆 PROCESSANDO TOTAL RETURN - DIVIDENDOS INTERNACIONAIS - TODOS OS DADOS PRONTOS!');
     console.log('🔍 [DEPS-DEBUG] Verificando estados no momento da execução:');
     console.log('🔍 [DEPS-DEBUG] todosOsDadosProntos:', todosOsDadosProntos);
     console.log('🔍 [DEPS-DEBUG] dividendosInternacionaisData.length:', dividendosInternacionaisData.length);
     console.log('🔍 [DEPS-DEBUG] cotacoesCompletas.size:', cotacoesCompletas.size);
     console.log('🔍 [DEPS-DEBUG] dyCompletos.size:', dyCompletos.size);
+    console.log('🔍 [DEPS-DEBUG] proventosCompletos.size:', proventosCompletos.size); // ✅ NOVO
     console.log('🔍 [DEPS-DEBUG] dyCompletos conteúdo:', Object.fromEntries(dyCompletos));
+    console.log('🔍 [DEPS-DEBUG] proventosCompletos conteúdo:', Object.fromEntries(proventosCompletos)); // ✅ NOVO
     
     console.log('📊 Dados disponíveis:', {
       cotacoes: cotacoesCompletas.size,
       dy: dyCompletos.size, 
+      proventos: proventosCompletos.size, // ✅ NOVO
       ativos: dividendosInternacionaisData.length
     });
 
     const novasCotacoes: any = {};
 
-    // 🎯 PROCESSAR TODOS OS ATIVOS
+    // 🎯 PROCESSAR TODOS OS ATIVOS COM TOTAL RETURN
     const ativosFinais = dividendosInternacionaisData.map((ativo, index) => {
       const cotacao = cotacoesCompletas.get(ativo.ticker);
       
       // 🔍 DEBUG DY ASSIGNMENT
       const dyAPI = dyCompletos.get(ativo.ticker) || '0,00%';
+      const proventosAtivo = proventosCompletos.get(ativo.ticker) || 0; // ✅ NOVO
+      
       console.log(`🔍 [ASSIGN-DEBUG] ${ativo.ticker}:`);
       console.log(`  - dyCompletos.size: ${dyCompletos.size}`);
       console.log(`  - dyCompletos.has('${ativo.ticker}'): ${dyCompletos.has(ativo.ticker)}`);
       console.log(`  - dyCompletos.get('${ativo.ticker}'): ${dyCompletos.get(ativo.ticker)}`);
       console.log(`  - dyAPI final: ${dyAPI}`);
+      console.log(`  - proventosAtivo: US$ ${proventosAtivo.toFixed(2)}`); // ✅ NOVO
       console.log(`  - loadingDY: ${loadingDY}`);
     
       if (cotacao && cotacao.precoAtual > 0) {
-        // ✅ ATIVO COM COTAÇÃO REAL
+        // ✅ ATIVO COM COTAÇÃO REAL - AGORA COM TOTAL RETURN
         const precoAtualNum = cotacao.precoAtual;
-        const performance = ((precoAtualNum - ativo.precoEntrada) / ativo.precoEntrada) * 100;
         
-        // VALIDAR SE O PREÇO FAZ SENTIDO (para dividendos, usar limite maior)
-        const diferencaPercent = Math.abs(performance);
+        // ✅ CALCULAR TOTAL RETURN (IGUAL AO CÓDIGO BR)
+        const performanceAcao = ((precoAtualNum - ativo.precoEntrada) / ativo.precoEntrada) * 100;
+        const performanceProventos = ativo.precoEntrada > 0 ? (proventosAtivo / ativo.precoEntrada) * 100 : 0;
+        const performanceTotal = performanceAcao + performanceProventos;
+        
+        // VALIDAR SE O PREÇO FAZ SENTIDO
+        const diferencaPercent = Math.abs(performanceAcao);
         if (diferencaPercent > 500) {
           console.warn(`🚨 ${ativo.ticker}: Preço suspeito! Diferença de ${diferencaPercent.toFixed(1)}% - usando preço de entrada`);
           return {
             ...ativo,
             id: String(ativo.id || index + 1),
             precoAtual: ativo.precoEntrada,
-            performance: 0,
+            performance: performanceProventos, // ✅ Ainda considera proventos
+            performanceAcao: 0,
+            performanceProventos: performanceProventos,
+            proventosAtivo: proventosAtivo,
             variacao: 0,
             variacaoPercent: 0,
             volume: 0,
@@ -600,13 +686,17 @@ function useDividendosInternacionaisIntegradas() {
         
         novasCotacoes[ativo.ticker] = precoAtualNum;
         
-        console.log(`🏆 ${ativo.ticker}: DY final que será usado = ${dyAPI}`);
+        console.log(`🏆 ${ativo.ticker}: DY final = ${dyAPI}`);
+        console.log(`🏆 ${ativo.ticker}: US$ ${ativo.precoEntrada.toFixed(2)} -> US$ ${precoAtualNum.toFixed(2)} | Ação ${performanceAcao.toFixed(2)}% + Proventos ${performanceProventos.toFixed(2)}% = TOTAL ${performanceTotal.toFixed(2)}%`);
         
         return {
           ...ativo,
           id: String(ativo.id || index + 1),
           precoAtual: precoAtualNum,
-          performance: performance,
+          performance: performanceTotal, // ✅ TOTAL RETURN
+          performanceAcao: performanceAcao, // ✅ NOVO
+          performanceProventos: performanceProventos, // ✅ NOVO
+          proventosAtivo: proventosAtivo, // ✅ NOVO
           variacao: cotacao.variacao,
           variacaoPercent: cotacao.variacaoPercent,
           volume: cotacao.volume,
@@ -621,14 +711,20 @@ function useDividendosInternacionaisIntegradas() {
           posicaoExibicao: index + 1
         };
       } else {
-        // ⚠️ ATIVO SEM COTAÇÃO REAL
-        console.log(`🏆 ${ativo.ticker}: (sem cotação) DY final que será usado = ${dyAPI}`);
+        // ⚠️ ATIVO SEM COTAÇÃO REAL - MAS AINDA COM PROVENTOS
+        const performanceProventos = ativo.precoEntrada > 0 ? (proventosAtivo / ativo.precoEntrada) * 100 : 0;
+        
+        console.log(`🏆 ${ativo.ticker}: (sem cotação) DY final = ${dyAPI}`);
+        console.log(`🏆 ${ativo.ticker}: Sem cotação | US$ ${ativo.precoEntrada.toFixed(2)} + Proventos ${performanceProventos.toFixed(2)}% = TOTAL ${performanceProventos.toFixed(2)}%`);
         
         return {
           ...ativo,
           id: String(ativo.id || index + 1),
           precoAtual: ativo.precoEntrada,
-          performance: 0,
+          performance: performanceProventos, // ✅ Considera apenas proventos
+          performanceAcao: 0,
+          performanceProventos: performanceProventos,
+          proventosAtivo: proventosAtivo,
           variacao: 0,
           variacaoPercent: 0,
           volume: 0,
@@ -649,8 +745,8 @@ function useDividendosInternacionaisIntegradas() {
     setCotacoesAtualizadas(novasCotacoes);
     setAtivosAtualizados(ativosFinais);
     
-    console.log('🏆 DIVIDENDOS INTERNACIONAIS PROCESSADO COM SUCESSO!');
-  }, [todosOsDadosProntos, cotacoesCompletas, dyCompletos, dividendosInternacionaisData, loadingDY]);
+    console.log('🏆 TOTAL RETURN INTERNACIONAL PROCESSADO COM SUCESSO!');
+  }, [todosOsDadosProntos, cotacoesCompletas, dyCompletos, proventosCompletos, dividendosInternacionaisData, loadingDY]);
 
   // UseEffect original simplificado
   React.useEffect(() => {
@@ -674,6 +770,7 @@ function useDividendosInternacionaisIntegradas() {
     setCotacoesAtualizadas,
     loading: loadingCotacoes || !todosOsDadosProntos, // ✅ Loading até TUDO estar pronto
     loadingDY,
+    loadingProventos, // ✅ NOVO
     error,
     refetch,
     isMobile,
@@ -690,6 +787,7 @@ export default function DividendosInternacionaisPage() {
     setCotacoesAtualizadas, 
     loading, 
     loadingDY,
+    loadingProventos, // ✅ NOVO
     isMobile,
     todosOsDadosProntos
   } = useDividendosInternacionaisIntegradas();
@@ -810,12 +908,12 @@ export default function DividendosInternacionaisPage() {
                 fontWeight: '600',
                 fontSize: isMobile ? '14px' : '16px'
               }}>
-                Atualizando carteira em tempo real...
+                Atualizando carteira com Total Return...
               </span>
             </>
           ) : (
             <span>
-              Ações e REITs pagadores de dividendos nos EUA • Dados atualizados a cada 15 minutos
+              Ações e REITs pagadores de dividendos nos EUA • Total Return com reinvestimento de proventos • Dados atualizados a cada 15 minutos
             </span>
           )}
         </div>
@@ -980,7 +1078,7 @@ export default function DividendosInternacionaisPage() {
             fontSize: isMobile ? '14px' : '16px',
             margin: '0'
           }}>
-            Ações e REITs pagadores de dividendos nos EUA com cotações em tempo real
+            Ações e REITs com Total Return - incluindo reinvestimento de proventos recebidos
           </p>
         </div>
 
@@ -1157,7 +1255,7 @@ export default function DividendosInternacionaisPage() {
                         </div>
                       </div>
                       
-                      {/* Performance em destaque */}
+                      {/* Performance em destaque - AGORA COM TOTAL RETURN */}
                       <div style={{
                         textAlign: 'center',
                         padding: '8px',
@@ -1166,7 +1264,7 @@ export default function DividendosInternacionaisPage() {
                         border: '1px solid #e2e8f0'
                       }}>
                         <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
-                          Performance
+                          Performance Total (c/ proventos)
                         </div>
                         <div style={{ 
                           fontSize: '18px', 
@@ -1205,7 +1303,29 @@ export default function DividendosInternacionaisPage() {
                         PREÇO TETO
                       </th>
                       <th style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
-                        PERFORMANCE
+                        {/* ✅ ADICIONADO ÍCONE DE INFO IGUAL AO BR */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                          PERFORMANCE TOTAL
+                          <div 
+                            style={{
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              backgroundColor: '#64748b',
+                              color: 'white',
+                              fontSize: '10px',
+                              fontWeight: '600',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'help',
+                              position: 'relative'
+                            }}
+                            title="Performance calculada com Total Return, incluindo o reinvestimento dos proventos recebidos desde a data de entrada."
+                          >
+                            i
+                          </div>
+                        </div>
                       </th>
                       <th style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
                         DY 12M
