@@ -91,7 +91,7 @@ const operacoesPUTFixas: CarteiraOperacao[] = [
   }
 ];
 
-// Dados fixos das operações de CALLs
+// Dados fixos das operações de CALLs - TODAS ENCERRADAS
 const operacoesCALLFixas: CarteiraOperacao[] = [
   {
     id: 'call-1',
@@ -105,7 +105,8 @@ const operacoesCALLFixas: CarteiraOperacao[] = [
     precoReferencia: 66.29,
     vencimento: '19/12/2025',
     tipoOperacao: 'CALL',
-    status: 'Aberta'
+    status: 'Encerrada',
+    observacao: '✅ OPERAÇÃO ENCERRADA - NÃO EXERCER'
   },
   {
     id: 'call-2',
@@ -119,7 +120,8 @@ const operacoesCALLFixas: CarteiraOperacao[] = [
     precoReferencia: 34.25,
     vencimento: '19/12/2025',
     tipoOperacao: 'CALL',
-    status: 'Aberta'
+    status: 'Encerrada',
+    observacao: '✅ OPERAÇÃO ENCERRADA - NÃO EXERCER'
   },
   {
     id: 'call-3',
@@ -133,7 +135,8 @@ const operacoesCALLFixas: CarteiraOperacao[] = [
     precoReferencia: 34.10,
     vencimento: '19/12/2025',
     tipoOperacao: 'CALL',
-    status: 'Aberta'
+    status: 'Encerrada',
+    observacao: '✅ OPERAÇÃO ENCERRADA - NÃO EXERCER'
   }
 ];
 
@@ -363,11 +366,12 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               <div
                 key={operacao.id}
                 style={{
-                  background: 'white',
+                  background: operacao.status === 'Encerrada' ? '#fafafa' : 'white',
                   borderRadius: '12px',
                   padding: '16px',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  border: '1px solid #e2e8f0'
+                  border: operacao.status === 'Encerrada' ? '2px solid #e2e8f0' : '1px solid #e2e8f0',
+                  opacity: operacao.status === 'Encerrada' ? 0.8 : 1
                 }}
               >
                 {/* Logo do Ativo */}
@@ -490,14 +494,16 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                     style={{
                       marginTop: '12px',
                       padding: '12px',
-                      background: '#fef3c7',
+                      background: operacao.status === 'Encerrada' ? '#f1f5f9' : '#fef3c7',
                       borderRadius: '8px',
                       fontSize: '13px',
-                      color: '#92400e',
-                      lineHeight: '1.5'
+                      color: operacao.status === 'Encerrada' ? '#64748b' : '#92400e',
+                      lineHeight: '1.5',
+                      fontWeight: '600',
+                      textAlign: 'center'
                     }}
                   >
-                    💡 {operacao.observacao}
+                    {operacao.observacao}
                   </div>
                 )}
               </div>
@@ -634,13 +640,17 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                   key={operacao.id}
                   style={{
                     borderBottom: '1px solid #f1f5f9',
-                    transition: 'background 0.2s'
+                    transition: 'background 0.2s',
+                    background: operacao.status === 'Encerrada' ? '#fafafa' : 'transparent',
+                    opacity: operacao.status === 'Encerrada' ? 0.8 : 1
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#f8fafc';
+                    if (operacao.status !== 'Encerrada') {
+                      e.currentTarget.style.background = '#f8fafc';
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.background = operacao.status === 'Encerrada' ? '#fafafa' : 'transparent';
                   }}
                 >
                   <td style={{ padding: '16px 12px' }}>
@@ -748,18 +758,32 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                     {operacao.vencimento}
                   </td>
                   <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <span
-                      style={{
-                        padding: '4px 12px',
-                        borderRadius: '20px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        background: statusStyle.background,
-                        color: statusStyle.color
-                      }}
-                    >
-                      {operacao.status}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <span
+                        style={{
+                          padding: '4px 12px',
+                          borderRadius: '20px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          background: statusStyle.background,
+                          color: statusStyle.color
+                        }}
+                      >
+                        {operacao.status}
+                      </span>
+                      {operacao.observacao && (
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            color: '#64748b',
+                            fontWeight: '600',
+                            textAlign: 'center'
+                          }}
+                        >
+                          {operacao.observacao}
+                        </span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
@@ -983,6 +1007,33 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
           margin: '0 auto 40px'
         }}
       >
+        {/* Banner de alerta CALLS ENCERRADAS */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
+            borderRadius: '12px',
+            padding: '20px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            marginBottom: '16px',
+            boxShadow: '0 4px 12px rgba(100, 116, 139, 0.3)'
+          }}
+        >
+          <AlertCircle size={32} color="white" style={{ flexShrink: 0 }} />
+          <p
+            style={{
+              margin: 0,
+              color: 'white',
+              fontSize: '15px',
+              fontWeight: '600',
+              lineHeight: '1.5'
+            }}
+          >
+            ⚠️ <strong>ATENÇÃO:</strong> Não há nenhuma operação ativa e, portanto, não deve ser realizada nenhuma nova venda de CALL.
+          </p>
+        </div>
+
         <div
           style={{
             background: 'white',
