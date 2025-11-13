@@ -587,6 +587,20 @@ function clampNumber(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
+// ========== FUNÇÃO PARA COPIAR LINK ==========
+function copyDirectLink(id: string | number, type: 'modulo' | 'live' | 'mentoria') {
+  if (typeof window === 'undefined') return;
+  
+  const link = `${window.location.origin}${window.location.pathname}#${type}-${id}`;
+  
+  navigator.clipboard.writeText(link).then(() => {
+    alert('Link copiado para a área de transferência!');
+  }).catch((error) => {
+    console.error('Erro ao copiar link:', error);
+    alert('Não foi possível copiar o link. Tente novamente.');
+  });
+}
+
 export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const router = useRouter();
   const { planInfo } = useAuthAccess();
@@ -594,7 +608,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const [modules, setModules] = React.useState<Module[]>([]);
   const [lessonForms, setLessonForms] = React.useState<Record<string, LessonFormState>>({});
   const [lessonErrors, setLessonErrors] = React.useState<Record<string, string | null>>({});
-  const [materialUploadState, setMaterialUploadState] = React.useState<
+  const [materialUploadState, setMaterialUploadState] = React.useState
     Record<number, { isUploading: boolean; error: string | null }>
   >({});
   const [openLessonModule, setOpenLessonModule] = React.useState<string | null>(null);
@@ -696,7 +710,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const [editingMentoriaId, setEditingMentoriaId] = React.useState<number | null>(null);
   const [editMentoriaForm, setEditMentoriaForm] = React.useState<MentoriaFormState>(createEmptyMentoriaForm());
   const [editMentoriaError, setEditMentoriaError] = React.useState<string | null>(null);
-  const [mentoriaMaterialState, setMentoriaMaterialState] = React.useState<
+  const [mentoriaMaterialState, setMentoriaMaterialState] = React.useState
     Record<number, { isUploading: boolean; error: string | null }>
   >({});
   const [isSavingMentoria, setIsSavingMentoria] = React.useState(false);
@@ -713,6 +727,41 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
       materials: sortMaterialsByDate(lesson.materials ?? [])
     }))
   }), []);
+
+  // ========== SCROLL AUTOMÁTICO PARA ÂNCORA ==========
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // Aguarda os dados carregarem
+    if (isLoading || isLoadingLives || isLoadingMentorias) return;
+    
+    // Verifica se há hash na URL
+    if (window.location.hash) {
+      const elementId = window.location.hash.substring(1); // Remove o #
+      
+      // Aguarda um pouco para garantir que o DOM foi renderizado
+      setTimeout(() => {
+        const element = document.getElementById(elementId);
+        
+        if (element) {
+          // Scroll suave até o elemento
+          element.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+          });
+          
+          // Adiciona highlight visual temporário
+          element.style.transition = 'box-shadow 0.3s ease';
+          element.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.5)';
+          
+          // Remove o highlight após 2 segundos
+          setTimeout(() => {
+            element.style.boxShadow = '';
+          }, 2000);
+        }
+      }, 500);
+    }
+  }, [isLoading, isLoadingLives, isLoadingMentorias, modules, liveEvents, mentorias]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -2443,8 +2492,8 @@ const handleUpdateModule = React.useCallback(
                           gap: '12px',
                           justifyContent: 'space-between'
                         }}
-                      >
-                        <a
+                        >
+                        
                           href={material.fileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -2458,7 +2507,7 @@ const handleUpdateModule = React.useCallback(
                         >
                           {material.title}
                         </a>
-                        <a
+                        
                           href={material.fileUrl}
                           download={material.title}
                           style={{
@@ -2572,7 +2621,7 @@ const handleUpdateModule = React.useCallback(
                 </form>
               )}
               {!enhancedEmbedSrc && lesson.videoUrl && (
-                <a
+                
                   href={lesson.videoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -2761,6 +2810,7 @@ const handleUpdateModule = React.useCallback(
       handleStartEditLesson,
       handleUpdateLesson,
       handleUploadMaterial,
+      handlePreviewMaterial,
       compactVideoStyles,
       isAdmin,
       isSaving,
@@ -3042,6 +3092,7 @@ visibleModules.map(module => {
   return (
     <div
       key={module.id}
+      id={`modulo-${module.id}`}
       style={{
         backgroundColor: '#ffffff',
         borderRadius: '16px',
@@ -3051,11 +3102,11 @@ visibleModules.map(module => {
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
-        opacity: !isAdmin && !isReleased ? 0.7 : 1
+        opacity: !isAdmin && !isReleased ? 0.7 : 1,
+        scrollMarginTop: '20px'
       }}
     >
       {editingModuleId === module.id ? (
-        // ========== FORMULÁRIO DE EDIÇÃO DO MÓDULO ==========
         <form
           onSubmit={event => handleUpdateModule(event, module.id)}
           style={{
@@ -3164,7 +3215,6 @@ visibleModules.map(module => {
           </div>
         </form>
       ) : (
-        // ========== VISUALIZAÇÃO NORMAL DO MÓDULO ==========
         <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
@@ -3188,6 +3238,25 @@ visibleModules.map(module => {
                   <span style={{ fontSize: '12px', color: '#475569' }}>
                     Liberação: {formatReleaseDate(module.releaseDate)}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => copyDirectLink(module.id, 'modulo')}
+                    style={{
+                      border: '1px solid #8b5cf6',
+                      backgroundColor: 'transparent',
+                      color: '#8b5cf6',
+                      borderRadius: '9999px',
+                      padding: '8px 16px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    📋 Copiar link
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleStartEditModule(module.id)}
@@ -3246,7 +3315,6 @@ visibleModules.map(module => {
               )}
             </div>
 
-            {/* MOSTRA HIGHLIGHT APENAS SE LIBERADO OU SE FOR ADMIN */}
             {(isReleased || isAdmin) && (
               <p style={{ margin: 0, color: '#1e293b', fontSize: '18px', lineHeight: 1.6 }}>
                 {module.highlight && module.highlight.trim().length > 0
@@ -3255,7 +3323,6 @@ visibleModules.map(module => {
               </p>
             )}
 
-            {/* AVISO PARA MÓDULOS NÃO LIBERADOS */}
             {!isAdmin && !isReleased && (
               <div
                 style={{
@@ -3273,7 +3340,6 @@ visibleModules.map(module => {
             )}
           </div>
 
-          {/* MOSTRA AULAS APENAS SE LIBERADO OU SE FOR ADMIN */}
           {(isReleased || isAdmin) && (
             <>
               <div style={{ display: 'grid', gap: '16px' }}>
@@ -3296,7 +3362,6 @@ visibleModules.map(module => {
                 )}
               </div>
 
-              {/* SEÇÃO ADMIN - ADICIONAR AULAS */}
               {isAdmin && (
                 <div
                   style={{
@@ -3314,7 +3379,7 @@ visibleModules.map(module => {
                       alignSelf: 'flex-start',
                       border: '1px solid #010101',
                       backgroundColor: openLessonModule === module.id ? '#010101' : 'transparent',
-                      color: openLessonModule === module.id ? '#010101' : '#010101',
+                      color: openLessonModule === module.id ? '#ffffff' : '#010101',
                       borderRadius: '9999px',
                       padding: '10px 18px',
                       fontWeight: 600,
@@ -3713,6 +3778,7 @@ visibleModules.map(module => {
                 return (
                   <div
                     key={live.id}
+                    id={`live-${live.id}`}
                     style={{
                       padding: blockPadding,
                       borderRadius: '12px',
@@ -3726,7 +3792,8 @@ visibleModules.map(module => {
                         : isPast
                         ? '#f8fafc'
                         : '#f9fafb',
-                      opacity: isPast && !isToday ? 0.7 : 1
+                      opacity: isPast && !isToday ? 0.7 : 1,
+                      scrollMarginTop: '20px'
                     }}
                   >
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -3830,7 +3897,7 @@ visibleModules.map(module => {
                           )}
 
 {live.meetingUrl && isLiveStarted(live.eventDate) && !isPast && !live.isCancelled && (
-                            <a
+                            
                               href={live.meetingUrl}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -3855,6 +3922,25 @@ visibleModules.map(module => {
                             className="live-card-actions"
                             style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}
                           >
+                            <button
+                              type="button"
+                              onClick={() => copyDirectLink(live.id, 'live')}
+                              style={{
+                                border: '1px solid #8b5cf6',
+                                backgroundColor: 'transparent',
+                                color: '#8b5cf6',
+                                borderRadius: '9999px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              📋 Copiar link
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleToggleLiveCancellation(live.id, live.isCancelled)}
@@ -4215,6 +4301,7 @@ visibleModules.map(module => {
               return (
                 <div
                   key={mentoria.id}
+                  id={`mentoria-${mentoria.id}`}
                   style={{
                     padding: blockPadding,
                     borderRadius: '12px',
@@ -4222,7 +4309,8 @@ visibleModules.map(module => {
                     backgroundColor: '#f8fafc',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '16px'
+                    gap: '16px',
+                    scrollMarginTop: '20px'
                   }}
                 >
                   {isEditing ? (
@@ -4428,6 +4516,25 @@ visibleModules.map(module => {
                           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                             <button
                               type="button"
+                              onClick={() => copyDirectLink(mentoria.id, 'mentoria')}
+                              style={{
+                                border: '1px solid #8b5cf6',
+                                backgroundColor: 'transparent',
+                                color: '#8b5cf6',
+                                borderRadius: '9999px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              📋 Copiar link
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => handleStartEditMentoria(mentoria)}
                               style={{
                                 border: '1px solid #2563eb',
@@ -4495,7 +4602,7 @@ visibleModules.map(module => {
                       )}
 
                       {!enhancedEmbedSrc && mentoria.videoUrl && (
-                        <a
+                        
                           href={mentoria.videoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -4569,7 +4676,7 @@ visibleModules.map(module => {
                               justifyContent: 'space-between'
                             }}
                           >
-                            <a
+                            
                               href={material.fileUrl}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -4583,7 +4690,7 @@ visibleModules.map(module => {
                             >
                               {material.title}
                             </a>
-                            <a
+                            
                               href={material.fileUrl}
                               download={material.title}
                               style={{
