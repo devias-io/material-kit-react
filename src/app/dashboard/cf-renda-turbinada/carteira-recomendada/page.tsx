@@ -972,33 +972,6 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
           margin: '0 auto 40px'
         }}
       >
-        {/* Banner de alerta CALLS ENCERRADAS */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
-            borderRadius: '12px',
-            padding: '20px 24px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-            marginBottom: '16px',
-            boxShadow: '0 4px 12px rgba(100, 116, 139, 0.3)'
-          }}
-        >
-          <AlertCircle size={32} color="white" style={{ flexShrink: 0 }} />
-          <p
-            style={{
-              margin: 0,
-              color: 'white',
-              fontSize: '15px',
-              fontWeight: '600',
-              lineHeight: '1.5'
-            }}
-          >
-            ⚠️ <strong>ATENÇÃO:</strong> Não há nenhuma operação ativa e, portanto, não deve ser realizada nenhuma nova venda de CALL.
-          </p>
-        </div>
-
         <div
           style={{
             background: 'white',
@@ -1030,6 +1003,33 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
             sintético), assumindo o risco de ter que vender tais ações pelo preço do
             strike no vencimento.
           </p>
+
+          {/* Banner de alerta CALLS ENCERRADAS */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
+              borderRadius: '12px',
+              padding: '20px 24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              marginBottom: '24px',
+              boxShadow: '0 4px 12px rgba(100, 116, 139, 0.3)'
+            }}
+          >
+            <AlertCircle size={32} color="white" style={{ flexShrink: 0 }} />
+            <p
+              style={{
+                margin: 0,
+                color: 'white',
+                fontSize: '15px',
+                fontWeight: '600',
+                lineHeight: '1.5'
+              }}
+            >
+              ⚠️ <strong>ATENÇÃO:</strong> Não há nenhuma operação ativa e, portanto, não deve ser realizada nenhuma nova venda de CALL.
+            </p>
+          </div>
 
           {renderOperacoesTable(operacoesCALL, 'CALL')}
         </div>
