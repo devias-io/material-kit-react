@@ -105,8 +105,7 @@ const operacoesCALLFixas: CarteiraOperacao[] = [
     precoReferencia: 66.29,
     vencimento: '19/12/2025',
     tipoOperacao: 'CALL',
-    status: 'Encerrada',
-    observacao: '✅ OPERAÇÃO ENCERRADA - NÃO EXERCER'
+    status: 'Encerrada'
   },
   {
     id: 'call-2',
@@ -120,8 +119,7 @@ const operacoesCALLFixas: CarteiraOperacao[] = [
     precoReferencia: 34.25,
     vencimento: '19/12/2025',
     tipoOperacao: 'CALL',
-    status: 'Encerrada',
-    observacao: '✅ OPERAÇÃO ENCERRADA - NÃO EXERCER'
+    status: 'Encerrada'
   },
   {
     id: 'call-3',
@@ -135,8 +133,7 @@ const operacoesCALLFixas: CarteiraOperacao[] = [
     precoReferencia: 34.10,
     vencimento: '19/12/2025',
     tipoOperacao: 'CALL',
-    status: 'Encerrada',
-    observacao: '✅ OPERAÇÃO ENCERRADA - NÃO EXERCER'
+    status: 'Encerrada'
   }
 ];
 
@@ -371,7 +368,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                   padding: '16px',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                   border: operacao.status === 'Encerrada' ? '2px solid #e2e8f0' : '1px solid #e2e8f0',
-                  opacity: operacao.status === 'Encerrada' ? 0.8 : 1
+                  opacity: operacao.status === 'Encerrada' ? 0.5 : 1
                 }}
               >
                 {/* Logo do Ativo */}
@@ -488,24 +485,6 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                 >
                   Vencimento: {operacao.vencimento}
                 </div>
-
-                {operacao.observacao && (
-                  <div
-                    style={{
-                      marginTop: '12px',
-                      padding: '12px',
-                      background: operacao.status === 'Encerrada' ? '#f1f5f9' : '#fef3c7',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      color: operacao.status === 'Encerrada' ? '#64748b' : '#92400e',
-                      lineHeight: '1.5',
-                      fontWeight: '600',
-                      textAlign: 'center'
-                    }}
-                  >
-                    {operacao.observacao}
-                  </div>
-                )}
               </div>
             );
           })}
@@ -642,7 +621,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                     borderBottom: '1px solid #f1f5f9',
                     transition: 'background 0.2s',
                     background: operacao.status === 'Encerrada' ? '#fafafa' : 'transparent',
-                    opacity: operacao.status === 'Encerrada' ? 0.8 : 1
+                    opacity: operacao.status === 'Encerrada' ? 0.5 : 1
                   }}
                   onMouseEnter={(e) => {
                     if (operacao.status !== 'Encerrada') {
@@ -758,32 +737,18 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                     {operacao.vencimento}
                   </td>
                   <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                      <span
-                        style={{
-                          padding: '4px 12px',
-                          borderRadius: '20px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          background: statusStyle.background,
-                          color: statusStyle.color
-                        }}
-                      >
-                        {operacao.status}
-                      </span>
-                      {operacao.observacao && (
-                        <span
-                          style={{
-                            fontSize: '11px',
-                            color: '#64748b',
-                            fontWeight: '600',
-                            textAlign: 'center'
-                          }}
-                        >
-                          {operacao.observacao}
-                        </span>
-                      )}
-                    </div>
+                    <span
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        background: statusStyle.background,
+                        color: statusStyle.color
+                      }}
+                    >
+                      {operacao.status}
+                    </span>
                   </td>
                 </tr>
               );
