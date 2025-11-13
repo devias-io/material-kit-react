@@ -708,9 +708,7 @@ const [materialUploadState, setMaterialUploadState] = React.useState<Record<numb
   const [editingMentoriaId, setEditingMentoriaId] = React.useState<number | null>(null);
   const [editMentoriaForm, setEditMentoriaForm] = React.useState<MentoriaFormState>(createEmptyMentoriaForm());
   const [editMentoriaError, setEditMentoriaError] = React.useState<string | null>(null);
-  const [mentoriaMaterialState, setMentoriaMaterialState] = React.useState
-    Record<number, { isUploading: boolean; error: string | null }>
-  >({});
+const [mentoriaMaterialState, setMentoriaMaterialState] = React.useState<Record<number, { isUploading: boolean; error: string | null }>>({});
   const [isSavingMentoria, setIsSavingMentoria] = React.useState(false);
   const isEditingMentoria = editingMentoriaId !== null;
 
