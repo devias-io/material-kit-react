@@ -2491,8 +2491,7 @@ const handleUpdateModule = React.useCallback(
                           alignItems: 'center',
                           gap: '12px',
                           justifyContent: 'space-between'
-                        }}
-                        >
+                        }}>
                         
                           href={material.fileUrl}
                           target="_blank"
