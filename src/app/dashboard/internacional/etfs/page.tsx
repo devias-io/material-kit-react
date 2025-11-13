@@ -378,18 +378,18 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
   return cotacoesMap;
 }
 
-  function registrarDyETF(result: any, ticker: string, dyMap: Map<string, string>): void {
-    const { valor, origem } = calcularDyAPartirDoResultado(result, ticker);
+function registrarDyETF(result: any, ticker: string, dyMap: Map<string, string>): void {
+  const { valor, origem } = calcularDyAPartirDoResultado(result, ticker);
 
-    if (valor && valor > 0) {
-      const dyFormatado = formatarDy(valor);
-      dyMap.set(ticker, dyFormatado);
-      console.log(`✅ [ETF] ${ticker}: ${dyFormatado} (${origem})`);
-    } else {
-      dyMap.set(ticker, '0,00%');
-      console.log(`❌ [ETF] ${ticker}: Yield não disponível (${origem})`);
-    }
+  if (valor && valor > 0) {
+    const dyFormatado = formatarDy(valor);
+    dyMap.set(ticker, dyFormatado);
+    console.log(`✅ [ETF] ${ticker}: ${dyFormatado} (${origem})`);
+  } else {
+    dyMap.set(ticker, '0,00%');
+    console.log(`❌ [ETF] ${ticker}: Yield não disponível (${origem})`);
   }
+}
 
 // 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO OTIMIZADA PARA ETFs
 async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
@@ -400,7 +400,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
 
   // ✅ BATCH REQUEST PRIMEIRO
   try {
-      const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?token=${BRAPI_TOKEN}&dividends=true`;
+    const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?token=${BRAPI_TOKEN}&dividends=true`;
     const response = await Promise.race([
       fetch(batchUrl),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY batch timeout')), 6000))
@@ -427,7 +427,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   const promises = tickers.map(async (ticker) => {
     try {
       const response = await Promise.race([
-          fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
+        fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
           headers: { 'Accept': 'application/json' }
         }),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY timeout')), 4000))
@@ -458,7 +458,71 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   return dyMap;
 }
 
-// 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL
+// ✅ NOVA FUNÇÃO: BUSCAR PROVENTOS PARA ETFs (TOTAL RETURN)
+async function buscarProventosETFs(ativosData: any[]): Promise<Map<string, number>> {
+  const novosProventos = new Map<string, number>();
+  
+  console.log('💰 Iniciando busca de proventos ETFs para', ativosData.length, 'ativos');
+  
+  const buscarProventoAtivo = async (ativo: any) => {
+    try {
+      const [dia, mes, ano] = ativo.dataEntrada.split('/');
+      const dataEntradaISO = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+      
+      console.log(`💰 Buscando proventos ETF para ${ativo.ticker} desde ${ativo.dataEntrada}`);
+      
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), 2000);
+      
+      const response = await fetch(`/api/proventos/${ativo.ticker}`, {
+        signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const proventosRaw = await response.json();
+        
+        if (Array.isArray(proventosRaw)) {
+          const dataEntradaDate = new Date(dataEntradaISO + 'T00:00:00');
+
+          const proventosFiltrados = proventosRaw.filter((p: any) => {
+            if (!p.dataObj) return false;
+            const dataProvento = new Date(p.dataObj);
+            
+            // Deve estar após a data de entrada
+            return dataProvento >= dataEntradaDate;
+          });
+          
+          const total = proventosFiltrados.reduce((sum: number, p: any) => sum + (p.valor || 0), 0);
+          console.log(`💰 ${ativo.ticker}: US$ ${total.toFixed(2)} (${proventosFiltrados.length} distribuições)`);
+          return { ticker: ativo.ticker, valor: total };
+        }
+      } else {
+        console.log(`💰 ${ativo.ticker}: Erro HTTP ${response.status}`);
+      }
+    } catch (error) {
+      console.log(`💰 ${ativo.ticker}: Erro -`, error instanceof Error ? error.message : 'Erro desconhecido');
+    }
+    
+    return { ticker: ativo.ticker, valor: 0 };
+  };
+
+  // Buscar proventos em paralelo
+  const resultados = await Promise.allSettled(
+    ativosData.map(ativo => buscarProventoAtivo(ativo))
+  );
+
+  resultados.forEach((resultado) => {
+    if (resultado.status === 'fulfilled') {
+      novosProventos.set(resultado.value.ticker, resultado.value.valor);
+    }
+  });
+  
+  console.log('💰 Proventos ETFs finais:', Object.fromEntries(novosProventos));
+  return novosProventos;
+}
+
+// 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL + TOTAL RETURN
 function useETFsInternacionaisIntegradas() {
   const { dados } = useDataStore();
   const [ativosAtualizados, setAtivosAtualizados] = React.useState<any[]>([]);
@@ -467,17 +531,19 @@ function useETFsInternacionaisIntegradas() {
   // Estados para garantir que TODOS os dados estejam prontos
   const [cotacoesCompletas, setCotacoesCompletas] = React.useState<Map<string, any>>(new Map());
   const [dyCompletos, setDyCompletos] = React.useState<Map<string, string>>(new Map());
+  const [proventosCompletos, setProventosCompletos] = React.useState<Map<string, number>>(new Map()); // ✅ NOVO
   const [todosOsDadosProntos, setTodosOsDadosProntos] = React.useState(false);
   
   // Loading states granulares
   const [loadingCotacoes, setLoadingCotacoes] = React.useState(true);
   const [loadingDY, setLoadingDY] = React.useState(false);
+  const [loadingProventos, setLoadingProventos] = React.useState(false); // ✅ NOVO
   const [error, setError] = React.useState<string | null>(null);
 
   const isMobile = useDeviceDetection();
   const etfsInternacionaisData = dados.etfs || [];
 
-  // 🎯 FUNÇÃO PRINCIPAL REESCRITA - PARALELIZAÇÃO TOTAL
+  // 🎯 FUNÇÃO PRINCIPAL REESCRITA - PARALELIZAÇÃO TOTAL COM TOTAL RETURN
   const buscarDadosCompletos = React.useCallback(async () => {
     if (etfsInternacionaisData.length === 0) {
       setAtivosAtualizados([]);
@@ -490,26 +556,29 @@ function useETFsInternacionaisIntegradas() {
       setTodosOsDadosProntos(false);
       const tickers = etfsInternacionaisData.map(ativo => ativo.ticker);
       
-      console.log('🚀 INICIANDO BUSCA STEP-BY-STEP ROBUSTA - ESTRATÉGIA MOBILE UNIVERSAL...');
+      console.log('🚀 INICIANDO BUSCA COM TOTAL RETURN - ETFs INTERNACIONAIS...');
       
       // 🔄 RESET DOS ESTADOS
       setCotacoesCompletas(new Map());
       setDyCompletos(new Map());
+      setProventosCompletos(new Map());
 
-      // ⚡ PARALELIZAÇÃO TOTAL
-      console.log('⚡ EXECUTANDO TODAS AS ETAPAS EM PARALELO...');
+      // ⚡ PARALELIZAÇÃO TOTAL - AGORA COM PROVENTOS
+      console.log('⚡ EXECUTANDO TODAS AS ETAPAS EM PARALELO (COTAÇÕES + DY + PROVENTOS)...');
 
       // Ativar todos os loadings
       setLoadingCotacoes(true);
       setLoadingDY(true);
+      setLoadingProventos(true);
 
       // Medir tempo
       const inicioTempo = performance.now();
 
-      // EXECUTAR TUDO EM PARALELO
-      const [cotacoesResult, dyResult] = await Promise.allSettled([
+      // ✅ EXECUTAR TUDO EM PARALELO - AGORA COM PROVENTOS
+      const [cotacoesResult, dyResult, proventosResult] = await Promise.allSettled([
         buscarCotacoesParalelas(tickers, isMobile),
-        buscarDYsComEstrategia(tickers, isMobile)
+        buscarDYsComEstrategia(tickers, isMobile),
+        buscarProventosETFs(etfsInternacionaisData) // ✅ NOVO
       ]);
 
       const tempoTotal = performance.now() - inicioTempo;
@@ -518,10 +587,12 @@ function useETFsInternacionaisIntegradas() {
       // Processar resultados
       const cotacoesMap = cotacoesResult.status === 'fulfilled' ? cotacoesResult.value : new Map();
       const dyMap = dyResult.status === 'fulfilled' ? dyResult.value : new Map();
+      const proventosData = proventosResult.status === 'fulfilled' ? proventosResult.value : new Map(); // ✅ NOVO
 
       // Logs de debug
       console.log('📊 Cotações obtidas:', cotacoesMap.size, 'de', tickers.length);
       console.log('📈 DY obtidos:', dyMap.size, 'de', tickers.length);
+      console.log('💰 Proventos obtidos:', proventosData.size, 'de', etfsInternacionaisData.length); // ✅ NOVO
 
       // Debug do DY
       console.log('🔍 [PARALLEL-DEBUG] dyMap processado:');
@@ -531,10 +602,12 @@ function useETFsInternacionaisIntegradas() {
       // Atualizar estados
       setCotacoesCompletas(cotacoesMap);
       setDyCompletos(dyMap);
+      setProventosCompletos(proventosData); // ✅ NOVO
 
       // Desativar loadings
       setLoadingCotacoes(false);
       setLoadingDY(false);
+      setLoadingProventos(false); // ✅ NOVO
       
       // Marcar como pronto para processamento final
       setTodosOsDadosProntos(true);
@@ -547,53 +620,66 @@ function useETFsInternacionaisIntegradas() {
     }
   }, [etfsInternacionaisData, isMobile]);
 
-  // 🏆 USEEFFECT QUE SÓ EXECUTA QUANDO TODOS OS DADOS ESTÃO PRONTOS
+  // 🏆 USEEFFECT QUE SÓ EXECUTA QUANDO TODOS OS DADOS ESTÃO PRONTOS - AGORA COM TOTAL RETURN
   React.useEffect(() => {
     if (!todosOsDadosProntos || etfsInternacionaisData.length === 0) return;
     
-    console.log('🏆 PROCESSANDO ETFS INTERNACIONAIS - TODOS OS DADOS PRONTOS!');
+    console.log('🏆 PROCESSANDO TOTAL RETURN - ETFs INTERNACIONAIS - TODOS OS DADOS PRONTOS!');
     console.log('🔍 [DEPS-DEBUG] Verificando estados no momento da execução:');
     console.log('🔍 [DEPS-DEBUG] todosOsDadosProntos:', todosOsDadosProntos);
     console.log('🔍 [DEPS-DEBUG] etfsInternacionaisData.length:', etfsInternacionaisData.length);
     console.log('🔍 [DEPS-DEBUG] cotacoesCompletas.size:', cotacoesCompletas.size);
     console.log('🔍 [DEPS-DEBUG] dyCompletos.size:', dyCompletos.size);
+    console.log('🔍 [DEPS-DEBUG] proventosCompletos.size:', proventosCompletos.size); // ✅ NOVO
     console.log('🔍 [DEPS-DEBUG] dyCompletos conteúdo:', Object.fromEntries(dyCompletos));
+    console.log('🔍 [DEPS-DEBUG] proventosCompletos conteúdo:', Object.fromEntries(proventosCompletos)); // ✅ NOVO
     
     console.log('📊 Dados disponíveis:', {
       cotacoes: cotacoesCompletas.size,
       dy: dyCompletos.size, 
+      proventos: proventosCompletos.size, // ✅ NOVO
       ativos: etfsInternacionaisData.length
     });
 
     const novasCotacoes: any = {};
 
-    // 🎯 PROCESSAR TODOS OS ATIVOS
+    // 🎯 PROCESSAR TODOS OS ATIVOS COM TOTAL RETURN
     const ativosFinais = etfsInternacionaisData.map((ativo, index) => {
       const cotacao = cotacoesCompletas.get(ativo.ticker);
       
       // 🔍 DEBUG DY ASSIGNMENT
       const dyAPI = dyCompletos.get(ativo.ticker) || '0,00%';
+      const proventosAtivo = proventosCompletos.get(ativo.ticker) || 0; // ✅ NOVO
+      
       console.log(`🔍 [ASSIGN-DEBUG] ${ativo.ticker}:`);
       console.log(`  - dyCompletos.size: ${dyCompletos.size}`);
       console.log(`  - dyCompletos.has('${ativo.ticker}'): ${dyCompletos.has(ativo.ticker)}`);
       console.log(`  - dyCompletos.get('${ativo.ticker}'): ${dyCompletos.get(ativo.ticker)}`);
       console.log(`  - dyAPI final: ${dyAPI}`);
+      console.log(`  - proventosAtivo: US$ ${proventosAtivo.toFixed(2)}`); // ✅ NOVO
       console.log(`  - loadingDY: ${loadingDY}`);
     
       if (cotacao && cotacao.precoAtual > 0) {
-        // ✅ ATIVO COM COTAÇÃO REAL
+        // ✅ ATIVO COM COTAÇÃO REAL - AGORA COM TOTAL RETURN
         const precoAtualNum = cotacao.precoAtual;
-        const performance = ((precoAtualNum - ativo.precoEntrada) / ativo.precoEntrada) * 100;
         
-        // VALIDAR SE O PREÇO FAZ SENTIDO (para ETFs, usar limite maior)
-        const diferencaPercent = Math.abs(performance);
+        // ✅ CALCULAR TOTAL RETURN (IGUAL AOS OUTROS CÓDIGOS)
+        const performanceAcao = ((precoAtualNum - ativo.precoEntrada) / ativo.precoEntrada) * 100;
+        const performanceProventos = ativo.precoEntrada > 0 ? (proventosAtivo / ativo.precoEntrada) * 100 : 0;
+        const performanceTotal = performanceAcao + performanceProventos;
+        
+        // VALIDAR SE O PREÇO FAZ SENTIDO
+        const diferencaPercent = Math.abs(performanceAcao);
         if (diferencaPercent > 1000) {
           console.warn(`🚨 ${ativo.ticker}: Preço suspeito! Diferença de ${diferencaPercent.toFixed(1)}% - usando preço de entrada`);
           return {
             ...ativo,
             id: String(ativo.id || index + 1),
             precoAtual: ativo.precoEntrada,
-            performance: 0,
+            performance: performanceProventos, // ✅ Ainda considera proventos
+            performanceAcao: 0,
+            performanceProventos: performanceProventos,
+            proventosAtivo: proventosAtivo,
             variacao: 0,
             variacaoPercent: 0,
             volume: 0,
@@ -611,13 +697,17 @@ function useETFsInternacionaisIntegradas() {
         
         novasCotacoes[ativo.ticker] = precoAtualNum;
         
-        console.log(`🏆 ${ativo.ticker}: DY final que será usado = ${dyAPI}`);
+        console.log(`🏆 ${ativo.ticker}: DY final = ${dyAPI}`);
+        console.log(`🏆 ${ativo.ticker}: US$ ${ativo.precoEntrada.toFixed(2)} -> US$ ${precoAtualNum.toFixed(2)} | Ação ${performanceAcao.toFixed(2)}% + Distribuições ${performanceProventos.toFixed(2)}% = TOTAL ${performanceTotal.toFixed(2)}%`);
         
         return {
           ...ativo,
           id: String(ativo.id || index + 1),
           precoAtual: precoAtualNum,
-          performance: performance,
+          performance: performanceTotal, // ✅ TOTAL RETURN
+          performanceAcao: performanceAcao, // ✅ NOVO
+          performanceProventos: performanceProventos, // ✅ NOVO
+          proventosAtivo: proventosAtivo, // ✅ NOVO
           variacao: cotacao.variacao,
           variacaoPercent: cotacao.variacaoPercent,
           volume: cotacao.volume,
@@ -632,14 +722,20 @@ function useETFsInternacionaisIntegradas() {
           posicaoExibicao: index + 1
         };
       } else {
-        // ⚠️ ATIVO SEM COTAÇÃO REAL
-        console.log(`🏆 ${ativo.ticker}: (sem cotação) DY final que será usado = ${dyAPI}`);
+        // ⚠️ ATIVO SEM COTAÇÃO REAL - MAS AINDA COM PROVENTOS
+        const performanceProventos = ativo.precoEntrada > 0 ? (proventosAtivo / ativo.precoEntrada) * 100 : 0;
+        
+        console.log(`🏆 ${ativo.ticker}: (sem cotação) DY final = ${dyAPI}`);
+        console.log(`🏆 ${ativo.ticker}: Sem cotação | US$ ${ativo.precoEntrada.toFixed(2)} + Distribuições ${performanceProventos.toFixed(2)}% = TOTAL ${performanceProventos.toFixed(2)}%`);
         
         return {
           ...ativo,
           id: String(ativo.id || index + 1),
           precoAtual: ativo.precoEntrada,
-          performance: 0,
+          performance: performanceProventos, // ✅ Considera apenas proventos
+          performanceAcao: 0,
+          performanceProventos: performanceProventos,
+          proventosAtivo: proventosAtivo,
           variacao: 0,
           variacaoPercent: 0,
           volume: 0,
@@ -660,8 +756,8 @@ function useETFsInternacionaisIntegradas() {
     setCotacoesAtualizadas(novasCotacoes);
     setAtivosAtualizados(ativosFinais);
     
-    console.log('🏆 ETFS INTERNACIONAIS PROCESSADO COM SUCESSO!');
-  }, [todosOsDadosProntos, cotacoesCompletas, dyCompletos, etfsInternacionaisData, loadingDY]);
+    console.log('🏆 TOTAL RETURN ETFs INTERNACIONAIS PROCESSADO COM SUCESSO!');
+  }, [todosOsDadosProntos, cotacoesCompletas, dyCompletos, proventosCompletos, etfsInternacionaisData, loadingDY]);
 
   // UseEffect original simplificado
   React.useEffect(() => {
@@ -685,6 +781,7 @@ function useETFsInternacionaisIntegradas() {
     setCotacoesAtualizadas,
     loading: loadingCotacoes || !todosOsDadosProntos, // ✅ Loading até TUDO estar pronto
     loadingDY,
+    loadingProventos, // ✅ NOVO
     error,
     refetch,
     isMobile,
@@ -701,6 +798,7 @@ export default function ETFsInternacionaisPage() {
     setCotacoesAtualizadas, 
     loading, 
     loadingDY,
+    loadingProventos, // ✅ NOVO
     isMobile,
     todosOsDadosProntos
   } = useETFsInternacionaisIntegradas();
@@ -821,12 +919,12 @@ export default function ETFsInternacionaisPage() {
                 fontWeight: '600',
                 fontSize: isMobile ? '14px' : '16px'
               }}>
-                Atualizando carteira em tempo real...
+                Atualizando carteira com Total Return...
               </span>
             </>
           ) : (
             <span>
-              Exposição diversificada aos mercados globais • Dados atualizados a cada 15 minutos
+              Exposição diversificada aos mercados globais • Total Return com reinvestimento de distribuições • Dados atualizados a cada 15 minutos
             </span>
           )}
         </div>
@@ -991,7 +1089,7 @@ export default function ETFsInternacionaisPage() {
             fontSize: isMobile ? '14px' : '16px',
             margin: '0'
           }}>
-            Exposição diversificada aos mercados globais com cotações em tempo real
+            ETFs com Total Return - incluindo reinvestimento de distribuições recebidas
           </p>
         </div>
 
@@ -1066,9 +1164,7 @@ export default function ETFsInternacionaisPage() {
                           height: '36px',
                           borderRadius: '6px',
                           overflow: 'hidden',
-   backgroundColor: WHITE_LOGO_TICKERS.includes(ticker)
-    ? '#f1f5f9'
-    : '#ffffff',
+                          backgroundColor: WHITE_LOGO_TICKERS.includes(ticker) ? '#f1f5f9' : '#ffffff',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1076,9 +1172,9 @@ export default function ETFsInternacionaisPage() {
                           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
                           padding: '4px'
                         }}>
-<img 
-  src={logoSrc}
-  alt={`Logo ${ticker}`}
+                          <img 
+                            src={logoSrc}
+                            alt={`Logo ${ticker}`}
                             style={{
                               width: '100%',
                               height: '100%',
@@ -1172,7 +1268,7 @@ export default function ETFsInternacionaisPage() {
                         </div>
                       </div>
                       
-                      {/* Performance em destaque */}
+                      {/* Performance em destaque - AGORA COM TOTAL RETURN */}
                       <div style={{
                         textAlign: 'center',
                         padding: '8px',
@@ -1181,7 +1277,7 @@ export default function ETFsInternacionaisPage() {
                         border: '1px solid #e2e8f0'
                       }}>
                         <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
-                          Performance
+                          Performance Total (c/ distribuições)
                         </div>
                         <div style={{ 
                           fontSize: '18px', 
@@ -1220,7 +1316,29 @@ export default function ETFsInternacionaisPage() {
                         PREÇO TETO
                       </th>
                       <th style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
-                        PERFORMANCE
+                        {/* ✅ ADICIONADO ÍCONE DE INFO */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                          PERFORMANCE TOTAL
+                          <div 
+                            style={{
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              backgroundColor: '#64748b',
+                              color: 'white',
+                              fontSize: '10px',
+                              fontWeight: '600',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'help',
+                              position: 'relative'
+                            }}
+                            title="Performance calculada com Total Return, incluindo o reinvestimento das distribuições recebidas desde a data de entrada."
+                          >
+                            i
+                          </div>
+                        </div>
                       </th>
                       <th style={{ padding: '16px', textAlign: 'center', fontWeight: '700', color: '#374151', fontSize: '14px' }}>
                         DY 12M
@@ -1282,17 +1400,15 @@ export default function ETFsInternacionaisPage() {
                                 height: '40px',
                                 borderRadius: '8px',
                                 overflow: 'hidden',
-     backgroundColor: WHITE_LOGO_TICKERS.includes(ticker)
-    ? '#f1f5f9'
-    : '#ffffff',
+                                backgroundColor: WHITE_LOGO_TICKERS.includes(ticker) ? '#f1f5f9' : '#ffffff',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 border: '1px solid #e2e8f0'
                               }}>
-<img 
-  src={logoSrc}
-  alt={`Logo ${ticker}`}
+                                <img 
+                                  src={logoSrc}
+                                  alt={`Logo ${ticker}`}
                                   style={{
                                     width: '32px',
                                     height: '32px',
