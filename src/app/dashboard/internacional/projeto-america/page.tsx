@@ -23,42 +23,6 @@ const setCachedData = (key: string, data: any) => {
   globalCache.set(key, { data, timestamp: Date.now() });
 };
 
-const getCachedDataWithTTL = (key: string, ttl: number) => {
-  const cached = globalCache.get(key);
-  if (cached && Date.now() - cached.timestamp < ttl) {
-    return cached.data;
-  }
-  return null;
-};
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-const FINNHUB_CACHE_DURATION = 10 * 60 * 1000; // 10 minutos
-const FINNHUB_RATE_LIMIT_MS = 1100;
-let finnhubRateLimiter: Promise<unknown> = Promise.resolve();
-let lastFinnhubCall = 0;
-
-const withFinnhubRateLimit = <T,>(task: () => Promise<T>): Promise<T> => {
-  const run: Promise<T> = finnhubRateLimiter.then(async () => {
-    if (lastFinnhubCall > 0) {
-      const elapsed = Date.now() - lastFinnhubCall;
-      const waitTime = Math.max(0, FINNHUB_RATE_LIMIT_MS - elapsed);
-      if (waitTime > 0) {
-        await delay(waitTime);
-      }
-    }
-
-    try {
-      return await task();
-    } finally {
-      lastFinnhubCall = Date.now();
-    }
-  });
-
-  finnhubRateLimiter = run.catch(() => {});
-  return run;
-};
-
 const WHITE_LOGO_TICKERS = ['XP', 'UNH', 'QQQ', 'ARE','WPC'];
 const CUSTOM_LOGO_URLS: Record<string, string> = {
   XP: 'https://logo.clearbit.com/xpi.com.br',
@@ -423,65 +387,6 @@ function isETF(ticker: string): boolean {
   return etfsConhecidos.includes(tickerUpper);
 }
 
-async function buscarDYFinnhub(ticker: string): Promise<{ valor: number | null; origem: string }> {
-  const normalizedTicker = ticker.toUpperCase();
-  const cacheKey = `finnhub_metric:${normalizedTicker}`;
-  const cached = getCachedDataWithTTL(cacheKey, FINNHUB_CACHE_DURATION);
-
-  if (cached) {
-    return cached;
-  }
-
-  try {
-    console.log(`📊 [FINNHUB] Buscando DY para ${normalizedTicker}...`);
-
-    const result = await withFinnhubRateLimit(async () => {
-      const controller = new AbortController();
-      const timeoutId: ReturnType<typeof setTimeout> = setTimeout(() => controller.abort(), 5000);
-
-      try {
-        const response = await fetch(`/api/finnhub-metrics/${normalizedTicker}`, {
-          signal: controller.signal,
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (!response.ok) {
-          console.log(`📊 [FINNHUB] ${normalizedTicker}: API retornou ${response.status}`);
-          return { valor: null, origem: 'finnhub_error' } as const;
-        }
-
-        const data = await response.json();
-
-        console.log(`📊 [FINNHUB] ${normalizedTicker}: Response`, data);
-
-        const dividendYield = data.dividendYield;
-
-        if (!dividendYield || dividendYield <= 0) {
-          console.log(`📊 [FINNHUB] ${normalizedTicker}: DY = ${dividendYield}`);
-          return { valor: null, origem: 'finnhub_no_yield' } as const;
-        }
-
-        const valorDecimal = dividendYield > 0.01 ? dividendYield / 100 : dividendYield;
-
-        console.log(`✅ [FINNHUB] ${normalizedTicker}: DY = ${(valorDecimal * 100).toFixed(2)}%`);
-
-        return {
-          valor: valorDecimal,
-          origem: 'finnhub_ttm'
-        } as const;
-      } finally {
-        clearTimeout(timeoutId);
-      }
-    });
-
-    setCachedData(cacheKey, result);
-    return result;
-  } catch (error) {
-    console.log(`❌ [FINNHUB] ${normalizedTicker}:`, error instanceof Error ? error.message : 'Erro');
-    return { valor: null, origem: 'finnhub_timeout' };
-  }
-}
-
 async function calcularDYDeProventos(
   ticker: string,
   precoAtual: number
@@ -588,38 +493,20 @@ async function buscarDYsComEstrategia(
   const tickersSemDY = tickers.filter(ticker => !dyMap.has(ticker));
 
   if (tickersSemDY.length > 0) {
-    console.log(`🇺🇸 [FINNHUB] Buscando DY para ${tickersSemDY.length} tickers via Finnhub...`);
+    console.log(`💰 [PROVENTOS] Calculando DY via proventos para ${tickersSemDY.length} tickers...`);
 
-    await Promise.allSettled(
-      tickersSemDY.map(async (ticker) => {
-        const { valor } = await buscarDYFinnhub(ticker);
-
-        if (valor && valor > 0) {
-          dyMap.set(ticker, formatarDy(valor));
-          return { ticker, sucesso: true };
-        }
-
-        return { ticker, sucesso: false };
-      })
-    );
-  }
-
-  const tickersAindaSemDY = tickers.filter(ticker => !dyMap.has(ticker));
-
-  if (tickersAindaSemDY.length > 0) {
-    console.log(`💰 [PROVENTOS] Calculando DY via proventos para ${tickersAindaSemDY.length} tickers...`);
-
-    const promisesProventos = tickersAindaSemDY.map(async (ticker) => {
+    const promisesProventos = tickersSemDY.map(async (ticker) => {
       const cotacao = cotacoesMap.get(ticker);
 
       if (!cotacao || !cotacao.precoAtual || cotacao.precoAtual <= 0) {
         return { ticker, valor: null };
       }
 
-      const { valor } = await calcularDYDeProventos(ticker, cotacao.precoAtual);
+      const { valor, origem } = await calcularDYDeProventos(ticker, cotacao.precoAtual);
 
       if (valor && valor > 0) {
         dyMap.set(ticker, formatarDy(valor));
+        console.log(`✅ [PROVENTOS] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
         return { ticker, valor };
       }
 
