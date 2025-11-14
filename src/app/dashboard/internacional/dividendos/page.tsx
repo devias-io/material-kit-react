@@ -507,8 +507,9 @@ async function buscarDYsComEstrategia(
       const cotacao = cotacoesMap.get(ticker);
 
       if (!cotacao || !cotacao.precoAtual || cotacao.precoAtual <= 0) {
-        return { ticker, valor: null };
-      }
+      console.log(`❌ [PROVENTOS] ${ticker}: Sem dados válidos (${origem})`);
+      return { ticker, valor: null as number | null };
+    };
 
       const { valor, origem } = await calcularDYDeProventos(ticker, cotacao.precoAtual);
 
@@ -521,7 +522,7 @@ async function buscarDYsComEstrategia(
       return { ticker, valor: null };
     });
 
-    await Promise.allSettled(promisesProventos);
+    await Promise.allSettled(tickersSemDY.map(processarTickerSemDy));
   }
 
   tickers.forEach(ticker => {
