@@ -376,13 +376,76 @@ function registrarDyNoMapa(result: any, ticker: string, dyMap: Map<string, strin
     dyMap.set(ticker, dyFormatado);
     console.log(`✅ [DY] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
   } else {
-    dyMap.set(ticker, '0,00%');
     console.log(`❌ [DY] ${ticker}: Sem dividendos (${origem})`);
   }
 }
 
+async function calcularDYDeProventos(
+  ticker: string,
+  precoAtual: number
+): Promise<{ valor: number | null; origem: string }> {
+  try {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch(`/api/proventos/${ticker}`, {
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+      return { valor: null, origem: 'proventos_api_error' };
+    }
+
+    const proventosRaw = await response.json();
+
+    if (!Array.isArray(proventosRaw) || proventosRaw.length === 0) {
+      return { valor: null, origem: 'proventos_no_data' };
+    }
+
+    const limite12Meses = new Date();
+    limite12Meses.setFullYear(limite12Meses.getFullYear() - 1);
+
+    const proventosUltimos12Meses = proventosRaw.filter((p: any) => {
+      if (!p.dataObj) return false;
+      const dataProvento = new Date(p.dataObj);
+      return dataProvento >= limite12Meses;
+    });
+
+    if (proventosUltimos12Meses.length === 0) {
+      return { valor: null, origem: 'proventos_no_recent' };
+    }
+
+    const somaProventos = proventosUltimos12Meses.reduce(
+      (sum: number, p: any) => sum + (p.valor || 0),
+      0
+    );
+
+    if (somaProventos <= 0 || precoAtual <= 0) {
+      return { valor: null, origem: 'proventos_invalid' };
+    }
+
+    const dy = somaProventos / precoAtual;
+
+    console.log(
+      `✅ [DY-PROVENTOS] ${ticker}: ${(dy * 100).toFixed(2)}% (${proventosUltimos12Meses.length} pagamentos)`
+    );
+
+    return {
+      valor: dy,
+      origem: `proventos_12m_${proventosUltimos12Meses.length}`
+    };
+  } catch (error) {
+    return { valor: null, origem: 'proventos_error' };
+  }
+}
+
 // 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO FINAL CORRIGIDA
-async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
+async function buscarDYsComEstrategia(
+  tickers: string[],
+  isMobile: boolean,
+  cotacoesMap: Map<string, any>
+): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
   const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
   
@@ -434,14 +497,40 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   });
   
   await Promise.allSettled(promises);
-  
-  // Garantir que todos os tickers tenham DY
+
+  const tickersSemDY = tickers.filter(ticker => !dyMap.has(ticker));
+
+  if (tickersSemDY.length > 0) {
+    console.log(`💰 [PROVENTOS] Calculando DY via proventos para ${tickersSemDY.length} tickers...`);
+
+    const promisesProventos = tickersSemDY.map(async (ticker) => {
+      const cotacao = cotacoesMap.get(ticker);
+
+      if (!cotacao || !cotacao.precoAtual || cotacao.precoAtual <= 0) {
+        return { ticker, valor: null };
+      }
+
+      const { valor, origem } = await calcularDYDeProventos(ticker, cotacao.precoAtual);
+
+      if (valor && valor > 0) {
+        dyMap.set(ticker, formatarDy(valor));
+        console.log(`✅ [PROVENTOS] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
+        return { ticker, valor };
+      }
+
+      return { ticker, valor: null };
+    });
+
+    await Promise.allSettled(promisesProventos);
+  }
+
   tickers.forEach(ticker => {
     if (!dyMap.has(ticker)) {
+      console.log(`⚠️ [DY] ${ticker}: Não encontrado em nenhuma fonte, setando 0,00%`);
       dyMap.set(ticker, '0,00%');
     }
   });
-  
+
   console.log('✅ [DY-OTIMIZADO] Concluído:', dyMap.size, 'de', tickers.length);
   console.log('📊 DY Final Map:', Object.fromEntries(dyMap));
   return dyMap;
@@ -563,48 +652,59 @@ function useDividendosInternacionaisIntegradas() {
       // Medir tempo
       const inicioTempo = performance.now();
 
-      // ✅ EXECUTAR TUDO EM PARALELO - AGORA COM PROVENTOS
-      const [cotacoesResult, dyResult, proventosResult] = await Promise.allSettled([
-        buscarCotacoesParalelas(tickers, isMobile),
-        buscarDYsComEstrategia(tickers, isMobile),
-        buscarProventosInternacionais(dividendosInternacionaisData) // ✅ NOVO
-      ]);
+      let cotacoesMap = new Map<string, any>();
+      try {
+        cotacoesMap = await buscarCotacoesParalelas(tickers, isMobile);
+      } catch (cotacaoError) {
+        console.log('❌ Erro ao buscar cotações:', cotacaoError);
+      }
 
-      const tempoTotal = performance.now() - inicioTempo;
-      console.log(`🎉 TODAS AS ETAPAS CONCLUÍDAS EM ${tempoTotal.toFixed(0)}ms!`);
-
-      // Processar resultados
-      const cotacoesMap = cotacoesResult.status === 'fulfilled' ? cotacoesResult.value : new Map();
-      const dyMap = dyResult.status === 'fulfilled' ? dyResult.value : new Map();
-      const proventosData = proventosResult.status === 'fulfilled' ? proventosResult.value : new Map(); // ✅ NOVO
-
-      // Logs de debug
-      console.log('📊 Cotações obtidas:', cotacoesMap.size, 'de', tickers.length);
-      console.log('📈 DY obtidos:', dyMap.size, 'de', tickers.length);
-      console.log('💰 Proventos obtidos:', proventosData.size, 'de', dividendosInternacionaisData.length); // ✅ NOVO
-
-      // Debug do DY
-      console.log('🔍 [PARALLEL-DEBUG] dyMap processado:');
-      console.log('🔍 [PARALLEL-DEBUG] dyMap.size:', dyMap.size);
-      console.log('🔍 [PARALLEL-DEBUG] dyMap conteúdo:', Object.fromEntries(dyMap));
-
-      // Atualizar estados
       setCotacoesCompletas(cotacoesMap);
-      setDyCompletos(dyMap);
-      setProventosCompletos(proventosData); // ✅ NOVO
-
-      // Desativar loadings
       setLoadingCotacoes(false);
-      setLoadingDY(false);
-      setLoadingProventos(false); // ✅ NOVO
-      
-      // Marcar como pronto para processamento final
+
+      const dyPromise = buscarDYsComEstrategia(tickers, isMobile, cotacoesMap)
+        .then((dyMap) => {
+          console.log('📈 DY obtidos (async):', dyMap.size, 'de', tickers.length);
+          console.log('🔍 [PARALLEL-DEBUG] dyMap conteúdo:', Object.fromEntries(dyMap));
+          setDyCompletos(dyMap);
+          return dyMap;
+        })
+        .catch((dyError) => {
+          console.error('❌ Erro ao buscar DY:', dyError);
+          const vazio = new Map<string, string>();
+          setDyCompletos(vazio);
+          return vazio;
+        })
+        .finally(() => {
+          setLoadingDY(false);
+        });
+
+      let proventosData = new Map<string, number>();
+      try {
+        proventosData = await buscarProventosInternacionais(dividendosInternacionaisData);
+      } catch (proventosError) {
+        console.error('❌ Erro ao buscar proventos:', proventosError);
+      }
+
+      setProventosCompletos(proventosData);
+      setLoadingProventos(false);
+
+      const tempoParcial = performance.now() - inicioTempo;
+      console.log(`⚡ Dados essenciais concluídos em ${tempoParcial.toFixed(0)}ms!`);
+      console.log('📊 Cotações obtidas:', cotacoesMap.size, 'de', tickers.length);
+      console.log('💰 Proventos obtidos:', proventosData.size, 'de', dividendosInternacionaisData.length);
+
       setTodosOsDadosProntos(true);
+
+      await dyPromise;
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       setError(errorMessage);
       console.error('❌ Erro na busca otimizada:', err);
+      setLoadingCotacoes(false);
+      setLoadingDY(false);
+      setLoadingProventos(false);
       setTodosOsDadosProntos(true);
     }
   }, [dividendosInternacionaisData, isMobile]);
