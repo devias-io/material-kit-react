@@ -447,83 +447,49 @@ async function buscarDYsComEstrategia(
   cotacoesMap: Map<string, any>
 ): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
-  const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
   
-  console.log('📈 [OTIMIZADO] Buscando DY para', tickers.length, 'tickers EM PARALELO...');
+  // ✅ LOG CORRETO
+  console.log('📈 [DY-INTERNACIONAL] Calculando DY via PROVENTOS para', tickers.length, 'tickers...');
   
-  // ✅ BATCH REQUEST PRIMEIRO
-  try {
-    const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?token=${BRAPI_TOKEN}&dividends=true`;
-    const response = await Promise.race([
-      fetch(batchUrl),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY batch timeout')), 6000))
-    ]);
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        console.log('✅ DY BATCH SUCCESS:', data.results.length, 'DYs em 1 só request');
-        
-        data.results.forEach((result: any) => {
-          const ticker = result.symbol;
-          registrarDyNoMapa(result, ticker, dyMap);
-        });
-        
-        return dyMap;
-      }
-    }
-  } catch (error) {
-    console.log('❌ DY Batch falhou, usando paralelo individual');
-  }
-  
-  // ✅ PARALELO INDIVIDUAL (mesma lógica)
-  const promises = tickers.map(async (ticker) => {
-    try {
-      const response = await Promise.race([
-        fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
-          headers: { 'Accept': 'application/json' }
-        }),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY timeout')), 4000))
-      ]);
+  // ✅ IR DIRETO PARA CÁLCULO VIA PROVENTOS (SEM BRAPI!)
+  const promisesProventos = tickers.map(async (ticker) => {
+    const cotacao = cotacoesMap.get(ticker);
 
-      if (response.ok) {
-        const data = await response.json();
-        const result = data.results?.[0];
-        registrarDyNoMapa(result, ticker, dyMap);
-      }
-    } catch (error) {
-      console.log(`❌ [DY-${ticker}]:`, error instanceof Error ? error.message : 'Erro desconhecido');
+    // ✅ VERIFICAÇÃO CORRETA (sem ; no final)
+    if (!cotacao || !cotacao.precoAtual || cotacao.precoAtual <= 0) {
+      console.log(`⚠️ [DY-PROVENTOS] ${ticker}: Sem cotação válida`);
+      return { ticker, valor: null };
+    }
+
+    // ✅ CHAMAR calcularDYDeProventos
+    const { valor, origem } = await calcularDYDeProventos(ticker, cotacao.precoAtual);
+
+    if (valor && valor > 0) {
+      dyMap.set(ticker, formatarDy(valor));
+      console.log(`✅ [DY-PROVENTOS] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
+      return { ticker, valor };
+    }
+
+    console.log(`⚠️ [DY-PROVENTOS] ${ticker}: Sem proventos nos últimos 12M`);
+    return { ticker, valor: null };
+  });
+
+  // ✅ AGUARDAR TODAS AS PROMISES
+  await Promise.allSettled(promisesProventos);
+
+  // ✅ GARANTIR QUE TODOS TENHAM DY
+  tickers.forEach(ticker => {
+    if (!dyMap.has(ticker)) {
+      console.log(`⚠️ [DY] ${ticker}: Setando 0,00%`);
+      dyMap.set(ticker, '0,00%');
     }
   });
+
+  console.log('✅ [DY-INTERNACIONAL] Concluído:', dyMap.size, 'de', tickers.length);
+  console.log('📊 DY Final Map:', Object.fromEntries(dyMap));
   
-  await Promise.allSettled(promises);
-
-  const tickersSemDY = tickers.filter(ticker => !dyMap.has(ticker));
-
-  if (tickersSemDY.length > 0) {
-    console.log(`💰 [PROVENTOS] Calculando DY via proventos para ${tickersSemDY.length} tickers...`);
-
-    const promisesProventos = tickersSemDY.map(async (ticker) => {
-      const cotacao = cotacoesMap.get(ticker);
-
-      if (!cotacao || !cotacao.precoAtual || cotacao.precoAtual <= 0) {
-      console.log(`❌ [PROVENTOS] ${ticker}: Sem dados válidos (${origem})`);
-      return { ticker, valor: null as number | null };
-    };
-
-      const { valor, origem } = await calcularDYDeProventos(ticker, cotacao.precoAtual);
-
-      if (valor && valor > 0) {
-        dyMap.set(ticker, formatarDy(valor));
-        console.log(`✅ [PROVENTOS] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
-        return { ticker, valor };
-      }
-
-      return { ticker, valor: null };
-    });
-
-    await Promise.allSettled(tickersSemDY.map(processarTickerSemDy));
-  }
+  return dyMap;
+}
 
   tickers.forEach(ticker => {
     if (!dyMap.has(ticker)) {
