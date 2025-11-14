@@ -379,9 +379,104 @@ function registrarDyNoMapa(result: any, ticker: string, dyMap: Map<string, strin
     dyMap.set(ticker, dyFormatado);
     console.log(`✅ [DY] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
   } else {
-    dyMap.set(ticker, '0,00%');
     console.log(`❌ [DY] ${ticker}: Sem dividendos (${origem})`);
   }
+}
+
+async function calcularDYDeProventos(
+  ticker: string,
+  precoAtual: number
+): Promise<{ valor: number | null; origem: string }> {
+  try {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch(`/api/proventos/${ticker}`, {
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+      return { valor: null, origem: 'proventos_api_error' };
+    }
+
+    const proventosRaw = await response.json();
+
+    if (!Array.isArray(proventosRaw) || proventosRaw.length === 0) {
+      return { valor: null, origem: 'proventos_no_data' };
+    }
+
+    const limite12Meses = new Date();
+    limite12Meses.setFullYear(limite12Meses.getFullYear() - 1);
+
+    const proventosUltimos12Meses = proventosRaw.filter((p: any) => {
+      if (!p.dataObj) return false;
+      const dataProvento = new Date(p.dataObj);
+      return dataProvento >= limite12Meses;
+    });
+
+    if (proventosUltimos12Meses.length === 0) {
+      return { valor: null, origem: 'proventos_no_recent' };
+    }
+
+    const somaProventos = proventosUltimos12Meses.reduce(
+      (sum: number, p: any) => sum + (p.valor || 0),
+      0
+    );
+
+    if (somaProventos <= 0 || precoAtual <= 0) {
+      return { valor: null, origem: 'proventos_invalid' };
+    }
+
+    const dy = somaProventos / precoAtual;
+
+    console.log(
+      `✅ [DY-PROVENTOS-STOCKS] ${ticker}: ${(dy * 100).toFixed(2)}% (${proventosUltimos12Meses.length} pagamentos)`
+    );
+
+    return {
+      valor: dy,
+      origem: `proventos_12m_${proventosUltimos12Meses.length}`
+    };
+  } catch (error) {
+    return { valor: null, origem: 'proventos_error' };
+  }
+}
+
+async function complementarDyComProventos(
+  tickers: string[],
+  cotacoesMap: Map<string, any>,
+  dyMap: Map<string, string>
+): Promise<void> {
+  const tickersSemDY = tickers.filter((ticker) => {
+    const dy = dyMap.get(ticker);
+    return !dy || dy === '0,00%';
+  });
+
+  if (tickersSemDY.length === 0) {
+    return;
+  }
+
+  console.log(
+    `💰 [PROVENTOS-STOCKS] Calculando DY via proventos para ${tickersSemDY.length} tickers...`
+  );
+
+  const promises = tickersSemDY.map(async (ticker) => {
+    const cotacao = cotacoesMap.get(ticker);
+
+    if (!cotacao || !cotacao.precoAtual || cotacao.precoAtual <= 0) {
+      return;
+    }
+
+    const { valor, origem } = await calcularDYDeProventos(ticker, cotacao.precoAtual);
+
+    if (valor && valor > 0) {
+      dyMap.set(ticker, formatarDy(valor));
+      console.log(`✅ [PROVENTOS-STOCKS] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
+    }
+  });
+
+  await Promise.allSettled(promises);
 }
 
 // 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO FINAL CORRIGIDA
@@ -437,13 +532,6 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   });
   
   await Promise.allSettled(promises);
-  
-  // Garantir que todos os tickers tenham DY
-  tickers.forEach(ticker => {
-    if (!dyMap.has(ticker)) {
-      dyMap.set(ticker, '0,00%');
-    }
-  });
   
   console.log('✅ [DY-OTIMIZADO] Concluído:', dyMap.size, 'de', tickers.length);
   console.log('📊 DY Final Map:', Object.fromEntries(dyMap));
@@ -586,7 +674,16 @@ function useExteriorStocksIntegradas() {
       console.log('📈 DY obtidos:', dyMap.size, 'de', tickers.length);
       console.log('💰 Proventos obtidos:', proventosData.size, 'de', exteriorStocksData.length); // ✅ NOVO
 
-      // Debug do DY
+      await complementarDyComProventos(tickers, cotacoesMap, dyMap);
+
+      tickers.forEach((ticker) => {
+        if (!dyMap.has(ticker)) {
+          console.log(`⚠️ [DY-STOCKS] ${ticker}: Não encontrado em nenhuma fonte, setando 0,00%`);
+          dyMap.set(ticker, '0,00%');
+        }
+      });
+
+      // Debug do DY após complementação
       console.log('🔍 [PARALLEL-DEBUG] dyMap processado:');
       console.log('🔍 [PARALLEL-DEBUG] dyMap.size:', dyMap.size);
       console.log('🔍 [PARALLEL-DEBUG] dyMap conteúdo:', Object.fromEntries(dyMap));
