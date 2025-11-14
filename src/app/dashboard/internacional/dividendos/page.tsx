@@ -440,7 +440,7 @@ async function calcularDYDeProventos(
   }
 }
 
-// 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO FINAL CORRIGIDA
+// 🔄 FUNÇÃO PARA BUSCAR DY VIA PROVENTOS - DIVIDENDOS INTERNACIONAIS
 async function buscarDYsComEstrategia(
   tickers: string[],
   isMobile: boolean,
@@ -448,20 +448,17 @@ async function buscarDYsComEstrategia(
 ): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
   
-  // ✅ LOG CORRETO
   console.log('📈 [DY-INTERNACIONAL] Calculando DY via PROVENTOS para', tickers.length, 'tickers...');
   
-  // ✅ IR DIRETO PARA CÁLCULO VIA PROVENTOS (SEM BRAPI!)
+  // IR DIRETO PARA CÁLCULO VIA PROVENTOS (SEM BRAPI)
   const promisesProventos = tickers.map(async (ticker) => {
     const cotacao = cotacoesMap.get(ticker);
 
-    // ✅ VERIFICAÇÃO CORRETA (sem ; no final)
     if (!cotacao || !cotacao.precoAtual || cotacao.precoAtual <= 0) {
       console.log(`⚠️ [DY-PROVENTOS] ${ticker}: Sem cotação válida`);
       return { ticker, valor: null };
     }
 
-    // ✅ CHAMAR calcularDYDeProventos
     const { valor, origem } = await calcularDYDeProventos(ticker, cotacao.precoAtual);
 
     if (valor && valor > 0) {
@@ -474,10 +471,9 @@ async function buscarDYsComEstrategia(
     return { ticker, valor: null };
   });
 
-  // ✅ AGUARDAR TODAS AS PROMISES
   await Promise.allSettled(promisesProventos);
 
-  // ✅ GARANTIR QUE TODOS TENHAM DY
+  // Garantir que todos tenham DY
   tickers.forEach(ticker => {
     if (!dyMap.has(ticker)) {
       console.log(`⚠️ [DY] ${ticker}: Setando 0,00%`);
@@ -488,18 +484,6 @@ async function buscarDYsComEstrategia(
   console.log('✅ [DY-INTERNACIONAL] Concluído:', dyMap.size, 'de', tickers.length);
   console.log('📊 DY Final Map:', Object.fromEntries(dyMap));
   
-  return dyMap;
-}
-
-  tickers.forEach(ticker => {
-    if (!dyMap.has(ticker)) {
-      console.log(`⚠️ [DY] ${ticker}: Não encontrado em nenhuma fonte, setando 0,00%`);
-      dyMap.set(ticker, '0,00%');
-    }
-  });
-
-  console.log('✅ [DY-OTIMIZADO] Concluído:', dyMap.size, 'de', tickers.length);
-  console.log('📊 DY Final Map:', Object.fromEntries(dyMap));
   return dyMap;
 }
 
