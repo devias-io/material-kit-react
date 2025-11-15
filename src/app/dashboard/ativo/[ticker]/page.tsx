@@ -3789,7 +3789,10 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
             condition={!loadingStages.stage3}
             fallback={<SkeletonLoader variant="card" count={2} />}
           >
-            <AnalisesTrimesestrais ticker={ticker} />
+            <AnalisesTrimesestrais
+              ticker={ticker}
+              titulo={tipoAtivo.ehFII ? 'Análises Mensais' : undefined}
+            />
           </LazyComponent>
 
           <LazyComponent
