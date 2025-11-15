@@ -811,7 +811,8 @@ const ModalAnaliseCompleta = memo(({
 ModalAnaliseCompleta.displayName = 'ModalAnaliseCompleta';
 
 // Componente Principal - CORRIGIDO E RESPONSIVO
-const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
+const AnalisesTrimesestrais = memo(({ ticker, titulo = 'Análises Trimestrais' }: { ticker: string; titulo?: string }) => {
+  const tituloLowerCase = useMemo(() => titulo.toLowerCase(), [titulo]);
   const [analises, setAnalises] = useState<AnaliseTrimestreData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -903,7 +904,7 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
           alignItems: 'center',
           gap: '8px'
         }}>
-          Análises Trimestrais
+          {titulo}
         </h3>
         
         <div style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
@@ -930,7 +931,7 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
           color: '#1e293b',
           margin: '0 0 20px 0'
         }}>
-          Análises Trimestrais
+          {titulo}
         </h3>
         
         <div style={{ textAlign: 'center', padding: '32px' }}>
@@ -973,7 +974,7 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
           color: '#1e293b',
           margin: '0 0 20px 0'
         }}>
-          Análises Trimestrais
+          {titulo}
         </h3>
         
         <div style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
@@ -982,7 +983,7 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
             Nenhuma análise encontrada
           </h4>
           <p style={{ marginBottom: '16px' }}>
-            Ainda não há análises trimestrais para <strong>{ticker}</strong>
+            Ainda não há {tituloLowerCase} para <strong>{ticker}</strong>
           </p>
           <p style={{ fontSize: '14px', color: '#94a3b8' }}>
             💡 As análises aparecerão aqui após serem publicadas
@@ -1012,7 +1013,7 @@ const AnalisesTrimesestrais = memo(({ ticker }: { ticker: string }) => {
             alignItems: 'center',
             gap: '8px'
           }}>
-            Análises Trimestrais
+            {titulo}
           </h3>
         </div>
 
