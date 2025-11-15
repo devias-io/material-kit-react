@@ -5,7 +5,8 @@ import * as React from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
-import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
+import { formatarDy } from '@/utils/dividendYield';
+import { fetchDividendYieldIntegrado } from '@/utils/fetchDividendYieldIntegrado';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -367,19 +368,6 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
   return cotacoesMap;
 }
 
-// 🔄 FUNÇÃO PARA DETERMINAR FREQUÊNCIA DE DIVIDENDOS
-function registrarDyNoMapa(result: any, ticker: string, dyMap: Map<string, string>): void {
-  const { valor, origem } = calcularDyAPartirDoResultado(result, ticker);
-
-  if (valor && valor > 0) {
-    const dyFormatado = formatarDy(valor);
-    dyMap.set(ticker, dyFormatado);
-    console.log(`✅ [DY] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
-  } else {
-    console.log(`❌ [DY] ${ticker}: Sem dividendos (${origem})`);
-  }
-}
-
 async function calcularDYDeProventos(
   ticker: string,
   precoAtual: number
@@ -440,38 +428,55 @@ async function calcularDYDeProventos(
   }
 }
 
-// 🔄 FUNÇÃO PARA BUSCAR DY VIA PROVENTOS - DIVIDENDOS INTERNACIONAIS
+// 🔄 FUNÇÃO PARA BUSCAR DY COM ESTRATÉGIA INTEGRADA (BRAPI + PROVENTOS)
 async function buscarDYsComEstrategia(
   tickers: string[],
   isMobile: boolean,
   cotacoesMap: Map<string, any>
 ): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
-  
-  console.log('📈 [DY-INTERNACIONAL] Calculando DY via PROVENTOS para', tickers.length, 'tickers...');
-  
-  // IR DIRETO PARA CÁLCULO VIA PROVENTOS (SEM BRAPI)
-  const promisesProventos = tickers.map(async (ticker) => {
+
+  console.log('📈 [DY-INTERNACIONAL] Calculando DY integrado (BRAPI + Proventos) para', tickers.length, 'tickers...');
+
+  const promises = tickers.map(async (ticker) => {
     const cotacao = cotacoesMap.get(ticker);
+    let dyDefinido = false;
 
-    if (!cotacao || !cotacao.precoAtual || cotacao.precoAtual <= 0) {
-      console.log(`⚠️ [DY-PROVENTOS] ${ticker}: Sem cotação válida`);
-      return { ticker, valor: null };
+    try {
+      const resultadoIntegrado = await fetchDividendYieldIntegrado(ticker, isMobile);
+
+      if (resultadoIntegrado.dy12Meses > 0) {
+        dyMap.set(ticker, resultadoIntegrado.dyFormatado);
+        dyDefinido = true;
+        console.log(
+          `✅ [DY-BRAPI] ${ticker}: ${resultadoIntegrado.dyFormatado} (${resultadoIntegrado.fonte})`
+        );
+      } else {
+        console.log(`⚠️ [DY-BRAPI] ${ticker}: DY zerado (${resultadoIntegrado.fonte})`);
+      }
+    } catch (error) {
+      console.log(`❌ [DY-BRAPI] ${ticker}:`, error instanceof Error ? error.message : 'Erro desconhecido');
     }
 
-    const { valor, origem } = await calcularDYDeProventos(ticker, cotacao.precoAtual);
+    if (!dyDefinido && cotacao?.precoAtual && cotacao.precoAtual > 0) {
+      const { valor, origem } = await calcularDYDeProventos(ticker, cotacao.precoAtual);
 
-    if (valor && valor > 0) {
-      dyMap.set(ticker, formatarDy(valor));
-      console.log(`✅ [DY-PROVENTOS] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
-      return { ticker, valor };
+      if (valor && valor > 0) {
+        dyMap.set(ticker, formatarDy(valor));
+        dyDefinido = true;
+        console.log(`✅ [DY-PROVENTOS] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
+      } else {
+        console.log(`⚠️ [DY-PROVENTOS] ${ticker}: Sem proventos válidos (${origem})`);
+      }
     }
 
-    console.log(`⚠️ [DY-PROVENTOS] ${ticker}: Sem proventos nos últimos 12M`);
-    return { ticker, valor: null };
+    if (!dyDefinido) {
+      dyMap.set(ticker, '0,00%');
+      console.log(`⚠️ [DY] ${ticker}: Setando fallback 0,00%`);
+    }
   });
 
-  await Promise.allSettled(promisesProventos);
+  await Promise.allSettled(promises);
 
   // Garantir que todos tenham DY
   tickers.forEach(ticker => {
