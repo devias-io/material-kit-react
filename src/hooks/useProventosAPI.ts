@@ -32,6 +32,7 @@ interface UploadMetadata {
   totalLinhas?: number;
   linhasProcessadas?: number;
   linhasComErro?: number;
+  origem?: 'arquivo' | 'texto';
 }
 
 // 🔥 FUNÇÃO PRINCIPAL - CALCULAR PROVENTOS VIA API

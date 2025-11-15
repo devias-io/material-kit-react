@@ -17,7 +17,8 @@ import {
   CircularProgress,
   LinearProgress,
   Grid,
-  Stack
+  Stack,
+  TextField
 } from '@mui/material';
 
 // ✅ IMPORTAR HOOK DE AUTENTICAÇÃO
@@ -65,6 +66,7 @@ export default function CentralProventos() {
   
   const [dialogAberto, setDialogAberto] = useState(false);
   const [arquivoSelecionado, setArquivoSelecionado] = useState<File | null>(null);
+  const [csvTexto, setCsvTexto] = useState<string>('');
   const [etapaProcessamento, setEtapaProcessamento] = useState<string>('');
 
   // 🔄 USAR NOVOS HOOKS DA API
@@ -109,17 +111,25 @@ export default function CentralProventos() {
       return;
     }
     setArquivoSelecionado(file);
+    setCsvTexto('');
+    e.target.value = '';
   };
+
+  const possuiEntrada = arquivoSelecionado !== null || csvTexto.trim().length > 0;
 
   // 🌍 VERSÃO UNIVERSAL - ACEITA FORMATO AMERICANO E BRASILEIRO SIMULTANEAMENTE
   const processarCSV = useCallback(async () => {
-    if (!arquivoSelecionado) return;
+    const textoColado = csvTexto.trim();
+    if (!arquivoSelecionado && !textoColado) {
+      alert('Envie um arquivo CSV ou cole os dados no campo indicado.');
+      return;
+    }
 
-    setEtapaProcessamento('Lendo arquivo...');
+    setEtapaProcessamento(arquivoSelecionado ? 'Lendo arquivo...' : 'Processando texto colado...');
     await delay(300);
 
     try {
-      const text = await arquivoSelecionado.text();
+      const text = arquivoSelecionado ? await arquivoSelecionado.text() : textoColado;
       
       // 🧹 LIMPEZA ROBUSTA DO ARQUIVO
       const linhas = text
@@ -439,9 +449,20 @@ if (!dataCom || isNaN(dataCom.getTime())) {
       setEtapaProcessamento('Enviando para servidor...');
 
       // 🚀 USAR API EM VEZ DE localStorage
+      const metadadosUpload = arquivoSelecionado
+        ? {
+            nomeArquivo: arquivoSelecionado.name,
+            tamanhoArquivo: arquivoSelecionado.size,
+            origem: 'arquivo'
+          }
+        : {
+            nomeArquivo: 'dados-colados.csv',
+            tamanhoArquivo: new Blob([textoColado]).size,
+            origem: 'texto'
+          };
+
       const resultado = await uploadProventos(proventos, {
-        nomeArquivo: arquivoSelecionado.name,
-        tamanhoArquivo: arquivoSelecionado.size,
+        ...metadadosUpload,
         totalLinhas: linhas.length,
         linhasProcessadas: proventos.length,
         linhasComErro: errosProcessamento
@@ -458,14 +479,15 @@ if (!dataCom || isNaN(dataCom.getTime())) {
       alert(mensagem);
       setDialogAberto(false);
       setArquivoSelecionado(null);
+      setCsvTexto('');
 
     } catch (error) {
       console.error('Erro no processamento:', error);
-      alert('Erro ao processar o arquivo. Verifique o formato.');
+      alert('Erro ao processar os dados. Verifique o formato.');
     } finally {
       setEtapaProcessamento('');
     }
-  }, [arquivoSelecionado, uploadProventos, carregarEstatisticas]);
+  }, [arquivoSelecionado, csvTexto, uploadProventos, carregarEstatisticas]);
 
   // ✅ EXPORTAR VIA API
   const handleExportarDados = async () => {
@@ -896,10 +918,10 @@ if (!dataCom || isNaN(dataCom.getTime())) {
             disabled={uploadLoading} 
           />
           <label htmlFor="upload-csv">
-            <Button 
-              component="span" 
-              fullWidth 
-              startIcon={<UploadIcon />} 
+            <Button
+              component="span"
+              fullWidth
+              startIcon={<UploadIcon />}
               disabled={uploadLoading}
               sx={{
                 border: '2px dashed #cbd5e1',
@@ -918,7 +940,44 @@ if (!dataCom || isNaN(dataCom.getTime())) {
               {arquivoSelecionado ? `✅ ${arquivoSelecionado.name}` : 'Clique para selecionar arquivo CSV'}
             </Button>
           </label>
-          
+
+          <Box mt={3}>
+            <Typography sx={{ mb: 1, fontWeight: 500, color: '#1e293b' }}>
+              Ou cole o conteúdo do CSV abaixo:
+            </Typography>
+            <TextField
+              value={csvTexto}
+              onChange={event => {
+                setCsvTexto(event.target.value);
+                if (arquivoSelecionado) {
+                  setArquivoSelecionado(null);
+                  const inputElement = document.getElementById('upload-csv') as HTMLInputElement | null;
+                  if (inputElement) {
+                    inputElement.value = '';
+                  }
+                }
+              }}
+              placeholder={
+                'Cole aqui os dados no formato CSV, incluindo a linha de cabeçalho.'
+              }
+              multiline
+              minRows={6}
+              maxRows={12}
+              fullWidth
+              disabled={uploadLoading}
+              sx={{
+                '& .MuiInputBase-root': {
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '12px'
+                }
+              }}
+            />
+            <Typography sx={{ mt: 1, fontSize: '0.75rem', color: '#64748b' }}>
+              Limite de 50.000 linhas por processamento. O upload por arquivo será
+              limpo automaticamente ao colar dados nesta área.
+            </Typography>
+          </Box>
+
           {uploadLoading && (
             <Box mt={3}>
               <Typography sx={{ mb: 1, color: '#64748b', fontSize: '0.875rem' }}>
@@ -952,9 +1011,9 @@ if (!dataCom || isNaN(dataCom.getTime())) {
           >
             Cancelar
           </Button>
-          <Button 
-            onClick={processarCSV} 
-            disabled={!arquivoSelecionado || uploadLoading}
+          <Button
+            onClick={processarCSV}
+            disabled={!possuiEntrada || uploadLoading}
             startIcon={uploadLoading ? <CircularProgress size={16} /> : <CheckIcon />}
             sx={{
               background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
