@@ -1093,8 +1093,10 @@ export default function FiisPage() {
   }, []);
 
   const calcularPerformanceEncerrada = React.useCallback((ativo: any) => {
-    if (!ativo.precoSaida) return 0;
-    return ((ativo.precoSaida - ativo.precoEntrada) / ativo.precoEntrada) * 100;
+    if (!ativo.precoSaida || !ativo.precoEntrada) return 0;
+
+    const proventosTotal = Number.isFinite(ativo.proventosAtivo) ? ativo.proventosAtivo : 0;
+    return ((ativo.precoSaida + proventosTotal - ativo.precoEntrada) / ativo.precoEntrada) * 100;
   }, []);
 
   const compositionColors = React.useMemo(
