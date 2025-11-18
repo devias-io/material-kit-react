@@ -134,6 +134,36 @@ const operacoesCALLFixas: CarteiraOperacao[] = [
     vencimento: '19/12/2025',
     tipoOperacao: 'CALL',
     status: 'Encerrada'
+  },
+  {
+    id: 'call-4',
+    ordem: 4,
+    ativoBase: 'VALE3',
+    codigoOpcao: 'VALEL69',
+    strike: 65.79,
+    premio: null,
+    premioCustom: 'R$ 1,35 a R$ 1,38',
+    rendaPercentual: 2.08,
+    garantia: null, // 1 LOTE
+    precoReferencia: 65.79,
+    vencimento: '19/12/2025',
+    tipoOperacao: 'CALL',
+    status: 'Aberta'
+  },
+  {
+    id: 'call-5',
+    ordem: 5,
+    ativoBase: 'B3SA3',
+    codigoOpcao: 'B3SAL149',
+    strike: 14.77,
+    premio: null,
+    premioCustom: 'R$ 0,31 a R$ 0,34',
+    rendaPercentual: 2.26,
+    garantia: null, // 1 LOTE
+    precoReferencia: 14.77,
+    vencimento: '19/12/2025',
+    tipoOperacao: 'CALL',
+    status: 'Aberta'
   }
 ];
 
