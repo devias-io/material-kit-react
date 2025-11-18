@@ -370,16 +370,23 @@ function useNotificationsState(): UseNotificationsReturn {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  // Effect para monitorar mudanças de auth
+  // ✅ ÚNICO useEffect - gerencia auth E SSE
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    isUnmountedRef.current = false;
+    retryCountRef.current = 0;
+
     const handleAuthChange = () => {
       if (!isAuthenticated()) {
         logDev('useNotifications: Auth perdida, limpando estado');
         clearState();
       } else {
-        console.log('useNotifications: Auth detectada, carregando dados');
-        retryCountRef.current = 0;
+        console.log('useNotifications: Auth detectada, iniciando SSE');
         connectEventSourceDebounced();
+        // fetchNotifications será chamado automaticamente pelo evento 'connected' do SSE
       }
     };
 
@@ -389,21 +396,9 @@ function useNotificationsState(): UseNotificationsReturn {
     // Escutar mudanças no localStorage
     window.addEventListener('storage', handleAuthChange);
 
-    return () => window.removeEventListener('storage', handleAuthChange);
-}, [isAuthenticated, clearState, connectEventSourceDebounced]);
-
-  // Conexão via SSE para notificações em tempo real para evitar polling agressivo
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    isUnmountedRef.current = false;
-    retryCountRef.current = 0;
-    connectEventSourceDebounced();
-
     return () => {
       isUnmountedRef.current = true;
+      window.removeEventListener('storage', handleAuthChange);
       closeEventSource();
       clearReconnectTimeout();
       if (reconnectDebounceRef.current) {
@@ -411,7 +406,7 @@ function useNotificationsState(): UseNotificationsReturn {
         reconnectDebounceRef.current = null;
       }
     };
-  }, [connectEventSourceDebounced, closeEventSource, clearReconnectTimeout]);
+  }, [isAuthenticated, clearState, connectEventSourceDebounced, closeEventSource, clearReconnectTimeout]);
 
   return {
     notifications,
