@@ -1,10 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
-
-const prisma = new PrismaClient();
 
 // Função para gerar senha segura
 function generateSecurePassword(): string {

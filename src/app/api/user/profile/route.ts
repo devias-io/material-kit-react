@@ -1,12 +1,10 @@
 export const dynamic = 'force-dynamic'; // 👈 ADICIONAR ESTA LINHA AQUI
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { getActiveEntitlementCodes } from '@/lib/entitlements';
 import { normalizeCustomPermissions } from '@/lib/custom-permissions';
-
-const prisma = new PrismaClient();
 
 export async function GET(_request: NextRequest) {
   try {

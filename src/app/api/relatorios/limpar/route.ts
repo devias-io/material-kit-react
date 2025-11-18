@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // 🗑️ DELETE - Limpar todos os relatórios do sistema
 export async function DELETE(request: NextRequest) {

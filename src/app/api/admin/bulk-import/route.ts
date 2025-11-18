@@ -2,11 +2,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
-
-const prisma = new PrismaClient();
 
 interface ImportUser {
   firstName: string;

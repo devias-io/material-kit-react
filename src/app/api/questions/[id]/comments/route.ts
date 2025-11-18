@@ -1,9 +1,7 @@
 // src/app/api/questions/[id]/comments/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 // POST - Criar comentário na pergunta ou resposta
 export async function POST(

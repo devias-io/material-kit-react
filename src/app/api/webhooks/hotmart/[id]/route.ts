@@ -2,13 +2,11 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth/password';
 import { activateEntitlement, deactivateEntitlement, isAddonPlan } from '@/lib/entitlements';
 import { enviarEmailCredenciais } from '@/lib/auth/email'; // ✅ ADICIONAR ENVIO DE EMAIL
 import { isLifetimePlan } from '@/lib/lifetime-plans';
-
-const prisma = new PrismaClient();
 
 // ✅ TOKEN ÚNICO DA HOTMART CONFIGURADO
 const TOKEN_MAPPING: Record<string, { name: string; plan: string; integrationId: string }> = {

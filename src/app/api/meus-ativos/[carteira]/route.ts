@@ -3,10 +3,9 @@
 
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, ViesOverride } from '@prisma/client';
+import { ViesOverride } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 const normalizarViesOverrideValor = (valor: unknown): ViesOverride =>
   valor === 'MANTER' ? 'MANTER' : 'AUTO';

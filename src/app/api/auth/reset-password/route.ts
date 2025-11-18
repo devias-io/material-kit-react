@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { gerarTokenReset } from '@/lib/auth/password';
 import { enviarEmailResetSenha } from '@/lib/auth/email';
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,12 +1,10 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { EDUZZ_TOKEN_MAPPING } from '@/data/integrations';
 import { activateEntitlement, deactivateEntitlement, isAddonPlan } from '@/lib/entitlements';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
-
-const prisma = new PrismaClient();
 
 // 🔍 FUNÇÃO PARA DETECTAR PLANO AUTOMATICAMENTE PELOS SEUS PRODUTOS EDUZZ
 function detectarPlanoEduzz(webhookData: any): { plan: string; productName: string } {

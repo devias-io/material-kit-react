@@ -1,11 +1,9 @@
 export const dynamic = 'force-dynamic'; // 👈 ADICIONAR ESTA LINHA AQUI
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 import { normalizeCustomPermissions } from '@/lib/custom-permissions';
-
-const prisma = new PrismaClient();
 
 function parseCustomPermissions(rawValue: unknown): string[] {
   if (!rawValue) {

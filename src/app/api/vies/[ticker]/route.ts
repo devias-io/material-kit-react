@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, ViesOverride } from '@prisma/client';
+import { ViesOverride } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 import { auth } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 const CARTEIRA_MODEL_MAP = {
   microCaps: prisma.userMicroCaps,

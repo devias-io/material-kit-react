@@ -4,10 +4,9 @@
 
 // ✅ Adicionar estas importações no topo do arquivo
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 // ✅ Inicializar o Prisma
-const prisma = new PrismaClient();
 
 export async function GET() {
   try {

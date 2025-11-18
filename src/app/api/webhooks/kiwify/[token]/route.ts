@@ -1,14 +1,13 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { enviarEmailCredenciais } from '@/lib/auth/email'; // ✅ ADICIONADO
 import { hashPassword } from '@/lib/auth/password'; // ✅ ADICIONADO
 import { KIWIFY_TOKEN_MAPPING } from '@/data/integrations';
 import { activateEntitlement, deactivateEntitlement, isAddonPlan } from '@/lib/entitlements';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
-
-const prisma = new PrismaClient();
 
 function extractString(value: unknown): string {
   if (typeof value === 'string') {

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // 🔐 FUNÇÃO DE AUTENTICAÇÃO FLEXÍVEL
 async function getAuthenticatedUser(request: NextRequest) {
@@ -42,7 +40,6 @@ async function getAuthenticatedUser(request: NextRequest) {
     return { isPublic: true, user: null };
   }
 }
-
 
 // 👑 VERIFICAR PERMISSÕES FLEXÍVEIS
 function getPermissions(user: any, isPublic: boolean) {
