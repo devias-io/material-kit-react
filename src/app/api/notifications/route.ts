@@ -67,9 +67,8 @@ export async function GET(request: NextRequest) {
       error: 'Internal server error',
       details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
+  // Sem finally, sem disconnect - o singleton do Prisma gerencia isso!
 }
 
 // POST - Criar nova notificação (para admins)
@@ -211,7 +210,6 @@ export async function POST(request: NextRequest) {
       error: 'Internal server error',
       details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
+  // Sem finally, sem disconnect - o singleton do Prisma gerencia isso!
 }
