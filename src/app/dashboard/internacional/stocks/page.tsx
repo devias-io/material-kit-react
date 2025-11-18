@@ -541,19 +541,31 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
 // ✅ NOVA FUNÇÃO: BUSCAR PROVENTOS PARA EXTERIOR STOCKS (TOTAL RETURN)
 async function buscarProventosExteriorStocks(ativosData: any[]): Promise<Map<string, number>> {
   const novosProventos = new Map<string, number>();
-  
+
   console.log('💰 Iniciando busca de proventos EXTERIOR STOCKS para', ativosData.length, 'ativos');
-  
+
   const buscarProventoAtivo = async (ativo: any) => {
     try {
-      const [dia, mes, ano] = ativo.dataEntrada.split('/');
-      const dataEntradaISO = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-      
-      console.log(`💰 Buscando proventos EXT para ${ativo.ticker} desde ${ativo.dataEntrada}`);
-      
+      const parseDataBR = (dataBr: string | undefined) => {
+        if (!dataBr || typeof dataBr !== 'string') return null;
+        const [dia, mes, ano] = dataBr.split('/');
+        if (!dia || !mes || !ano) return null;
+        const dataISO = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+        const parsed = new Date(`${dataISO}T00:00:00`);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      };
+
+      const dataEntradaDate = parseDataBR(ativo.dataEntrada);
+      const dataSaidaDate = parseDataBR(ativo.dataSaida);
+      const periodoProventos = dataSaidaDate
+        ? `${ativo.dataEntrada ?? 'data não informada'} até ${ativo.dataSaida}`
+        : `desde ${ativo.dataEntrada ?? 'data não informada'}`;
+
+      console.log(`💰 Buscando proventos EXT para ${ativo.ticker} (${periodoProventos})`);
+
       const controller = new AbortController();
       setTimeout(() => controller.abort(), 2000);
-      
+
       const response = await fetch(`/api/proventos/${ativo.ticker}`, {
         signal: controller.signal,
         headers: { 'Content-Type': 'application/json' }
@@ -561,16 +573,17 @@ async function buscarProventosExteriorStocks(ativosData: any[]): Promise<Map<str
       
       if (response.ok) {
         const proventosRaw = await response.json();
-        
-        if (Array.isArray(proventosRaw)) {
-          const dataEntradaDate = new Date(dataEntradaISO + 'T00:00:00');
 
+        if (Array.isArray(proventosRaw)) {
           const proventosFiltrados = proventosRaw.filter((p: any) => {
             if (!p.dataObj) return false;
             const dataProvento = new Date(p.dataObj);
-            
-            // Deve estar após a data de entrada
-            return dataProvento >= dataEntradaDate;
+
+            if (Number.isNaN(dataProvento.getTime())) return false;
+            if (dataEntradaDate && dataProvento < dataEntradaDate) return false;
+            if (dataSaidaDate && dataProvento > dataSaidaDate) return false;
+
+            return true;
           });
           
           const total = proventosFiltrados.reduce((sum: number, p: any) => sum + (p.valor || 0), 0);
