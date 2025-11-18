@@ -307,6 +307,26 @@ function isLiveToday(eventDate: string): boolean {
   );
 }
 
+function sortLiveEvents(events: LiveEvent[]): LiveEvent[] {
+  return [...events].sort((a, b) => {
+    const dateA = new Date(a.eventDate);
+    const dateB = new Date(b.eventDate);
+    const now = new Date();
+
+    const isPastA = dateA < now;
+    const isPastB = dateB < now;
+
+    if (isPastA && !isPastB) return 1;
+    if (!isPastA && isPastB) return -1;
+
+    if (isPastA && isPastB) {
+      return dateB.getTime() - dateA.getTime();
+    }
+
+    return dateA.getTime() - dateB.getTime();
+  });
+}
+
 type VideoProvider = 'vimeo' | 'youtube';
 
 interface VideoEmbedConfig {
@@ -998,55 +1018,62 @@ const visibleModules = React.useMemo(() => {
       setIsSaving(true);
 
       try {
-        const response = await fetch('/api/cf-renda-turbinada/live-events', {
-          method: 'POST',
+        const requestBody = {
+          title: liveForm.title.trim(),
+          description: liveForm.description.trim() || undefined,
+          eventDate: parsedDate.toISOString(),
+          durationMinutes: Number.parseInt(liveForm.durationMinutes, 10) || 60,
+          meetingUrl: liveForm.meetingUrl.trim() || undefined
+        };
+
+        const endpoint = isEditingLive
+          ? `/api/cf-renda-turbinada/live-events/${editingLiveId}`
+          : '/api/cf-renda-turbinada/live-events';
+
+        const response = await fetch(endpoint, {
+          method: isEditingLive ? 'PATCH' : 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: liveForm.title.trim(),
-            description: liveForm.description.trim() || undefined,
-            eventDate: parsedDate.toISOString(),
-            durationMinutes: Number.parseInt(liveForm.durationMinutes, 10) || 60,
-            meetingUrl: liveForm.meetingUrl.trim() || undefined
-          })
+          body: JSON.stringify(requestBody)
         });
 
         const data = (await response.json().catch(() => null)) as { event?: LiveEvent; error?: string } | null;
 
         if (!response.ok || !data?.event) {
-          throw new Error(data?.error ?? 'Erro ao criar live.');
+          throw new Error(data?.error ?? 'Erro ao salvar live.');
         }
 
-setLiveEvents(prev =>
-  [...prev, data.event].sort((a, b) => {
-    const dateA = new Date(a.eventDate);
-    const dateB = new Date(b.eventDate);
-    const now = new Date();
-    
-    const isPastA = dateA < now;
-    const isPastB = dateB < now;
-    
-    if (isPastA && !isPastB) return 1;
-    if (!isPastA && isPastB) return -1;
-    
-    if (isPastA && isPastB) {
-      return dateB.getTime() - dateA.getTime();
-    }
-    
-    return dateA.getTime() - dateB.getTime();
-  })
-);
+        setLiveEvents(prev =>
+          sortLiveEvents(
+            isEditingLive
+              ? prev.map(event => (event.id === data.event.id ? data.event : event))
+              : [...prev, data.event]
+          )
+        );
         setLiveForm(createEmptyLiveForm());
         setShowLiveForm(false);
         setEditingLiveId(null);
       } catch (error) {
-        console.error('Erro ao criar live:', error);
-        setLiveError(error instanceof Error ? error.message : 'Erro ao criar live. Tente novamente.');
+        console.error('Erro ao salvar live:', error);
+        setLiveError(error instanceof Error ? error.message : 'Erro ao salvar live. Tente novamente.');
       } finally {
         setIsSaving(false);
       }
     },
-    [liveForm]
+    [editingLiveId, isEditingLive, liveForm]
   );
+
+  const handleEditLive = React.useCallback((live: LiveEvent) => {
+    setLiveForm({
+      title: live.title,
+      description: live.description ?? '',
+      eventDate: toInputDateTimeValue(live.eventDate),
+      durationMinutes: String(live.durationMinutes ?? 60),
+      meetingUrl: live.meetingUrl ?? ''
+    });
+    setShowLiveForm(true);
+    setLiveError(null);
+    setEditingLiveId(live.id);
+  }, []);
 
   const handleDeleteLive = React.useCallback(
     async (liveId: number) => {
@@ -3959,6 +3986,24 @@ visibleModules.map(module => {
                               }}
                             >
                               📋 Copiar link direto
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleEditLive(live)}
+                              style={{
+                                border: '1px solid #0ea5e9',
+                                backgroundColor: 'transparent',
+                                color: '#0ea5e9',
+                                borderRadius: '9999px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: isSaving ? 'not-allowed' : 'pointer',
+                                opacity: isSaving ? 0.7 : 1
+                              }}
+                              disabled={isSaving}
+                            >
+                              ✏️ Editar
                             </button>
                             <button
                               type="button"
