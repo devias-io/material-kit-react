@@ -1,5 +1,15 @@
+"use client";
 // src/hooks/useNotifications.ts
-import { useState, useEffect, useCallback, useRef } from 'react';
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState
+} from 'react';
+import type { ReactNode } from 'react';
 
 import type { NotificationStreamEvent } from '@/types/notifications';
 
@@ -38,7 +48,13 @@ interface UseNotificationsReturn {
   refreshNotifications: () => void;
 }
 
-export function useNotifications(): UseNotificationsReturn {
+interface NotificationsProviderProps {
+  children: ReactNode;
+}
+
+const NotificationsContext = createContext<UseNotificationsReturn | null>(null);
+
+function useNotificationsState(): UseNotificationsReturn {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -409,4 +425,26 @@ export function useNotifications(): UseNotificationsReturn {
     deleteNotification,
     refreshNotifications
   };
+}
+
+export function NotificationsProvider({
+  children
+}: NotificationsProviderProps): JSX.Element {
+  const value = useNotificationsState();
+
+  return (
+    <NotificationsContext.Provider value={value}>
+      {children}
+    </NotificationsContext.Provider>
+  );
+}
+
+export function useNotifications(): UseNotificationsReturn {
+  const context = useContext(NotificationsContext);
+
+  if (!context) {
+    throw new Error('useNotifications must be used within a NotificationsProvider');
+  }
+
+  return context;
 }
