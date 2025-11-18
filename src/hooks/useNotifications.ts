@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { NotificationStreamEvent } from '@/types/notifications';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
+const MAX_STREAM_RETRIES = 2;
+const STREAM_DEBOUNCE_MS = 5000;
+
 const logDev = (...args: Parameters<typeof console.log>) => {
   if (isDevelopment) {
     console.log(...args);
@@ -45,6 +48,10 @@ export function useNotifications(): UseNotificationsReturn {
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
+  const reconnectDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const retryCountRef = useRef(0);
   const isUnmountedRef = useRef(false);
 
   const clearReconnectTimeout = useCallback(() => {
@@ -61,6 +68,10 @@ export function useNotifications(): UseNotificationsReturn {
       eventSourceRef.current = null;
     }
     clearReconnectTimeout();
+    if (reconnectDebounceRef.current) {
+      clearTimeout(reconnectDebounceRef.current);
+      reconnectDebounceRef.current = null;
+    }
   }, [clearReconnectTimeout]);
 
   // Função para verificar se está autenticado
@@ -163,7 +174,7 @@ export function useNotifications(): UseNotificationsReturn {
     console.log('useNotifications SSE: conectando ao stream');
 
     try {
-      const eventSource = new EventSource('/api/notifications/stream', {
+      const eventSource = new EventSource('/api/notifications/fluxo', {
         withCredentials: true
       });
 
@@ -171,6 +182,7 @@ export function useNotifications(): UseNotificationsReturn {
 
       eventSource.addEventListener('connected', () => {
         console.log('useNotifications SSE: conexão estabelecida');
+        retryCountRef.current = 0;
         fetchNotifications();
       });
 
@@ -189,11 +201,20 @@ export function useNotifications(): UseNotificationsReturn {
         console.error('useNotifications SSE: erro na conexão', error);
         closeEventSource();
 
-        if (!isUnmountedRef.current && !reconnectTimeoutRef.current) {
+        if (
+          !isUnmountedRef.current &&
+          !reconnectTimeoutRef.current &&
+          retryCountRef.current < MAX_STREAM_RETRIES
+        ) {
+          retryCountRef.current += 1;
           reconnectTimeoutRef.current = setTimeout(() => {
             reconnectTimeoutRef.current = null;
             connectEventSource();
-          }, 5000);
+          }, STREAM_DEBOUNCE_MS);
+        } else if (retryCountRef.current >= MAX_STREAM_RETRIES) {
+          console.warn(
+            'useNotifications SSE: limite de tentativas atingido, parando reconexões automáticas'
+          );
         }
       };
     } catch (connectionError) {
@@ -201,6 +222,17 @@ export function useNotifications(): UseNotificationsReturn {
       closeEventSource();
     }
   }, [closeEventSource, fetchNotifications, isAuthenticated]);
+
+  const connectEventSourceDebounced = useCallback(() => {
+    if (reconnectDebounceRef.current) {
+      return;
+    }
+
+    reconnectDebounceRef.current = setTimeout(() => {
+      reconnectDebounceRef.current = null;
+      connectEventSource();
+    }, STREAM_DEBOUNCE_MS);
+  }, [connectEventSource]);
 
   const markAsRead = useCallback(async (id: string) => {
     if (!isAuthenticated()) {
@@ -330,7 +362,8 @@ export function useNotifications(): UseNotificationsReturn {
         clearState();
       } else {
         console.log('useNotifications: Auth detectada, carregando dados');
-        connectEventSource();
+        retryCountRef.current = 0;
+        connectEventSourceDebounced();
         fetchNotifications();
       }
     };
@@ -342,23 +375,28 @@ export function useNotifications(): UseNotificationsReturn {
     window.addEventListener('storage', handleAuthChange);
 
     return () => window.removeEventListener('storage', handleAuthChange);
-  }, [fetchNotifications, isAuthenticated, clearState, connectEventSource]);
+  }, [fetchNotifications, isAuthenticated, clearState, connectEventSourceDebounced]);
 
-  // Conexão via SSE para notificações em tempo real
+  // Conexão via SSE para notificações em tempo real para evitar polling agressivo
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
     }
 
     isUnmountedRef.current = false;
-    connectEventSource();
+    retryCountRef.current = 0;
+    connectEventSourceDebounced();
 
     return () => {
       isUnmountedRef.current = true;
       closeEventSource();
       clearReconnectTimeout();
+      if (reconnectDebounceRef.current) {
+        clearTimeout(reconnectDebounceRef.current);
+        reconnectDebounceRef.current = null;
+      }
     };
-  }, [connectEventSource, closeEventSource, clearReconnectTimeout]);
+  }, [connectEventSourceDebounced, closeEventSource, clearReconnectTimeout]);
 
   return {
     notifications,
