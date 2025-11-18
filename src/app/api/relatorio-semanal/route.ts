@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { notifyNewReport } from '@/utils/notifications';
 import { auth } from '@/lib/auth';
 import { verifyToken } from '@/utils/auth';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-const prisma = new PrismaClient();
 
 // Centraliza a autenticação de administradores
 async function authenticateAdmin(request: NextRequest) {

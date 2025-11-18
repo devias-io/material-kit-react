@@ -1,10 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { HOTMART_INTEGRATIONS } from '@/data/integrations';
-
-const prisma = new PrismaClient();
 
 // Verificar autenticação admin
 async function verifyAuth(request: NextRequest) {

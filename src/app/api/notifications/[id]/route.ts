@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 import { auth } from '@/lib/auth';
 import { emitNotificationEvent } from '@/lib/notificationsEmitter';
-
-const prisma = new PrismaClient();
 
 // PUT - Marcar notificação como lida
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {

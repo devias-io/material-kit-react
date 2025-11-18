@@ -1,9 +1,7 @@
 // src/app/api/response-templates/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/utils/auth';
-
-const prisma = new PrismaClient();
 
 // GET - Buscar template específico
 export async function GET(

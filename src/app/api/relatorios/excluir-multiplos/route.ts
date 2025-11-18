@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // 🗑️ DELETE - Excluir múltiplos relatórios por IDs
 export async function DELETE(request: NextRequest) {

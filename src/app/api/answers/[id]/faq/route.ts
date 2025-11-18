@@ -1,8 +1,6 @@
 // src/app/api/answers/[id]/faq/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // PUT - Marcar/desmarcar resposta como FAQ
 export async function PUT(
@@ -104,7 +102,6 @@ export async function PUT(
       }, { status: 400 });
     }
 
-
     // Se está marcando como FAQ, gerar um título se não fornecido
     let finalFaqTitle = faqTitle;
     const finalIsFaq = isFaq !== undefined ? isFaq : answer.isFaq;
@@ -140,7 +137,6 @@ export async function PUT(
     if (content !== undefined) {
       updateData.content = content;
     }
-
 
     const updatedAnswer = await prisma.answer.update({
       where: { id: params.id },

@@ -1,9 +1,7 @@
 // src/app/api/questions/stats/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 // GET - Estatísticas para dashboard admin
 export async function GET(_request: NextRequest) {

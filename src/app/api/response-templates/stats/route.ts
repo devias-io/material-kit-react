@@ -1,9 +1,7 @@
 // src/app/api/response-templates/stats/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/utils/auth';
-
-const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {

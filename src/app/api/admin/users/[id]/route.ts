@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { getActiveEntitlementCodes } from '@/lib/entitlements';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
 import { normalizeCustomPermissions, serializeCustomPermissions } from '@/lib/custom-permissions';
-
-const prisma = new PrismaClient();
 
 async function verifyAuth() {
   try {

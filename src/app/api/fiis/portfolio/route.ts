@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient, type UserFiis, type ViesOverride } from '@prisma/client';
+import { type UserFiis, type ViesOverride } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { DEFAULT_FIIS_PORTFOLIO } from '@/data/carteiras-default';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const runtime = 'nodejs';
-
-const prisma = new PrismaClient();
 
 interface FiiPortfolioAsset {
   id: string;

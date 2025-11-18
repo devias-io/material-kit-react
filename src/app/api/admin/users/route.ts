@@ -1,18 +1,12 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { enviarEmailCredenciais } from '@/lib/auth/email';
 import { hashPassword, gerarSenhaSegura } from '@/lib/auth/password'; // ✅ ADICIONADO
 import { auth } from '@/lib/auth';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
 import { normalizeCustomPermissions, serializeCustomPermissions } from '@/lib/custom-permissions';
-
-const prisma = new PrismaClient({
-  datasourceUrl: process.env.NODE_ENV === 'production' 
-    ? process.env.DATABASE_URL 
-    : 'file:./dev.db'
-});
 
 // Função de autenticação
 async function verifyAuth() {
