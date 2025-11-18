@@ -380,7 +380,6 @@ function useNotificationsState(): UseNotificationsReturn {
         console.log('useNotifications: Auth detectada, carregando dados');
         retryCountRef.current = 0;
         connectEventSourceDebounced();
-        fetchNotifications();
       }
     };
 
@@ -391,7 +390,7 @@ function useNotificationsState(): UseNotificationsReturn {
     window.addEventListener('storage', handleAuthChange);
 
     return () => window.removeEventListener('storage', handleAuthChange);
-  }, [fetchNotifications, isAuthenticated, clearState, connectEventSourceDebounced]);
+}, [isAuthenticated, clearState, connectEventSourceDebounced]);
 
   // Conexão via SSE para notificações em tempo real para evitar polling agressivo
   useEffect(() => {
