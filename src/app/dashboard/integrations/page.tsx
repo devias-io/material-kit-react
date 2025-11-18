@@ -840,10 +840,22 @@ function useDividendosIntegradas() {
     
     const buscarProventoAtivo = async (ativo: any) => {
       try {
-        const [dia, mes, ano] = ativo.dataEntrada.split('/');
-        const dataEntradaISO = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-        
-        console.log(`💰 Buscando proventos para ${ativo.ticker} desde ${ativo.dataEntrada}`);
+        const parseDataBR = (dataBr: string | undefined) => {
+          if (!dataBr || typeof dataBr !== 'string') return null;
+          const [dia, mes, ano] = dataBr.split('/');
+          if (!dia || !mes || !ano) return null;
+          const dataISO = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+          const parsed = new Date(`${dataISO}T00:00:00`);
+          return Number.isNaN(parsed.getTime()) ? null : parsed;
+        };
+
+        const dataEntradaDate = parseDataBR(ativo.dataEntrada);
+        const dataSaidaDate = parseDataBR(ativo.dataSaida);
+        const periodoProventos = dataSaidaDate
+          ? `${ativo.dataEntrada} até ${ativo.dataSaida}`
+          : `desde ${ativo.dataEntrada}`;
+
+        console.log(`💰 Buscando proventos para ${ativo.ticker} (${periodoProventos})`);
         
         const controller = new AbortController();
         setTimeout(() => controller.abort(), 2000);
@@ -857,26 +869,14 @@ function useDividendosIntegradas() {
           const proventosRaw = await response.json();
           
           if (Array.isArray(proventosRaw)) {
-            const dataEntradaDate = new Date(dataEntradaISO + 'T00:00:00');
-
-            // ✅ CORREÇÃO: FILTRAR ATÉ DATA DE SAÍDA PARA POSIÇÕES ENCERRADAS
-            let dataLimite = null;
-            if (ativo.posicaoEncerrada && ativo.dataSaida) {
-              const [dia, mes, ano] = ativo.dataSaida.split('/');
-              const dataSaidaISO = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-              dataLimite = new Date(dataSaidaISO + 'T23:59:59'); // Incluir o dia da saída
-            }
-
             const proventosFiltrados = proventosRaw.filter((p: any) => {
               if (!p.dataObj) return false;
               const dataProvento = new Date(p.dataObj);
-              
-              // Deve estar após a data de entrada
-              if (dataProvento < dataEntradaDate) return false;
-              
-              // Se for posição encerrada, deve estar antes ou na data de saída
-              if (dataLimite && dataProvento > dataLimite) return false;
-              
+
+              if (Number.isNaN(dataProvento.getTime())) return false;
+              if (dataEntradaDate && dataProvento < dataEntradaDate) return false;
+              if (dataSaidaDate && dataProvento > dataSaidaDate) return false;
+
               return true;
             });
             
