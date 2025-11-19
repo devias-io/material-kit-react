@@ -1,3 +1,7 @@
+import { buildCacheHeaders } from '@/server/cache-headers';
+
+const IFIX_CACHE_HEADERS = buildCacheHeaders({ ttl: 90, swr: 600 });
+
 export async function GET() {
   try {
     const agora = new Date();
@@ -27,7 +31,7 @@ export async function GET() {
 
     console.log('API IFIX chamada:', dadosIfix);
 
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       ifix: dadosIfix,
       success: true,
       timestamp: agora.toISOString(),
@@ -37,7 +41,7 @@ export async function GET() {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'no-cache'
+        ...IFIX_CACHE_HEADERS
       }
     });
 

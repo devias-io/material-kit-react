@@ -13,7 +13,7 @@ const nextConfig = {
     serverComponentsExternalPackages: ['sharp'],
     // ✅ ADICIONAR ISSO
     serverActions: {
-      bodySizeLimit: '50mb',
+      bodySizeLimit: '12mb',
     },
   },
   
@@ -27,30 +27,21 @@ const nextConfig = {
   // ✅ ADICIONAR ISSO
   api: {
     bodyParser: {
-      sizeLimit: '50mb',
+      sizeLimit: '12mb',
     },
     responseLimit: false,
   },
   
   // Configurações para upload de arquivos
   serverRuntimeConfig: {
-    maxFileSize: '50mb' // ✅ AUMENTAR DE 10mb PARA 50mb
+    maxFileSize: '12mb'
   },
   
   async headers() {
     return [
-      // Headers para APIs financeiras (sem cache)
+      // Headers para rotas sensíveis que nunca devem ser cacheadas
       {
-        source: '/api/financial/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-store, must-revalidate',
-          },
-        ],
-      },
-      {
-        source: '/api/:path*',
+        source: '/api/(auth|user|admin|carteiras|agenda|reports|relatorios|notifications|answers|questions|webhooks|hotmart|instagram-cadastro|meus-ativos|report-files|generate-pdf|cron|faq|check-admin)/:path*',
         headers: [
           {
             key: 'Cache-Control',
@@ -73,6 +64,10 @@ const nextConfig = {
           {
             key: 'Access-Control-Allow-Headers',
             value: 'Content-Type, Authorization'
+          },
+          {
+            key: 'Cache-Control',
+            value: 'no-store, must-revalidate'
           }
         ]
       }

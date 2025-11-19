@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BrapiService } from '@/lib/brapi-service';
+import { buildCacheHeaders } from '@/server/cache-headers';
 
 // 🛡️ CONFIGURAÇÃO PARA VERCEL - EVITA ERRO DE STATIC GENERATION
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
+export const revalidate = 60;
+export const fetchCache = 'default-cache';
 export const runtime = 'nodejs';
+
+const CACHE_HEADERS = buildCacheHeaders({ ttl: 60, swr: 600 });
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +26,7 @@ export async function GET(request: NextRequest) {
     }
     
     const symbolsArray = symbols.split(',').map(s => s.trim().toUpperCase());
-    const quotes = await BrapiService.fetchQuotes(symbolsArray);
+    const quotes = await BrapiService.fetchQuotes(symbolsArray, { cacheTtlMs: 60 * 1000 });
     
     console.log('✅ Quotes processadas:', quotes.length, 'ativos');
     
@@ -37,10 +40,7 @@ export async function GET(request: NextRequest) {
       { 
         status: 200,
         headers: {
-          // Configuração de cache mais segura para Vercel
-          'Cache-Control': 'no-store, max-age=0',
-          'CDN-Cache-Control': 'no-store',
-          'Vercel-CDN-Cache-Control': 'no-store',
+          ...CACHE_HEADERS,
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type'

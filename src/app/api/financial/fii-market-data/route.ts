@@ -1,5 +1,6 @@
 // app/api/financial/fii-market-data/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { buildCacheHeaders } from '@/server/cache-headers';
 
 // 🔥 TIPOS PARA DADOS DE MERCADO DOS FIIs
 interface FIIMarketData {
@@ -28,6 +29,7 @@ interface FIIMarketData {
 // 🚀 CACHE GLOBAL PARA OTIMIZAÇÃO
 let cachedData: { data: FIIMarketData; timestamp: number } | null = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+const CACHE_HEADERS = buildCacheHeaders({ ttl: 300, swr: 1200 });
 
 // 🔑 TOKEN BRAPI VALIDADO
 const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
@@ -159,7 +161,7 @@ export async function GET(request: NextRequest) {
         timestamp: new Date(cachedData.timestamp).toISOString(),
         source: 'cache',
         cacheAge: Math.floor((now - cachedData.timestamp) / 1000)
-      });
+      }, { headers: CACHE_HEADERS });
     }
 
     // 📊 BUSCAR DADOS FRESCOS
@@ -178,7 +180,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
       source: 'fresh',
       nextUpdate: new Date(now + CACHE_DURATION).toISOString()
-    });
+    }, { headers: CACHE_HEADERS });
 
   } catch (error) {
     console.error('❌ Erro na API FII Market Data:', error);

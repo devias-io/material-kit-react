@@ -1,14 +1,14 @@
 {
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/(auth|user|admin|carteiras|agenda|reports|relatorios|notifications|answers|questions|webhooks|hotmart|instagram-cadastro|meus-ativos|report-files|generate-pdf|cron|faq|check-admin)/:path*",
       "headers": [
         {
           "key": "Cache-Control",
           "value": "no-cache, no-store, must-revalidate"
         },
         {
-          "key": "Pragma", 
+          "key": "Pragma",
           "value": "no-cache"
         },
         {
