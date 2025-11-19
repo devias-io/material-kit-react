@@ -1,13 +1,15 @@
 // src/app/api/financial/market-data/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getMarketSnapshot, type CombinedQuote } from '@/server/market-data';
+import { buildCacheHeaders } from '@/server/cache-headers';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
+export const revalidate = 120;
+export const fetchCache = 'default-cache';
 export const runtime = 'nodejs';
 
 const MARKET_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const RESPONSE_CACHE_HEADERS = buildCacheHeaders({ ttl: 120, swr: 600 });
 
 const FALLBACK_MARKET_DATA = {
   ibovespa: { value: '136.431', trend: 'down' as const, diff: -0.26 },
@@ -106,9 +108,7 @@ export async function GET(_request: NextRequest) {
     return NextResponse.json(body, {
       status: 200,
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
-        'CDN-Cache-Control': 'no-store',
-        'Vercel-CDN-Cache-Control': 'no-store',
+        ...RESPONSE_CACHE_HEADERS,
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type'

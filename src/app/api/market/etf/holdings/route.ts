@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { buildCacheHeaders } from '@/server/cache-headers';
 
 type Holding = {
   symbol: string;
@@ -23,6 +24,8 @@ type ETFData = {
 const YAHOO_ENDPOINT = 'https://query2.finance.yahoo.com/v10/finance/quoteSummary/';
 const YAHOO_MODULES = 'topHoldings%2CsummaryProfile%2CquoteType';
 
+const ETF_CACHE_HEADERS = buildCacheHeaders({ ttl: 300, swr: 1800 });
+
 async function fetchFromYahoo(ticker: string): Promise<ETFData | null> {
   try {
     const response = await fetch(
@@ -32,7 +35,8 @@ async function fetchFromYahoo(ticker: string): Promise<ETFData | null> {
           'User-Agent': 'Mozilla/5.0 (compatible; MembrosFatosDaBolsaBot/1.0)',
           'Accept': 'application/json'
         },
-        cache: 'no-store'
+        cache: 'force-cache',
+        next: { revalidate: 300 }
       }
     );
 
@@ -86,7 +90,10 @@ async function fetchFromFMP(ticker: string): Promise<ETFData | null> {
   const url = `https://financialmodelingprep.com/api/v3/etf-holder/${ticker}?apikey=${apiKey}`;
 
   try {
-    const response = await fetch(url, { cache: 'no-store' });
+    const response = await fetch(url, {
+      cache: 'force-cache',
+      next: { revalidate: 300 }
+    });
     if (!response.ok) {
       return null;
     }
@@ -150,7 +157,7 @@ export async function GET(request: Request) {
         success: true,
         source: 'yahoo',
         data: yahooData
-      });
+      }, { headers: ETF_CACHE_HEADERS });
     }
 
     const fmpData = await fetchFromFMP(normalizedTicker);
@@ -159,7 +166,7 @@ export async function GET(request: Request) {
         success: true,
         source: 'fmp',
         data: fmpData
-      });
+      }, { headers: ETF_CACHE_HEADERS });
     }
 
     return NextResponse.json(
@@ -169,7 +176,7 @@ export async function GET(request: Request) {
         data: null,
         message: `Holdings não encontrados para ${normalizedTicker}.`
       },
-      { status: 404 }
+      { status: 404, headers: ETF_CACHE_HEADERS }
     );
   } catch (error) {
     console.error(`[ETF Holdings] Unexpected error for ${normalizedTicker}:`, error);

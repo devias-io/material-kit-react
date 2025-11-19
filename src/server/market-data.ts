@@ -137,7 +137,8 @@ function resolveQuote(
 
 async function fetchFromBrapi(
   requests: NormalizedRequest[],
-  includeDividends: boolean
+  includeDividends: boolean,
+  cacheTtlSeconds: number
 ): Promise<Record<string, any>> {
   if (requests.length === 0) {
     return {};
@@ -171,7 +172,10 @@ async function fetchFromBrapi(
             Accept: 'application/json',
             'User-Agent': 'MembrosFatosdaBolsa/1.0'
           },
-          cache: 'no-store'
+          cache: 'force-cache',
+          next: {
+            revalidate: cacheTtlSeconds
+          }
         });
 
         if (!response.ok) {
@@ -204,7 +208,10 @@ async function fetchFromBrapi(
   return aggregatedResults;
 }
 
-async function fetchFromYahoo(requests: NormalizedRequest[]): Promise<Record<string, any>> {
+async function fetchFromYahoo(
+  requests: NormalizedRequest[],
+  cacheTtlSeconds: number
+): Promise<Record<string, any>> {
   if (requests.length === 0) {
     return {};
   }
@@ -238,7 +245,10 @@ async function fetchFromYahoo(requests: NormalizedRequest[]): Promise<Record<str
             Accept: 'application/json',
             Referer: 'https://finance.yahoo.com/'
           },
-          cache: 'no-store'
+          cache: 'force-cache',
+          next: {
+            revalidate: cacheTtlSeconds
+          }
         });
 
         if (!response.ok) {
@@ -362,6 +372,7 @@ export async function getMarketSnapshot(
 ): Promise<MarketSnapshot> {
   const includeDividends = Boolean(options.includeDividends);
   const cacheTtlMs = options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
+  const cacheTtlSeconds = Math.max(30, Math.floor(cacheTtlMs / 1000));
 
   const requests = inputs.map((input) => buildRequest(input));
   const cacheKey = buildCacheKey(requests, includeDividends);
@@ -379,8 +390,8 @@ export async function getMarketSnapshot(
   }
 
   const [brapiMap, yahooMap] = await Promise.all([
-    fetchFromBrapi(requests, includeDividends),
-    fetchFromYahoo(requests)
+    fetchFromBrapi(requests, includeDividends, cacheTtlSeconds),
+    fetchFromYahoo(requests, cacheTtlSeconds)
   ]);
 
   const combined = buildCombinedQuotes(requests, brapiMap, yahooMap);
