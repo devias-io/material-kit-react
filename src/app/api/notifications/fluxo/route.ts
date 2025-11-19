@@ -7,6 +7,6 @@ export const revalidate = 60;
 export async function GET(request: NextRequest) {
   return createNotificationStreamResponse(request, {
     routeLabel: '/api/notifications/fluxo',
-    connectionTimeoutMs: 120000
+    connectionTimeoutMs: 60000
   });
 }
