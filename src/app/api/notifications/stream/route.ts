@@ -3,7 +3,8 @@ import { NextRequest } from 'next/server';
 import { createNotificationStreamResponse } from '@/lib/notificationStream';
 
 // Alias route for the notifications SSE stream used by legacy clients
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export async function GET(request: NextRequest) {
   return createNotificationStreamResponse(request, {
