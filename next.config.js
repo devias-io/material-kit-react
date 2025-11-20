@@ -31,7 +31,7 @@ const nextConfig = {
     },
     responseLimit: false,
   },
-  
+
   // Configurações para upload de arquivos
   serverRuntimeConfig: {
     maxFileSize: '12mb'
