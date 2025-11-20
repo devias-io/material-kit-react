@@ -31,7 +31,16 @@ const nextConfig = {
     },
     responseLimit: false,
   },
-  
+
+  async rewrites() {
+    return [
+      {
+        source: '/api/notifications/stream',
+        destination: '/api/notifications/fluxo',
+      },
+    ];
+  },
+
   // Configurações para upload de arquivos
   serverRuntimeConfig: {
     maxFileSize: '12mb'

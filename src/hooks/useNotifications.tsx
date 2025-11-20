@@ -69,6 +69,7 @@ function useNotificationsState(): UseNotificationsReturn {
   );
   const retryCountRef = useRef(0);
   const isUnmountedRef = useRef(false);
+  const hasAuthenticatedRef = useRef(false);
 
   const clearReconnectTimeout = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -91,8 +92,16 @@ function useNotificationsState(): UseNotificationsReturn {
   }, [clearReconnectTimeout]);
 
   // Função para verificar se está autenticado
-  const isAuthenticated = useCallback(() => {
-    return true;
+  const isAuthenticated = useCallback(async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/auth/check', {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
   }, []);
 
   // Função para limpar estado quando não autenticado
@@ -102,6 +111,7 @@ function useNotificationsState(): UseNotificationsReturn {
     setUnreadCount(0);
     setError(null);
     setLoading(false);
+    hasAuthenticatedRef.current = false;
   }, [closeEventSource]);
 
   const getAuthHeaders = useCallback(() => {
@@ -111,8 +121,8 @@ function useNotificationsState(): UseNotificationsReturn {
   }, []);
 
   const fetchNotifications = useCallback(async () => {
-    // Verificar auth antes de fazer request
-    if (!isAuthenticated()) {
+    const authenticated = await isAuthenticated();
+    if (!authenticated) {
       logDev('useNotifications: Usuário não autenticado, limpando estado');
       clearState();
       return;
@@ -163,7 +173,7 @@ function useNotificationsState(): UseNotificationsReturn {
     }
   }, [getAuthHeaders, isAuthenticated, clearState]);
 
-  const connectEventSource = useCallback(() => {
+  const connectEventSource = useCallback(async () => {
     if (typeof window === 'undefined') {
       return;
     }
@@ -172,7 +182,8 @@ function useNotificationsState(): UseNotificationsReturn {
       return;
     }
 
-    if (!isAuthenticated()) {
+    const authenticated = await isAuthenticated();
+    if (!authenticated) {
       console.log('useNotifications SSE: usuário não autenticado, não conectando');
       closeEventSource();
       return;
@@ -199,6 +210,7 @@ function useNotificationsState(): UseNotificationsReturn {
       eventSource.addEventListener('connected', () => {
         console.log('useNotifications SSE: conexão estabelecida');
         retryCountRef.current = 0;
+        hasAuthenticatedRef.current = true;
         fetchNotifications();
       });
 
@@ -213,9 +225,16 @@ function useNotificationsState(): UseNotificationsReturn {
         }
       });
 
-      eventSource.onerror = error => {
+      eventSource.onerror = async error => {
         console.error('useNotifications SSE: erro na conexão', error);
         closeEventSource();
+
+        const stillAuthenticated = await isAuthenticated();
+        if (!stillAuthenticated) {
+          console.log('useNotifications SSE: não autenticado mais, parando reconexões');
+          clearState();
+          return;
+        }
 
         if (
           !isUnmountedRef.current &&
@@ -237,7 +256,7 @@ function useNotificationsState(): UseNotificationsReturn {
       console.error('useNotifications SSE: falha ao iniciar EventSource', connectionError);
       closeEventSource();
     }
-  }, [closeEventSource, fetchNotifications, isAuthenticated]);
+  }, [clearState, closeEventSource, fetchNotifications, isAuthenticated]);
 
   const connectEventSourceDebounced = useCallback(() => {
     if (reconnectDebounceRef.current) {
@@ -251,7 +270,8 @@ function useNotificationsState(): UseNotificationsReturn {
   }, [connectEventSource]);
 
   const markAsRead = useCallback(async (id: string) => {
-    if (!isAuthenticated()) {
+    const authenticated = await isAuthenticated();
+    if (!authenticated) {
       clearState();
       return;
     }
@@ -291,7 +311,8 @@ function useNotificationsState(): UseNotificationsReturn {
   }, [getAuthHeaders, isAuthenticated, clearState]);
 
   const markAllAsRead = useCallback(async () => {
-    if (!isAuthenticated()) {
+    const authenticated = await isAuthenticated();
+    if (!authenticated) {
       clearState();
       return;
     }
@@ -328,7 +349,8 @@ function useNotificationsState(): UseNotificationsReturn {
   }, [getAuthHeaders, isAuthenticated, clearState]);
 
   const deleteNotification = useCallback(async (id: string) => {
-    if (!isAuthenticated()) {
+    const authenticated = await isAuthenticated();
+    if (!authenticated) {
       clearState();
       return;
     }
@@ -379,26 +401,22 @@ function useNotificationsState(): UseNotificationsReturn {
     isUnmountedRef.current = false;
     retryCountRef.current = 0;
 
-    const handleAuthChange = () => {
-      if (!isAuthenticated()) {
-        logDev('useNotifications: Auth perdida, limpando estado');
+    const initAuth = async () => {
+      const authenticated = await isAuthenticated();
+      if (!authenticated) {
+        logDev('useNotifications: Não autenticado no mount');
         clearState();
       } else {
-        console.log('useNotifications: Auth detectada, iniciando SSE');
+        console.log('useNotifications: Autenticado, iniciando SSE');
+        hasAuthenticatedRef.current = true;
         connectEventSourceDebounced();
-        // fetchNotifications será chamado automaticamente pelo evento 'connected' do SSE
       }
     };
 
-    // Verificar imediatamente
-    handleAuthChange();
-
-    // Escutar mudanças no localStorage
-    window.addEventListener('storage', handleAuthChange);
+    initAuth();
 
     return () => {
       isUnmountedRef.current = true;
-      window.removeEventListener('storage', handleAuthChange);
       closeEventSource();
       clearReconnectTimeout();
       if (reconnectDebounceRef.current) {
