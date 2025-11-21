@@ -3,9 +3,13 @@ import { prisma } from '@/lib/prisma';
 
 import { auth } from '@/lib/auth';
 import { emitNotificationEvent } from '@/lib/notificationsEmitter';
+import { CacheService } from '@/lib/redis';
+import { logApiMetric } from '@/lib/metrics';
 
 // GET - Listar notificações do usuário
 export async function GET(request: NextRequest) {
+  const startedAt = Date.now();
+
   try {
     const { searchParams } = new URL(request.url);
     const session = await auth();
@@ -28,36 +32,70 @@ export async function GET(request: NextRequest) {
       whereClause.read = false;
     }
 
-    const notifications = await prisma.notification.findMany({
-      where: whereClause,
-      orderBy: {
-        createdAt: 'desc'
+    const cacheKey = CacheService.getCacheKey(
+      'notifications',
+      user.id,
+      `page:${page}`,
+      `limit:${limit}`,
+      `unread:${unreadOnly}`
+    );
+
+    const { data, metadata } = await CacheService.withCache(
+      cacheKey,
+      async () => {
+        const [notifications, totalNotifications, unreadCount] = await Promise.all([
+          prisma.notification.findMany({
+            where: whereClause,
+            orderBy: {
+              createdAt: 'desc'
+            },
+            skip: (page - 1) * limit,
+            take: limit
+          }),
+          prisma.notification.count({
+            where: whereClause
+          }),
+          prisma.notification.count({
+            where: {
+              userId: user.id,
+              read: false
+            }
+          })
+        ]);
+
+        return {
+          notifications,
+          unreadCount,
+          pagination: {
+            page,
+            limit,
+            total: totalNotifications,
+            totalPages: Math.ceil(totalNotifications / limit)
+          }
+        };
       },
-      skip: (page - 1) * limit,
-      take: limit
-    });
+      {
+        ttlSeconds: 45,
+        tags: [`notifications:${user.id}`],
+      }
+    );
 
-    const totalNotifications = await prisma.notification.count({
-      where: whereClause
-    });
-
-    const unreadCount = await prisma.notification.count({
-      where: {
-        userId: user.id,
-        read: false
+    const response = NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'private, max-age=0, must-revalidate',
       }
     });
 
-    return NextResponse.json({
-      notifications,
-      unreadCount,
-      pagination: {
-        page,
-        limit,
-        total: totalNotifications,
-        totalPages: Math.ceil(totalNotifications / limit)
-      }
+    logApiMetric({
+      route: '/api/notifications',
+      cacheHit: metadata.cached,
+      cacheBackend: metadata.backend,
+      durationMs: Date.now() - startedAt,
+      status: 200,
+      extra: { unreadOnly, page, limit },
     });
+
+    return response;
 
   } catch (error) {
     console.error('Error fetching notifications:', error);
@@ -195,6 +233,8 @@ export async function POST(request: NextRequest) {
         reason: 'created'
       });
     });
+
+    await CacheService.invalidateTags(Array.from(recipientIds).map(id => `notifications:${id}`));
 
     return NextResponse.json({
       notificationsCreated: notifications.length,
