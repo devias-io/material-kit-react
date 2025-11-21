@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server';
-
 import { auth } from '@/lib/auth';
 import { addNotificationListener } from '@/lib/notificationsEmitter';
 import type { NotificationRealtimeEvent, NotificationStreamEvent } from '@/types/notifications';
@@ -20,14 +19,16 @@ export async function createNotificationStreamResponse(
 ): Promise<Response> {
   try {
     const session = await auth();
-
+    
     if (!session?.user) {
+      console.log(`[Notifications stream] ${routeLabel}: No session, returning 401`);
       return new Response('Authentication required', { status: 401 });
     }
 
     const userId = session.user.id;
-    const encoder = new TextEncoder();
+    console.log(`[Notifications stream] ${routeLabel}: Starting stream for user ${userId}`);
 
+    const encoder = new TextEncoder();
     let removeListener: (() => void) | null = null;
     let keepAliveTimer: ReturnType<typeof setInterval> | null = null;
     let abortHandler: (() => void) | null = null;
@@ -38,22 +39,18 @@ export async function createNotificationStreamResponse(
         clearInterval(keepAliveTimer);
         keepAliveTimer = null;
       }
-
       if (connectionTimeout) {
         clearTimeout(connectionTimeout);
         connectionTimeout = null;
       }
-
       if (removeListener) {
         removeListener();
         removeListener = null;
       }
-
       if (abortHandler) {
         request.signal.removeEventListener('abort', abortHandler);
         abortHandler = null;
       }
-
       console.log(`[Notifications stream] ${routeLabel} cleanup executed (${context}) for user ${userId}`);
     };
 
@@ -64,8 +61,7 @@ export async function createNotificationStreamResponse(
           eventName?: NotificationStreamEvent['type']
         ) => {
           const type = eventName ?? event.type;
-          const payload = `event: ${type}\n` +
-            `data: ${JSON.stringify(event)}\n\n`;
+          const payload = `event: ${type}\ndata: ${JSON.stringify(event)}\n\n`;
           controller.enqueue(encoder.encode(payload));
         };
 
@@ -88,8 +84,8 @@ export async function createNotificationStreamResponse(
 
         if (connectionTimeoutMs && connectionTimeoutMs > 0) {
           connectionTimeout = setTimeout(() => {
-            console.error(`[` +
-              `Notifications stream] ${routeLabel} connection timeout for user ${userId} after ${connectionTimeoutMs}ms`
+            console.log(
+              `[Notifications stream] ${routeLabel} connection timeout for user ${userId} after ${connectionTimeoutMs}ms`
             );
             cleanup('timeout');
             controller.close();
