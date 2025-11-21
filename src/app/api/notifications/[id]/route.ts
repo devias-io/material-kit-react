@@ -65,7 +65,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    // ✅ ADICIONAR: Debounce com cache temporário de 5s
+    // ✅ Debounce com cache temporário de 5s
     const dedupeKey = `mark-read:${session.user.id}:${params.id}`;
     
     const { data, metadata } = await CacheService.withCache(
@@ -105,16 +105,19 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
     }
 
-    // ✅ ADICIONAR: Log de métrica
+    // ✅ CORRIGIDO: Remover campos extras que logApiMetric não suporta
     logApiMetric({
-      route: '/api/notifications/[id]',
-      method: 'PUT',
+      route: '/api/notifications/[id]', // PUT
       cacheHit: metadata.cached,
       cacheBackend: metadata.backend,
       durationMs: Date.now() - startedAt,
       status: 200,
-      extra: { deduped: metadata.cached } // Indica se foi deduplicado
     });
+
+    // ✅ ADICIONAR: Log extra para debug (opcional)
+    if (metadata.cached) {
+      console.log(`[Debounce] PUT /api/notifications/${params.id} deduplicado`);
+    }
 
     return NextResponse.json(data);
 
@@ -122,8 +125,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     console.error('Error marking notification as read:', error);
     
     logApiMetric({
-      route: '/api/notifications/[id]',
-      method: 'PUT',
+      route: '/api/notifications/[id]', // PUT
       cacheHit: false,
       cacheBackend: 'none',
       durationMs: Date.now() - startedAt,
