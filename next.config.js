@@ -8,10 +8,14 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   
+  // ✅ ADICIONAR ISSO - Force new bundle generation
+  generateBuildId: async () => {
+    return `build-${Date.now()}`
+  },
+  
   experimental: {
     forceSwcTransforms: true,
     serverComponentsExternalPackages: ['sharp'],
-    // ✅ ADICIONAR ISSO
     serverActions: {
       bodySizeLimit: '12mb',
     },
@@ -24,22 +28,19 @@ const nextConfig = {
     ],
   },
   
-  // ✅ ADICIONAR ISSO
   api: {
     bodyParser: {
       sizeLimit: '12mb',
     },
     responseLimit: false,
   },
-
-  // Configurações para upload de arquivos
+  
   serverRuntimeConfig: {
     maxFileSize: '12mb'
   },
   
   async headers() {
     return [
-      // Headers para rotas sensíveis que nunca devem ser cacheadas
       {
         source: '/api/(auth|user|admin|carteiras|agenda|reports|relatorios|notifications|answers|questions|webhooks|hotmart|instagram-cadastro|meus-ativos|report-files|generate-pdf|cron|faq|check-admin)/:path*',
         headers: [
@@ -49,7 +50,6 @@ const nextConfig = {
           },
         ],
       },
-      // Headers específicos para upload de carteiras
       {
         source: '/api/carteiras/upload',
         headers: [
@@ -74,5 +74,4 @@ const nextConfig = {
     ];
   },
 }
-
 module.exports = nextConfig;
