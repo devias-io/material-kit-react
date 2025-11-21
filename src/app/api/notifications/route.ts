@@ -4,8 +4,6 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { emitNotificationEvent } from '@/lib/notificationsEmitter';
 
-export const revalidate = 60;
-
 // GET - Listar notificações do usuário
 export async function GET(request: NextRequest) {
   try {
