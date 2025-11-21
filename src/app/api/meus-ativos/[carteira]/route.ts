@@ -25,7 +25,8 @@ interface AuditLog {
 // 🔍 CACHE EM MEMÓRIA PARA PERFORMANCE (4 mil usuários)
 const cachePermissoes = new Map<string, boolean>();
 const cacheDadosMestres = new Map<string, { data: any[], timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+const inflightDadosMestres = new Map<string, Promise<any[]>>();
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutos para reduzir chamadas repetidas
 
 // 📊 ESTATÍSTICAS EM TEMPO REAL
 let estatisticasUso = {
@@ -180,25 +181,41 @@ function obterDadosMestresComCache(carteira: string): Promise<any[]> {
     console.log(`⚡ [CACHE] Hit para ${carteira} - dados em cache`);
     return Promise.resolve(dadosCache.data);
   }
-  
+
+  if (inflightDadosMestres.has(chaveCache)) {
+    console.log(`⏳ [CACHE] Reutilizando promise em voo para ${carteira}`);
+    return inflightDadosMestres.get(chaveCache)!;
+  }
+
   // Cache miss - buscar dados
   console.log(`🔄 [CACHE] Miss para ${carteira} - buscando dados frescos`);
-  
-  return buscarDadosMestres(carteira).then(dados => {
-    // Atualizar cache
-    cacheDadosMestres.set(chaveCache, {
-      data: dados,
-      timestamp: agora
+
+  const promise = buscarDadosMestres(carteira)
+    .then(dados => {
+      // Atualizar cache
+      cacheDadosMestres.set(chaveCache, {
+        data: dados,
+        timestamp: agora
+      });
+
+      inflightDadosMestres.delete(chaveCache);
+
+      // Limpeza periódica do cache
+      if (agora - estatisticasUso.ultimaLimpezaCache > CACHE_TTL * 2) {
+        limparCacheExpirado();
+        estatisticasUso.ultimaLimpezaCache = agora;
+      }
+
+      return dados;
+    })
+    .catch(error => {
+      inflightDadosMestres.delete(chaveCache);
+      throw error;
     });
-    
-    // Limpeza periódica do cache
-    if (agora - estatisticasUso.ultimaLimpezaCache > CACHE_TTL * 2) {
-      limparCacheExpirado();
-      estatisticasUso.ultimaLimpezaCache = agora;
-    }
-    
-    return dados;
-  });
+
+  inflightDadosMestres.set(chaveCache, promise);
+
+  return promise;
 }
 
 // 🧹 LIMPEZA DE CACHE

@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BrapiService } from '@/lib/brapi-service';
 import { buildCacheHeaders } from '@/server/cache-headers';
+import { CacheService } from '@/lib/redis';
+import { logApiMetric } from '@/lib/metrics';
 
 // 🛡️ CONFIGURAÇÃO PARA VERCEL - EVITA ERRO DE STATIC GENERATION
 export const dynamic = 'force-dynamic';
-export const revalidate = 60;
+export const revalidate = 300;
 export const fetchCache = 'default-cache';
 export const runtime = 'nodejs';
 
-const CACHE_HEADERS = buildCacheHeaders({ ttl: 60, swr: 600 });
+const CACHE_HEADERS = buildCacheHeaders({ ttl: 300, swr: 600 });
 
 export async function GET(request: NextRequest) {
+  const startedAt = Date.now();
+
   try {
     // ✅ USAR request.nextUrl EM VEZ DE new URL(request.url)
     const { searchParams } = request.nextUrl;
@@ -26,13 +30,29 @@ export async function GET(request: NextRequest) {
     }
     
     const symbolsArray = symbols.split(',').map(s => s.trim().toUpperCase());
-    const quotes = await BrapiService.fetchQuotes(symbolsArray, { cacheTtlMs: 60 * 1000 });
-    
-    console.log('✅ Quotes processadas:', quotes.length, 'ativos');
-    
+
+    const cacheKey = CacheService.getCacheKey('financial-quotes', symbolsArray.join(','));
+
+    const { data, metadata } = await CacheService.withCache(
+      cacheKey,
+      async () => BrapiService.fetchQuotes(symbolsArray, { cacheTtlMs: 5 * 60 * 1000 }),
+      { ttlSeconds: 300, tags: ['financial:quotes'] }
+    );
+
+    console.log('✅ Quotes processadas:', data.length, 'ativos');
+
+    logApiMetric({
+      route: '/api/financial/quotes',
+      cacheHit: metadata.cached,
+      cacheBackend: metadata.backend,
+      durationMs: Date.now() - startedAt,
+      status: 200,
+      extra: { symbolsCount: symbolsArray.length },
+    });
+
     return NextResponse.json(
-      { 
-        quotes, 
+      {
+        quotes: data,
         timestamp: new Date().toISOString(),
         symbols: symbolsArray,
         success: true

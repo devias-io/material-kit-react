@@ -5,8 +5,12 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth'; // ADICIONAR ESTA LINHA
+import { CacheService } from '@/lib/redis';
+import { logApiMetric } from '@/lib/metrics';
 
 export async function GET(request: NextRequest) {
+  const startedAt = Date.now();
+
   try {
     // CORRIGIDO: Usar a função auth() real
     const session = await auth();
@@ -33,66 +37,89 @@ export async function GET(request: NextRequest) {
       where.status = status.toUpperCase();
     }
 
-    // Buscar carteiras com ativos
-    const [carteiras, total] = await Promise.all([
-      prisma.carteiraAnalise.findMany({
-        where,
-        include: {
-          ativos: {
+    const cacheKey = CacheService.getCacheKey(
+      'carteiras',
+      session.user.id,
+      `page:${page}`,
+      `limit:${limit}`,
+      status || 'todos'
+    );
+
+    const { data, metadata } = await CacheService.withCache(
+      cacheKey,
+      async () => {
+        const [carteiras, total] = await Promise.all([
+          prisma.carteiraAnalise.findMany({
+            where,
+            include: {
+              ativos: {
+                orderBy: {
+                  valorTotal: 'desc'
+                }
+              },
+              analista: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              },
+              questionario: true
+            },
             orderBy: {
-              valorTotal: 'desc'
-            }
-          },
-          analista: {
-            select: {
-              id: true,
-              name: true
-            }
-          },
-          questionario: true
-        },
-        orderBy: {
-          createdAt: 'desc'
-        },
-        skip,
-        take: limit
-      }),
-      prisma.carteiraAnalise.count({ where })
-    ]);
+              createdAt: 'desc'
+            },
+            skip,
+            take: limit
+          }),
+          prisma.carteiraAnalise.count({ where })
+        ]);
 
-    // Calcular estatísticas por carteira
-    const carteirasComEstatisticas = carteiras.map(carteira => {
-      const estatisticasAtivos = calcularEstatisticasAtivos(carteira.ativos);
-      
-      return {
-        id: carteira.id,
-        nomeArquivo: carteira.nomeArquivo,
-        status: carteira.status.toLowerCase(),
-        dataEnvio: carteira.dataEnvio,
-        dataAnalise: carteira.dataAnalise,
-        valorTotal: carteira.valorTotal,
-        quantidadeAtivos: carteira.quantidadeAtivos,
-        feedback: carteira.feedback,
-        recomendacoes: carteira.recomendacoes,
-        pontuacao: carteira.pontuacao,
-        riscoBeneficio: carteira.riscoBeneficio,
-        diversificacao: carteira.diversificacao,
-        analista: carteira.analista,
-        questionario: carteira.questionario,
-        ativos: carteira.ativos,
-        estatisticas: estatisticasAtivos
-      };
+        const carteirasComEstatisticas = carteiras.map(carteira => {
+          const estatisticasAtivos = calcularEstatisticasAtivos(carteira.ativos);
+
+          return {
+            id: carteira.id,
+            nomeArquivo: carteira.nomeArquivo,
+            status: carteira.status.toLowerCase(),
+            dataEnvio: carteira.dataEnvio,
+            dataAnalise: carteira.dataAnalise,
+            valorTotal: carteira.valorTotal,
+            quantidadeAtivos: carteira.quantidadeAtivos,
+            feedback: carteira.feedback,
+            recomendacoes: carteira.recomendacoes,
+            pontuacao: carteira.pontuacao,
+            riscoBeneficio: carteira.riscoBeneficio,
+            diversificacao: carteira.diversificacao,
+            analista: carteira.analista,
+            questionario: carteira.questionario,
+            ativos: carteira.ativos,
+            estatisticas: estatisticasAtivos
+          };
+        });
+
+        return {
+          carteiras: carteirasComEstatisticas,
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit)
+          }
+        };
+      },
+      { ttlSeconds: 600, tags: [`carteiras:${session.user.id}`] }
+    );
+
+    logApiMetric({
+      route: '/api/carteiras',
+      cacheHit: metadata.cached,
+      cacheBackend: metadata.backend,
+      durationMs: Date.now() - startedAt,
+      status: 200,
+      extra: { status, page, limit },
     });
 
-    return NextResponse.json({
-      carteiras: carteirasComEstatisticas,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
-    });
+    return NextResponse.json(data);
 
   } catch (error) {
     console.error('Erro ao buscar carteiras:', error);

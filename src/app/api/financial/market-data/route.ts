@@ -2,14 +2,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMarketSnapshot, type CombinedQuote } from '@/server/market-data';
 import { buildCacheHeaders } from '@/server/cache-headers';
+import { logApiMetric } from '@/lib/metrics';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 120;
+export const revalidate = 300;
 export const fetchCache = 'default-cache';
 export const runtime = 'nodejs';
 
-const MARKET_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
-const RESPONSE_CACHE_HEADERS = buildCacheHeaders({ ttl: 120, swr: 600 });
+const MARKET_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const RESPONSE_CACHE_HEADERS = buildCacheHeaders({ ttl: 300, swr: 600 });
 
 const FALLBACK_MARKET_DATA = {
   ibovespa: { value: '136.431', trend: 'down' as const, diff: -0.26 },
@@ -105,7 +106,7 @@ export async function GET(_request: NextRequest) {
       }
     };
 
-    return NextResponse.json(body, {
+    const response = NextResponse.json(body, {
       status: 200,
       headers: {
         ...RESPONSE_CACHE_HEADERS,
@@ -114,6 +115,16 @@ export async function GET(_request: NextRequest) {
         'Access-Control-Allow-Headers': 'Content-Type'
       }
     });
+
+    logApiMetric({
+      route: '/api/financial/market-data',
+      cacheHit: snapshot.fromCache,
+      cacheBackend: 'upstream-snapshot',
+      durationMs: Date.now() - startedAt,
+      status: 200,
+    });
+
+    return response;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
 
