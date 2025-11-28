@@ -176,10 +176,11 @@ export default function ImportUsuariosPage() {
   const getPlanColor = (plan: string) => {
     const colors: Record<string, string> = {
       'VIP': '#7C3AED',
-      'LITE': '#2563EB', 
+      'LITE': '#2563EB',
       'RENDA_PASSIVA': '#059669',
       'FIIS': '#D97706',
       'RENDA_TURBINADA': '#F97316',
+      'RENDA_TURBINADA_T2': '#FB923C',
       'AMERICA': '#DC2626'
     };
     return colors[plan] || '#6B7280';

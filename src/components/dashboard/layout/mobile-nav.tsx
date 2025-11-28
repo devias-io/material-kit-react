@@ -27,7 +27,7 @@ function applyPlanOverrides(items: NavItemConfig[], plan?: string): NavItemConfi
       ? { ...item, items: applyPlanOverrides(item.items, plan) }
       : { ...item };
 
-    if (plan === 'RENDA_TURBINADA' && withChildren.key === 'recursos-telegram') {
+    if ((plan === 'RENDA_TURBINADA' || plan === 'RENDA_TURBINADA_T2') && withChildren.key === 'recursos-telegram') {
       return {
         ...withChildren,
         title: 'Telegram de membros',

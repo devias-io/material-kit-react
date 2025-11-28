@@ -314,7 +314,7 @@ export async function POST(request: NextRequest) {
         await notifyNewReport(
           relatorio,
           adminName,
-          ['VIP', 'LITE', 'LITE_V2', 'RENDA_PASSIVA', 'FIIS', 'RENDA_TURBINADA', 'AMERICA']
+          ['VIP', 'LITE', 'LITE_V2', 'RENDA_PASSIVA', 'FIIS', 'RENDA_TURBINADA', 'RENDA_TURBINADA_T2', 'AMERICA']
         );
         console.log('Notificações enviadas para usuários sobre novo relatório');
       } catch (notificationError) {

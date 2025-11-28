@@ -192,6 +192,13 @@ export default function NovoUsuarioPage() {
         emoji: '⚡',
         isNew: true
       },
+      'RENDA_TURBINADA_T2': {
+        label: 'CF Renda Turbinada - Turma 2',
+        description: 'Segunda turma do Renda Turbinada com conteúdos atualizados',
+        color: '#FB923C',
+        emoji: '⚡',
+        isNew: true
+      },
       'ANALISTA': {
         label: 'Perfil Analista',
         description: 'Acesso administrativo personalizado à central e ferramentas selecionadas',
@@ -400,6 +407,25 @@ export default function NovoUsuarioPage() {
                           size="small"
                           sx={{
                             bgcolor: '#F97316',
+                            color: 'white',
+                            fontWeight: '700',
+                            fontSize: '10px',
+                            height: '18px',
+                            ml: 1
+                          }}
+                        />
+                      </Box>
+                    </MenuItem>
+
+                    <MenuItem value="RENDA_TURBINADA_T2">
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <span>⚡</span>
+                        <span>CF Renda Turbinada - Turma 2</span>
+                        <Chip
+                          label="NOVO"
+                          size="small"
+                          sx={{
+                            bgcolor: '#FB923C',
                             color: 'white',
                             fontWeight: '700',
                             fontSize: '10px',

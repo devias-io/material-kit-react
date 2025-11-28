@@ -65,6 +65,19 @@ export const PLAN_PERMISSIONS = {
       'recursos-suporte'
     ]
   },
+  'RENDA_TURBINADA_T2': {
+    displayName: 'CF Renda Turbinada - Turma 2',
+    isAdmin: false,
+    pages: [
+      'cf-renda-turbinada',
+      'cf-renda-turbinada-aulas',
+      'cf-renda-turbinada-bastidores',
+      'cf-renda-turbinada-carteira',
+      'recursos-exclusivos',
+      'recursos-telegram',
+      'recursos-suporte'
+    ]
+  },
   'AMERICA': {
     displayName: 'Projeto América',
     isAdmin: false,
