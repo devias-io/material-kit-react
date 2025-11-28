@@ -99,8 +99,10 @@ interface Mentoria {
   content?: string;
   videoUrl?: string;
   recordedAt: string;
+  releaseDate?: string;
   durationMinutes?: number;
   materials: MentoriaMaterial[];
+  isReleased?: boolean;
 }
 
 interface MentoriaFormState {
@@ -109,6 +111,7 @@ interface MentoriaFormState {
   content: string;
   videoUrl: string;
   recordedAt: string;
+  releaseDate: string;
   durationMinutes: string;
 }
 
@@ -119,6 +122,7 @@ function createEmptyMentoriaForm(): MentoriaFormState {
     content: '',
     videoUrl: '',
     recordedAt: '',
+    releaseDate: '',
     durationMinutes: ''
   };
 }
@@ -592,8 +596,8 @@ function sortModulesBySchedule(modules: Module[]): Module[] {
 
 function sortMentoriasByDate(mentorias: Mentoria[]): Mentoria[] {
   return [...mentorias].sort((mentoriaA, mentoriaB) => {
-    const dateA = new Date(mentoriaA.recordedAt).getTime();
-    const dateB = new Date(mentoriaB.recordedAt).getTime();
+    const dateA = new Date(mentoriaA.releaseDate ?? mentoriaA.recordedAt).getTime();
+    const dateB = new Date(mentoriaB.releaseDate ?? mentoriaB.recordedAt).getTime();
 
     if (dateA !== dateB) {
       return dateB - dateA;
@@ -806,7 +810,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
       setIsLoadingLives(true);
 
       try {
-        const response = await fetch('/api/cf-renda-turbinada/live-events');
+        const response = await fetch('/api/cf-renda-turbinada-turma-2/live-events');
         const data = (await response.json().catch(() => null)) as { events?: LiveEvent[]; error?: string } | null;
 
         if (!response.ok || !data || !Array.isArray(data.events)) {
@@ -1027,8 +1031,8 @@ const visibleModules = React.useMemo(() => {
         };
 
         const endpoint = isEditingLive
-          ? `/api/cf-renda-turbinada/live-events/${editingLiveId}`
-          : '/api/cf-renda-turbinada/live-events';
+          ? `/api/cf-renda-turbinada-turma-2/live-events/${editingLiveId}`
+          : '/api/cf-renda-turbinada-turma-2/live-events';
 
         const response = await fetch(endpoint, {
           method: isEditingLive ? 'PATCH' : 'POST',
@@ -1084,7 +1088,7 @@ const visibleModules = React.useMemo(() => {
       setIsSaving(true);
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/live-events/${liveId}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/live-events/${liveId}`, {
           method: 'DELETE'
         });
 
@@ -1108,7 +1112,7 @@ const visibleModules = React.useMemo(() => {
       setIsSaving(true);
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/live-events/${liveId}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/live-events/${liveId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ isCancelled: !currentIsCancelled })
@@ -1140,8 +1144,8 @@ const visibleModules = React.useMemo(() => {
       event.preventDefault();
       setMentoriaFormError(null);
 
-      if (!mentoriaForm.title.trim() || !mentoriaForm.recordedAt) {
-        setMentoriaFormError('Título e data da mentoria são obrigatórios.');
+      if (!mentoriaForm.title.trim() || !mentoriaForm.recordedAt || !mentoriaForm.releaseDate) {
+        setMentoriaFormError('Título, data da mentoria e data de liberação são obrigatórios.');
         return;
       }
 
@@ -1149,6 +1153,13 @@ const visibleModules = React.useMemo(() => {
 
       if (Number.isNaN(recordedDate.getTime())) {
         setMentoriaFormError('Informe uma data válida.');
+        return;
+      }
+
+      const releaseDate = new Date(mentoriaForm.releaseDate);
+
+      if (Number.isNaN(releaseDate.getTime())) {
+        setMentoriaFormError('Informe uma data de liberação válida.');
         return;
       }
 
@@ -1178,6 +1189,7 @@ const visibleModules = React.useMemo(() => {
             content: mentoriaForm.content.trim() || undefined,
             videoUrl: mentoriaForm.videoUrl.trim() || undefined,
             recordedAt: recordedDate.toISOString(),
+            releaseDate: releaseDate.toISOString(),
             durationMinutes: parsedDuration ?? undefined
           })
         });
@@ -1209,6 +1221,7 @@ const visibleModules = React.useMemo(() => {
       content: mentoria.content ?? '',
       videoUrl: mentoria.videoUrl ?? '',
       recordedAt: toInputDateTimeValue(mentoria.recordedAt),
+      releaseDate: toInputDateTimeValue(mentoria.releaseDate ?? mentoria.recordedAt),
       durationMinutes: mentoria.durationMinutes ? String(mentoria.durationMinutes) : ''
     });
     setEditMentoriaError(null);
@@ -1230,8 +1243,8 @@ const visibleModules = React.useMemo(() => {
       event.preventDefault();
       setEditMentoriaError(null);
 
-      if (!editMentoriaForm.title.trim() || !editMentoriaForm.recordedAt) {
-        setEditMentoriaError('Título e data da mentoria são obrigatórios.');
+      if (!editMentoriaForm.title.trim() || !editMentoriaForm.recordedAt || !editMentoriaForm.releaseDate) {
+        setEditMentoriaError('Título, data da mentoria e data de liberação são obrigatórios.');
         return;
       }
 
@@ -1239,6 +1252,13 @@ const visibleModules = React.useMemo(() => {
 
       if (Number.isNaN(recordedDate.getTime())) {
         setEditMentoriaError('Informe uma data válida.');
+        return;
+      }
+
+      const releaseDate = new Date(editMentoriaForm.releaseDate);
+
+      if (Number.isNaN(releaseDate.getTime())) {
+        setEditMentoriaError('Informe uma data de liberação válida.');
         return;
       }
 
@@ -1268,6 +1288,7 @@ const visibleModules = React.useMemo(() => {
             content: editMentoriaForm.content.trim() || null,
             videoUrl: editMentoriaForm.videoUrl.trim() || null,
             recordedAt: recordedDate.toISOString(),
+            releaseDate: releaseDate.toISOString(),
             durationMinutes: parsedDuration ?? null
           })
         });
@@ -4176,6 +4197,22 @@ visibleModules.map(module => {
                 </label>
 
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                  Data de liberação para alunos
+                  <input
+                    type="datetime-local"
+                    value={mentoriaForm.releaseDate}
+                    onChange={event => handleMentoriaFieldChange('releaseDate', event.target.value)}
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                    required
+                  />
+                </label>
+
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
                   Duração (minutos)
                   <input
                     type="number"
@@ -4356,7 +4393,12 @@ visibleModules.map(module => {
             mentorias.map(mentoria => {
               const embedConfig = getVideoEmbedConfig(mentoria.videoUrl);
               const enhancedEmbedSrc = embedConfig ? enhanceEmbedSrc(embedConfig) : null;
-              const { date, dayOfWeek, time } = formatMentoriaDate(mentoria.recordedAt);
+              const releaseDateValue = mentoria.releaseDate ?? mentoria.recordedAt;
+              const { date, dayOfWeek, time } = formatMentoriaDate(releaseDateValue);
+              const recordedDateInfo = formatMentoriaDate(mentoria.recordedAt);
+              const releaseTimestamp = new Date(releaseDateValue).getTime();
+              const isReleased = mentoria.isReleased ?? (!Number.isNaN(releaseTimestamp) && releaseTimestamp <= Date.now());
+              const canViewContent = isReleased || isAdmin;
               const uploadState = mentoriaMaterialState[mentoria.id] ?? { isUploading: false, error: null };
               const isMaterialUploading = uploadState.isUploading;
               const materialError = uploadState.error;
@@ -4407,6 +4449,22 @@ visibleModules.map(module => {
                           type="datetime-local"
                           value={editMentoriaForm.recordedAt}
                           onChange={event => handleEditMentoriaFieldChange('recordedAt', event.target.value)}
+                          style={{
+                            borderRadius: '10px',
+                            border: '1px solid #cbd5f5',
+                            padding: '10px 14px',
+                            fontSize: '14px'
+                          }}
+                          required
+                        />
+                      </label>
+
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                        Liberação para alunos
+                        <input
+                          type="datetime-local"
+                          value={editMentoriaForm.releaseDate}
+                          onChange={event => handleEditMentoriaFieldChange('releaseDate', event.target.value)}
                           style={{
                             borderRadius: '10px',
                             border: '1px solid #cbd5f5',
@@ -4564,14 +4622,33 @@ visibleModules.map(module => {
                           <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>
                             {mentoria.title}
                           </h3>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '14px', color: '#475569' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#475569' }}>
                             <span>
-                              📅 {dayOfWeek}, {date}
+                              📅 Liberação: {dayOfWeek}, {date}
                             </span>
                             <span>
                               🕑 {time}
                               {mentoria.durationMinutes ? ` • ${mentoria.durationMinutes} min` : ''}
                             </span>
+                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  padding: '6px 10px',
+                                  borderRadius: '9999px',
+                                  backgroundColor: isReleased ? '#dcfce7' : '#fef3c7',
+                                  color: isReleased ? '#15803d' : '#b45309',
+                                  fontWeight: 600
+                                }}
+                              >
+                                {isReleased ? 'Disponível' : 'Agendada'}
+                              </span>
+                              <span style={{ color: '#0f172a' }}>
+                                Gravada em {recordedDateInfo.dayOfWeek}, {recordedDateInfo.date} às {recordedDateInfo.time}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
@@ -4639,7 +4716,23 @@ visibleModules.map(module => {
                         </p>
                       )}
 
-                      {enhancedEmbedSrc && (
+                      {!canViewContent && (
+                        <div
+                          style={{
+                            padding: '12px 14px',
+                            borderRadius: '10px',
+                            border: '1px dashed #f59e0b',
+                            backgroundColor: '#fffbeb',
+                            color: '#92400e',
+                            fontWeight: 600,
+                            fontSize: '14px'
+                          }}
+                        >
+                          🔒 Conteúdo liberado em {dayOfWeek}, {date} às {time}.
+                        </div>
+                      )}
+
+                      {canViewContent && enhancedEmbedSrc && (
                         <div
                           style={{
                             width: '100%',
@@ -4661,7 +4754,7 @@ visibleModules.map(module => {
                         </div>
                       )}
 
-                      {!enhancedEmbedSrc && mentoria.videoUrl && (
+                      {canViewContent && !enhancedEmbedSrc && mentoria.videoUrl && (
                         <a
                           href={mentoria.videoUrl}
                           target="_blank"
@@ -4684,7 +4777,7 @@ visibleModules.map(module => {
                         </a>
                       )}
 
-                      {mentoria.content && mentoria.content.trim().length > 0 && (
+                      {canViewContent && mentoria.content && mentoria.content.trim().length > 0 && (
                         <div
                           style={{
                             backgroundColor: '#e0f2fe',
@@ -4701,7 +4794,7 @@ visibleModules.map(module => {
                     </>
                   )}
 
-                  {mentoria.materials.length > 0 && (
+                  {canViewContent && mentoria.materials.length > 0 && (
                     <div
                       style={{
                         display: 'flex',

@@ -47,8 +47,12 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    const isAdmin = user.plan === 'ADMIN';
+    const now = new Date();
+
     const mentorias = await prisma.cfRendaTurbinadaMentoria.findMany({
       orderBy: [
+        { releaseDate: 'desc' },
         { recordedAt: 'desc' },
         { createdAt: 'desc' }
       ],
@@ -62,7 +66,28 @@ export async function GET() {
       }
     });
 
-    return NextResponse.json({ mentorias: mentorias.map(serializeMentoria) });
+    const serializedMentorias = mentorias.map(mentoria => {
+      const base = serializeMentoria(mentoria);
+      const releaseTime = mentoria.releaseDate?.getTime();
+      const isReleased = isAdmin || (typeof releaseTime === 'number' && releaseTime <= now.getTime());
+
+      if (isAdmin || isReleased) {
+        return {
+          ...base,
+          isReleased
+        };
+      }
+
+      return {
+        ...base,
+        isReleased,
+        content: undefined,
+        videoUrl: undefined,
+        materials: []
+      };
+    });
+
+    return NextResponse.json({ mentorias: serializedMentorias });
   } catch (error) {
     console.error('Erro ao listar mentorias gravadas do CF Renda Turbinada:', error);
     return NextResponse.json({ error: 'Erro ao listar mentorias' }, { status: 500 });
@@ -102,11 +127,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
 
-    const { title, description, content, recordedAt, videoUrl, durationMinutes } = body as {
+    const { title, description, content, recordedAt, releaseDate, videoUrl, durationMinutes } = body as {
       title?: unknown;
       description?: unknown;
       content?: unknown;
       recordedAt?: unknown;
+      releaseDate?: unknown;
       videoUrl?: unknown;
       durationMinutes?: unknown;
     };
@@ -123,6 +149,16 @@ export async function POST(request: NextRequest) {
 
     if (Number.isNaN(parsedRecordedAt.getTime())) {
       return NextResponse.json({ error: 'Data da mentoria inválida' }, { status: 400 });
+    }
+
+    if (typeof releaseDate !== 'string' || !releaseDate.trim()) {
+      return NextResponse.json({ error: 'Data de liberação é obrigatória' }, { status: 400 });
+    }
+
+    const parsedReleaseDate = new Date(releaseDate);
+
+    if (Number.isNaN(parsedReleaseDate.getTime())) {
+      return NextResponse.json({ error: 'Data de liberação inválida' }, { status: 400 });
     }
 
     let normalizedDescription: string | null = null;
@@ -183,6 +219,7 @@ export async function POST(request: NextRequest) {
         content: normalizedContent,
         videoUrl: normalizedVideoUrl,
         recordedAt: parsedRecordedAt,
+        releaseDate: parsedReleaseDate,
         durationMinutes: normalizedDuration ?? undefined
       },
       include: { materials: true }

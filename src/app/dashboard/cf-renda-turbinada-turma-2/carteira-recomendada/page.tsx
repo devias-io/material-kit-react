@@ -230,19 +230,9 @@ const getStatusStyle = (status: 'Aberta' | 'Fechada' | 'Encerrada') => {
   }
 };
 
-const CONTENT_RELEASE_DATE = new Date('2025-12-10T00:00:00-03:00');
-
-const formatReleaseDate = (date: Date): string =>
-  date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-
 export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   const router = useRouter();
-  const { loading: authLoading, hasAccessSync, planInfo } = useAuthAccess();
-  const isAdmin = planInfo.isAdmin;
-  const isContentReleased = React.useMemo(
-    () => new Date() >= CONTENT_RELEASE_DATE,
-    []
-  );
+  const { loading: authLoading, hasAccessSync } = useAuthAccess();
   const hasCarteiraAccess = hasAccessSync('cf-renda-turbinada-carteira');
   const isMobile = useDeviceDetection();
 
@@ -294,91 +284,6 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
       { label: 'Renda média estimada', value: formatPercentage(rendaMedia) }
     ];
   }, [operacoesProcessadas, operacoesPUT, operacoesCALL]);
-
-  if (!isContentReleased && !isAdmin) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-          padding: '20px'
-        }}
-      >
-        <div
-          style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '48px 32px',
-            maxWidth: '520px',
-            width: '100%',
-            textAlign: 'center',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.25)'
-          }}
-        >
-          <div
-            style={{
-              width: '80px',
-              height: '80px',
-              background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 24px'
-            }}
-          >
-            <Lock size={40} color="white" />
-          </div>
-          <h2
-            style={{
-              fontSize: '28px',
-              fontWeight: '700',
-              color: '#0f172a',
-              marginBottom: '16px'
-            }}
-          >
-            Conteúdo disponível em breve
-          </h2>
-          <p
-            style={{
-              fontSize: '16px',
-              color: '#475569',
-              lineHeight: '1.6',
-              marginBottom: '20px'
-            }}
-          >
-            As operações recomendadas serão liberadas a partir de:
-          </p>
-          <div
-            style={{
-              background: '#e2e8f0',
-              color: '#0f172a',
-              padding: '16px 20px',
-              borderRadius: '12px',
-              fontSize: '20px',
-              fontWeight: '700',
-              marginBottom: '16px'
-            }}
-          >
-            {formatReleaseDate(CONTENT_RELEASE_DATE)}
-          </div>
-          <p
-            style={{
-              fontSize: '14px',
-              color: '#64748b',
-              lineHeight: '1.6',
-              margin: 0
-            }}
-          >
-            Retorne nessa data para acessar a carteira recomendada atualizada.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   if (!authLoading && !hasCarteiraAccess) {
     return (
