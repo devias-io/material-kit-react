@@ -101,6 +101,7 @@ interface Mentoria {
   recordedAt: string;
   releaseDate?: string;
   durationMinutes?: number;
+  sortOrder?: number;
   materials: MentoriaMaterial[];
   isReleased?: boolean;
 }
@@ -594,8 +595,15 @@ function sortModulesBySchedule(modules: Module[]): Module[] {
   });
 }
 
-function sortMentoriasByDate(mentorias: Mentoria[]): Mentoria[] {
+function sortMentoriasByOrder(mentorias: Mentoria[]): Mentoria[] {
   return [...mentorias].sort((mentoriaA, mentoriaB) => {
+    const orderA = mentoriaA.sortOrder ?? Number.MAX_SAFE_INTEGER;
+    const orderB = mentoriaB.sortOrder ?? Number.MAX_SAFE_INTEGER;
+
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+
     const dateA = new Date(mentoriaA.releaseDate ?? mentoriaA.recordedAt).getTime();
     const dateB = new Date(mentoriaB.releaseDate ?? mentoriaB.recordedAt).getTime();
 
@@ -879,7 +887,7 @@ setLiveEvents(
           return;
         }
 
-        setMentorias(sortMentoriasByDate(data.mentorias));
+        setMentorias(sortMentoriasByOrder(data.mentorias));
       } catch (error) {
         console.error('Erro ao carregar mentorias gravadas:', error);
 
@@ -1200,7 +1208,7 @@ const visibleModules = React.useMemo(() => {
           throw new Error(data?.error ?? 'Erro ao criar mentoria.');
         }
 
-        setMentorias(prev => sortMentoriasByDate([...prev, data.mentoria]));
+        setMentorias(prev => sortMentoriasByOrder([...prev, data.mentoria]));
         setMentoriaForm(createEmptyMentoriaForm());
         setShowMentoriaForm(false);
       } catch (error) {
@@ -1299,7 +1307,7 @@ const visibleModules = React.useMemo(() => {
           throw new Error(data?.error ?? 'Erro ao atualizar mentoria.');
         }
 
-        setMentorias(prev => sortMentoriasByDate(prev.map(item => (item.id === mentoriaId ? data.mentoria : item))));
+        setMentorias(prev => sortMentoriasByOrder(prev.map(item => (item.id === mentoriaId ? data.mentoria : item))));
         handleCancelEditMentoria();
       } catch (error) {
         console.error('Erro ao atualizar mentoria gravada:', error);

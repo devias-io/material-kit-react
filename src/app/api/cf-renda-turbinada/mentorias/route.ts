@@ -52,6 +52,7 @@ export async function GET() {
 
     const mentorias = await prisma.cfRendaTurbinadaMentoria.findMany({
       orderBy: [
+        { sortOrder: 'asc' },
         { releaseDate: 'desc' },
         { recordedAt: 'desc' },
         { createdAt: 'desc' }
@@ -212,6 +213,12 @@ export async function POST(request: NextRequest) {
       normalizedDuration = parsedDuration;
     }
 
+    const sortOrderAggregate = await prisma.cfRendaTurbinadaMentoria.aggregate({
+      _max: { sortOrder: true }
+    });
+
+    const nextSortOrder = (sortOrderAggregate._max.sortOrder ?? 0) + 1;
+
     const mentoria = await prisma.cfRendaTurbinadaMentoria.create({
       data: {
         title: title.trim(),
@@ -220,7 +227,8 @@ export async function POST(request: NextRequest) {
         videoUrl: normalizedVideoUrl,
         recordedAt: parsedRecordedAt,
         releaseDate: parsedReleaseDate,
-        durationMinutes: normalizedDuration ?? undefined
+        durationMinutes: normalizedDuration ?? undefined,
+        sortOrder: nextSortOrder
       },
       include: { materials: true }
     });
