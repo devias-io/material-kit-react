@@ -89,6 +89,7 @@ export function serializeMentoria(mentoria: MentoriaWithMaterials) {
     recordedAt: mentoria.recordedAt.toISOString(),
     releaseDate: mentoria.releaseDate?.toISOString(),
     durationMinutes: mentoria.durationMinutes ?? undefined,
+    sortOrder: mentoria.sortOrder ?? undefined,
     materials: mentoria.materials.map(serializeMentoriaMaterial)
   };
 }
