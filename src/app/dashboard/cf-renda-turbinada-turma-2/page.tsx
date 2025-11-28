@@ -28,8 +28,7 @@ const navigationCards: NavigationCard[] = [
     title: 'Carteira Recomendada',
     description: 'Acompanhe as operações sugeridas e o plano mensal para gerar renda com consistência.',
     href: '/dashboard/cf-renda-turbinada-turma-2/carteira-recomendada',
-    icon: '📊',
-    badge: 'LIBERADO'
+    icon: '📊'
   }
 ];
 
