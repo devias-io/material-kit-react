@@ -865,6 +865,7 @@ model CfRendaTurbinadaMentoria {
   content         String?
   videoUrl        String?                           @map("video_url")
   recordedAt      DateTime                          @map("recorded_at")
+  releaseDate     DateTime?                         @map("release_date")
   durationMinutes Int?                              @map("duration_minutes")
   createdAt       DateTime                          @default(now()) @map("created_at")
   updatedAt       DateTime                          @updatedAt @map("updated_at")

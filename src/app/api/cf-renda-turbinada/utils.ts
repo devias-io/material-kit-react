@@ -87,6 +87,7 @@ export function serializeMentoria(mentoria: MentoriaWithMaterials) {
     content: mentoria.content ?? undefined,
     videoUrl: mentoria.videoUrl ?? undefined,
     recordedAt: mentoria.recordedAt.toISOString(),
+    releaseDate: mentoria.releaseDate?.toISOString(),
     durationMinutes: mentoria.durationMinutes ?? undefined,
     materials: mentoria.materials.map(serializeMentoriaMaterial)
   };
