@@ -311,7 +311,7 @@ function sortModulesBySchedule(modules: Module[]): Module[] {
 }
 
 // Data de liberação geral do conteúdo
-const CONTENT_RELEASE_DATE = new Date('2024-12-10T00:00:00-03:00');
+const CONTENT_RELEASE_DATE = new Date('2025-12-10T00:00:00-03:00');
 
 export default function BastidoresDaBolsaPage(): React.JSX.Element {
   const router = useRouter();
