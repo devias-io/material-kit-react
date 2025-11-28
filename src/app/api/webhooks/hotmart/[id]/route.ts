@@ -24,6 +24,8 @@ const HOTMART_PRODUCT_IDS = {
   RENDA_TURBINADA: new Set(['6558190'])
 };
 
+const RENDA_TURBINADA_TURMA2_START = new Date('2025-11-28T00:00:00Z');
+
 // ✅ IDs DOS PRODUTOS QUE DEVEM ENVIAR EMAIL AUTOMÁTICO
 const PRODUTOS_COM_EMAIL_AUTOMATICO = new Set([
   '6558190',  // CF Renda Turbinada
@@ -31,6 +33,51 @@ const PRODUTOS_COM_EMAIL_AUTOMATICO = new Set([
   // '4218223',  // Projeto FIIs
   // '5325106',  // Projeto América
 ]);
+
+function parseHotmartDate(value: any): Date | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getPurchaseDate(webhookData: any): Date | null {
+  const purchaseData = webhookData.data?.purchase || webhookData.purchase || webhookData;
+  const candidateDates = [
+    purchaseData?.approved_date,
+    purchaseData?.approvedDate,
+    purchaseData?.purchase_date,
+    purchaseData?.paid_at,
+    purchaseData?.paidDate,
+    purchaseData?.created_at,
+    webhookData.data?.subscription?.approved_date,
+    webhookData.event_date,
+    webhookData.created_at,
+    webhookData.timestamp,
+  ];
+
+  for (const candidate of candidateDates) {
+    const parsed = parseHotmartDate(candidate);
+    if (parsed) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function resolveRendaTurbinadaPlan(webhookData: any): { plan: 'RENDA_TURBINADA' | 'RENDA_TURBINADA_T2'; label: string; purchaseDate: Date | null } {
+  const purchaseDate = getPurchaseDate(webhookData);
+  const isTurma2 = !purchaseDate || purchaseDate >= RENDA_TURBINADA_TURMA2_START;
+
+  return {
+    plan: isTurma2 ? 'RENDA_TURBINADA_T2' : 'RENDA_TURBINADA',
+    label: isTurma2 ? 'CF Renda Turbinada - Turma 2' : 'CF Renda Turbinada',
+    purchaseDate,
+  };
+}
 
 function normalizarIdHotmart(valor: any): string | null {
   if (!valor && valor !== 0) return null;
@@ -115,9 +162,10 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
       }
 
       if (HOTMART_PRODUCT_IDS.RENDA_TURBINADA.has(productId)) {
+        const rendaTurbinada = resolveRendaTurbinadaPlan(webhookData);
         return {
-          plan: 'RENDA_TURBINADA',
-          productName: `CF Renda Turbinada Hotmart - Produto ${productId}`
+          plan: rendaTurbinada.plan,
+          productName: `${rendaTurbinada.label} Hotmart - Produto ${productId}`
         };
       }
     }
@@ -154,9 +202,10 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
 
     if (produtoLower.includes('renda turbinada') ||
         produtoLower.includes('cf renda')) {
+      const rendaTurbinada = resolveRendaTurbinadaPlan(webhookData);
       return {
-        plan: 'RENDA_TURBINADA',
-        productName: `CF Renda Turbinada Hotmart - ${productName}`
+        plan: rendaTurbinada.plan,
+        productName: `${rendaTurbinada.label} Hotmart - ${productName}`
       };
     }
     

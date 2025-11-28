@@ -32,7 +32,7 @@ interface User {
   lastName: string;
   email: string;
   avatar?: string;
-  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'AMERICA' | 'ANALISTA' | 'ADMIN'; // ✅ ADICIONADO LITE_V2
+  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'RENDA_TURBINADA_T2' | 'AMERICA' | 'ANALISTA' | 'ADMIN'; // ✅ ADICIONADO LITE_V2
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING';
   hotmartCustomerId?: string;
   createdAt: string;
@@ -164,6 +164,7 @@ export default function AdminUsersPage() {
       'RENDA_PASSIVA': { label: 'Projeto Renda Passiva', color: '#059669', emoji: '💰' },
       'FIIS': { label: 'Projeto FIIs', color: '#D97706', emoji: '🏢' },
       'RENDA_TURBINADA': { label: 'CF Renda Turbinada', color: '#F97316', emoji: '⚡' },
+      'RENDA_TURBINADA_T2': { label: 'CF Renda Turbinada - Turma 2', color: '#FB923C', emoji: '⚡' },
       'AMERICA': { label: 'Projeto América', color: '#DC2626', emoji: '🗽' },
       'ANALISTA': { label: 'Analista', color: '#2563EB', emoji: '📊' },
       'ADMIN': { label: 'Administrador', color: '#4B5563', emoji: '👨‍💼' }
@@ -235,6 +236,7 @@ export default function AdminUsersPage() {
         FIIS: users.filter(u => u.plan === 'FIIS').length,
         RENDA_PASSIVA: users.filter(u => u.plan === 'RENDA_PASSIVA').length,
         RENDA_TURBINADA: users.filter(u => u.plan === 'RENDA_TURBINADA').length,
+        RENDA_TURBINADA_T2: users.filter(u => u.plan === 'RENDA_TURBINADA_T2').length,
         AMERICA: users.filter(u => u.plan === 'AMERICA').length,
         ANALISTA: users.filter(u => u.plan === 'ANALISTA').length,
         ADMIN: users.filter(u => u.plan === 'ADMIN').length
@@ -313,7 +315,7 @@ export default function AdminUsersPage() {
           <Typography variant="caption">
             Debug Info: API: {debugInfo.apiUrl} | Token: {debugInfo.hasToken ? '✅' : '❌'} | Email: {debugInfo.userEmail || 'N/A'} | Users: {debugInfo.usersCount}
             <br />
-            Planos: VIP({planStats.byPlan.VIP}) LITE({planStats.byPlan.LITE}) LITE_V2({planStats.byPlan.LITE_V2}) FIIS({planStats.byPlan.FIIS}) RENDA_TURBINADA({planStats.byPlan.RENDA_TURBINADA})
+            Planos: VIP({planStats.byPlan.VIP}) LITE({planStats.byPlan.LITE}) LITE_V2({planStats.byPlan.LITE_V2}) FIIS({planStats.byPlan.FIIS}) RENDA_TURBINADA({planStats.byPlan.RENDA_TURBINADA}) RENDA_TURBINADA_T2({planStats.byPlan.RENDA_TURBINADA_T2})
           </Typography>
         </Alert>
       )}
@@ -721,6 +723,19 @@ export default function AdminUsersPage() {
                             size="small"
                             sx={{
                               backgroundColor: '#F97316',
+                              color: 'white',
+                              fontWeight: '700',
+                              fontSize: '10px',
+                              height: '18px'
+                            }}
+                          />
+                        )}
+                        {user.plan === 'RENDA_TURBINADA_T2' && (
+                          <Chip
+                            label="CF Renda Turbinada - Turma 2"
+                            size="small"
+                            sx={{
+                              backgroundColor: '#FB923C',
                               color: 'white',
                               fontWeight: '700',
                               fontSize: '10px',

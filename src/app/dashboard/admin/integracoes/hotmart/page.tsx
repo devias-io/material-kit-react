@@ -188,6 +188,7 @@ export default function HotmartPage() {
       'RENDA_PASSIVA': { label: 'Projeto Renda Passiva', color: '#059669', emoji: '💰' },
       'FIIS': { label: 'Projeto FIIs', color: '#D97706', emoji: '🏢' },
       'RENDA_TURBINADA': { label: 'CF Renda Turbinada', color: '#F97316', emoji: '⚡' },
+      'RENDA_TURBINADA_T2': { label: 'CF Renda Turbinada - Turma 2', color: '#FB923C', emoji: '⚡' },
       'AMERICA': { label: 'Projeto América', color: '#DC2626', emoji: '🇺🇸' }
     };
     return planMap[plan] || { label: plan, color: '#6B7280', emoji: '📋' };
@@ -550,6 +551,7 @@ export default function HotmartPage() {
                 <MenuItem value="RENDA_PASSIVA">💰 Projeto Renda Passiva</MenuItem>
                 <MenuItem value="FIIS">🏢 Projeto FIIs</MenuItem>
                 <MenuItem value="RENDA_TURBINADA">⚡ CF Renda Turbinada</MenuItem>
+                <MenuItem value="RENDA_TURBINADA_T2">⚡ CF Renda Turbinada - Turma 2</MenuItem>
                 <MenuItem value="AMERICA">🇺🇸 Projeto América</MenuItem>
               </Select>
             </FormControl>
