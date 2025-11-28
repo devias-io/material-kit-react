@@ -317,11 +317,6 @@ export default function BastidoresDaBolsaPage(): React.JSX.Element {
   const router = useRouter();
   const { planInfo } = useAuthAccess();
   const isAdmin = planInfo.isAdmin;
-  
-  // Verificar se o conteúdo já foi liberado
-  const now = new Date();
-  const isContentReleased = now >= CONTENT_RELEASE_DATE;
-  
   const [modules, setModules] = React.useState<Module[]>([]);
   const [lessonForms, setLessonForms] = React.useState<Record<string, LessonFormState>>({});
   const [lessonErrors, setLessonErrors] = React.useState<Record<string, string | null>>({});

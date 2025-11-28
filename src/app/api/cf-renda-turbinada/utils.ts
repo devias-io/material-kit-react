@@ -4,7 +4,8 @@ import {
   CfRendaTurbinadaLiveEvent,
   CfRendaTurbinadaMentoria,
   CfRendaTurbinadaMentoriaMaterial,
-  CfRendaTurbinadaModule
+  CfRendaTurbinadaModule,
+  CfRendaTurbinadaTurma2LiveEvent
 } from '@prisma/client';
 
 type ModuleWithLessons = CfRendaTurbinadaModule & {
@@ -54,7 +55,9 @@ export function serializeModule(module: ModuleWithLessons) {
   };
 }
 
-export function serializeLiveEvent(event: CfRendaTurbinadaLiveEvent) {
+export function serializeLiveEvent(
+  event: CfRendaTurbinadaLiveEvent | CfRendaTurbinadaTurma2LiveEvent
+) {
   return {
     id: event.id,
     title: event.title,
@@ -84,7 +87,9 @@ export function serializeMentoria(mentoria: MentoriaWithMaterials) {
     content: mentoria.content ?? undefined,
     videoUrl: mentoria.videoUrl ?? undefined,
     recordedAt: mentoria.recordedAt.toISOString(),
+    releaseDate: mentoria.releaseDate?.toISOString(),
     durationMinutes: mentoria.durationMinutes ?? undefined,
+    sortOrder: mentoria.sortOrder ?? undefined,
     materials: mentoria.materials.map(serializeMentoriaMaterial)
   };
 }

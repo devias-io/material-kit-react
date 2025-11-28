@@ -69,11 +69,12 @@ export async function PATCH(request: NextRequest, { params }: { params: { mentor
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
 
-    const { title, description, content, recordedAt, videoUrl, durationMinutes } = body as {
+    const { title, description, content, recordedAt, releaseDate, videoUrl, durationMinutes } = body as {
       title?: unknown;
       description?: unknown;
       content?: unknown;
       recordedAt?: unknown;
+      releaseDate?: unknown;
       videoUrl?: unknown;
       durationMinutes?: unknown;
     };
@@ -111,6 +112,26 @@ export async function PATCH(request: NextRequest, { params }: { params: { mentor
         }
 
         updateData.recordedAt = parsedRecordedAt;
+      }
+    }
+
+    if (typeof releaseDate !== 'undefined') {
+      if (releaseDate !== null && typeof releaseDate !== 'string') {
+        return NextResponse.json({ error: 'Data de liberação inválida' }, { status: 400 });
+      }
+
+      if (typeof releaseDate === 'string') {
+        if (!releaseDate.trim()) {
+          return NextResponse.json({ error: 'Data de liberação é obrigatória' }, { status: 400 });
+        }
+
+        const parsedReleaseDate = new Date(releaseDate);
+
+        if (Number.isNaN(parsedReleaseDate.getTime())) {
+          return NextResponse.json({ error: 'Data de liberação inválida' }, { status: 400 });
+        }
+
+        updateData.releaseDate = parsedReleaseDate;
       }
     }
 

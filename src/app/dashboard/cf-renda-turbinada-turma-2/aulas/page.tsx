@@ -99,8 +99,11 @@ interface Mentoria {
   content?: string;
   videoUrl?: string;
   recordedAt: string;
+  releaseDate?: string;
   durationMinutes?: number;
+  sortOrder?: number;
   materials: MentoriaMaterial[];
+  isReleased?: boolean;
 }
 
 interface MentoriaFormState {
@@ -109,6 +112,7 @@ interface MentoriaFormState {
   content: string;
   videoUrl: string;
   recordedAt: string;
+  releaseDate: string;
   durationMinutes: string;
 }
 
@@ -119,6 +123,7 @@ function createEmptyMentoriaForm(): MentoriaFormState {
     content: '',
     videoUrl: '',
     recordedAt: '',
+    releaseDate: '',
     durationMinutes: ''
   };
 }
@@ -590,10 +595,17 @@ function sortModulesBySchedule(modules: Module[]): Module[] {
   });
 }
 
-function sortMentoriasByDate(mentorias: Mentoria[]): Mentoria[] {
+function sortMentoriasByOrder(mentorias: Mentoria[]): Mentoria[] {
   return [...mentorias].sort((mentoriaA, mentoriaB) => {
-    const dateA = new Date(mentoriaA.recordedAt).getTime();
-    const dateB = new Date(mentoriaB.recordedAt).getTime();
+    const orderA = mentoriaA.sortOrder ?? Number.MAX_SAFE_INTEGER;
+    const orderB = mentoriaB.sortOrder ?? Number.MAX_SAFE_INTEGER;
+
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+
+    const dateA = new Date(mentoriaA.releaseDate ?? mentoriaA.recordedAt).getTime();
+    const dateB = new Date(mentoriaB.releaseDate ?? mentoriaB.recordedAt).getTime();
 
     if (dateA !== dateB) {
       return dateB - dateA;
@@ -720,6 +732,10 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
     Record<number, { isUploading: boolean; error: string | null }>
   >({});
   const [isSavingMentoria, setIsSavingMentoria] = React.useState(false);
+  const [mentoriaReorderForms, setMentoriaReorderForms] = React.useState<Record<number, string>>({});
+  const [mentoriaReorderErrors, setMentoriaReorderErrors] = React.useState<Record<number, string | null>>({});
+  const [openMentoriaReorderId, setOpenMentoriaReorderId] = React.useState<number | null>(null);
+  const [reorderingMentoriaId, setReorderingMentoriaId] = React.useState<number | null>(null);
   const isEditingMentoria = editingMentoriaId !== null;
 
   const copyLinkToClipboard = React.useCallback((hash: string) => {
@@ -806,7 +822,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
       setIsLoadingLives(true);
 
       try {
-        const response = await fetch('/api/cf-renda-turbinada/live-events');
+        const response = await fetch('/api/cf-renda-turbinada-turma-2/live-events');
         const data = (await response.json().catch(() => null)) as { events?: LiveEvent[]; error?: string } | null;
 
         if (!response.ok || !data || !Array.isArray(data.events)) {
@@ -875,7 +891,7 @@ setLiveEvents(
           return;
         }
 
-        setMentorias(sortMentoriasByDate(data.mentorias));
+        setMentorias(sortMentoriasByOrder(data.mentorias));
       } catch (error) {
         console.error('Erro ao carregar mentorias gravadas:', error);
 
@@ -1027,8 +1043,8 @@ const visibleModules = React.useMemo(() => {
         };
 
         const endpoint = isEditingLive
-          ? `/api/cf-renda-turbinada/live-events/${editingLiveId}`
-          : '/api/cf-renda-turbinada/live-events';
+          ? `/api/cf-renda-turbinada-turma-2/live-events/${editingLiveId}`
+          : '/api/cf-renda-turbinada-turma-2/live-events';
 
         const response = await fetch(endpoint, {
           method: isEditingLive ? 'PATCH' : 'POST',
@@ -1084,7 +1100,7 @@ const visibleModules = React.useMemo(() => {
       setIsSaving(true);
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/live-events/${liveId}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/live-events/${liveId}`, {
           method: 'DELETE'
         });
 
@@ -1108,7 +1124,7 @@ const visibleModules = React.useMemo(() => {
       setIsSaving(true);
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/live-events/${liveId}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/live-events/${liveId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ isCancelled: !currentIsCancelled })
@@ -1140,8 +1156,8 @@ const visibleModules = React.useMemo(() => {
       event.preventDefault();
       setMentoriaFormError(null);
 
-      if (!mentoriaForm.title.trim() || !mentoriaForm.recordedAt) {
-        setMentoriaFormError('Título e data da mentoria são obrigatórios.');
+      if (!mentoriaForm.title.trim() || !mentoriaForm.recordedAt || !mentoriaForm.releaseDate) {
+        setMentoriaFormError('Título, data da mentoria e data de liberação são obrigatórios.');
         return;
       }
 
@@ -1149,6 +1165,13 @@ const visibleModules = React.useMemo(() => {
 
       if (Number.isNaN(recordedDate.getTime())) {
         setMentoriaFormError('Informe uma data válida.');
+        return;
+      }
+
+      const releaseDate = new Date(mentoriaForm.releaseDate);
+
+      if (Number.isNaN(releaseDate.getTime())) {
+        setMentoriaFormError('Informe uma data de liberação válida.');
         return;
       }
 
@@ -1178,6 +1201,7 @@ const visibleModules = React.useMemo(() => {
             content: mentoriaForm.content.trim() || undefined,
             videoUrl: mentoriaForm.videoUrl.trim() || undefined,
             recordedAt: recordedDate.toISOString(),
+            releaseDate: releaseDate.toISOString(),
             durationMinutes: parsedDuration ?? undefined
           })
         });
@@ -1188,7 +1212,7 @@ const visibleModules = React.useMemo(() => {
           throw new Error(data?.error ?? 'Erro ao criar mentoria.');
         }
 
-        setMentorias(prev => sortMentoriasByDate([...prev, data.mentoria]));
+        setMentorias(prev => sortMentoriasByOrder([...prev, data.mentoria]));
         setMentoriaForm(createEmptyMentoriaForm());
         setShowMentoriaForm(false);
       } catch (error) {
@@ -1209,6 +1233,7 @@ const visibleModules = React.useMemo(() => {
       content: mentoria.content ?? '',
       videoUrl: mentoria.videoUrl ?? '',
       recordedAt: toInputDateTimeValue(mentoria.recordedAt),
+      releaseDate: toInputDateTimeValue(mentoria.releaseDate ?? mentoria.recordedAt),
       durationMinutes: mentoria.durationMinutes ? String(mentoria.durationMinutes) : ''
     });
     setEditMentoriaError(null);
@@ -1225,13 +1250,107 @@ const visibleModules = React.useMemo(() => {
     setEditMentoriaError(null);
   }, []);
 
+  const handleToggleMentoriaReorder = React.useCallback(
+    (mentoriaId: number) => {
+      const currentIndex = mentorias.findIndex(item => item.id === mentoriaId);
+      const fallbackPosition = currentIndex >= 0 ? currentIndex + 1 : 1;
+
+      setMentoriaReorderForms(prev => ({
+        ...prev,
+        [mentoriaId]: prev[mentoriaId] ?? String(fallbackPosition)
+      }));
+      setMentoriaReorderErrors(prev => ({
+        ...prev,
+        [mentoriaId]: null
+      }));
+      setOpenMentoriaReorderId(prev => (prev === mentoriaId ? null : mentoriaId));
+    },
+    [mentorias]
+  );
+
+  const handleMentoriaPositionChange = React.useCallback(
+    (mentoriaId: number, position: string) => {
+      const totalMentorias = Math.max(1, mentorias.length);
+      const currentIndex = mentorias.findIndex(item => item.id === mentoriaId);
+      const fallbackPosition = currentIndex >= 0 ? currentIndex + 1 : 1;
+      const parsedPosition = Number.parseInt(position, 10);
+      const safePosition = clampNumber(Number.isNaN(parsedPosition) ? fallbackPosition : parsedPosition, 1, totalMentorias);
+
+      setMentoriaReorderForms(prev => ({
+        ...prev,
+        [mentoriaId]: String(safePosition)
+      }));
+      setMentoriaReorderErrors(prev => ({
+        ...prev,
+        [mentoriaId]: null
+      }));
+    },
+    [mentorias]
+  );
+
+  const handleSubmitMentoriaReorder = React.useCallback(
+    async (event: React.FormEvent<HTMLFormElement>, mentoriaId: number) => {
+      event.preventDefault();
+
+      const totalMentorias = mentorias.length;
+      const currentIndex = mentorias.findIndex(item => item.id === mentoriaId);
+      const fallbackPosition = currentIndex >= 0 ? currentIndex + 1 : 1;
+      const positionValue = mentoriaReorderForms[mentoriaId] ?? String(fallbackPosition);
+      const parsedPosition = Number.parseInt(positionValue, 10);
+
+      if (Number.isNaN(parsedPosition) || parsedPosition < 1 || parsedPosition > totalMentorias) {
+        setMentoriaReorderErrors(prev => ({
+          ...prev,
+          [mentoriaId]: `Informe uma posição entre 1 e ${Math.max(totalMentorias, 1)}.`
+        }));
+        return;
+      }
+
+      setReorderingMentoriaId(mentoriaId);
+      setMentoriaReorderErrors(prev => ({
+        ...prev,
+        [mentoriaId]: null
+      }));
+
+      try {
+        const response = await fetch('/api/cf-renda-turbinada/mentorias/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mentoriaId,
+            targetPosition: parsedPosition
+          })
+        });
+
+        const data = (await response.json().catch(() => null)) as { mentorias?: Mentoria[]; error?: string } | null;
+
+        if (!response.ok || !data?.mentorias) {
+          const message = data?.error ?? 'Erro ao reordenar mentoria.';
+          throw new Error(message);
+        }
+
+        setMentorias(sortMentoriasByOrder(data.mentorias));
+        setOpenMentoriaReorderId(null);
+      } catch (error) {
+        console.error('Erro ao reordenar mentoria:', error);
+        setMentoriaReorderErrors(prev => ({
+          ...prev,
+          [mentoriaId]: error instanceof Error ? error.message : 'Erro ao reordenar. Tente novamente.'
+        }));
+      } finally {
+        setReorderingMentoriaId(null);
+      }
+    },
+    [mentoriaReorderForms, mentorias]
+  );
+
   const handleUpdateMentoria = React.useCallback(
     async (event: React.FormEvent<HTMLFormElement>, mentoriaId: number) => {
       event.preventDefault();
       setEditMentoriaError(null);
 
-      if (!editMentoriaForm.title.trim() || !editMentoriaForm.recordedAt) {
-        setEditMentoriaError('Título e data da mentoria são obrigatórios.');
+      if (!editMentoriaForm.title.trim() || !editMentoriaForm.recordedAt || !editMentoriaForm.releaseDate) {
+        setEditMentoriaError('Título, data da mentoria e data de liberação são obrigatórios.');
         return;
       }
 
@@ -1239,6 +1358,13 @@ const visibleModules = React.useMemo(() => {
 
       if (Number.isNaN(recordedDate.getTime())) {
         setEditMentoriaError('Informe uma data válida.');
+        return;
+      }
+
+      const releaseDate = new Date(editMentoriaForm.releaseDate);
+
+      if (Number.isNaN(releaseDate.getTime())) {
+        setEditMentoriaError('Informe uma data de liberação válida.');
         return;
       }
 
@@ -1268,6 +1394,7 @@ const visibleModules = React.useMemo(() => {
             content: editMentoriaForm.content.trim() || null,
             videoUrl: editMentoriaForm.videoUrl.trim() || null,
             recordedAt: recordedDate.toISOString(),
+            releaseDate: releaseDate.toISOString(),
             durationMinutes: parsedDuration ?? null
           })
         });
@@ -1278,7 +1405,7 @@ const visibleModules = React.useMemo(() => {
           throw new Error(data?.error ?? 'Erro ao atualizar mentoria.');
         }
 
-        setMentorias(prev => sortMentoriasByDate(prev.map(item => (item.id === mentoriaId ? data.mentoria : item))));
+        setMentorias(prev => sortMentoriasByOrder(prev.map(item => (item.id === mentoriaId ? data.mentoria : item))));
         handleCancelEditMentoria();
       } catch (error) {
         console.error('Erro ao atualizar mentoria gravada:', error);
@@ -4176,6 +4303,22 @@ visibleModules.map(module => {
                 </label>
 
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                  Data de liberação para alunos
+                  <input
+                    type="datetime-local"
+                    value={mentoriaForm.releaseDate}
+                    onChange={event => handleMentoriaFieldChange('releaseDate', event.target.value)}
+                    style={{
+                      borderRadius: '10px',
+                      border: '1px solid #cbd5f5',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                    required
+                  />
+                </label>
+
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
                   Duração (minutos)
                   <input
                     type="number"
@@ -4356,11 +4499,20 @@ visibleModules.map(module => {
             mentorias.map(mentoria => {
               const embedConfig = getVideoEmbedConfig(mentoria.videoUrl);
               const enhancedEmbedSrc = embedConfig ? enhanceEmbedSrc(embedConfig) : null;
-              const { date, dayOfWeek, time } = formatMentoriaDate(mentoria.recordedAt);
+              const releaseDateValue = mentoria.releaseDate ?? mentoria.recordedAt;
+              const { date, dayOfWeek, time } = formatMentoriaDate(releaseDateValue);
+              const recordedDateInfo = formatMentoriaDate(mentoria.recordedAt);
+              const releaseTimestamp = new Date(releaseDateValue).getTime();
+              const isReleased = mentoria.isReleased ?? (!Number.isNaN(releaseTimestamp) && releaseTimestamp <= Date.now());
+              const canViewContent = isReleased || isAdmin;
               const uploadState = mentoriaMaterialState[mentoria.id] ?? { isUploading: false, error: null };
               const isMaterialUploading = uploadState.isUploading;
               const materialError = uploadState.error;
               const isEditing = editingMentoriaId === mentoria.id;
+              const currentPosition = mentorias.findIndex(item => item.id === mentoria.id) + 1;
+              const reorderFormValue = mentoriaReorderForms[mentoria.id] ?? String(currentPosition > 0 ? currentPosition : 1);
+              const reorderError = mentoriaReorderErrors[mentoria.id] ?? null;
+              const isReorderingThisMentoria = reorderingMentoriaId === mentoria.id;
 
               return (
                 <div
@@ -4407,6 +4559,22 @@ visibleModules.map(module => {
                           type="datetime-local"
                           value={editMentoriaForm.recordedAt}
                           onChange={event => handleEditMentoriaFieldChange('recordedAt', event.target.value)}
+                          style={{
+                            borderRadius: '10px',
+                            border: '1px solid #cbd5f5',
+                            padding: '10px 14px',
+                            fontSize: '14px'
+                          }}
+                          required
+                        />
+                      </label>
+
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                        Liberação para alunos
+                        <input
+                          type="datetime-local"
+                          value={editMentoriaForm.releaseDate}
+                          onChange={event => handleEditMentoriaFieldChange('releaseDate', event.target.value)}
                           style={{
                             borderRadius: '10px',
                             border: '1px solid #cbd5f5',
@@ -4564,14 +4732,33 @@ visibleModules.map(module => {
                           <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>
                             {mentoria.title}
                           </h3>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '14px', color: '#475569' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#475569' }}>
                             <span>
-                              📅 {dayOfWeek}, {date}
+                              📅 Liberação: {dayOfWeek}, {date}
                             </span>
                             <span>
                               🕑 {time}
                               {mentoria.durationMinutes ? ` • ${mentoria.durationMinutes} min` : ''}
                             </span>
+                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  padding: '6px 10px',
+                                  borderRadius: '9999px',
+                                  backgroundColor: isReleased ? '#dcfce7' : '#fef3c7',
+                                  color: isReleased ? '#15803d' : '#b45309',
+                                  fontWeight: 600
+                                }}
+                              >
+                                {isReleased ? 'Disponível' : 'Agendada'}
+                              </span>
+                              <span style={{ color: '#0f172a' }}>
+                                Gravada em {recordedDateInfo.dayOfWeek}, {recordedDateInfo.date} às {recordedDateInfo.time}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
@@ -4592,6 +4779,24 @@ visibleModules.map(module => {
                               }}
                             >
                               📋 Copiar link direto
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleMentoriaReorder(mentoria.id)}
+                              style={{
+                                border: '1px solid #0ea5e9',
+                                backgroundColor: 'transparent',
+                                color: '#0ea5e9',
+                                borderRadius: '9999px',
+                                padding: '8px 16px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: isSavingMentoria ? 'not-allowed' : 'pointer',
+                                opacity: isSavingMentoria ? 0.7 : 1
+                              }}
+                              disabled={isSavingMentoria}
+                            >
+                              ↕️ Reordenar
                             </button>
                             <button
                               type="button"
@@ -4628,18 +4833,111 @@ visibleModules.map(module => {
                               disabled={isSavingMentoria}
                             >
                               Excluir
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
-                      {mentoria.description && mentoria.description.trim().length > 0 && (
-                        <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
-                          {renderTextWithLineBreaks(mentoria.description)}
+                    {openMentoriaReorderId === mentoria.id && (
+                      <form
+                        onSubmit={event => handleSubmitMentoriaReorder(event, mentoria.id)}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                          gap: '12px',
+                          padding: '12px',
+                          border: '1px dashed #bae6fd',
+                          borderRadius: '10px',
+                          background: '#f0f9ff'
+                        }}
+                      >
+                        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '14px', color: '#0f172a' }}>
+                          Nova posição na lista
+                          <input
+                            type="number"
+                            min={1}
+                            max={Math.max(mentorias.length, 1)}
+                            value={reorderFormValue}
+                            onChange={event => handleMentoriaPositionChange(mentoria.id, event.target.value)}
+                            style={{
+                              borderRadius: '8px',
+                              border: '1px solid #bae6fd',
+                              padding: '8px 12px',
+                              fontSize: '14px'
+                            }}
+                          />
+                          <span style={{ fontSize: '12px', color: '#475569' }}>
+                            Posição atual: {currentPosition > 0 ? currentPosition : '-'} de {mentorias.length}
+                          </span>
+                        </label>
+
+                        {reorderError && (
+                          <div style={{ gridColumn: '1 / -1', color: '#be123c', fontSize: '13px' }}>{reorderError}</div>
+                        )}
+
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => setOpenMentoriaReorderId(null)}
+                            style={{
+                              border: '1px solid #cbd5f5',
+                              backgroundColor: 'transparent',
+                              color: '#0f172a',
+                              borderRadius: '8px',
+                              padding: '8px 14px',
+                              fontWeight: 600,
+                              fontSize: '13px',
+                              cursor: isReorderingThisMentoria ? 'not-allowed' : 'pointer',
+                              opacity: isReorderingThisMentoria ? 0.7 : 1
+                            }}
+                            disabled={isReorderingThisMentoria}
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="submit"
+                            style={{
+                              border: 'none',
+                              background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+                              color: '#ffffff',
+                              borderRadius: '8px',
+                              padding: '10px 16px',
+                              fontWeight: 700,
+                              fontSize: '13px',
+                              cursor: isReorderingThisMentoria ? 'not-allowed' : 'pointer',
+                              opacity: isReorderingThisMentoria ? 0.85 : 1
+                            }}
+                            disabled={isReorderingThisMentoria}
+                          >
+                            {isReorderingThisMentoria ? 'Reordenando...' : 'Salvar nova posição'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {mentoria.description && mentoria.description.trim().length > 0 && (
+                      <p style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
+                        {renderTextWithLineBreaks(mentoria.description)}
                         </p>
                       )}
 
-                      {enhancedEmbedSrc && (
+                      {!canViewContent && (
+                        <div
+                          style={{
+                            padding: '12px 14px',
+                            borderRadius: '10px',
+                            border: '1px dashed #f59e0b',
+                            backgroundColor: '#fffbeb',
+                            color: '#92400e',
+                            fontWeight: 600,
+                            fontSize: '14px'
+                          }}
+                        >
+                          🔒 Conteúdo liberado em {dayOfWeek}, {date} às {time}.
+                        </div>
+                      )}
+
+                      {canViewContent && enhancedEmbedSrc && (
                         <div
                           style={{
                             width: '100%',
@@ -4661,7 +4959,7 @@ visibleModules.map(module => {
                         </div>
                       )}
 
-                      {!enhancedEmbedSrc && mentoria.videoUrl && (
+                      {canViewContent && !enhancedEmbedSrc && mentoria.videoUrl && (
                         <a
                           href={mentoria.videoUrl}
                           target="_blank"
@@ -4684,7 +4982,7 @@ visibleModules.map(module => {
                         </a>
                       )}
 
-                      {mentoria.content && mentoria.content.trim().length > 0 && (
+                      {canViewContent && mentoria.content && mentoria.content.trim().length > 0 && (
                         <div
                           style={{
                             backgroundColor: '#e0f2fe',
@@ -4701,7 +4999,7 @@ visibleModules.map(module => {
                     </>
                   )}
 
-                  {mentoria.materials.length > 0 && (
+                  {canViewContent && mentoria.materials.length > 0 && (
                     <div
                       style={{
                         display: 'flex',
