@@ -50,6 +50,15 @@ const planPermissions = {
       'recursos-reserva'
     ]
   },
+  'RENDA_TURBINADA_T2': {
+    displayName: 'CF Renda Turbinada - Turma 2',
+    isAdmin: false,
+    pages: [
+      'cf-renda-turbinada', 'cf-renda-turbinada-aulas', 'cf-renda-turbinada-bastidores', 'cf-renda-turbinada-carteira',
+      'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
+      'recursos-reserva'
+    ]
+  },
   'AMERICA': {
     displayName: 'Projeto América',
     isAdmin: false,

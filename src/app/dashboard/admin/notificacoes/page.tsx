@@ -9,6 +9,7 @@ type PlanValue =
   | 'RENDA_PASSIVA'
   | 'FIIS'
   | 'RENDA_TURBINADA'
+  | 'RENDA_TURBINADA_T2'
   | 'AMERICA'
   | 'ADMIN';
 
@@ -32,6 +33,7 @@ const PLAN_OPTIONS: Array<{
   { value: 'RENDA_PASSIVA', label: 'Projeto Renda Passiva', description: 'Comunidade dedicada à renda recorrente.', color: '#059669', emoji: '💰' },
   { value: 'FIIS', label: 'Projeto FIIs', description: 'Investidores focados em fundos imobiliários.', color: '#D97706', emoji: '🏢' },
   { value: 'RENDA_TURBINADA', label: 'CF Renda Turbinada', description: 'Alunos do programa Renda Turbinada.', color: '#F97316', emoji: '⚡' },
+  { value: 'RENDA_TURBINADA_T2', label: 'CF Renda Turbinada - Turma 2', description: 'Alunos da segunda turma do Renda Turbinada.', color: '#FB923C', emoji: '⚡' },
   { value: 'AMERICA', label: 'Projeto América', description: 'Assinantes do hub internacional.', color: '#DC2626', emoji: '🗽' },
   { value: 'ADMIN', label: 'Administradores', description: 'Time interno e contas administrativas.', color: '#4B5563', emoji: '🛠️' }
 ];
