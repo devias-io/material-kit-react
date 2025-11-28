@@ -230,9 +230,18 @@ const getStatusStyle = (status: 'Aberta' | 'Fechada' | 'Encerrada') => {
   }
 };
 
+const CONTENT_RELEASE_DATE = new Date('2025-12-10T00:00:00-03:00');
+
+const formatReleaseDate = (date: Date): string =>
+  date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
 export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   const router = useRouter();
   const { loading: authLoading, hasAccessSync } = useAuthAccess();
+  const isContentReleased = React.useMemo(
+    () => new Date() >= CONTENT_RELEASE_DATE,
+    []
+  );
   const hasCarteiraAccess = hasAccessSync('cf-renda-turbinada-carteira');
   const isMobile = useDeviceDetection();
 
@@ -284,6 +293,95 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
       { label: 'Renda média estimada', value: formatPercentage(rendaMedia) }
     ];
   }, [operacoesProcessadas, operacoesPUT, operacoesCALL]);
+
+  if (!isContentReleased) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          backgroundColor: '#f5f5f5',
+          padding: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            padding: '48px',
+            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+            textAlign: 'center',
+            maxWidth: '600px'
+          }}
+        >
+          <div style={{ fontSize: '64px', marginBottom: '24px' }}>🔒</div>
+          <h1
+            style={{
+              fontSize: '32px',
+              fontWeight: 800,
+              color: '#1e293b',
+              margin: '0 0 16px 0'
+            }}
+          >
+            Conteúdo em breve
+          </h1>
+          <p
+            style={{
+              color: '#64748b',
+              fontSize: '18px',
+              margin: '0 0 24px 0',
+              lineHeight: 1.6
+            }}
+          >
+            As operações recomendadas serão liberadas em:
+          </p>
+          <div
+            style={{
+              backgroundColor: '#fef3c7',
+              color: '#b45309',
+              padding: '20px 24px',
+              borderRadius: '12px',
+              fontSize: '24px',
+              fontWeight: 700,
+              marginBottom: '24px'
+            }}
+          >
+            {formatReleaseDate(CONTENT_RELEASE_DATE)}
+          </div>
+          <p
+            style={{
+              color: '#64748b',
+              fontSize: '16px',
+              margin: 0,
+              lineHeight: 1.6
+            }}
+          >
+            Fique de olho! Assim que a data chegar, a carteira recomendada estará disponível automaticamente.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push('/dashboard/cf-renda-turbinada-turma-2')}
+            style={{
+              marginTop: '32px',
+              background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+              border: 'none',
+              color: '#ffffff',
+              fontWeight: 600,
+              fontSize: '16px',
+              padding: '14px 28px',
+              borderRadius: '10px',
+              cursor: 'pointer'
+            }}
+          >
+            Voltar para o CF Renda Turbinada
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!authLoading && !hasCarteiraAccess) {
     return (
