@@ -22,6 +22,10 @@ export const paths = {
     cfRendaTurbinadaAulas: '/dashboard/cf-renda-turbinada/aulas',
     cfRendaTurbinadaBastidores: '/dashboard/cf-renda-turbinada/bastidores-da-bolsa',
     cfRendaTurbinadaCarteira: '/dashboard/cf-renda-turbinada/carteira-recomendada',
+    cfRendaTurbinadaTurma2: '/dashboard/cf-renda-turbinada-turma-2',
+    cfRendaTurbinadaTurma2Aulas: '/dashboard/cf-renda-turbinada-turma-2/aulas',
+    cfRendaTurbinadaTurma2Bastidores: '/dashboard/cf-renda-turbinada-turma-2/bastidores-da-bolsa',
+    cfRendaTurbinadaTurma2Carteira: '/dashboard/cf-renda-turbinada-turma-2/carteira-recomendada',
     
     // 🛡️ ROTAS ADMINISTRATIVAS
     admin: '/dashboard/admin',

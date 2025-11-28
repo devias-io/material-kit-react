@@ -16,6 +16,18 @@ interface NavigationCard {
 export default function DashboardOverview() {
   const { hasAccessSync, loading } = useAuthAccess();
 
+  const rendaTurbinadaAccess = hasAccessSync('cf-renda-turbinada-turma-2')
+    ? {
+        title: 'CF Renda Turbinada - Turma 2',
+        permission: 'cf-renda-turbinada-turma-2',
+        href: '/dashboard/cf-renda-turbinada-turma-2',
+      }
+    : {
+        title: 'CF Renda Turbinada',
+        permission: 'cf-renda-turbinada',
+        href: '/dashboard/cf-renda-turbinada',
+      };
+
   const navigationCards: NavigationCard[] = [
     {
       title: 'Relatório Semanal',
@@ -75,11 +87,11 @@ export default function DashboardOverview() {
       isNew: true
     },
     {
-      title: 'CF Renda Turbinada',
+      title: rendaTurbinadaAccess.title,
       description: 'Plano completo de opções com aulas guiadas e carteira mensal',
       icon: '⚡',
-      href: '/dashboard/cf-renda-turbinada',
-      permission: 'cf-renda-turbinada'
+      href: rendaTurbinadaAccess.href,
+      permission: rendaTurbinadaAccess.permission
     }
   ];
 
