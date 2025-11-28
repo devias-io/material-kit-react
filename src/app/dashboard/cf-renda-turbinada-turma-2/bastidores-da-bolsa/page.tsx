@@ -1480,8 +1480,8 @@ const handleUpdateModule = React.useCallback(
     ]
   );
 
-  // Se não for admin e o conteúdo não foi liberado, mostrar mensagem de bloqueio
-  if (!isAdmin && !isContentReleased) {
+  // Se o conteúdo não foi liberado, mostrar mensagem de bloqueio para todos
+  if (!isContentReleased) {
     return (
       <div
         style={{

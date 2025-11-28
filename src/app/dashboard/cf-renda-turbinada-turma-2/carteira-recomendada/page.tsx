@@ -237,8 +237,7 @@ const formatReleaseDate = (date: Date): string =>
 
 export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   const router = useRouter();
-  const { loading: authLoading, hasAccessSync, planInfo } = useAuthAccess();
-  const isAdmin = planInfo.isAdmin;
+  const { loading: authLoading, hasAccessSync } = useAuthAccess();
   const isContentReleased = React.useMemo(
     () => new Date() >= CONTENT_RELEASE_DATE,
     []
@@ -295,7 +294,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
     ];
   }, [operacoesProcessadas, operacoesPUT, operacoesCALL]);
 
-  if (!isContentReleased && !isAdmin) {
+  if (!isContentReleased) {
     return (
       <div
         style={{
