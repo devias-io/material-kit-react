@@ -45,7 +45,7 @@ interface User {
   lastName: string;
   email: string;
   avatar?: string;
-  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'AMERICA' | 'ANALISTA' | 'ADMIN';
+  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'RENDA_TURBINADA_T2' | 'AMERICA' | 'ANALISTA' | 'ADMIN';
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING';
   hotmartCustomerId?: string;
   createdAt: string;
@@ -414,6 +414,7 @@ export default function EditUserPage() {
       'RENDA_PASSIVA': { label: 'Projeto Renda Passiva', color: '#10B981', emoji: '💰' },
       'FIIS': { label: 'Projeto FIIs', color: '#F59E0B', emoji: '🏢' },
       'RENDA_TURBINADA': { label: 'CF Renda Turbinada', color: '#F97316', emoji: '⚡' },
+      'RENDA_TURBINADA_T2': { label: 'CF Renda Turbinada - Turma 2', color: '#FB923C', emoji: '⚡' },
       'AMERICA': { label: 'Projeto América', color: '#EF4444', emoji: '🇺🇸' },
       'ANALISTA': { label: 'Analista', color: '#2563EB', emoji: '📊' },
       'ADMIN': { label: 'Administrador', color: '#6B7280', emoji: '🛡️' }
@@ -699,6 +700,7 @@ export default function EditUserPage() {
                       <MenuItem value="FIIS">🏢 Projeto FIIs</MenuItem>
                       <MenuItem value="AMERICA">🇺🇸 Projeto América</MenuItem>
                       <MenuItem value="RENDA_TURBINADA">⚡ CF Renda Turbinada</MenuItem>
+                      <MenuItem value="RENDA_TURBINADA_T2">⚡ CF Renda Turbinada - Turma 2</MenuItem>
                       <MenuItem value="ANALISTA">📊 Analista</MenuItem>
                       <MenuItem value="ADMIN">🛡️ Administrador</MenuItem>
                     </Select>
