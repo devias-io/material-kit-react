@@ -62,7 +62,7 @@ function applyPlanOverrides(items: NavItemConfig[], plan?: string): NavItemConfi
       return {
         ...withChildren,
         key: 'cf-renda-turbinada-turma-2',
-        title: 'CF Renda Turbinada - Turma 2',
+        title: 'Renda Turbinada',
         href: paths.dashboard.cfRendaTurbinadaTurma2,
         page: 'cf-renda-turbinada-turma-2',
         items: remapChildren,
