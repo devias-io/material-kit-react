@@ -1,6 +1,7 @@
 import {
   CfRendaTurbinadaTurma2Lesson,
   CfRendaTurbinadaTurma2LessonMaterial,
+  CfRendaTurbinadaTurma2LiveEvent,
   CfRendaTurbinadaTurma2Module
 } from '@prisma/client';
 
@@ -46,5 +47,17 @@ export function serializeModule(module: ModuleWithLessons) {
     isHidden: module.isHidden,
     sortOrder: module.sortOrder ?? undefined,
     lessons: module.lessons.map(serializeLesson)
+  };
+}
+
+export function serializeLiveEvent(event: CfRendaTurbinadaTurma2LiveEvent) {
+  return {
+    id: event.id,
+    title: event.title,
+    description: event.description ?? undefined,
+    eventDate: event.eventDate.toISOString(),
+    durationMinutes: event.durationMinutes,
+    meetingUrl: event.meetingUrl ?? undefined,
+    isCancelled: event.isCancelled
   };
 }
