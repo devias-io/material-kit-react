@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-import { serializeLiveEvent } from '../../../cf-renda-turbinada/utils';
+import { serializeLiveEvent } from '../../utils';
 
 function parseDurationMinutes(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) {
