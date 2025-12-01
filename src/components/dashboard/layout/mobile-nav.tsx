@@ -21,62 +21,74 @@ import { useAuthAccess } from '@/hooks/use-auth-access';
 import { navItems } from './config';
 import { navIcons } from './nav-icons';
 
+function remapToTurma2(item: NavItemConfig): NavItemConfig {
+  const remapChildren = item.items?.map(subItem => {
+    if (subItem.key === 'cf-renda-turbinada-aulas') {
+      return {
+        ...subItem,
+        key: 'cf-renda-turbinada-turma-2-aulas',
+        href: paths.dashboard.cfRendaTurbinadaTurma2Aulas,
+        page: 'cf-renda-turbinada-turma-2-aulas',
+      };
+    }
+
+    if (subItem.key === 'cf-renda-turbinada-bastidores') {
+      return {
+        ...subItem,
+        key: 'cf-renda-turbinada-turma-2-bastidores',
+        href: paths.dashboard.cfRendaTurbinadaTurma2Bastidores,
+        page: 'cf-renda-turbinada-turma-2-bastidores',
+      };
+    }
+
+    if (subItem.key === 'cf-renda-turbinada-carteira') {
+      return {
+        ...subItem,
+        key: 'cf-renda-turbinada-turma-2-carteira',
+        href: paths.dashboard.cfRendaTurbinadaTurma2Carteira,
+        page: 'cf-renda-turbinada-turma-2-carteira',
+      };
+    }
+
+    return subItem;
+  });
+
+  return {
+    ...item,
+    key: 'cf-renda-turbinada-turma-2',
+    title: 'Renda Turbinada',
+    href: paths.dashboard.cfRendaTurbinadaTurma2,
+    page: 'cf-renda-turbinada-turma-2',
+    items: remapChildren,
+  };
+}
+
 function applyPlanOverrides(items: NavItemConfig[], plan?: string): NavItemConfig[] {
-  return items.map(item => {
+  return items.flatMap(item => {
     const withChildren = item.items
       ? { ...item, items: applyPlanOverrides(item.items, plan) }
       : { ...item };
 
     if (plan === 'RENDA_TURBINADA_T2' && withChildren.key === 'cf-renda-turbinada') {
-      const remapChildren = withChildren.items?.map(subItem => {
-        if (subItem.key === 'cf-renda-turbinada-aulas') {
-          return {
-            ...subItem,
-            key: 'cf-renda-turbinada-turma-2-aulas',
-            href: paths.dashboard.cfRendaTurbinadaTurma2Aulas,
-            page: 'cf-renda-turbinada-turma-2-aulas',
-          };
-        }
+      return [remapToTurma2(withChildren)];
+    }
 
-        if (subItem.key === 'cf-renda-turbinada-bastidores') {
-          return {
-            ...subItem,
-            key: 'cf-renda-turbinada-turma-2-bastidores',
-            href: paths.dashboard.cfRendaTurbinadaTurma2Bastidores,
-            page: 'cf-renda-turbinada-turma-2-bastidores',
-          };
-        }
+    const results = [withChildren];
 
-        if (subItem.key === 'cf-renda-turbinada-carteira') {
-          return {
-            ...subItem,
-            key: 'cf-renda-turbinada-turma-2-carteira',
-            href: paths.dashboard.cfRendaTurbinadaTurma2Carteira,
-            page: 'cf-renda-turbinada-turma-2-carteira',
-          };
-        }
-
-        return subItem;
-      });
-
-      return {
-        ...withChildren,
-        key: 'cf-renda-turbinada-turma-2',
-        title: 'Renda Turbinada',
-        href: paths.dashboard.cfRendaTurbinadaTurma2,
-        page: 'cf-renda-turbinada-turma-2',
-        items: remapChildren,
-      };
+    if (plan === 'ADMIN' && withChildren.key === 'cf-renda-turbinada') {
+      results.push(remapToTurma2(withChildren));
     }
 
     if ((plan === 'RENDA_TURBINADA' || plan === 'RENDA_TURBINADA_T2') && withChildren.key === 'recursos-telegram') {
-      return {
-        ...withChildren,
-        title: 'Telegram de membros',
-      };
+      return [
+        {
+          ...withChildren,
+          title: 'Telegram de membros',
+        },
+      ];
     }
 
-    return withChildren;
+    return results;
   });
 }
 
