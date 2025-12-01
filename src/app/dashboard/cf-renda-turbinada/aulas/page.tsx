@@ -994,12 +994,42 @@ const visibleModules = React.useMemo(() => {
     .filter(module => !module.isHidden) // Remove apenas os ocultos
     .map(module => {
       const releaseDate = new Date(module.releaseDate);
-      const isReleased = !Number.isNaN(releaseDate.getTime()) && releaseDate <= now;
-      
+      const serverIsReleased = typeof module.isReleased === 'boolean' ? module.isReleased : null;
+      const isReleased = serverIsReleased ?? (!Number.isNaN(releaseDate.getTime()) && releaseDate <= now);
+
       return {
         ...module,
         isReleased // Adiciona flag para saber se está liberado
       };
+    })
+    .sort((moduleA, moduleB) => {
+      // Mantém a mesma ordenação usada no carregamento para listas de alunos,
+      // priorizando datas de liberação antes da ordenação manual.
+      const dateA = new Date(moduleA.releaseDate).getTime();
+      const dateB = new Date(moduleB.releaseDate).getTime();
+      const hasDateA = !Number.isNaN(dateA);
+      const hasDateB = !Number.isNaN(dateB);
+
+      if (hasDateA && hasDateB && dateA !== dateB) {
+        return dateA - dateB;
+      }
+
+      if (hasDateA && !hasDateB) {
+        return -1;
+      }
+
+      if (!hasDateA && hasDateB) {
+        return 1;
+      }
+
+      const orderA = moduleA.sortOrder ?? Number.MAX_SAFE_INTEGER;
+      const orderB = moduleB.sortOrder ?? Number.MAX_SAFE_INTEGER;
+
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+
+      return moduleA.title.localeCompare(moduleB.title);
     });
 }, [isAdmin, modules, viewAsStudent]);
 
