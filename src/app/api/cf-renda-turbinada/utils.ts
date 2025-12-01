@@ -4,8 +4,7 @@ import {
   CfRendaTurbinadaLiveEvent,
   CfRendaTurbinadaMentoria,
   CfRendaTurbinadaMentoriaMaterial,
-  CfRendaTurbinadaModule,
-  CfRendaTurbinadaTurma2LiveEvent
+  CfRendaTurbinadaModule
 } from '@prisma/client';
 
 type ModuleWithLessons = CfRendaTurbinadaModule & {
@@ -55,9 +54,7 @@ export function serializeModule(module: ModuleWithLessons) {
   };
 }
 
-export function serializeLiveEvent(
-  event: CfRendaTurbinadaLiveEvent | CfRendaTurbinadaTurma2LiveEvent
-) {
+export function serializeLiveEvent(event: CfRendaTurbinadaLiveEvent) {
   return {
     id: event.id,
     title: event.title,
