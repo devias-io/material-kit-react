@@ -70,11 +70,30 @@ export async function GET(request: NextRequest) {
       const releaseTimestamp = module.releaseDate instanceof Date
         ? module.releaseDate.getTime()
         : Number.NaN;
-      const isReleased = !Number.isNaN(releaseTimestamp) && releaseTimestamp <= now.getTime();
+      const isReleased = isAdmin || (!Number.isNaN(releaseTimestamp) && releaseTimestamp <= now.getTime());
+
+      if (isReleased) {
+        return {
+          ...baseModule,
+          isReleased
+        };
+      }
+
+      const safeLessons = module.lessons.map(lesson => ({
+        id: lesson.id,
+        title: lesson.title,
+        duration: lesson.duration,
+        description: lesson.description ?? undefined,
+        videoUrl: undefined,
+        content: undefined,
+        sortOrder: lesson.sortOrder ?? undefined,
+        materials: []
+      }));
 
       return {
         ...baseModule,
-        isReleased
+        isReleased,
+        lessons: safeLessons
       };
     });
 
