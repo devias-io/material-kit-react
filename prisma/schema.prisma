@@ -830,6 +830,49 @@ model CfRendaTurbinadaLessonMaterial {
   @@map("lesson_materials")
 }
 
+model CfRendaTurbinadaTurma2Module {
+  id          String                            @id @default(cuid())
+  title       String
+  highlight   String?
+  releaseDate DateTime
+  isHidden    Boolean                           @default(false)
+  createdAt   DateTime                          @default(now())
+  updatedAt   DateTime                          @updatedAt
+  sortOrder   Int?
+  lessons     CfRendaTurbinadaTurma2Lesson[]
+
+  @@map("modules_turma2")
+}
+
+model CfRendaTurbinadaTurma2Lesson {
+  id          Int                                 @id @default(autoincrement())
+  moduleId    String
+  title       String
+  duration    String
+  description String?
+  videoUrl    String?
+  content     String?
+  sortOrder   Int?
+  createdAt   DateTime                            @default(now())
+  updatedAt   DateTime                            @updatedAt
+  module      CfRendaTurbinadaTurma2Module        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  materials   CfRendaTurbinadaTurma2LessonMaterial[]
+
+  @@map("lessons_turma2")
+}
+
+model CfRendaTurbinadaTurma2LessonMaterial {
+  id        Int                              @id @default(autoincrement())
+  lessonId  Int
+  title     String
+  fileUrl   String
+  createdAt DateTime                         @default(now())
+  updatedAt DateTime                         @updatedAt
+  lesson    CfRendaTurbinadaTurma2Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("lesson_materials_turma2")
+}
+
 model CfRendaTurbinadaLiveEvent {
   id              Int      @id @default(autoincrement())
   title           String
