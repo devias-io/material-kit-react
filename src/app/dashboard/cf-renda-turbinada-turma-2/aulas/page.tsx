@@ -880,7 +880,7 @@ setLiveEvents(
       setMentoriaFetchError(null);
 
       try {
-        const response = await fetch('/api/cf-renda-turbinada/mentorias');
+        const response = await fetch('/api/cf-renda-turbinada-turma-2/mentorias');
         const data = (await response.json().catch(() => null)) as { mentorias?: Mentoria[]; error?: string } | null;
 
         if (!response.ok || !data || !Array.isArray(data.mentorias)) {
@@ -1192,7 +1192,7 @@ const visibleModules = React.useMemo(() => {
       setIsSavingMentoria(true);
 
       try {
-        const response = await fetch('/api/cf-renda-turbinada/mentorias', {
+        const response = await fetch('/api/cf-renda-turbinada-turma-2/mentorias', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1313,7 +1313,7 @@ const visibleModules = React.useMemo(() => {
       }));
 
       try {
-        const response = await fetch('/api/cf-renda-turbinada/mentorias/reorder', {
+        const response = await fetch('/api/cf-renda-turbinada-turma-2/mentorias/reorder', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1385,7 +1385,7 @@ const visibleModules = React.useMemo(() => {
       setIsSavingMentoria(true);
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/mentorias/${mentoriaId}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/mentorias/${mentoriaId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1426,7 +1426,7 @@ const visibleModules = React.useMemo(() => {
       setIsSavingMentoria(true);
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/mentorias/${mentoriaId}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/mentorias/${mentoriaId}`, {
           method: 'DELETE'
         });
 
@@ -1475,7 +1475,7 @@ const visibleModules = React.useMemo(() => {
           formData.set('title', title.trim());
         }
 
-        const response = await fetch(`/api/cf-renda-turbinada/mentorias/${mentoriaId}/materials`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/mentorias/${mentoriaId}/materials`, {
           method: 'POST',
           body: formData
         });
@@ -1527,7 +1527,7 @@ const visibleModules = React.useMemo(() => {
       }));
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/mentorias/materials/${materialId}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/mentorias/materials/${materialId}`, {
           method: 'DELETE'
         });
 

@@ -930,6 +930,35 @@ model CfRendaTurbinadaMentoriaMaterial {
   @@map("mentoria_materials")
 }
 
+model CfRendaTurbinadaTurma2Mentoria {
+  id              Int                                   @id @default(autoincrement())
+  title           String
+  description     String?
+  content         String?
+  videoUrl        String?                               @map("video_url")
+  recordedAt      DateTime                              @map("recorded_at")
+  releaseDate     DateTime?                             @map("release_date")
+  durationMinutes Int?                                  @map("duration_minutes")
+  sortOrder       Int?                                  @map("sort_order")
+  createdAt       DateTime                              @default(now()) @map("created_at")
+  updatedAt       DateTime                              @updatedAt @map("updated_at")
+  materials       CfRendaTurbinadaTurma2MentoriaMaterial[]
+
+  @@map("mentorias_turma2")
+}
+
+model CfRendaTurbinadaTurma2MentoriaMaterial {
+  id         Int                                       @id @default(autoincrement())
+  mentoriaId Int                                       @map("mentoria_id")
+  title      String
+  fileUrl    String                                    @map("file_url")
+  createdAt  DateTime                                  @default(now()) @map("created_at")
+  updatedAt  DateTime                                  @updatedAt @map("updated_at")
+  mentoria   CfRendaTurbinadaTurma2Mentoria            @relation(fields: [mentoriaId], references: [id], onDelete: Cascade)
+
+  @@map("mentoria_materials_turma2")
+}
+
 model BastidoresDaBolsaModule {
   id          String                        @id @default(cuid())
   title       String
