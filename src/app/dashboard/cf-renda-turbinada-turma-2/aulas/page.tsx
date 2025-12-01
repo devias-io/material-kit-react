@@ -781,7 +781,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
       setFetchError(null);
 
       try {
-        const response = await fetch('/api/cf-renda-turbinada/modules');
+        const response = await fetch('/api/cf-renda-turbinada-turma-2/modules');
         const data = (await response.json().catch(() => null)) as { modules?: Module[]; error?: string } | null;
 
         if (!response.ok || !data || !Array.isArray(data.modules)) {
@@ -880,7 +880,7 @@ setLiveEvents(
       setMentoriaFetchError(null);
 
       try {
-        const response = await fetch('/api/cf-renda-turbinada/mentorias');
+        const response = await fetch('/api/cf-renda-turbinada-turma-2/mentorias');
         const data = (await response.json().catch(() => null)) as { mentorias?: Mentoria[]; error?: string } | null;
 
         if (!response.ok || !data || !Array.isArray(data.mentorias)) {
@@ -1192,7 +1192,7 @@ const visibleModules = React.useMemo(() => {
       setIsSavingMentoria(true);
 
       try {
-        const response = await fetch('/api/cf-renda-turbinada/mentorias', {
+        const response = await fetch('/api/cf-renda-turbinada-turma-2/mentorias', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1313,7 +1313,7 @@ const visibleModules = React.useMemo(() => {
       }));
 
       try {
-        const response = await fetch('/api/cf-renda-turbinada/mentorias/reorder', {
+        const response = await fetch('/api/cf-renda-turbinada-turma-2/mentorias/reorder', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1385,7 +1385,7 @@ const visibleModules = React.useMemo(() => {
       setIsSavingMentoria(true);
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/mentorias/${mentoriaId}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/mentorias/${mentoriaId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1426,7 +1426,7 @@ const visibleModules = React.useMemo(() => {
       setIsSavingMentoria(true);
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/mentorias/${mentoriaId}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/mentorias/${mentoriaId}`, {
           method: 'DELETE'
         });
 
@@ -1475,7 +1475,7 @@ const visibleModules = React.useMemo(() => {
           formData.set('title', title.trim());
         }
 
-        const response = await fetch(`/api/cf-renda-turbinada/mentorias/${mentoriaId}/materials`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/mentorias/${mentoriaId}/materials`, {
           method: 'POST',
           body: formData
         });
@@ -1527,7 +1527,7 @@ const visibleModules = React.useMemo(() => {
       }));
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/mentorias/materials/${materialId}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/mentorias/materials/${materialId}`, {
           method: 'DELETE'
         });
 
@@ -1571,7 +1571,7 @@ const visibleModules = React.useMemo(() => {
       setIsSaving(true);
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/modules/${moduleId}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/modules/${moduleId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ isHidden: !currentIsHidden })
@@ -1632,7 +1632,7 @@ const visibleModules = React.useMemo(() => {
           formData.set('title', title.trim());
         }
 
-        const response = await fetch(`/api/cf-renda-turbinada/lessons/${lessonId}/materials`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/lessons/${lessonId}/materials`, {
           method: 'POST',
           body: formData
         });
@@ -1768,7 +1768,7 @@ const visibleModules = React.useMemo(() => {
       setIsSaving(true);
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/modules/${moduleId}/lessons`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/modules/${moduleId}/lessons`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1842,7 +1842,7 @@ const visibleModules = React.useMemo(() => {
       setIsSaving(true);
 
       try {
-        const response = await fetch('/api/cf-renda-turbinada/modules', {
+        const response = await fetch('/api/cf-renda-turbinada-turma-2/modules', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1937,7 +1937,7 @@ const handleUpdateModule = React.useCallback(
     setIsSaving(true);
 
     try {
-      const response = await fetch(`/api/cf-renda-turbinada/modules/${moduleId}`, {
+      const response = await fetch(`/api/cf-renda-turbinada-turma-2/modules/${moduleId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1986,7 +1986,7 @@ const handleUpdateModule = React.useCallback(
       setIsSaving(true);
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/modules/${moduleId}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/modules/${moduleId}`, {
           method: 'DELETE'
         });
 
@@ -2076,7 +2076,7 @@ const handleUpdateModule = React.useCallback(
       setIsSaving(true);
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/lessons/${lesson.id}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/lessons/${lesson.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2144,7 +2144,7 @@ const handleUpdateModule = React.useCallback(
       setIsSaving(true);
 
       try {
-        const response = await fetch(`/api/cf-renda-turbinada/lessons/${lesson.id}`, {
+        const response = await fetch(`/api/cf-renda-turbinada-turma-2/lessons/${lesson.id}`, {
           method: 'DELETE'
         });
 
@@ -2330,7 +2330,7 @@ const handleUpdateModule = React.useCallback(
       }));
 
       try {
-        const response = await fetch('/api/cf-renda-turbinada/lessons/reorder', {
+        const response = await fetch('/api/cf-renda-turbinada-turma-2/lessons/reorder', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

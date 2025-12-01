@@ -53,24 +53,28 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    const serializedModules = modules.map(module => {
+    const serializedModules = modules
+      .filter(module => {
+        if (isAdmin) {
+          return true;
+        }
+
+        const releaseTimestamp = module.releaseDate instanceof Date
+          ? module.releaseDate.getTime()
+          : Number.NaN;
+
+        return !Number.isNaN(releaseTimestamp) && releaseTimestamp <= now.getTime();
+      })
+      .map(module => {
       const baseModule = serializeModule(module);
       const releaseTimestamp = module.releaseDate instanceof Date
         ? module.releaseDate.getTime()
         : Number.NaN;
       const isReleased = !Number.isNaN(releaseTimestamp) && releaseTimestamp <= now.getTime();
 
-      if (isAdmin || isReleased) {
-        return {
-          ...baseModule,
-          isReleased
-        };
-      }
-
       return {
         ...baseModule,
-        isReleased,
-        lessons: []
+        isReleased
       };
     });
 
