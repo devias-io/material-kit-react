@@ -204,19 +204,22 @@ export async function POST(
         const treatAsAddon = isAddonPurchase && user.plan !== integrationData.plan;
         let updatedUser = user;
 
+        console.log(`♻️ Revogando acesso do produto ${integrationData.plan} (Eduzz)`);
+        await deactivateEntitlement(prisma, {
+          userId: user.id,
+          code: integrationData.plan,
+          origin: 'EDUZZ',
+        });
+
         if (treatAsAddon) {
-          console.log(`♻️ Revogando complemento ${integrationData.plan} (Eduzz)`);
-          await deactivateEntitlement(prisma, {
-            userId: user.id,
-            code: integrationData.plan,
-            origin: 'EDUZZ',
-          });
+          console.log(`✅ Complemento ${integrationData.plan} removido sem afetar outros produtos`);
         } else {
-          console.log('🚫 Bloqueando usuário por reembolso de plano principal (Eduzz)');
+          console.log('🚫 Revogando plano principal sem bloquear demais produtos do usuário');
           updatedUser = await prisma.user.update({
             where: { email },
             data: {
-              status: 'INACTIVE',
+              status: 'ACTIVE',
+              plan: user.plan === integrationData.plan ? 'CANCELLED' : user.plan,
               expirationDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Ontem
               origin: 'EDUZZ'
             }
@@ -245,14 +248,14 @@ export async function POST(
           success: true,
           message: treatAsAddon
             ? `Reembolso Eduzz processado - complemento ${integrationData.plan} removido`
-            : `Reembolso Eduzz processado - usuário bloqueado`,
+            : `Reembolso Eduzz processado - produto principal revogado`,
           platform: 'Eduzz',
           event: event,
           user: {
             id: updatedUser.id,
             email: updatedUser.email,
             status: updatedUser.status,
-            blocked: !treatAsAddon,
+            blocked: false,
           },
           entitlementRemoved: treatAsAddon,
         });
