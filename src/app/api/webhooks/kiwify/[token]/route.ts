@@ -421,19 +421,22 @@ export async function POST(
         const treatAsAddon = isAddonPurchase && user.plan !== integrationData.plan;
         let updatedUser = user;
 
+        console.log(`♻️ Revogando acesso do produto ${integrationData.plan} (Kiwify)`);
+        await deactivateEntitlement(prisma, {
+          userId: user.id,
+          code: integrationData.plan,
+          origin: 'KIWIFY',
+        });
+
         if (treatAsAddon) {
-          console.log(`♻️ Revogando complemento ${integrationData.plan} (Kiwify)`);
-          await deactivateEntitlement(prisma, {
-            userId: user.id,
-            code: integrationData.plan,
-            origin: 'KIWIFY',
-          });
+          console.log(`✅ Complemento ${integrationData.plan} removido sem afetar outros produtos`);
         } else {
-          console.log('🚫 Bloqueando usuário por reembolso de plano principal (Kiwify)');
+          console.log('🚫 Revogando plano principal sem bloquear demais produtos do usuário');
           updatedUser = await prisma.user.update({
             where: { email },
             data: {
-              status: 'INACTIVE',
+              status: 'ACTIVE',
+              plan: user.plan === integrationData.plan ? 'CANCELLED' : user.plan,
               expirationDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Ontem
               origin: 'KIWIFY'
             }
@@ -469,14 +472,14 @@ export async function POST(
           success: true,
           message: treatAsAddon
             ? `Reembolso Kiwify processado - complemento ${integrationData.plan} removido`
-            : `Reembolso Kiwify processado - usuário bloqueado`,
+            : `Reembolso Kiwify processado - produto principal revogado`,
           platform: 'Kiwify',
           event: event,
           user: {
             id: updatedUser.id,
             email: updatedUser.email,
             status: updatedUser.status,
-            blocked: !treatAsAddon,
+            blocked: false,
           },
           entitlementRemoved: treatAsAddon,
         });
