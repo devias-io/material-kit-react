@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword, hashPassword } from '@/lib/auth/password';
-import jwt from 'jsonwebtoken';
+import { auth } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,19 +28,18 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Pegar usuário do token ou localStorage
-    const authHeader = request.headers.get('authorization');
-    const userEmail = request.headers.get('x-user-email');
+    // Recuperar usuário da sessão
+    const session = await auth();
 
-    if (!userEmail) {
-      return NextResponse.json({ 
-        error: 'Usuário não autenticado' 
+    if (!session?.user?.email) {
+      return NextResponse.json({
+        error: 'Usuário não autenticado'
       }, { status: 401 });
     }
 
     // Buscar usuário
     const user = await prisma.user.findUnique({
-      where: { email: userEmail.toLowerCase() }
+      where: { email: session.user.email.toLowerCase() }
     });
 
     if (!user) {
