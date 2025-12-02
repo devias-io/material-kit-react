@@ -105,7 +105,7 @@ export function UserPopover({ anchorEl, onClose, open }: UserPopoverProps): Reac
         return;
       }
       await checkSession?.();
-      router.refresh();
+      router.push(paths.auth.signIn);
     } catch (err) {
       logger.error('Sign out error', err);
     }
