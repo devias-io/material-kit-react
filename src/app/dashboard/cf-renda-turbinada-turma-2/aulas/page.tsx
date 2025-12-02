@@ -624,6 +624,7 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const { planInfo } = useAuthAccess();
   const isAdmin = planInfo.isAdmin;
   const [modules, setModules] = React.useState<Module[]>([]);
+  const [collapsedModules, setCollapsedModules] = React.useState<Set<string>>(new Set());
   const [lessonForms, setLessonForms] = React.useState<Record<string, LessonFormState>>({});
   const [lessonErrors, setLessonErrors] = React.useState<Record<string, string | null>>({});
   const [materialUploadState, setMaterialUploadState] = React.useState<
@@ -1884,9 +1885,38 @@ const visibleModules = React.useMemo(() => {
     setOpenMoveLessonKey(null);
   }, []);
 
+  React.useEffect(() => {
+    if (!isAdmin || viewAsStudent) {
+      setCollapsedModules(new Set());
+      return;
+    }
+
+    setCollapsedModules(previous => {
+      const next = new Set(previous);
+      modules.forEach(module => {
+        if (!previous.has(module.id)) {
+          next.add(module.id);
+        }
+      });
+      return next;
+    });
+  }, [isAdmin, modules, viewAsStudent]);
+
+  const handleToggleModuleCollapse = React.useCallback((moduleId: string) => {
+    setCollapsedModules(prev => {
+      const next = new Set(prev);
+      if (next.has(moduleId)) {
+        next.delete(moduleId);
+      } else {
+        next.add(moduleId);
+      }
+      return next;
+    });
+  }, []);
+
   const handleStartEditModule = React.useCallback(
-  (moduleId: string) => {
-    const module = modules.find(m => m.id === moduleId);
+    (moduleId: string) => {
+      const module = modules.find(m => m.id === moduleId);
     if (!module) return;
 
     const releaseDate = new Date(module.releaseDate);
@@ -3259,15 +3289,17 @@ const handleUpdateModule = React.useCallback(
         ) : (
 visibleModules.map(module => {
   const now = new Date();
-  const releaseDate = new Date(module.releaseDate);
-  const releaseIsValid = !Number.isNaN(releaseDate.getTime());
-  const isReleased = module.isReleased ?? (releaseIsValid && releaseDate <= now);
-  const isHidden = Boolean(module.isHidden);
+      const releaseDate = new Date(module.releaseDate);
+      const releaseIsValid = !Number.isNaN(releaseDate.getTime());
+      const isReleased = module.isReleased ?? (releaseIsValid && releaseDate <= now);
+      const isHidden = Boolean(module.isHidden);
+      const isCollapsed =
+        isAdmin && !viewAsStudent && collapsedModules.has(module.id) && editingModuleId !== module.id;
 
-  return (
-    <div
-      key={module.id}
-      id={`modulo-${module.id}`}
+      return (
+        <div
+          key={module.id}
+          id={`modulo-${module.id}`}
       style={{
         backgroundColor: '#ffffff',
         borderRadius: '16px',
@@ -3399,6 +3431,22 @@ visibleModules.map(module => {
               </span>
               {isAdmin && (
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleModuleCollapse(module.id)}
+                    style={{
+                      border: '1px solid #010101',
+                      backgroundColor: isCollapsed ? '#010101' : 'transparent',
+                      color: isCollapsed ? '#f8fafc' : '#010101',
+                      borderRadius: '9999px',
+                      padding: '8px 14px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {isCollapsed ? 'Expandir conteúdo' : 'Recolher conteúdo'}
+                  </button>
                   <span
                     style={{
                       padding: '6px 12px',
@@ -3488,35 +3536,39 @@ visibleModules.map(module => {
               )}
             </div>
 
-            {/* MOSTRA HIGHLIGHT APENAS SE LIBERADO OU SE FOR ADMIN */}
-            {(isReleased || isAdmin) && (
-              <p style={{ margin: 0, color: '#1e293b', fontSize: '18px', lineHeight: 1.6 }}>
-                {module.highlight && module.highlight.trim().length > 0
-                  ? module.highlight
-                  : 'Conteúdo liberado recentemente.'}
-              </p>
-            )}
+            {!isCollapsed && (
+              <>
+                {/* MOSTRA HIGHLIGHT APENAS SE LIBERADO OU SE FOR ADMIN */}
+                {(isReleased || isAdmin) && (
+                  <p style={{ margin: 0, color: '#1e293b', fontSize: '18px', lineHeight: 1.6 }}>
+                    {module.highlight && module.highlight.trim().length > 0
+                      ? module.highlight
+                      : 'Conteúdo liberado recentemente.'}
+                  </p>
+                )}
 
-            {/* AVISO PARA MÓDULOS NÃO LIBERADOS */}
-            {!isAdmin && !isReleased && (
-              <div
-                style={{
-                  borderRadius: '12px',
-                  backgroundColor: '#fef3c7',
-                  color: '#b45309',
-                  padding: '16px 20px',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  textAlign: 'center'
-                }}
-              >
-                🔒 Este módulo será liberado em {formatReleaseDate(module.releaseDate)}
-              </div>
+                {/* AVISO PARA MÓDULOS NÃO LIBERADOS */}
+                {!isAdmin && !isReleased && (
+                  <div
+                    style={{
+                      borderRadius: '12px',
+                      backgroundColor: '#fef3c7',
+                      color: '#b45309',
+                      padding: '16px 20px',
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      textAlign: 'center'
+                    }}
+                  >
+                    🔒 Este módulo será liberado em {formatReleaseDate(module.releaseDate)}
+                  </div>
+                )}
+              </>
             )}
           </div>
 
           {/* MOSTRA AULAS APENAS SE LIBERADO OU SE FOR ADMIN */}
-          {(isReleased || isAdmin) && (
+          {(isReleased || isAdmin) && !isCollapsed && (
             <>
               <div style={{ display: 'grid', gap: '16px' }}>
                 {module.lessons.length === 0 ? (
