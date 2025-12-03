@@ -304,19 +304,6 @@ export default function AdminUsersPage() {
         </Typography>
       </Box>
 
-      {/* ✅ ALERTA MOSTRANDO STATS DOS PLANOS */}
-      {planStats.byPlan.LITE_V2 > 0 && (
-        <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>
-          <Typography variant="body2" sx={{ fontWeight: '500', mb: 1 }}>
-            🌟 Close Friends LITE 2.0 Detectado!
-          </Typography>
-          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-            {planStats.byPlan.LITE_V2} usuário(s) com plano LITE 2.0 encontrado(s). 
-            LITE Original: {planStats.byPlan.LITE} | VIP: {planStats.byPlan.VIP} | FIIs: {planStats.byPlan.FIIS}
-          </Typography>
-        </Alert>
-      )}
-
       {/* Debug info em desenvolvimento */}
       {process.env.NODE_ENV === 'development' && (
         <Alert 
@@ -371,21 +358,6 @@ export default function AdminUsersPage() {
               • Verifique a conexão com o banco de dados
             </Typography>
           </Box>
-        </Alert>
-      )}
-
-      {!error && users.length > 0 && (
-        <Alert 
-          severity="success" 
-          sx={{ 
-            mb: 3, 
-            backgroundColor: '#F0FDF4', 
-            border: '1px solid #BBF7D0',
-            color: '#166534',
-            borderRadius: 2
-          }}
-        >
-          ✅ Conectado à API - {users.length} usuários carregados do banco de dados
         </Alert>
       )}
 
