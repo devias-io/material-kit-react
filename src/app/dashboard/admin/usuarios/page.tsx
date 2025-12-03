@@ -240,6 +240,42 @@ export default function AdminUsersPage() {
 
   const filtersActive = Boolean(planFilter || statusFilter || originFilter || normalizedSearchTerm);
 
+  const handleExportEmails = () => {
+    if (filteredUsers.length === 0) {
+      alert('Nenhum usuário encontrado para exportar com os filtros atuais.');
+      return;
+    }
+
+    const headers = ['nome_completo', 'email', 'plano', 'status', 'origem'];
+
+    const rows = filteredUsers.map(user => [
+      `${user.firstName} ${user.lastName}`.trim(),
+      user.email,
+      user.plan,
+      user.status,
+      user.origin
+    ]);
+
+    const csvContent = [
+      headers.join(';'),
+      ...rows.map(row =>
+        row
+          .map(value => `"${String(value ?? '').replace(/"/g, '""')}"`)
+          .join(';')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `usuarios-emails-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+  };
+
   // ✅ STATS ATUALIZADAS INCLUINDO LITE_V2
   const planStats = React.useMemo(() => {
     const stats = {
@@ -508,11 +544,34 @@ export default function AdminUsersPage() {
           >
             📤 Importar em Massa
           </Button>
-          
+
+          <Button
+            variant="outlined"
+            disabled={loading}
+            onClick={handleExportEmails}
+            sx={{
+              bgcolor: '#FFFFFF',
+              color: '#0F172A',
+              borderColor: '#CBD5E1',
+              fontWeight: '600',
+              '&:hover': { bgcolor: '#F8FAFC', borderColor: '#94A3B8' },
+              '&:disabled': { color: '#94A3B8', borderColor: '#E2E8F0' },
+              borderRadius: 2,
+              px: 3,
+              py: 1.5,
+              textTransform: 'none',
+              fontSize: '0.95rem',
+              boxShadow: 'none',
+              width: { xs: '100%', sm: 'auto' }
+            }}
+          >
+            📥 Exportar E-mails
+          </Button>
+
           <Button
             variant="contained"
             disabled={loading}
-            sx={{ 
+            sx={{
               bgcolor: '#3B82F6', 
               color: '#FFFFFF', 
               fontWeight: '600',
