@@ -20,7 +20,11 @@ import {
   TextField,
   InputAdornment,
   IconButton,
-  CircularProgress
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 
 import { useUser } from '@/hooks/use-user';
@@ -50,6 +54,9 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [planFilter, setPlanFilter] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('');
+  const [originFilter, setOriginFilter] = React.useState('');
 
   // Verificar se é admin
   React.useEffect(() => {
@@ -218,11 +225,20 @@ export default function AdminUsersPage() {
 
   const normalizedSearchTerm = normalizeText(searchTerm);
 
-  const filteredUsers = users.filter(user =>
-    normalizeText(user.firstName).includes(normalizedSearchTerm) ||
-    normalizeText(user.lastName).includes(normalizedSearchTerm) ||
-    normalizeText(user.email).includes(normalizedSearchTerm)
-  );
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = !normalizedSearchTerm ||
+      normalizeText(user.firstName).includes(normalizedSearchTerm) ||
+      normalizeText(user.lastName).includes(normalizedSearchTerm) ||
+      normalizeText(user.email).includes(normalizedSearchTerm);
+
+    const matchesPlan = !planFilter || user.plan === planFilter;
+    const matchesStatus = !statusFilter || user.status === statusFilter;
+    const matchesOrigin = !originFilter || user.origin === originFilter;
+
+    return matchesSearch && matchesPlan && matchesStatus && matchesOrigin;
+  });
+
+  const filtersActive = Boolean(planFilter || statusFilter || originFilter || normalizedSearchTerm);
 
   // ✅ STATS ATUALIZADAS INCLUINDO LITE_V2
   const planStats = React.useMemo(() => {
@@ -382,35 +398,109 @@ export default function AdminUsersPage() {
         flexDirection={{ xs: 'column', lg: 'row' }}
         gap={2}
       >
-        <TextField
-          placeholder="Buscar usuários..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          disabled={loading}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <span style={{ color: '#64748B' }}>🔍</span>
-              </InputAdornment>
-            ),
-          }}
-          sx={{ 
-            backgroundColor: '#FFFFFF', 
-            borderRadius: 2,
-            width: { xs: '100%', lg: 'auto' },
-            minWidth: { lg: '320px' },
-            '& .MuiInputBase-input': {
-              color: '#1E293B',
-              fontSize: '0.95rem'
-            },
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': { borderColor: '#E2E8F0' },
-              '&:hover fieldset': { borderColor: '#CBD5E1' },
-              '&.Mui-focused fieldset': { borderColor: '#3B82F6', borderWidth: '2px' },
-            }
-          }}
-        />
-        
+        <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2} width="100%">
+          <TextField
+            placeholder="Buscar usuários..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            disabled={loading}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <span style={{ color: '#64748B' }}>🔍</span>
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: 2,
+              width: { xs: '100%', md: '280px', lg: '320px' },
+              '& .MuiInputBase-input': {
+                color: '#1E293B',
+                fontSize: '0.95rem'
+              },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#E2E8F0' },
+                '&:hover fieldset': { borderColor: '#CBD5E1' },
+                '&.Mui-focused fieldset': { borderColor: '#3B82F6', borderWidth: '2px' },
+              }
+            }}
+          />
+
+          <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
+            <FormControl size="small" sx={{ minWidth: 160 }}>
+              <InputLabel id="plan-filter-label">Plano</InputLabel>
+              <Select
+                labelId="plan-filter-label"
+                value={planFilter}
+                label="Plano"
+                onChange={(e) => setPlanFilter(e.target.value as string)}
+              >
+                <MenuItem value=""><em>Todos</em></MenuItem>
+                <MenuItem value="VIP">Close Friends VIP</MenuItem>
+                <MenuItem value="LITE">Close Friends LITE</MenuItem>
+                <MenuItem value="LITE_V2">Close Friends LITE 2.0</MenuItem>
+                <MenuItem value="RENDA_PASSIVA">Projeto Renda Passiva</MenuItem>
+                <MenuItem value="FIIS">Projeto FIIs</MenuItem>
+                <MenuItem value="RENDA_TURBINADA">CF Renda Turbinada</MenuItem>
+                <MenuItem value="RENDA_TURBINADA_T2">CF Renda Turbinada - T2</MenuItem>
+                <MenuItem value="AMERICA">Projeto América</MenuItem>
+                <MenuItem value="ANALISTA">Analista</MenuItem>
+                <MenuItem value="ADMIN">Administrador</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel id="status-filter-label">Status</InputLabel>
+              <Select
+                labelId="status-filter-label"
+                value={statusFilter}
+                label="Status"
+                onChange={(e) => setStatusFilter(e.target.value as string)}
+              >
+                <MenuItem value=""><em>Todos</em></MenuItem>
+                <MenuItem value="ACTIVE">Ativo</MenuItem>
+                <MenuItem value="INACTIVE">Inativo</MenuItem>
+                <MenuItem value="PENDING">Pendente</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel id="origin-filter-label">Origem</InputLabel>
+              <Select
+                labelId="origin-filter-label"
+                value={originFilter}
+                label="Origem"
+                onChange={(e) => setOriginFilter(e.target.value as string)}
+              >
+                <MenuItem value=""><em>Todas</em></MenuItem>
+                <MenuItem value="MANUAL">Manual</MenuItem>
+                <MenuItem value="HOTMART">Hotmart</MenuItem>
+                <MenuItem value="KIWIFY">Kiwify</MenuItem>
+                <MenuItem value="EDUZZ">Eduzz</MenuItem>
+              </Select>
+            </FormControl>
+
+            <Button
+              variant="text"
+              disabled={!filtersActive}
+              onClick={() => {
+                setSearchTerm('');
+                setPlanFilter('');
+                setStatusFilter('');
+                setOriginFilter('');
+              }}
+              sx={{
+                textTransform: 'none',
+                color: filtersActive ? '#3B82F6' : '#94A3B8',
+                fontWeight: '600'
+              }}
+            >
+              Limpar filtros
+            </Button>
+          </Box>
+        </Box>
+
         <Box
           display="flex"
           gap={2}
@@ -492,6 +582,11 @@ export default function AdminUsersPage() {
                   <Typography variant="h4" sx={{ color: '#1E293B', fontWeight: '700', fontSize: '1.75rem' }}>
                     {users.length}
                   </Typography>
+                  {filtersActive && (
+                    <Typography variant="body2" sx={{ color: '#3B82F6', fontSize: '0.85rem', fontWeight: 600 }}>
+                      Filtrados: {filteredUsers.length}
+                    </Typography>
+                  )}
                 </Box>
               </Box>
             </CardContent>
