@@ -599,31 +599,6 @@ export default function AdminUsersPage() {
           }}>
             <CardContent sx={{ p: 3 }}>
               <Box display="flex" alignItems="center">
-                <Avatar sx={{ bgcolor: '#FFFBEB', color: '#D97706', mr: 2, fontSize: '20px', width: 48, height: 48 }}>
-                  💰
-                </Avatar>
-                <Box>
-                  <Typography color="#64748B" variant="body2" sx={{ fontSize: '0.875rem', fontWeight: '500' }}>
-                    Receita Total
-                  </Typography>
-                  <Typography variant="h4" sx={{ color: '#1E293B', fontWeight: '700', fontSize: '1.75rem' }}>
-                    {formatCurrency(users.reduce((sum, u) => sum + (u.totalPurchases || 0), 0))}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            backgroundColor: '#FFFFFF', 
-            borderRadius: 3, 
-            border: '1px solid #E2E8F0',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-          }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box display="flex" alignItems="center">
                 <Avatar sx={{ bgcolor: '#FAF5FF', color: '#7C3AED', mr: 2, fontSize: '20px', width: 48, height: 48 }}>
                   📅
                 </Avatar>
