@@ -51,6 +51,29 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       orderBy: { createdAt: 'desc' }
     });
 
+    // Buscar dados das integrações (Hotmart/Kiwify/Eduzz) para telefone
+    let hotmartData: any = null;
+    let kiwifyData: any = null;
+    let eduzzData: any = null;
+
+    try {
+      hotmartData = await (prisma as any).hotmartData?.findUnique?.({ where: { userId } });
+    } catch (error: any) {
+      console.warn('⚠️ Erro ao buscar dados Hotmart para telefone:', error.message);
+    }
+
+    try {
+      kiwifyData = await (prisma as any).kiwifyData?.findUnique?.({ where: { userId } });
+    } catch (error: any) {
+      console.warn('⚠️ Erro ao buscar dados Kiwify para telefone:', error.message);
+    }
+
+    try {
+      eduzzData = await (prisma as any).eduzzData?.findUnique?.({ where: { userId } });
+    } catch (error: any) {
+      console.warn('⚠️ Erro ao buscar dados Eduzz para telefone:', error.message);
+    }
+
     const formattedPurchases = purchases.map(purchase => ({
       id: purchase.id,
       amount: purchase.amount,
@@ -72,6 +95,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       plan: user.plan,
       status: user.status,
       hotmartCustomerId: user.hotmartCustomerId || undefined,
+      phone: (user as any)?.phone || hotmartData?.phone || kiwifyData?.phone || eduzzData?.phone,
+      hotmartPhone: hotmartData?.phone,
+      kiwifyPhone: kiwifyData?.phone,
+      eduzzPhone: eduzzData?.phone,
       createdAt: user.createdAt.toISOString(),
       lastLogin: user.lastLogin?.toISOString(),
       totalPurchases: user.totalPurchases || 0,
