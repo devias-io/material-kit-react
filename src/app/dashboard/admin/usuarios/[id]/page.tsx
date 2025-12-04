@@ -48,6 +48,10 @@ interface User {
   plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'RENDA_TURBINADA_T2' | 'AMERICA' | 'ANALISTA' | 'ADMIN';
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING';
   hotmartCustomerId?: string;
+  phone?: string | null;
+  hotmartPhone?: string | null;
+  kiwifyPhone?: string | null;
+  eduzzPhone?: string | null;
   createdAt: string;
   lastLogin?: string;
   totalPurchases: number;
@@ -479,6 +483,7 @@ export default function EditUserPage() {
   const lifetimePlan = isLifetimePlan(user.plan);
   const isLifetimeAccess = lifetimePlan || user.expirationDate === null;
   const expired = !isLifetimeAccess && isExpired(user.expirationDate);
+  const phoneValue = user.phone || user.hotmartPhone || user.kiwifyPhone || user.eduzzPhone || '';
 
   return (
     <Box sx={{ p: 4, backgroundColor: '#F8FAFC', minHeight: '100vh' }}>
@@ -652,7 +657,25 @@ export default function EditUserPage() {
                     type="email"
                     value={user.email}
                     onChange={(e) => setUser({ ...user, email: e.target.value })}
-                    sx={{ 
+                    sx={{
+                      '& .MuiInputBase-input': { color: '#1E293B' },
+                      '& .MuiInputLabel-root': { color: '#64748B' },
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': { borderColor: '#E2E8F0' },
+                        '&:hover fieldset': { borderColor: '#CBD5E1' },
+                        '&.Mui-focused fieldset': { borderColor: '#3B82F6', borderWidth: '2px' },
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Telefone (Hotmart/Kiwify/Eduzz)"
+                    value={phoneValue}
+                    InputProps={{ readOnly: true }}
+                    helperText={phoneValue ? 'Número trazido das plataformas de pagamento ou cadastro interno' : 'Nenhum telefone disponível'}
+                    sx={{
                       '& .MuiInputBase-input': { color: '#1E293B' },
                       '& .MuiInputLabel-root': { color: '#64748B' },
                       '& .MuiOutlinedInput-root': {

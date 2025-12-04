@@ -67,6 +67,8 @@ export async function GET(request: NextRequest) {
     // Estratégia: tentar diferentes abordagens até uma funcionar
     let users;
     const hotmartDataMap = new Map();
+    const kiwifyDataMap = new Map();
+    const eduzzDataMap = new Map();
     const purchasesMap = new Map();
     
     try {
@@ -90,6 +92,36 @@ export async function GET(request: NextRequest) {
         
       } catch (hotmartError) {
         console.warn('⚠️ Erro ao buscar HotmartData (pode não existir ainda):', hotmartError.message);
+      }
+
+      // 2b. Buscar dados da Kiwify
+      try {
+        const kiwifyData = await (prisma as any).kiwifyData?.findMany?.();
+        if (Array.isArray(kiwifyData)) {
+          console.log(`✅ Encontrados ${kiwifyData.length} registros Kiwify`);
+          kiwifyData.forEach((data: any) => {
+            if (data?.userId) {
+              kiwifyDataMap.set(data.userId, data);
+            }
+          });
+        }
+      } catch (kiwifyError: any) {
+        console.warn('⚠️ Erro ao buscar dados da Kiwify (pode não existir ainda):', kiwifyError.message);
+      }
+
+      // 2c. Buscar dados da Eduzz
+      try {
+        const eduzzData = await (prisma as any).eduzzData?.findMany?.();
+        if (Array.isArray(eduzzData)) {
+          console.log(`✅ Encontrados ${eduzzData.length} registros Eduzz`);
+          eduzzData.forEach((data: any) => {
+            if (data?.userId) {
+              eduzzDataMap.set(data.userId, data);
+            }
+          });
+        }
+      } catch (eduzzError: any) {
+        console.warn('⚠️ Erro ao buscar dados da Eduzz (pode não existir ainda):', eduzzError.message);
       }
       
       // 3. Tentar buscar purchases separadamente
@@ -130,6 +162,8 @@ export async function GET(request: NextRequest) {
         
         // Pegar dados do Hotmart para este usuário
         const hotmartInfo = hotmartDataMap.get(user.id);
+        const kiwifyInfo = kiwifyDataMap.get(user.id);
+        const eduzzInfo = eduzzDataMap.get(user.id);
         
         // Calcular total de compras
         const userPurchases = purchasesMap?.get(user.id) || [];
@@ -146,7 +180,13 @@ export async function GET(request: NextRequest) {
           plan: user.plan,
           status: user.status,
           origin: user.origin,
-          
+
+          // 📞 Contatos das plataformas
+          phone: (user as any)?.phone || hotmartInfo?.phone || kiwifyInfo?.phone || eduzzInfo?.phone || null,
+          hotmartPhone: hotmartInfo?.phone || null,
+          kiwifyPhone: kiwifyInfo?.phone || null,
+          eduzzPhone: eduzzInfo?.phone || null,
+
           // 🔥 DADOS DO HOTMART (essenciais para liberação de membros)
           hotmartCustomerId: hotmartInfo?.hotmartCustomerId || user.hotmartCustomerId || null,
           
