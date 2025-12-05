@@ -418,7 +418,7 @@ export async function POST(
           updatedUser = await prisma.user.update({
             where: { email },
             data: {
-              status: 'ACTIVE',
+              status: 'INACTIVE',
               plan: user.plan === integrationData.plan ? 'CANCELLED' : user.plan,
               expirationDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
               origin: 'HOTMART'
