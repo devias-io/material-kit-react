@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { EDUZZ_TOKEN_MAPPING } from '@/data/integrations';
-import { activateEntitlement, deactivateEntitlement, isAddonPlan } from '@/lib/entitlements';
+import { activateEntitlement, deactivateEntitlement, getActiveEntitlementCodes, isAddonPlan } from '@/lib/entitlements';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
 
 // 🔍 FUNÇÃO PARA DETECTAR PLANO AUTOMATICAMENTE PELOS SEUS PRODUTOS EDUZZ
@@ -211,9 +211,21 @@ export async function POST(
           origin: 'EDUZZ',
         });
 
+        const otherActiveEntitlements = await prisma.userEntitlement.findMany({
+          where: {
+            userId: user.id,
+            status: 'ACTIVE',
+            NOT: { code: integrationData.plan },
+          },
+          select: { code: true, status: true, expiresAt: true },
+        });
+
+        const hasAnotherActivePlan = getActiveEntitlementCodes(otherActiveEntitlements).length > 0;
+        const shouldDeactivatePrimaryPlan = !treatAsAddon && user.plan === integrationData.plan && !hasAnotherActivePlan;
+
         if (treatAsAddon) {
           console.log(`✅ Complemento ${integrationData.plan} removido sem afetar outros produtos`);
-        } else {
+        } else if (shouldDeactivatePrimaryPlan) {
           console.log('🚫 Revogando plano principal sem bloquear demais produtos do usuário');
           updatedUser = await prisma.user.update({
             where: { email },
@@ -224,6 +236,8 @@ export async function POST(
               origin: 'EDUZZ'
             }
           });
+        } else {
+          console.log('ℹ️ Outro plano ativo encontrado; mantendo usuário ativo.');
         }
 
         // Registrar reembolso

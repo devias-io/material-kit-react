@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth/password';
-import { activateEntitlement, deactivateEntitlement, isAddonPlan } from '@/lib/entitlements';
+import { activateEntitlement, deactivateEntitlement, getActiveEntitlementCodes, isAddonPlan } from '@/lib/entitlements';
 import { enviarEmailCredenciais } from '@/lib/auth/email'; // ✅ ADICIONAR ENVIO DE EMAIL
 import { isLifetimePlan } from '@/lib/lifetime-plans';
 
@@ -411,9 +411,21 @@ export async function POST(
           origin: 'HOTMART',
         });
 
+        const otherActiveEntitlements = await prisma.userEntitlement.findMany({
+          where: {
+            userId: user.id,
+            status: 'ACTIVE',
+            NOT: { code: integrationData.plan },
+          },
+          select: { code: true, status: true, expiresAt: true },
+        });
+
+        const hasAnotherActivePlan = getActiveEntitlementCodes(otherActiveEntitlements).length > 0;
+        const shouldDeactivatePrimaryPlan = !treatAsAddon && user.plan === integrationData.plan && !hasAnotherActivePlan;
+
         if (treatAsAddon) {
           console.log(`✅ Complemento ${integrationData.plan} removido sem afetar outros produtos`);
-        } else {
+        } else if (shouldDeactivatePrimaryPlan) {
           console.log('🚫 Revogando plano principal sem bloquear demais produtos do usuário');
           updatedUser = await prisma.user.update({
             where: { email },
@@ -424,6 +436,8 @@ export async function POST(
               origin: 'HOTMART'
             }
           });
+        } else {
+          console.log('ℹ️ Outro plano ativo encontrado; mantendo usuário ativo.');
         }
 
         try {
