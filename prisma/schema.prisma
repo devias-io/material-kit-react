@@ -150,6 +150,28 @@ model InstagramCadastro {
   @@map("instagram_cadastros")
 }
 
+model CfRendaTurbinadaCarteiraOperacao {
+  id              String   @id @default(cuid())
+  ordem           Int
+  ativoBase       String
+  codigoOpcao     String
+  strike          Float?
+  premio          Float?
+  premioCustom    String?
+  rendaPercentual Float?
+  garantia        Float?
+  precoReferencia Float?
+  vencimento      String
+  tipoOperacao    String
+  status          String
+  observacao      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("cf_renda_turbinada_carteira_operacoes")
+  @@index([tipoOperacao])
+}
+
 model AnaliseTecnica {
   id          String   @id @default(cuid())
   ticker      String
