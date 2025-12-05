@@ -4,7 +4,6 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, TrendingUp, AlertCircle, AlertTriangle } from 'lucide-react';
 import { useAuthAccess } from '@/hooks/use-auth-access';
-import { useDataStore } from '@/hooks/useDataStore';
 
 type CarteiraResumo = {
   label: string;
@@ -232,24 +231,485 @@ const getStatusStyle = (status: 'Aberta' | 'Fechada' | 'Encerrada') => {
 
 export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   const router = useRouter();
-  const { loading: authLoading, hasAccessSync } = useAuthAccess();
+  const { loading: authLoading, hasAccessSync, planInfo } = useAuthAccess();
   const hasCarteiraAccess = hasAccessSync('cf-renda-turbinada-carteira');
   const isMobile = useDeviceDetection();
+  const isAdmin = planInfo?.isAdmin ?? false;
 
-  // Usar os dados fixos diretamente
-  const operacoesPUT = operacoesPUTFixas;
-  const operacoesCALL = operacoesCALLFixas;
+  const [operacoesPUT, setOperacoesPUT] = React.useState<CarteiraOperacao[]>(operacoesPUTFixas);
+  const [operacoesCALL, setOperacoesCALL] = React.useState<CarteiraOperacao[]>(operacoesCALLFixas);
+  const [loadingOperacoes, setLoadingOperacoes] = React.useState(true);
+  const [salvandoOperacoes, setSalvandoOperacoes] = React.useState(false);
+  const [erroCarregarOperacoes, setErroCarregarOperacoes] = React.useState<string | null>(null);
+
+  const [modoEdicao, setModoEdicao] = React.useState<
+    | { tipo: 'PUT' | 'CALL'; operacao?: CarteiraOperacao | null }
+    | null
+  >(null);
+
+  const initialFormState = React.useMemo(
+    () => ({
+      id: null as string | null,
+      ativoBase: '',
+      codigoOpcao: '',
+      strike: '',
+      premio: '',
+      premioCustom: '',
+      rendaPercentual: '',
+      garantia: '',
+      precoReferencia: '',
+      vencimento: '',
+      status: 'Aberta' as CarteiraOperacao['status'],
+      ordem: ''
+    }),
+    []
+  );
+
+  const [formData, setFormData] = React.useState(initialFormState);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const carregarOperacoes = async () => {
+      setLoadingOperacoes(true);
+      setErroCarregarOperacoes(null);
+
+      try {
+        const response = await fetch('/api/cf-renda-turbinada/carteira');
+
+        if (!response.ok) {
+          throw new Error('Falha ao carregar operações');
+        }
+
+        const data = await response.json();
+
+        if (!isMounted) return;
+
+        setOperacoesPUT(Array.isArray(data.puts) ? data.puts : operacoesPUTFixas);
+        setOperacoesCALL(Array.isArray(data.calls) ? data.calls : operacoesCALLFixas);
+      } catch (error) {
+        console.error('Erro ao buscar operações:', error);
+        if (!isMounted) return;
+        setOperacoesPUT(operacoesPUTFixas);
+        setOperacoesCALL(operacoesCALLFixas);
+        setErroCarregarOperacoes('Não foi possível carregar as operações atualizadas. Exibindo valores padrão.');
+      } finally {
+        if (isMounted) {
+          setLoadingOperacoes(false);
+        }
+      }
+    };
+
+    void carregarOperacoes();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const persistirOperacoes = async (
+    puts: CarteiraOperacao[],
+    calls: CarteiraOperacao[]
+  ) => {
+    if (!isAdmin) return;
+
+    setSalvandoOperacoes(true);
+
+    try {
+      const response = await fetch('/api/cf-renda-turbinada/carteira', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ puts, calls })
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao salvar operações');
+      }
+
+      const data = await response.json();
+      setOperacoesPUT(Array.isArray(data.puts) ? data.puts : puts);
+      setOperacoesCALL(Array.isArray(data.calls) ? data.calls : calls);
+    } catch (error) {
+      console.error('Falha ao persistir operações:', error);
+    } finally {
+      setSalvandoOperacoes(false);
+    }
+  };
+
   const ordenarOperacoes = (operacoes: CarteiraOperacao[]) => {
-  return [...operacoes].sort((a, b) => {
-    if (a.status === 'Aberta' && b.status !== 'Aberta') return -1;
-    if (a.status !== 'Aberta' && b.status === 'Aberta') return 1;
-    return a.ordem - b.ordem;
-  });
-};
-  const operacoesProcessadas = [...operacoesPUTFixas, ...operacoesCALLFixas];
+    return [...operacoes].sort((a, b) => {
+      if (a.status === 'Aberta' && b.status !== 'Aberta') return -1;
+      if (a.status !== 'Aberta' && b.status === 'Aberta') return 1;
+      return a.ordem - b.ordem;
+    });
+  };
+
+  const operacoesProcessadas = [...operacoesPUT, ...operacoesCALL];
+
+  const iniciarCadastro = (tipo: 'PUT' | 'CALL') => {
+    setModoEdicao({ tipo, operacao: null });
+    setFormData({
+      ...initialFormState,
+      ordem: (tipo === 'PUT' ? operacoesPUT.length + 1 : operacoesCALL.length + 1).toString()
+    });
+  };
+
+  const iniciarEdicao = (operacao: CarteiraOperacao) => {
+    setModoEdicao({ tipo: operacao.tipoOperacao, operacao });
+    setFormData({
+      id: operacao.id,
+      ativoBase: operacao.ativoBase,
+      codigoOpcao: operacao.codigoOpcao,
+      strike: operacao.strike?.toString() ?? '',
+      premio: operacao.premio?.toString() ?? '',
+      premioCustom: operacao.premioCustom ?? '',
+      rendaPercentual: operacao.rendaPercentual?.toString() ?? '',
+      garantia: operacao.garantia?.toString() ?? '',
+      precoReferencia: operacao.precoReferencia?.toString() ?? '',
+      vencimento: operacao.vencimento,
+      status: operacao.status,
+      ordem: operacao.ordem?.toString() ?? ''
+    });
+  };
+
+  const removerOperacao = (id: string, tipo: 'PUT' | 'CALL') => {
+    if (!isAdmin) return;
+
+    if (tipo === 'PUT') {
+      setOperacoesPUT(prev => {
+        const atualizadas = prev.filter(op => op.id !== id);
+        void persistirOperacoes(atualizadas, operacoesCALL);
+        return atualizadas;
+      });
+    } else {
+      setOperacoesCALL(prev => {
+        const atualizadas = prev.filter(op => op.id !== id);
+        void persistirOperacoes(operacoesPUT, atualizadas);
+        return atualizadas;
+      });
+    }
+  };
+
+  const salvarOperacao = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!modoEdicao) return;
+
+    const isEdicao = Boolean(formData.id);
+    const baseLista = modoEdicao.tipo === 'PUT' ? operacoesPUT : operacoesCALL;
+    const novaOperacao: CarteiraOperacao = {
+      id: formData.id ?? `${modoEdicao.tipo.toLowerCase()}-${Date.now()}`,
+      ordem: parseNumber(formData.ordem) ?? baseLista.length + 1,
+      ativoBase: formData.ativoBase.trim().toUpperCase(),
+      codigoOpcao: formData.codigoOpcao.trim().toUpperCase(),
+      strike: parseNumber(formData.strike),
+      premio: parseNumber(formData.premio),
+      premioCustom: formData.premioCustom || undefined,
+      rendaPercentual: parseNumber(formData.rendaPercentual),
+      garantia: parseNumber(formData.garantia),
+      precoReferencia: parseNumber(formData.precoReferencia),
+      vencimento: formData.vencimento,
+      tipoOperacao: modoEdicao.tipo,
+      status: formData.status
+    };
+
+    const atualizarLista = (lista: CarteiraOperacao[]) => {
+      if (isEdicao) {
+        return lista.map(op => (op.id === novaOperacao.id ? novaOperacao : op));
+      }
+      return [...lista, novaOperacao];
+    };
+
+    if (modoEdicao.tipo === 'PUT') {
+      const novasPUT = atualizarLista(operacoesPUT);
+      setOperacoesPUT(novasPUT);
+      void persistirOperacoes(novasPUT, operacoesCALL);
+    } else {
+      const novasCALL = atualizarLista(operacoesCALL);
+      setOperacoesCALL(novasCALL);
+      void persistirOperacoes(operacoesPUT, novasCALL);
+    }
+
+    setModoEdicao(null);
+    setFormData(initialFormState);
+  };
+
+  const cancelarEdicao = () => {
+    setModoEdicao(null);
+    setFormData(initialFormState);
+  };
+
+  const handleFormChange = (field: keyof typeof formData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const renderAdminPanel = () => {
+    if (!isAdmin) return null;
+
+    return (
+      <div
+        style={{
+          maxWidth: '1400px',
+          margin: '0 auto 24px',
+          background: 'white',
+          borderRadius: '12px',
+          padding: isMobile ? '16px' : '24px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            justifyContent: 'space-between',
+            gap: '12px',
+            alignItems: isMobile ? 'flex-start' : 'center',
+            marginBottom: '12px'
+          }}
+        >
+          <div>
+            <h3 style={{ margin: 0, color: '#0f172a', fontSize: '18px' }}>
+              Painel administrativo
+            </h3>
+            <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '14px' }}>
+              Gerencie as operações diretamente desta página. As alterações são persistidas no
+              banco de dados (Prisma) e ficam visíveis para todos os usuários, enquanto o
+              controle de edição permanece restrito a administradores.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => iniciarCadastro('PUT')}
+              style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                border: '1px solid #3b82f6',
+                background: '#eff6ff',
+                color: '#1d4ed8',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              ➕ Nova PUT
+            </button>
+            <button
+              type="button"
+              onClick={() => iniciarCadastro('CALL')}
+              style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                border: '1px solid #10b981',
+                background: '#ecfdf3',
+                color: '#0f766e',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              ➕ Nova CALL
+            </button>
+          </div>
+        </div>
+
+        {erroCarregarOperacoes ? (
+          <div
+            style={{
+              marginBottom: '12px',
+              padding: '10px 12px',
+              borderRadius: '8px',
+              background: '#fef3c7',
+              border: '1px solid #fcd34d',
+              color: '#92400e',
+              fontSize: '14px'
+            }}
+          >
+            {erroCarregarOperacoes}
+          </div>
+        ) : null}
+
+        {salvandoOperacoes ? (
+          <div
+            style={{
+              marginBottom: '12px',
+              padding: '10px 12px',
+              borderRadius: '8px',
+              background: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              color: '#1d4ed8',
+              fontSize: '14px'
+            }}
+          >
+            Salvando alterações na carteira...
+          </div>
+        ) : null}
+
+        {modoEdicao ? (
+          <form onSubmit={salvarOperacao} style={{ display: 'grid', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '12px' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>Ativo base</span>
+                <input
+                  value={formData.ativoBase}
+                  onChange={(e) => handleFormChange('ativoBase', e.target.value)}
+                  required
+                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>Código da opção</span>
+                <input
+                  value={formData.codigoOpcao}
+                  onChange={(e) => handleFormChange('codigoOpcao', e.target.value)}
+                  required
+                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>Vencimento</span>
+                <input
+                  value={formData.vencimento}
+                  onChange={(e) => handleFormChange('vencimento', e.target.value)}
+                  placeholder="19/12/2025"
+                  required
+                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                />
+              </label>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: '12px' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>Strike</span>
+                <input
+                  value={formData.strike}
+                  onChange={(e) => handleFormChange('strike', e.target.value)}
+                  placeholder="66,29"
+                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>Prêmio</span>
+                <input
+                  value={formData.premio}
+                  onChange={(e) => handleFormChange('premio', e.target.value)}
+                  placeholder="1,52"
+                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>Prêmio customizado</span>
+                <input
+                  value={formData.premioCustom}
+                  onChange={(e) => handleFormChange('premioCustom', e.target.value)}
+                  placeholder="R$ 0,44 e R$ 0,47"
+                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>Renda %</span>
+                <input
+                  value={formData.rendaPercentual}
+                  onChange={(e) => handleFormChange('rendaPercentual', e.target.value)}
+                  placeholder="2,10"
+                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                />
+              </label>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '12px' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>Garantia</span>
+                <input
+                  value={formData.garantia}
+                  onChange={(e) => handleFormChange('garantia', e.target.value)}
+                  placeholder="3326"
+                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>Preço de referência</span>
+                <input
+                  value={formData.precoReferencia}
+                  onChange={(e) => handleFormChange('precoReferencia', e.target.value)}
+                  placeholder="65,79"
+                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>Ordem</span>
+                <input
+                  value={formData.ordem}
+                  onChange={(e) => handleFormChange('ordem', e.target.value)}
+                  placeholder="1"
+                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                />
+              </label>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '12px', alignItems: 'center' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>Status</span>
+                <select
+                  value={formData.status}
+                  onChange={(e) => handleFormChange('status', e.target.value as CarteiraOperacao['status'])}
+                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'white' }}
+                >
+                  <option value="Aberta">Aberta</option>
+                  <option value="Fechada">Fechada</option>
+                  <option value="Encerrada">Encerrada</option>
+                </select>
+              </label>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: isMobile ? 'stretch' : 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={cancelarEdicao}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
+                    background: '#f8fafc',
+                    color: '#475569',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)',
+                    color: 'white',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {modoEdicao.operacao ? 'Salvar alterações' : `Adicionar ${modoEdicao.tipo}`}
+                </button>
+              </div>
+            </div>
+          </form>
+        ) : (
+          <div
+            style={{
+              marginTop: '12px',
+              padding: '12px',
+              borderRadius: '8px',
+              background: '#f8fafc',
+              color: '#475569',
+              fontSize: '14px'
+            }}
+          >
+            Clique em “Nova PUT” ou “Nova CALL” para adicionar, ou use os botões de editar nos cards.
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const totaisCarteira = React.useMemo(() => {
-    const abertas = operacoesProcessadas.filter((op) => op.status === 'Aberta').length;
     const putAbertas = operacoesPUT.filter((op) => op.status === 'Aberta').length;
     const callAbertas = operacoesCALL.filter((op) => op.status === 'Aberta').length;
 
@@ -368,7 +828,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   }
 
   const renderOperacoesTable = (operacoes: CarteiraOperacao[], tipo: 'PUT' | 'CALL') => {
-      const operacoesOrdenadas = ordenarOperacoes(operacoes);
+    const operacoesOrdenadas = ordenarOperacoes(operacoes);
     if (operacoesOrdenadas.length === 0) {
       return (
         <div
@@ -515,6 +975,51 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                 >
                   Vencimento: {operacao.vencimento}
                 </div>
+
+                {isAdmin && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '8px',
+                      marginTop: '12px',
+                      paddingTop: '12px',
+                      borderTop: '1px dashed #e2e8f0'
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => iniciarEdicao(operacao)}
+                      style={{
+                        flex: 1,
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid #3b82f6',
+                        background: '#eff6ff',
+                        color: '#1d4ed8',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removerOperacao(operacao.id, operacao.tipoOperacao)}
+                      style={{
+                        flex: 1,
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid #ef4444',
+                        background: '#fef2f2',
+                        color: '#b91c1c',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -639,6 +1144,21 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               >
                 Status
               </th>
+              {isAdmin && (
+                <th
+                  style={{
+                    padding: '16px 12px',
+                    textAlign: 'center',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    color: '#64748b',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}
+                >
+                  Ações
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -780,6 +1300,42 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                       {operacao.status}
                     </span>
                   </td>
+                  {isAdmin && (
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => iniciarEdicao(operacao)}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            border: '1px solid #3b82f6',
+                            background: '#eff6ff',
+                            color: '#1d4ed8',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removerOperacao(operacao.id, operacao.tipoOperacao)}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            border: '1px solid #ef4444',
+                            background: '#fef2f2',
+                            color: '#b91c1c',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               );
             })}
@@ -843,6 +1399,22 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
         >
           Estratégias de venda de opções para geração de renda adicional
         </p>
+
+        {loadingOperacoes ? (
+          <div
+            style={{
+              marginTop: '12px',
+              padding: '10px 12px',
+              borderRadius: '8px',
+              background: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              color: '#1d4ed8',
+              fontSize: '14px'
+            }}
+          >
+            Carregando operações atualizadas...
+          </div>
+        ) : null}
       </div>
 
       {/* Cards de resumo */}
@@ -919,6 +1491,8 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
           operações já é válido embolsar o lucro para montagem de novas posições.
         </p>
       </div>
+
+      {renderAdminPanel()}
 
       {/* Seção PUTs */}
       <div
