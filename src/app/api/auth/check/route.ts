@@ -6,9 +6,7 @@ import { auth } from '@/lib/auth';
 import { CacheService } from '@/lib/redis';
 import { logApiMetric } from '@/lib/metrics';
 
-export const config = {
-  maxDuration: 3,
-};
+export const maxDuration = 3;
 
 export async function GET() {
   const startedAt = Date.now();

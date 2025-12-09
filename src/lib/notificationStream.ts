@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { addNotificationListener } from '@/lib/notificationsEmitter';
-import { logApiMetric } from '@/lib/api-metrics';
+import { logApiMetric } from '@/lib/metrics';
 import type { NotificationRealtimeEvent, NotificationStreamEvent } from '@/types/notifications';
 
 interface StreamOptions {
@@ -30,12 +30,11 @@ export async function createNotificationStreamResponse(
       if (metricsLogged) return;
       metricsLogged = true;
       logApiMetric({
-        endpoint: routeLabel,
-        method: 'GET',
-        statusCode,
-        responseTime: Date.now() - startTime,
+        route: routeLabel,
+        status: statusCode,
+        durationMs: Date.now() - startTime,
         cacheHit: false,
-        userId
+        extra: userId ? { userId } : undefined
       });
     };
 
@@ -159,10 +158,9 @@ export async function createNotificationStreamResponse(
   } catch (error) {
     console.error(`[Notifications stream] ${routeLabel}: failed to open stream`, error);
     logApiMetric({
-      endpoint: routeLabel,
-      method: 'GET',
-      statusCode: 500,
-      responseTime: Date.now() - startTime,
+      route: routeLabel,
+      status: 500,
+      durationMs: Date.now() - startTime,
       cacheHit: false
     });
     return new Response('Internal server error', { status: 500 });
