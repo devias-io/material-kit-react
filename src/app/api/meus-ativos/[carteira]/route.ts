@@ -7,9 +7,7 @@ import { ViesOverride } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
-export const config = {
-  maxDuration: 5,
-};
+export const maxDuration = 5;
 
 const normalizarViesOverrideValor = (valor: unknown): ViesOverride =>
   valor === 'MANTER' ? 'MANTER' : 'AUTO';

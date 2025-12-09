@@ -3,9 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
-export const config = {
-  maxDuration: 5,
-};
+export const maxDuration = 5;
 
 type CarteiraPayload = {
   id?: unknown;

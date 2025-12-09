@@ -6,9 +6,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
 export const runtime = 'nodejs';
-export const config = {
-  maxDuration: 5,
-};
+export const maxDuration = 5;
 
 // 🔑 SUA CHAVE DA API BRAPI
 const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';

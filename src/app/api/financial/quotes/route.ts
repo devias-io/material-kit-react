@@ -10,9 +10,7 @@ export const revalidate = 300;
 export const fetchCache = 'default-cache';
 export const runtime = 'nodejs';
 
-export const config = {
-  maxDuration: 5,
-};
+export const maxDuration = 5;
 
 const CACHE_HEADERS = buildCacheHeaders({ ttl: 300, swr: 600 });
 

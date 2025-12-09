@@ -3,9 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { buildCacheHeaders } from '@/server/cache-headers';
 import { CacheService } from '@/lib/cache-service';
 
-export const config = {
-  maxDuration: 5,
-};
+export const maxDuration = 5;
 
 // 🔥 TIPOS PARA DADOS DE MERCADO DOS FIIs
 interface FIIMarketData {

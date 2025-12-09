@@ -9,9 +9,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 300;
 export const fetchCache = 'default-cache';
 export const runtime = 'nodejs';
-export const config = {
-  maxDuration: 5,
-};
+export const maxDuration = 5;
 
 const MARKET_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const RESPONSE_CACHE_HEADERS = buildCacheHeaders({ ttl: 300, swr: 600 });
