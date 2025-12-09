@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     }
 
     const cacheKey = `user:me:${session.user.id}`;
-    
+
     return await CacheService.withCache({
       key: cacheKey,
       ttlSeconds: 60,
@@ -35,11 +35,11 @@ export async function GET(request: NextRequest) {
             origin: true,
           },
         });
-        
+
         if (!user) {
           throw new Error('User not found');
         }
-        
+
         return NextResponse.json(user);
       },
     });
