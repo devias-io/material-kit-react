@@ -1,6 +1,10 @@
 // app/api/ativo/[ticker]/completo/route.ts
 import { CacheService } from '@/lib/redis';
 
+export const config = {
+  maxDuration: 5,
+};
+
 export async function GET(
   request: Request,
   { params }: { params: { ticker: string } }

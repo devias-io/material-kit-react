@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { addNotificationListener } from '@/lib/notificationsEmitter';
+import { logApiMetric } from '@/lib/metrics';
 import type { NotificationRealtimeEvent, NotificationStreamEvent } from '@/types/notifications';
 
 interface StreamOptions {
@@ -17,22 +18,39 @@ export async function createNotificationStreamResponse(
   request: NextRequest,
   { routeLabel, keepAliveMs = 15000, connectionTimeoutMs = 120000 }: StreamOptions
 ): Promise<Response> {
+  const startTime = Date.now();
+
   try {
     const session = await auth();
-    
-    if (!session?.user) {
-      console.log(`[Notifications stream] ${routeLabel}: No session, returning 401`);
-      return new Response('Authentication required', { status: 401 });
+    const userId = session?.user?.id;
+    const encoder = new TextEncoder();
+    let metricsLogged = false;
+
+    const logMetrics = (statusCode: number) => {
+      if (metricsLogged) return;
+      metricsLogged = true;
+      logApiMetric({
+        route: routeLabel,
+        status: statusCode,
+        durationMs: Date.now() - startTime,
+        cacheHit: false,
+        extra: userId ? { userId } : undefined
+      });
+    };
+
+    if (!userId) {
+      console.log(
+        `[Notifications stream] ${routeLabel}: No session, keeping connection open briefly with error event`
+      );
+    } else {
+      console.log(`[Notifications stream] ${routeLabel}: Starting stream for user ${userId}`);
     }
 
-    const userId = session.user.id;
-    console.log(`[Notifications stream] ${routeLabel}: Starting stream for user ${userId}`);
-
-    const encoder = new TextEncoder();
     let removeListener: (() => void) | null = null;
     let keepAliveTimer: ReturnType<typeof setInterval> | null = null;
     let abortHandler: (() => void) | null = null;
     let connectionTimeout: ReturnType<typeof setTimeout> | null = null;
+    let connectionClosed = false;
 
     const cleanup = (context: string) => {
       if (keepAliveTimer) {
@@ -51,11 +69,30 @@ export async function createNotificationStreamResponse(
         request.signal.removeEventListener('abort', abortHandler);
         abortHandler = null;
       }
-      console.log(`[Notifications stream] ${routeLabel} cleanup executed (${context}) for user ${userId}`);
+      if (!connectionClosed) {
+        logMetrics(userId ? 200 : 401);
+        connectionClosed = true;
+      }
+      console.log(
+        `[Notifications stream] ${routeLabel} cleanup executed (${context}) for user ${userId ?? 'unknown'}`
+      );
     };
 
     const stream = new ReadableStream({
       start(controller) {
+        if (!userId) {
+          controller.enqueue(
+            encoder.encode(
+              `event: error\ndata: ${JSON.stringify({ message: 'unauthorized' })}\n\n`
+            )
+          );
+          setTimeout(() => {
+            logMetrics(401);
+            controller.close();
+          }, 1000);
+          return;
+        }
+
         const sendEvent = (
           event: NotificationStreamEvent,
           eventName?: NotificationStreamEvent['type']
@@ -87,8 +124,15 @@ export async function createNotificationStreamResponse(
             console.log(
               `[Notifications stream] ${routeLabel} connection timeout for user ${userId} after ${connectionTimeoutMs}ms`
             );
-            cleanup('timeout');
-            controller.close();
+            controller.enqueue(
+              encoder.encode(
+                `event: timeout\ndata: ${JSON.stringify({ message: 'connection_timeout' })}\n\n`
+              )
+            );
+            setTimeout(() => {
+              cleanup('timeout');
+              controller.close();
+            }, 100);
           }, connectionTimeoutMs);
         }
 
@@ -113,6 +157,12 @@ export async function createNotificationStreamResponse(
     });
   } catch (error) {
     console.error(`[Notifications stream] ${routeLabel}: failed to open stream`, error);
+    logApiMetric({
+      route: routeLabel,
+      status: 500,
+      durationMs: Date.now() - startTime,
+      cacheHit: false
+    });
     return new Response('Internal server error', { status: 500 });
   }
 }

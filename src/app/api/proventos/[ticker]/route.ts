@@ -4,6 +4,10 @@ import { prisma } from '@/lib/prisma';
 import { CacheService } from '@/lib/redis';
 import { logApiMetric } from '@/lib/metrics';
 
+export const config = {
+  maxDuration: 5,
+};
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { ticker: string } }

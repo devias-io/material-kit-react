@@ -1,6 +1,11 @@
 // app/api/financial/fii-market-data/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { buildCacheHeaders } from '@/server/cache-headers';
+import { CacheService } from '@/lib/cache-service';
+
+export const config = {
+  maxDuration: 5,
+};
 
 // 🔥 TIPOS PARA DADOS DE MERCADO DOS FIIs
 interface FIIMarketData {
@@ -26,10 +31,9 @@ interface FIIMarketData {
   };
 }
 
-// 🚀 CACHE GLOBAL PARA OTIMIZAÇÃO
-let cachedData: { data: FIIMarketData; timestamp: number } | null = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 const CACHE_HEADERS = buildCacheHeaders({ ttl: 300, swr: 1200 });
+const CACHE_DURATION = 300000;
+let cachedData: { data: FIIMarketData; timestamp: number } | null = null;
 
 // 🔑 TOKEN BRAPI VALIDADO
 const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
@@ -150,37 +154,39 @@ async function fetchFIIMarketData(): Promise<FIIMarketData> {
 export async function GET(request: NextRequest) {
   try {
     console.log('🌐 API FII Market Data chamada');
+    const cacheKey = CacheService.getCacheKey('market', 'fii', 'all');
 
-    // 🔍 VERIFICAR CACHE
-    const now = Date.now();
-    if (cachedData && (now - cachedData.timestamp) < CACHE_DURATION) {
-      console.log('✅ Retornando dados do cache FIIs');
-      return NextResponse.json({
-        success: true,
-        marketData: cachedData.data,
-        timestamp: new Date(cachedData.timestamp).toISOString(),
-        source: 'cache',
-        cacheAge: Math.floor((now - cachedData.timestamp) / 1000)
-      }, { headers: CACHE_HEADERS });
-    }
+    const { data, metadata } = await CacheService.withCache(
+      cacheKey,
+      async () => {
+        const marketData = await fetchFIIMarketData();
+        const now = Date.now();
 
-    // 📊 BUSCAR DADOS FRESCOS
-    console.log('🔄 Cache expirado, buscando dados frescos...');
-    const marketData = await fetchFIIMarketData();
+        return {
+          success: true,
+          marketData,
+          timestamp: new Date(now).toISOString(),
+          source: 'fresh',
+          nextUpdate: new Date(now + 300000).toISOString()
+        };
+      },
+      {
+        ttlSeconds: 300,
+        tags: ['market', 'fii'],
+      }
+    );
 
-    // 💾 ATUALIZAR CACHE
     cachedData = {
-      data: marketData,
-      timestamp: now
+      data: data.marketData,
+      timestamp: Date.now(),
     };
 
-    return NextResponse.json({
-      success: true,
-      marketData,
-      timestamp: new Date().toISOString(),
-      source: 'fresh',
-      nextUpdate: new Date(now + CACHE_DURATION).toISOString()
-    }, { headers: CACHE_HEADERS });
+    return NextResponse.json(
+      metadata.cached
+        ? { ...data, source: 'cache' }
+        : data,
+      { headers: CACHE_HEADERS }
+    );
 
   } catch (error) {
     console.error('❌ Erro na API FII Market Data:', error);

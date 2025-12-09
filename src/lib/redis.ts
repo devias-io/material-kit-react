@@ -191,6 +191,28 @@ export class CacheService {
   static async withCache<T>(
     baseKey: string,
     fetcher: () => Promise<T>,
+    options?: WithCacheOptions
+  ): Promise<WithCacheResult<T>>;
+
+  static async withCache<T>(options: { key: string; ttlSeconds?: number; tags?: string[]; fn: () => Promise<T> }): Promise<T>;
+
+  static async withCache<T>(
+    baseKeyOrOptions: string | { key: string; ttlSeconds?: number; tags?: string[]; fn: () => Promise<T> },
+    fetcher?: () => Promise<T>,
+    options: WithCacheOptions = {}
+  ): Promise<WithCacheResult<T> | T> {
+    if (typeof baseKeyOrOptions === 'string') {
+      return this.runWithCache(baseKeyOrOptions, fetcher as () => Promise<T>, options);
+    }
+
+    const { key, fn, ttlSeconds, tags } = baseKeyOrOptions;
+    const result = await this.runWithCache(key, fn, { ttlSeconds, tags });
+    return result.data;
+  }
+
+  private static async runWithCache<T>(
+    baseKey: string,
+    fetcher: () => Promise<T>,
     options: WithCacheOptions = {}
   ): Promise<WithCacheResult<T>> {
     const ttlSeconds = options.ttlSeconds ?? DEFAULT_TTL_SECONDS;
