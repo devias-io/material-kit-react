@@ -26,21 +26,22 @@ export async function createNotificationStreamResponse(
     const encoder = new TextEncoder();
     let metricsLogged = false;
 
-    const logMetrics = (statusCode: number) => {
+    const logMetrics = (statusCode: number, reason?: string) => {
       if (metricsLogged) return;
       metricsLogged = true;
+      const extra = userId ? { userId } : reason ? { reason } : undefined;
       logApiMetric({
         route: routeLabel,
         status: statusCode,
         durationMs: Date.now() - startTime,
         cacheHit: false,
-        extra: userId ? { userId } : undefined
+        extra
       });
     };
 
     if (!userId) {
       console.log(
-        `[Notifications stream] ${routeLabel}: No session, keeping connection open briefly with error event`
+        `[Notifications stream] ${routeLabel}: No session, keeping connection open briefly with unauthorized event`
       );
     } else {
       console.log(`[Notifications stream] ${routeLabel}: Starting stream for user ${userId}`);
@@ -70,7 +71,7 @@ export async function createNotificationStreamResponse(
         abortHandler = null;
       }
       if (!connectionClosed) {
-        logMetrics(userId ? 200 : 401);
+        logMetrics(userId ? 200 : 200, userId ? undefined : 'unauthenticated');
         connectionClosed = true;
       }
       console.log(
@@ -81,15 +82,17 @@ export async function createNotificationStreamResponse(
     const stream = new ReadableStream({
       start(controller) {
         if (!userId) {
+          const unauthorizedPayload = {
+            message: 'unauthorized',
+            retryAfterMs: 3000
+          } satisfies Record<string, unknown>;
           controller.enqueue(
-            encoder.encode(
-              `event: error\ndata: ${JSON.stringify({ message: 'unauthorized' })}\n\n`
-            )
+            encoder.encode(`event: unauthorized\ndata: ${JSON.stringify(unauthorizedPayload)}\n\n`)
           );
           setTimeout(() => {
-            logMetrics(401);
+            logMetrics(200, 'unauthenticated');
             controller.close();
-          }, 1000);
+          }, unauthorizedPayload.retryAfterMs);
           return;
         }
 
