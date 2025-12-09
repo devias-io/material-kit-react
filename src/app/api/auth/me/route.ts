@@ -3,7 +3,9 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { CacheService } from '@/lib/cache-service';
 
-export const maxDuration = 3;
+export const config = {  // ✅ MUDOU AQUI
+  maxDuration: 3,
+};
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,7 +42,7 @@ export async function GET(request: NextRequest) {
           throw new Error('User not found');
         }
         
-        return NextResponse.json(user);
+        return user;  // ✅ MUDOU AQUI - apenas o objeto
       },
     });
   } catch (error) {
