@@ -3,11 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getMarketSnapshot, type CombinedQuote } from '@/server/market-data';
 import { buildCacheHeaders } from '@/server/cache-headers';
 import { logApiMetric } from '@/lib/metrics';
+import { CacheService } from '@/lib/cache-service';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
 export const fetchCache = 'default-cache';
 export const runtime = 'nodejs';
+export const maxDuration = 5;
 
 const MARKET_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const RESPONSE_CACHE_HEADERS = buildCacheHeaders({ ttl: 300, swr: 600 });
@@ -64,49 +66,60 @@ export async function GET(_request: NextRequest) {
   const startedAt = Date.now();
 
   try {
-    const snapshot = await getMarketSnapshot(
-      [
-        { symbol: 'IBOV', key: 'IBOV' },
-        { symbol: 'SMLL', key: 'SMLL' }
-      ],
-      { cacheTtlMs: MARKET_CACHE_TTL_MS }
+    const { data, metadata } = await CacheService.withCache(
+      CacheService.getCacheKey('market', 'data', 'all'),
+      async () => {
+        const snapshot = await getMarketSnapshot(
+          [
+            { symbol: 'IBOV', key: 'IBOV' },
+            { symbol: 'SMLL', key: 'SMLL' }
+          ],
+          { cacheTtlMs: MARKET_CACHE_TTL_MS }
+        );
+
+        const ibovespaMetric = buildMetric(snapshot.quotes.IBOV, FALLBACK_MARKET_DATA.ibovespa);
+        const smllMetric = buildMetric(snapshot.quotes.SMLL, FALLBACK_MARKET_DATA.indiceSmall);
+
+        const processingTime = Date.now() - startedAt;
+
+        return {
+          body: {
+            marketData: {
+              ibovespa: ibovespaMetric,
+              indiceSmall: smllMetric,
+              carteiraHoje: FALLBACK_MARKET_DATA.carteiraHoje,
+              dividendYield: FALLBACK_MARKET_DATA.dividendYield,
+              ibovespaPeriodo: FALLBACK_MARKET_DATA.ibovespaPeriodo,
+              carteiraPeriodo: FALLBACK_MARKET_DATA.carteiraPeriodo
+            },
+            metadata: {
+              timestamp: new Date().toISOString(),
+              processingTime,
+              cache: {
+                fromCache: snapshot.fromCache,
+                cachedAt: snapshot.cachedAt,
+                cacheTtlMs: snapshot.cacheTtlMs,
+                expiresAt: snapshot.cachedAt + snapshot.cacheTtlMs
+              },
+              sources: {
+                ibovespa: snapshot.quotes.IBOV?.sources ?? {},
+                indiceSmall: snapshot.quotes.SMLL?.sources ?? {}
+              },
+              requested: snapshot.metadata.requested,
+              upstream: snapshot.metadata,
+              lastUpdate: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+              version: '7.0-server-fetcher'
+            }
+          }
+        };
+      },
+      {
+        ttlSeconds: 300,
+        tags: ['market', 'market-data'],
+      }
     );
 
-    const ibovespaMetric = buildMetric(snapshot.quotes.IBOV, FALLBACK_MARKET_DATA.ibovespa);
-    const smllMetric = buildMetric(snapshot.quotes.SMLL, FALLBACK_MARKET_DATA.indiceSmall);
-
-    const processingTime = Date.now() - startedAt;
-
-    const body = {
-      marketData: {
-        ibovespa: ibovespaMetric,
-        indiceSmall: smllMetric,
-        carteiraHoje: FALLBACK_MARKET_DATA.carteiraHoje,
-        dividendYield: FALLBACK_MARKET_DATA.dividendYield,
-        ibovespaPeriodo: FALLBACK_MARKET_DATA.ibovespaPeriodo,
-        carteiraPeriodo: FALLBACK_MARKET_DATA.carteiraPeriodo
-      },
-      metadata: {
-        timestamp: new Date().toISOString(),
-        processingTime,
-        cache: {
-          fromCache: snapshot.fromCache,
-          cachedAt: snapshot.cachedAt,
-          cacheTtlMs: snapshot.cacheTtlMs,
-          expiresAt: snapshot.cachedAt + snapshot.cacheTtlMs
-        },
-        sources: {
-          ibovespa: snapshot.quotes.IBOV?.sources ?? {},
-          indiceSmall: snapshot.quotes.SMLL?.sources ?? {}
-        },
-        requested: snapshot.metadata.requested,
-        upstream: snapshot.metadata,
-        lastUpdate: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
-        version: '7.0-server-fetcher'
-      }
-    };
-
-    const response = NextResponse.json(body, {
+    const response = NextResponse.json(data.body, {
       status: 200,
       headers: {
         ...RESPONSE_CACHE_HEADERS,
@@ -118,8 +131,8 @@ export async function GET(_request: NextRequest) {
 
     logApiMetric({
       route: '/api/financial/market-data',
-      cacheHit: snapshot.fromCache,
-      cacheBackend: 'upstream-snapshot',
+      cacheHit: metadata.cached,
+      cacheBackend: metadata.backend,
       durationMs: Date.now() - startedAt,
       status: 200,
     });

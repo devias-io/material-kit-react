@@ -10,6 +10,6 @@ export async function GET(request: NextRequest) {
     routeLabel: '/api/notifications/fluxo',
     // Mantemos a conexão aberta por mais tempo para evitar reconexões
     // frequentes que estavam gerando excesso de requisições e erros 429.
-    connectionTimeoutMs: 5 * 60 * 1000
+    connectionTimeoutMs: 120000
   });
 }

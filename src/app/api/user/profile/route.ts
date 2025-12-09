@@ -1,85 +1,52 @@
-export const dynamic = 'force-dynamic'; // 👈 ADICIONAR ESTA LINHA AQUI
-
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
-import { getActiveEntitlementCodes } from '@/lib/entitlements';
-import { normalizeCustomPermissions } from '@/lib/custom-permissions';
+import { CacheService } from '@/lib/cache-service';
 
-export async function GET(_request: NextRequest) {
+export const maxDuration = 3;
+
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json({
-        error: 'Usuário não autenticado'
-      }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Buscar dados completos do usuário
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: {
-        purchases: {
-          orderBy: { createdAt: 'desc' },
-          take: 5 // Últimas 5 compras
-        },
-        entitlements: true,
-      }
+    const cacheKey = `user:profile:${session.user.id}`;
+
+    return await CacheService.withCache({
+      key: cacheKey,
+      ttlSeconds: 60,
+      tags: ['auth', `user:${session.user.id}`],
+      fn: async () => {
+        const user = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            role: true,
+            avatar: true,
+            plan: true,
+            status: true,
+            expirationDate: true,
+            customPermissions: true,
+            origin: true,
+          },
+        });
+
+        if (!user) {
+          throw new Error('User not found');
+        }
+
+        return NextResponse.json(user);
+      },
     });
-
-    if (!user) {
-      return NextResponse.json({ 
-        error: 'Usuário não encontrado' 
-      }, { status: 404 });
-    }
-
-    // Formatar dados para retorno
-    const activeEntitlements = getActiveEntitlementCodes(user.entitlements ?? []);
-
-    const userData = {
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      avatar: user.avatar,
-      plan: user.plan,
-      status: user.status,
-      customPermissions: normalizeCustomPermissions(user.customPermissions),
-      expirationDate: user.expirationDate,
-      createdAt: user.createdAt,
-      lastLogin: user.lastLogin,
-      mustChangePassword: user.mustChangePassword,
-      entitlements: user.entitlements.map(entitlement => ({
-        id: entitlement.id,
-        code: entitlement.code,
-        status: entitlement.status,
-        expiresAt: entitlement.expiresAt,
-        origin: entitlement.origin,
-        createdAt: entitlement.createdAt,
-        updatedAt: entitlement.updatedAt,
-      })),
-      activeEntitlements,
-      totalPurchases: user.purchases.reduce((sum, p) => sum + p.amount, 0),
-      purchaseCount: user.purchases.length,
-      recentPurchases: user.purchases.map(p => ({
-        id: p.id,
-        amount: p.amount,
-        productName: p.productName,
-        createdAt: p.createdAt,
-        status: p.status
-      }))
-    };
-
-    return NextResponse.json({ user: userData });
-
   } catch (error) {
-    console.error('❌ Erro ao buscar perfil:', error);
-    return NextResponse.json({ 
-      error: 'Erro interno do servidor' 
-    }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+    console.error('Erro em /api/user/profile:', error);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }
 
@@ -118,8 +85,8 @@ export async function PUT(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Erro ao atualizar perfil:', error);
-    return NextResponse.json({ 
-      error: 'Erro interno do servidor' 
+    return NextResponse.json({
+      error: 'Erro interno do servidor'
     }, { status: 500 });
   } finally {
     await prisma.$disconnect();
