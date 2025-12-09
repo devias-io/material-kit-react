@@ -6,9 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { normalizeCustomPermissions } from '@/lib/custom-permissions';
 import { CacheService } from '@/lib/cache-service';
 
-export const config = {
-  maxDuration: 3,
-};
+export const maxDuration = 3;
 
 function parseCustomPermissions(rawValue: unknown): string[] {
   if (!rawValue) {

@@ -5,9 +5,7 @@ import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { CacheService } from '@/lib/cache-service';
 
-export const config = {
-  maxDuration: 3,
-};
+export const maxDuration = 3;
 
 export async function GET(_request: NextRequest) {
   try {

@@ -7,9 +7,7 @@ import { getActiveEntitlementCodes } from '@/lib/entitlements';
 import { normalizeCustomPermissions } from '@/lib/custom-permissions';
 import { CacheService } from '@/lib/cache-service';
 
-export const config = {
-  maxDuration: 3,
-};
+export const maxDuration = 3;
 
 export async function GET(_request: NextRequest) {
   try {
