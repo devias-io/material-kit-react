@@ -4,6 +4,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 import { normalizeCustomPermissions } from '@/lib/custom-permissions';
+import { CacheService } from '@/lib/cache-service';
+
+export const config = {
+  maxDuration: 3,
+};
 
 function parseCustomPermissions(rawValue: unknown): string[] {
   if (!rawValue) {
@@ -53,62 +58,73 @@ export async function GET(request: NextRequest) {
 
     console.log('🔍 Buscando dados do usuário:', userEmail);
 
-    // Verificar se é admin (usuário especial)
-    if (userEmail === 'admin@fatosdobolsa.com') {
-      return NextResponse.json({
-        id: 'ADM-001',
-        firstName: 'Admin',
-        lastName: 'Sistema',
-        email: userEmail,
-        plan: 'ADMIN',
-        status: 'ACTIVE',
-        customPermissions: [],
-        createdAt: new Date().toISOString()
-      });
-    }
+    const cacheKey = CacheService.getCacheKey('user', 'me', userEmail);
 
-    // Buscar no banco de dados
-    const user = await prisma.user.findUnique({
-      where: { email: userEmail },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        plan: true,
-        status: true,
-        customPermissions: true,
-        expirationDate: true,
-        createdAt: true,
-        avatar: true
+    const { data } = await CacheService.withCache(
+      cacheKey,
+      async () => {
+        if (userEmail === 'admin@fatosdobolsa.com') {
+          return {
+            id: 'ADM-001',
+            firstName: 'Admin',
+            lastName: 'Sistema',
+            email: userEmail,
+            plan: 'ADMIN',
+            status: 'ACTIVE',
+            customPermissions: [],
+            createdAt: new Date().toISOString(),
+          };
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email: userEmail },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            plan: true,
+            status: true,
+            customPermissions: true,
+            expirationDate: true,
+            createdAt: true,
+            avatar: true,
+          }
+        });
+
+        if (!user) {
+          throw new Error('USER_NOT_FOUND');
+        }
+
+        console.log('✅ Usuário encontrado:', user.email, 'Plano:', user.plan);
+
+        return {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          plan: user.plan,
+          status: user.status,
+          customPermissions: normalizeCustomPermissions(user.customPermissions),
+          expirationDate: user.expirationDate?.toISOString(),
+          avatar: user.avatar
+        };
+      },
+      {
+        ttlSeconds: 60,
+        tags: ['auth', `user:${userEmail}`],
       }
-    });
+    );
 
-    if (!user) {
-      console.log('❌ Usuário não encontrado no banco:', userEmail);
-      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
-    }
-
-    console.log('✅ Usuário encontrado:', user.email, 'Plano:', user.plan);
-
-    // Formatar resposta
-    const userData = {
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      name: `${user.firstName} ${user.lastName}`,
-      plan: user.plan,
-      status: user.status,
-      customPermissions: normalizeCustomPermissions(user.customPermissions),
-      expirationDate: user.expirationDate?.toISOString(),
-      avatar: user.avatar
-    };
-
-    return NextResponse.json(userData);
+    return NextResponse.json(data);
 
   } catch (error) {
     console.error('❌ Erro ao buscar usuário:', error);
+    if (error instanceof Error && error.message === 'USER_NOT_FOUND') {
+      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
+    }
+
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
