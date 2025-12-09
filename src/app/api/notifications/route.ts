@@ -48,6 +48,15 @@ export async function GET(request: NextRequest) {
         const [notifications, totalNotifications, unreadCount] = await Promise.all([
           prisma.notification.findMany({
             where: whereClause,
+            select: {
+              id: true,
+              type: true,
+              title: true,
+              message: true,
+              read: true,
+              createdAt: true,
+              link: true,
+            },
             orderBy: {
               createdAt: 'desc'
             },
@@ -77,7 +86,7 @@ export async function GET(request: NextRequest) {
         };
       },
       {
-        ttlSeconds: 45,
+        ttlSeconds: 120,
         tags: [`notifications:${user.id}`],
       }
     );
