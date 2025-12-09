@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic'; // 👈 ADICIONAR ESTA LINHA AQUI
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+export const maxDuration = 3;
+
 export async function GET() {
   try {
     const session = await auth();

@@ -8,6 +8,8 @@ import { auth } from '@/lib/auth'; // ADICIONAR ESTA LINHA
 import { CacheService } from '@/lib/redis';
 import { logApiMetric } from '@/lib/metrics';
 
+export const maxDuration = 5;
+
 export async function GET(request: NextRequest) {
   const startedAt = Date.now();
 

@@ -6,6 +6,8 @@ import { emitNotificationEvent } from '@/lib/notificationsEmitter';
 import { CacheService } from '@/lib/redis';
 import { logApiMetric } from '@/lib/metrics';
 
+export const maxDuration = 5;
+
 // GET - Listar notificações do usuário
 export async function GET(request: NextRequest) {
   const startedAt = Date.now();
