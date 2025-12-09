@@ -1,58 +1,50 @@
-export const dynamic = 'force-dynamic'; // 👈 ADICIONAR ESTA LINHA AQUI
-
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { CacheService } from '@/lib/cache-service';
 
 export const maxDuration = 3;
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-
-    console.log('=== DEBUG AUTH ROUTE ===');
-    console.log('Session:', session);
-    console.log('========================');
-
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const cacheKey = CacheService.getCacheKey('auth', 'me', session.user.id);
-
-    const { data } = await CacheService.withCache(
-      cacheKey,
-      async () => {
+    const cacheKey = `auth:me:${session.user.id}`;
+    
+    return await CacheService.withCache({
+      key: cacheKey,
+      ttlSeconds: 60,
+      tags: ['auth', `user:${session.user.id}`],
+      fn: async () => {
         const user = await prisma.user.findUnique({
           where: { id: session.user.id },
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             email: true,
             role: true,
+            avatar: true,
+            plan: true,
+            status: true,
+            expirationDate: true,
+            customPermissions: true,
+            origin: true,
           },
         });
-
+        
         if (!user) {
-          throw new Error('USER_NOT_FOUND');
+          throw new Error('User not found');
         }
-
-        return user;
+        
+        return NextResponse.json(user);
       },
-      {
-        ttlSeconds: 60,
-        tags: ['auth', `user:${session.user.id}`],
-      }
-    );
-
-    return NextResponse.json(data);
+    });
   } catch (error) {
-    if (error instanceof Error && error.message === 'USER_NOT_FOUND') {
-      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
-    }
-
     console.error('Erro em /api/auth/me:', error);
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

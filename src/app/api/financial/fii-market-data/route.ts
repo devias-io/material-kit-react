@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { buildCacheHeaders } from '@/server/cache-headers';
 import { CacheService } from '@/lib/cache-service';
 
+export const maxDuration = 5;
+
 // 🔥 TIPOS PARA DADOS DE MERCADO DOS FIIs
 interface FIIMarketData {
   ifix: {
@@ -28,6 +30,8 @@ interface FIIMarketData {
 }
 
 const CACHE_HEADERS = buildCacheHeaders({ ttl: 300, swr: 1200 });
+const CACHE_DURATION = 300000;
+let cachedData: { data: FIIMarketData; timestamp: number } | null = null;
 
 // 🔑 TOKEN BRAPI VALIDADO
 const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
@@ -169,6 +173,11 @@ export async function GET(request: NextRequest) {
         tags: ['market', 'fii'],
       }
     );
+
+    cachedData = {
+      data: data.marketData,
+      timestamp: Date.now(),
+    };
 
     return NextResponse.json(
       metadata.cached
