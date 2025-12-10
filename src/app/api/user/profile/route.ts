@@ -8,13 +8,12 @@ export const maxDuration = 3;
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const cacheKey = `user:profile:${session.user.id}`;
-
+    
     return await CacheService.withCache({
       key: cacheKey,
       ttlSeconds: 60,
@@ -27,7 +26,7 @@ export async function GET(request: NextRequest) {
             firstName: true,
             lastName: true,
             email: true,
-            role: true,
+            // role: true,  // ❌ REMOVIDO - campo não existe
             avatar: true,
             plan: true,
             status: true,
@@ -72,6 +71,9 @@ export async function PUT(request: NextRequest) {
       }
     });
 
+    // ✅ Invalidar cache após atualização
+    await CacheService.invalidate(`user:profile:${session.user.id}`);
+
     return NextResponse.json({
       message: 'Perfil atualizado com sucesso',
       user: {
@@ -82,13 +84,11 @@ export async function PUT(request: NextRequest) {
         avatar: updatedUser.avatar
       }
     });
-
   } catch (error) {
     console.error('❌ Erro ao atualizar perfil:', error);
     return NextResponse.json({
       error: 'Erro interno do servidor'
     }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
+  // ✅ REMOVIDO: prisma.$disconnect() - não usar com singleton
 }
