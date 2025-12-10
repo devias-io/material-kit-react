@@ -45,7 +45,7 @@ function remapToTurma2(item: NavItemConfig): NavItemConfig {
       return {
         ...subItem,
         key: 'cf-renda-turbinada-turma-2-carteira',
-        href : caminhos. painel . cfRendaTurbinadaCarteira,
+href: paths.dashboard.cfRendaTurbinadaCarteira,
         page: 'cf-renda-turbinada-turma-2-carteira',
       };
     }
