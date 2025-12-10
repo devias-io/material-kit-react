@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
 import { auth } from '@/lib/auth';
 import { emitNotificationEvent } from '@/lib/notificationsEmitter';
 import { CacheService } from '@/lib/redis';
@@ -45,38 +44,36 @@ export async function GET(request: NextRequest) {
     const { data, metadata } = await CacheService.withCache(
       cacheKey,
       async () => {
-✅ Correção Completa
-Troque o código por este:
-typescriptconst [notifications, totalNotifications, unreadCount] = await Promise.all([
-  prisma.notification.findMany({
-    where: whereClause,
-    select: {
-      id: true,
-      type: true,
-      title: true,
-      message: true,
-      read: true,
-      createdAt: true,
-      actionUrl: true,  // ✅ CORRIGIDO: era "link", agora é "actionUrl"
-      category: true,   // ✅ ADICIONADO
-      metadata: true,   // ✅ ADICIONADO (opcional, mas útil)
-    },
-    orderBy: {
-      createdAt: 'desc'
-    },
-    skip: (page - 1) * limit,
-    take: limit
-  }),
-  prisma.notification.count({
-    where: whereClause
-  }),
-  prisma.notification.count({
-    where: {
-      userId: user.id,
-      read: false
-    }
-  })
-]);
+        const [notifications, totalNotifications, unreadCount] = await Promise.all([
+          prisma.notification.findMany({
+            where: whereClause,
+            select: {
+              id: true,
+              type: true,
+              title: true,
+              message: true,
+              read: true,
+              createdAt: true,
+              actionUrl: true,  // ✅ CORRIGIDO: era "link"
+              category: true,   // ✅ ADICIONADO
+              metadata: true,   // ✅ ADICIONADO
+            },
+            orderBy: {
+              createdAt: 'desc'
+            },
+            skip: (page - 1) * limit,
+            take: limit
+          }),
+          prisma.notification.count({
+            where: whereClause
+          }),
+          prisma.notification.count({
+            where: {
+              userId: user.id,
+              read: false
+            }
+          })
+        ]);
 
         return {
           notifications,
@@ -119,7 +116,6 @@ typescriptconst [notifications, totalNotifications, unreadCount] = await Promise
       details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     }, { status: 500 });
   }
-  // Sem finally, sem disconnect - o singleton do Prisma gerencia isso!
 }
 
 // POST - Criar nova notificação (para admins)
@@ -264,5 +260,4 @@ export async function POST(request: NextRequest) {
       details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     }, { status: 500 });
   }
-  // Sem finally, sem disconnect - o singleton do Prisma gerencia isso!
 }
