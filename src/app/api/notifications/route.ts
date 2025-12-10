@@ -45,34 +45,38 @@ export async function GET(request: NextRequest) {
     const { data, metadata } = await CacheService.withCache(
       cacheKey,
       async () => {
-        const [notifications, totalNotifications, unreadCount] = await Promise.all([
-          prisma.notification.findMany({
-            where: whereClause,
-            select: {
-              id: true,
-              type: true,
-              title: true,
-              message: true,
-              read: true,
-              createdAt: true,
-              link: true,
-            },
-            orderBy: {
-              createdAt: 'desc'
-            },
-            skip: (page - 1) * limit,
-            take: limit
-          }),
-          prisma.notification.count({
-            where: whereClause
-          }),
-          prisma.notification.count({
-            where: {
-              userId: user.id,
-              read: false
-            }
-          })
-        ]);
+✅ Correção Completa
+Troque o código por este:
+typescriptconst [notifications, totalNotifications, unreadCount] = await Promise.all([
+  prisma.notification.findMany({
+    where: whereClause,
+    select: {
+      id: true,
+      type: true,
+      title: true,
+      message: true,
+      read: true,
+      createdAt: true,
+      actionUrl: true,  // ✅ CORRIGIDO: era "link", agora é "actionUrl"
+      category: true,   // ✅ ADICIONADO
+      metadata: true,   // ✅ ADICIONADO (opcional, mas útil)
+    },
+    orderBy: {
+      createdAt: 'desc'
+    },
+    skip: (page - 1) * limit,
+    take: limit
+  }),
+  prisma.notification.count({
+    where: whereClause
+  }),
+  prisma.notification.count({
+    where: {
+      userId: user.id,
+      read: false
+    }
+  })
+]);
 
         return {
           notifications,
