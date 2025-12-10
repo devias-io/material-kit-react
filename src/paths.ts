@@ -25,7 +25,7 @@ export const paths = {
     cfRendaTurbinadaTurma2: '/dashboard/cf-renda-turbinada-turma-2',
     cfRendaTurbinadaTurma2Aulas: '/dashboard/cf-renda-turbinada-turma-2/aulas',
     cfRendaTurbinadaTurma2Bastidores: '/dashboard/cf-renda-turbinada-turma-2/bastidores-da-bolsa',
-    cfRendaTurbinadaTurma2Carteira: '/dashboard/cf-renda-turbinada-turma-2/carteira-recomendada',
+    cfRendaTurbinadaTurma2Carteira: '/dashboard/cf-renda-turbinada/carteira-recomendada',
     
     // 🛡️ ROTAS ADMINISTRATIVAS
     admin: '/dashboard/admin',
