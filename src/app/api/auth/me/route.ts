@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     const cacheKey = `auth:me:${session.user.id}`;
     
-    return await CacheService.withCache({
+    const user = await CacheService.withCache({
       key: cacheKey,
       ttlSeconds: 60,
       tags: ['auth', `user:${session.user.id}`],
@@ -35,14 +35,16 @@ export async function GET(request: NextRequest) {
             origin: true,
           },
         });
-        
+
         if (!user) {
           throw new Error('User not found');
         }
-        
-        return user;  // ✅ MUDOU AQUI - apenas o objeto
+
+        return user;
       },
     });
+
+    return NextResponse.json({ user });
   } catch (error) {
     console.error('Erro em /api/auth/me:', error);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
