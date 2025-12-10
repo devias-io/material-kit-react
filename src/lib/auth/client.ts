@@ -54,7 +54,7 @@ const planPermissions = {
     displayName: 'CF Renda Turbinada - Turma 2',
     isAdmin: false,
     pages: [
-      'cf-renda-turbinada-turma-2', 'cf-renda-turbinada-turma-2-aulas', 'cf-renda-turbinada-turma-2-bastidores', 'cf-renda-turbinada-turma-2-carteira',
+      'cf-renda-turbinada-turma-2', 'cf-renda-turbinada-turma-2-aulas', 'cf-renda-turbinada-turma-2-bastidores', 'cf-renda-turbinada-carteira',
       'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
       'recursos-reserva'
     ]
@@ -75,7 +75,7 @@ const planPermissions = {
         'small-caps', 'micro-caps', 'dividendos', 'fundos-imobiliarios', 'rentabilidades',
         'internacional', 'internacional-etfs', 'internacional-stocks', 'internacional-dividendos', 'internacional-projeto-america',
         'cf-renda-turbinada', 'cf-renda-turbinada-aulas', 'cf-renda-turbinada-bastidores', 'cf-renda-turbinada-carteira',
-        'cf-renda-turbinada-turma-2', 'cf-renda-turbinada-turma-2-aulas', 'cf-renda-turbinada-turma-2-bastidores', 'cf-renda-turbinada-turma-2-carteira',
+  'cf-renda-turbinada-turma-2', 'cf-renda-turbinada-turma-2-aulas', 'cf-renda-turbinada-turma-2-bastidores', 'cf-renda-turbinada-carteira',
         'recursos-exclusivos', 'recursos-dicas', 'recursos-analise', 'recursos-ebooks',
         'recursos-imposto', 'recursos-lives', 'recursos-milhas', 'recursos-planilhas', 'recursos-telegram',
         'recursos-reserva',
