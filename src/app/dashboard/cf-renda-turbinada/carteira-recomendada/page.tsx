@@ -200,10 +200,20 @@ const formatCurrency = (value: number | null | undefined): string => {
   });
 };
 
-const formatGarantia = (value: number | null | undefined): string => {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return '1 LOTE';
+const formatGarantia = (
+  value: number | null | undefined,
+  tipoOperacao: 'PUT' | 'CALL'
+): string => {
+  if (tipoOperacao === 'CALL') {
+    const lotes = typeof value === 'number' && !Number.isNaN(value) ? value : 1;
+    const label = lotes === 1 ? 'LOTE' : 'LOTES';
+    return `${lotes} ${label}`;
   }
+
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return '--';
+  }
+
   return value.toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL'
@@ -396,6 +406,8 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
 
     const isEdicao = Boolean(formData.id);
     const baseLista = modoEdicao.tipo === 'PUT' ? operacoesPUT : operacoesCALL;
+    const garantiaValor = parseNumber(formData.garantia);
+
     const novaOperacao: CarteiraOperacao = {
       id: formData.id ?? `${modoEdicao.tipo.toLowerCase()}-${Date.now()}`,
       ordem: parseNumber(formData.ordem) ?? baseLista.length + 1,
@@ -405,7 +417,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
       premio: parseNumber(formData.premio),
       premioCustom: formData.premioCustom || undefined,
       rendaPercentual: parseNumber(formData.rendaPercentual),
-      garantia: parseNumber(formData.garantia),
+      garantia: modoEdicao.tipo === 'CALL' ? garantiaValor ?? 1 : garantiaValor,
       precoReferencia: parseNumber(formData.precoReferencia),
       vencimento: formData.vencimento,
       tipoOperacao: modoEdicao.tipo,
@@ -617,13 +629,21 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
 
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '12px' }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>Garantia</span>
+                <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>
+                  Garantia
+                  {modoEdicao?.tipo === 'CALL' ? ' (quantidade de lotes)' : ''}
+                </span>
                 <input
                   value={formData.garantia}
                   onChange={(e) => handleFormChange('garantia', e.target.value)}
-                  placeholder="3326"
+                  placeholder={modoEdicao?.tipo === 'CALL' ? '2 (lotes)' : '3326'}
                   style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
                 />
+                {modoEdicao?.tipo === 'CALL' && (
+                  <span style={{ color: '#94a3b8', fontSize: '12px' }}>
+                    Informe quantos lotes serão usados como garantia (ex.: 1, 2, 3).
+                  </span>
+                )}
               </label>
               <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <span style={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}>Preço de referência</span>
@@ -959,7 +979,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
                   <span style={{ color: '#64748b', fontSize: '13px' }}>Garantia</span>
                   <strong style={{ fontSize: '14px' }}>
-                    {formatGarantia(operacao.garantia)}
+                    {formatGarantia(operacao.garantia, operacao.tipoOperacao)}
                   </strong>
                 </div>
 
@@ -1274,7 +1294,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
                     {formatPercentage(operacao.rendaPercentual)}
                   </td>
                   <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>
-                    {formatGarantia(operacao.garantia)}
+                    {formatGarantia(operacao.garantia, operacao.tipoOperacao)}
                   </td>
                   <td
                     style={{
