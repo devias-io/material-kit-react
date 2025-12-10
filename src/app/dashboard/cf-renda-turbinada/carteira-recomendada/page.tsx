@@ -204,16 +204,19 @@ const formatGarantia = (
   value: number | null | undefined,
   tipoOperacao: 'PUT' | 'CALL'
 ): string => {
+  // 🔍 ADICIONE ESTE LOG TEMPORÁRIO
+  console.log('formatGarantia chamada:', { value, tipoOperacao });
+  
   if (tipoOperacao === 'CALL') {
     const lotes = typeof value === 'number' && !Number.isNaN(value) ? value : 1;
     const label = lotes === 1 ? 'LOTE' : 'LOTES';
     return `${lotes} ${label}`;
   }
-
+  
   if (value === null || value === undefined || Number.isNaN(value)) {
     return '--';
   }
-
+  
   return value.toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL'
