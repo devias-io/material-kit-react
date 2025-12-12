@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation';
 import {
   PLATFORM_METADATA,
   PLATFORM_SLUGS,
-  getIntegrationsByPlatform,
+  getPublicIntegrationsByPlatform,
   type PlatformSlug
 } from '@/data/integrations';
 
@@ -37,7 +37,6 @@ type RealStats = Partial<Record<PlatformSlug, {
   active: boolean;
   sales: number;
   integrations: number;
-  tokens: string[];
 }>>;
 
 interface IntegrationSummaryResponse {
@@ -47,7 +46,6 @@ interface IntegrationSummaryResponse {
   status: 'ACTIVE' | 'INACTIVE';
   totalSales: number;
   webhookUrl: string;
-  token?: string;
   productId?: string;
 }
 
@@ -88,13 +86,10 @@ export default function IntegracoesMainPage() {
 
     PLATFORM_SLUGS.forEach(slug => {
       const meta = PLATFORM_METADATA[slug];
-      const integrations = getIntegrationsByPlatform(slug);
+      const integrations = getPublicIntegrationsByPlatform(slug);
       const totalIntegrations = integrations.length;
       const activeIntegrations = integrations.filter(integration => integration.status === 'ACTIVE').length;
       const totalSales = integrations.reduce((sum, integration) => sum + integration.totalSales, 0);
-      const tokens = integrations
-        .map(integration => ('token' in integration ? integration.token : undefined))
-        .filter((token): token is string => Boolean(token));
 
       const platformData: PlatformStats = {
         name: meta.name,
@@ -112,8 +107,7 @@ export default function IntegracoesMainPage() {
       fallbackStats[slug] = {
         active: activeIntegrations > 0,
         sales: totalSales,
-        integrations: totalIntegrations,
-        tokens
+        integrations: totalIntegrations
       };
     });
 
@@ -162,10 +156,7 @@ export default function IntegracoesMainPage() {
         acc[platform.slug] = {
           active: platform.totals.activeIntegrations > 0,
           sales: platform.totals.totalSales,
-          integrations: platform.totals.totalIntegrations,
-          tokens: platform.integrations
-            .map(integration => integration.token)
-            .filter((token): token is string => Boolean(token))
+          integrations: platform.totals.totalIntegrations
         };
         return acc;
       }, {} as RealStats);
@@ -197,10 +188,6 @@ export default function IntegracoesMainPage() {
   };
 
   const stats = getTotalStats();
-  const kiwifyTokens = realStats.kiwify?.tokens ?? [];
-  const eduzzTokens = realStats.eduzz?.tokens ?? [];
-  const kiwifyTokenLabel = kiwifyTokens.length > 0 ? kiwifyTokens.join(', ') : 'Nenhum token configurado';
-  const eduzzTokenLabel = eduzzTokens.length > 0 ? eduzzTokens.join(', ') : 'Nenhum token configurado';
 
   if (loading) {
     return (
@@ -230,7 +217,7 @@ export default function IntegracoesMainPage() {
             🥝 Kiwify Funcionando!
           </Typography>
           <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-            Token(s) <strong>{kiwifyTokenLabel}</strong> ativo(s). {realStats.kiwify?.sales ?? 0} venda(s) processada(s) com sucesso.
+            Integrações Kiwify ativas. {realStats.kiwify?.sales ?? 0} venda(s) processada(s) com sucesso.
           </Typography>
         </Alert>
       )}
@@ -241,7 +228,7 @@ export default function IntegracoesMainPage() {
             📚 Eduzz Funcionando!
           </Typography>
           <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-            Token(s) <strong>{eduzzTokenLabel}</strong> ativo(s). {realStats.eduzz?.sales ?? 0} venda(s) processada(s) com sucesso.
+            Integrações Eduzz ativas. {realStats.eduzz?.sales ?? 0} venda(s) processada(s) com sucesso.
           </Typography>
         </Alert>
       )}
