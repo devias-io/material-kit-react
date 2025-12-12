@@ -3,12 +3,10 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import {
-  EDUZZ_INTEGRATIONS,
-  HOTMART_INTEGRATIONS,
-  KIWIFY_INTEGRATIONS,
   PLATFORM_METADATA,
   PLATFORM_SLUGS,
-  type PlatformIntegrationConfig,
+  getPublicIntegrationsByPlatform,
+  type PublicPlatformIntegrationConfig,
   type PlatformSlug,
 } from '@/data/integrations';
 
@@ -19,7 +17,6 @@ interface IntegrationSummary {
   status: 'ACTIVE' | 'INACTIVE';
   totalSales: number;
   webhookUrl: string;
-  token?: string;
   productId?: string;
 }
 
@@ -38,17 +35,18 @@ interface PlatformPayload {
   };
 }
 
-function buildWebhookUrl(origin: string, slug: PlatformSlug, integration: PlatformIntegrationConfig): string {
-  if ('token' in integration) {
-    return `${origin}/api/webhooks/${slug}/${integration.token}`;
+function buildWebhookUrl(origin: string, slug: PlatformSlug, integration: PublicPlatformIntegrationConfig): string {
+  if (slug === 'hotmart') {
+    return `${origin}/api/webhooks/hotmart/${integration.id}`;
   }
-  return `${origin}/api/webhooks/hotmart/${integration.id}`;
+
+  return `${origin}/api/webhooks/${slug}/{token}`;
 }
 
 function normaliseIntegrations(
   origin: string,
   slug: PlatformSlug,
-  integrations: readonly PlatformIntegrationConfig[],
+  integrations: readonly PublicPlatformIntegrationConfig[],
 ): IntegrationSummary[] {
   return integrations.map(integration => ({
     id: integration.id,
@@ -57,13 +55,13 @@ function normaliseIntegrations(
     status: integration.status,
     totalSales: integration.totalSales,
     webhookUrl: buildWebhookUrl(origin, slug, integration),
-    ...('token' in integration ? { token: integration.token } : { productId: integration.productId }),
+    ...('productId' in integration ? { productId: integration.productId } : {}),
   }));
 }
 
 function computePlatformPayload(origin: string, slug: PlatformSlug): PlatformPayload {
   const meta = PLATFORM_METADATA[slug];
-  const integrations = getIntegrations(slug);
+  const integrations = getPublicIntegrationsByPlatform(slug);
   const summaries = normaliseIntegrations(origin, slug, integrations);
   const activeIntegrations = integrations.filter(integration => integration.status === 'ACTIVE').length;
   const totalSales = integrations.reduce((sum, integration) => sum + integration.totalSales, 0);
@@ -82,19 +80,6 @@ function computePlatformPayload(origin: string, slug: PlatformSlug): PlatformPay
       totalSales,
     },
   };
-}
-
-function getIntegrations(slug: PlatformSlug): readonly PlatformIntegrationConfig[] {
-  switch (slug) {
-    case 'hotmart':
-      return HOTMART_INTEGRATIONS;
-    case 'kiwify':
-      return KIWIFY_INTEGRATIONS;
-    case 'eduzz':
-      return EDUZZ_INTEGRATIONS;
-    default:
-      return [];
-  }
 }
 
 async function verifyAuth() {

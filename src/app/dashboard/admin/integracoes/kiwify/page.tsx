@@ -31,9 +31,9 @@ import {
   Link
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { KIWIFY_INTEGRATIONS, type TokenIntegrationConfig } from '@/data/integrations';
+import { KIWIFY_PUBLIC_INTEGRATIONS, type PublicTokenIntegrationConfig } from '@/data/integrations';
 
-type KiwifyIntegration = TokenIntegrationConfig & { webhookUrl: string };
+type KiwifyIntegration = PublicTokenIntegrationConfig & { webhookUrl: string };
 
 export default function KiwifyPage() {
   const router = useRouter();
@@ -53,15 +53,19 @@ export default function KiwifyPage() {
     loadIntegrations();
   }, []);
 
+  const buildWebhookTemplate = (origin: string) => `${origin}/api/webhooks/kiwify/{token}`;
+
   const loadIntegrations = async () => {
     try {
       setLoading(true);
-      
+
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
 
-      const realIntegrations: KiwifyIntegration[] = KIWIFY_INTEGRATIONS.map(integration => ({
+      const webhookUrl = buildWebhookTemplate(origin);
+
+      const realIntegrations: KiwifyIntegration[] = KIWIFY_PUBLIC_INTEGRATIONS.map(integration => ({
         ...integration,
-        webhookUrl: origin ? `${origin}/api/webhooks/kiwify/${integration.token}` : integration.token,
+        webhookUrl,
       }));
 
       setIntegrations(realIntegrations);
@@ -92,13 +96,13 @@ export default function KiwifyPage() {
 
   const handleSaveIntegration = async () => {
     try {
-      // Gerar token único para Kiwify
-      const token = generateKiwifyToken();
-      
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const webhookUrl = buildWebhookTemplate(origin);
+
       if (editingIntegration) {
         // Atualizar integração existente
-        setIntegrations(prev => 
-          prev.map(int => 
+        setIntegrations(prev =>
+          prev.map(int =>
             int.id === editingIntegration.id 
               ? { ...int, ...formData }
               : int
@@ -110,8 +114,7 @@ export default function KiwifyPage() {
         const newIntegration: KiwifyIntegration = {
           id: integrationId,
           ...formData,
-          token: token,
-          webhookUrl: `${window.location.origin}/api/webhooks/kiwify/${token}`,
+          webhookUrl,
           status: 'ACTIVE',
           createdAt: new Date().toISOString().split('T')[0],
           totalSales: 0
@@ -126,16 +129,6 @@ export default function KiwifyPage() {
     } catch (error) {
       console.error('Erro ao salvar integração Kiwify:', error);
     }
-  };
-
-  // Função para gerar token único do Kiwify
-  const generateKiwifyToken = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-    let token = 'KW';
-    for (let i = 0; i < 15; i++) {
-      token += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return token;
   };
 
   const handleDeleteIntegration = async (id: string) => {
@@ -329,7 +322,6 @@ export default function KiwifyPage() {
               <TableRow sx={{ backgroundColor: '#F8FAFC' }}>
                 <TableCell sx={{ fontWeight: '600', color: '#475569' }}>Produto</TableCell>
                 <TableCell sx={{ fontWeight: '600', color: '#475569' }}>Plano</TableCell>
-                <TableCell sx={{ fontWeight: '600', color: '#475569' }}>Token</TableCell>
                 <TableCell sx={{ fontWeight: '600', color: '#475569' }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: '600', color: '#475569' }}>Webhook URL</TableCell>
                 <TableCell sx={{ fontWeight: '600', color: '#475569' }}>Vendas</TableCell>
@@ -375,29 +367,6 @@ export default function KiwifyPage() {
                             fontWeight: '500'
                           }}
                         />
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Typography variant="caption" sx={{ 
-                          fontFamily: 'monospace', 
-                          color: '#64748B',
-                          backgroundColor: '#F8FAFC',
-                          padding: '4px 8px',
-                          borderRadius: 1,
-                          border: '1px solid #E2E8F0',
-                          fontSize: '0.75rem'
-                        }}>
-                          {integration.token?.substring(0, 12)}...
-                        </Typography>
-                        <IconButton
-                          size="small"
-                          onClick={() => copyToClipboard(integration.token || '')}
-                          sx={{ color: '#4ECDC4' }}
-                          title="Copiar Token"
-                        >
-                          📋
-                        </IconButton>
                       </Box>
                     </TableCell>
                     <TableCell>

@@ -31,9 +31,9 @@ import {
   Link
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { EDUZZ_INTEGRATIONS, type TokenIntegrationConfig } from '@/data/integrations';
+import { EDUZZ_PUBLIC_INTEGRATIONS, type PublicTokenIntegrationConfig } from '@/data/integrations';
 
-type EduzzIntegration = TokenIntegrationConfig & { webhookUrl: string };
+type EduzzIntegration = PublicTokenIntegrationConfig & { webhookUrl: string };
 
 export default function EduzzPage() {
   const router = useRouter();
@@ -53,14 +53,18 @@ export default function EduzzPage() {
     loadIntegrations();
   }, []);
 
+  const buildWebhookTemplate = (origin: string) => `${origin}/api/webhooks/eduzz/{token}`;
+
   const loadIntegrations = async () => {
     try {
       setLoading(true);
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
 
-      const realIntegrations: EduzzIntegration[] = EDUZZ_INTEGRATIONS.map(integration => ({
+      const webhookUrl = buildWebhookTemplate(origin);
+
+      const realIntegrations: EduzzIntegration[] = EDUZZ_PUBLIC_INTEGRATIONS.map(integration => ({
         ...integration,
-        webhookUrl: origin ? `${origin}/api/webhooks/eduzz/${integration.token}` : integration.token,
+        webhookUrl,
       }));
 
       setIntegrations(realIntegrations);
@@ -91,12 +95,12 @@ export default function EduzzPage() {
 
   const handleSaveIntegration = async () => {
     try {
-      // Gerar token único para Eduzz
-      const token = generateEduzzToken();
-      
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const webhookUrl = buildWebhookTemplate(origin);
+
       if (editingIntegration) {
         // Atualizar integração existente
-        setIntegrations(prev => 
+        setIntegrations(prev =>
           prev.map(int => 
             int.id === editingIntegration.id 
               ? { ...int, ...formData }
@@ -109,8 +113,7 @@ export default function EduzzPage() {
         const newIntegration: EduzzIntegration = {
           id: integrationId,
           ...formData,
-          token: token,
-          webhookUrl: `${window.location.origin}/api/webhooks/eduzz/${token}`,
+          webhookUrl,
           status: 'ACTIVE',
           createdAt: new Date().toISOString().split('T')[0],
           totalSales: 0
@@ -125,16 +128,6 @@ export default function EduzzPage() {
     } catch (error) {
       console.error('Erro ao salvar integração Eduzz:', error);
     }
-  };
-
-  // Função para gerar token único do Eduzz
-  const generateEduzzToken = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-    let token = 'ED';
-    for (let i = 0; i < 15; i++) {
-      token += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return token;
   };
 
   const handleDeleteIntegration = async (id: string) => {
@@ -339,7 +332,6 @@ export default function EduzzPage() {
               <TableRow sx={{ backgroundColor: '#F8FAFC' }}>
                 <TableCell sx={{ fontWeight: '600', color: '#475569' }}>Produto</TableCell>
                 <TableCell sx={{ fontWeight: '600', color: '#475569' }}>Plano</TableCell>
-                <TableCell sx={{ fontWeight: '600', color: '#475569' }}>Token</TableCell>
                 <TableCell sx={{ fontWeight: '600', color: '#475569' }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: '600', color: '#475569' }}>Webhook URL</TableCell>
                 <TableCell sx={{ fontWeight: '600', color: '#475569' }}>Vendas</TableCell>
@@ -385,29 +377,6 @@ export default function EduzzPage() {
                             fontWeight: '500'
                           }}
                         />
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Typography variant="caption" sx={{ 
-                          fontFamily: 'monospace', 
-                          color: '#64748B',
-                          backgroundColor: '#F8FAFC',
-                          padding: '4px 8px',
-                          borderRadius: 1,
-                          border: '1px solid #E2E8F0',
-                          fontSize: '0.75rem'
-                        }}>
-                          {integration.token?.substring(0, 12)}...
-                        </Typography>
-                        <IconButton
-                          size="small"
-                          onClick={() => copyToClipboard(integration.token || '')}
-                          sx={{ color: '#FF6B35' }}
-                          title="Copiar Token"
-                        >
-                          📋
-                        </IconButton>
                       </Box>
                     </TableCell>
                     <TableCell>

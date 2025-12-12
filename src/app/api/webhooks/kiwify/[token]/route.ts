@@ -5,9 +5,11 @@ import type { PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { enviarEmailCredenciais } from '@/lib/auth/email'; // ✅ ADICIONADO
 import { hashPassword } from '@/lib/auth/password'; // ✅ ADICIONADO
-import { KIWIFY_TOKEN_MAPPING } from '@/data/integrations';
+import { getKiwifyTokenMapping } from '@/server/integration-secrets';
 import { activateEntitlement, deactivateEntitlement, getActiveEntitlementCodes, isAddonPlan } from '@/lib/entitlements';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
+
+const KIWIFY_TOKEN_MAPPING = getKiwifyTokenMapping();
 
 function extractString(value: unknown): string {
   if (typeof value === 'string') {

@@ -28,6 +28,10 @@ export interface TokenIntegrationConfig extends BaseIntegrationConfig {
   token: string;
 }
 
+export type PublicTokenIntegrationConfig = Omit<TokenIntegrationConfig, 'token'>;
+
+export type PublicPlatformIntegrationConfig = HotmartIntegrationConfig | PublicTokenIntegrationConfig;
+
 export type PlatformIntegrationConfig = HotmartIntegrationConfig | TokenIntegrationConfig;
 
 export const PLATFORM_SLUGS: PlatformSlug[] = ['hotmart', 'kiwify', 'eduzz'];
@@ -89,11 +93,10 @@ export const HOTMART_INTEGRATIONS: HotmartIntegrationConfig[] = [
   },
 ];
 
-export const KIWIFY_INTEGRATIONS: TokenIntegrationConfig[] = [
+export const KIWIFY_PUBLIC_INTEGRATIONS: PublicTokenIntegrationConfig[] = [
   {
     id: 'KW001',
     productName: 'Produto Fatos da Bolsa',
-    token: '27419sqm9vm',
     plan: 'VIP',
     status: 'ACTIVE',
     createdAt: '2024-07-16',
@@ -102,7 +105,6 @@ export const KIWIFY_INTEGRATIONS: TokenIntegrationConfig[] = [
   {
     id: 'KWVIP06',
     productName: 'Close Friends VIP - Turma 6',
-    token: 'KWiChuFSyPUjAgdJs',
     plan: 'VIP',
     status: 'INACTIVE',
     createdAt: '2024-07-16',
@@ -110,11 +112,10 @@ export const KIWIFY_INTEGRATIONS: TokenIntegrationConfig[] = [
   },
 ];
 
-export const EDUZZ_INTEGRATIONS: TokenIntegrationConfig[] = [
+export const EDUZZ_PUBLIC_INTEGRATIONS: PublicTokenIntegrationConfig[] = [
   {
     id: 'ED001',
     productName: 'Produto Fatos da Bolsa Eduzz',
-    token: 'EDm2rYeqZWZHmCVmA',
     plan: 'VIP',
     status: 'INACTIVE',
     createdAt: '2024-07-16',
@@ -123,7 +124,6 @@ export const EDUZZ_INTEGRATIONS: TokenIntegrationConfig[] = [
   {
     id: 'ED002',
     productName: 'Produto Fatos da Bolsa Eduzz',
-    token: 'EDgZhmhuBZN4CP4uD',
     plan: 'VIP',
     status: 'ACTIVE',
     createdAt: '2024-07-16',
@@ -131,42 +131,16 @@ export const EDUZZ_INTEGRATIONS: TokenIntegrationConfig[] = [
   },
 ];
 
-export const KIWIFY_TOKEN_MAPPING: Record<string, { name: string; plan: string; integrationId: string }> =
-  KIWIFY_INTEGRATIONS.reduce(
-    (acc, integration) => {
-      acc[integration.token] = {
-        name: integration.productName,
-        plan: integration.plan,
-        integrationId: integration.id,
-      };
-      return acc;
-    },
-    {} as Record<string, { name: string; plan: string; integrationId: string }>,
-  );
-
-export const EDUZZ_TOKEN_MAPPING: Record<string, { name: string; plan: string; integrationId: string }> =
-  EDUZZ_INTEGRATIONS.reduce(
-    (acc, integration) => {
-      acc[integration.token] = {
-        name: integration.productName,
-        plan: integration.plan,
-        integrationId: integration.id,
-      };
-      return acc;
-    },
-    {} as Record<string, { name: string; plan: string; integrationId: string }>,
-  );
-
-export function getIntegrationsByPlatform(
+export function getPublicIntegrationsByPlatform(
   slug: PlatformSlug,
-): ReadonlyArray<PlatformIntegrationConfig> {
+): ReadonlyArray<PublicPlatformIntegrationConfig> {
   switch (slug) {
     case 'hotmart':
       return HOTMART_INTEGRATIONS;
     case 'kiwify':
-      return KIWIFY_INTEGRATIONS;
+      return KIWIFY_PUBLIC_INTEGRATIONS;
     case 'eduzz':
-      return EDUZZ_INTEGRATIONS;
+      return EDUZZ_PUBLIC_INTEGRATIONS;
     default:
       return [];
   }

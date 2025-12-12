@@ -2,9 +2,11 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { EDUZZ_TOKEN_MAPPING } from '@/data/integrations';
+import { getEduzzTokenMapping } from '@/server/integration-secrets';
 import { activateEntitlement, deactivateEntitlement, getActiveEntitlementCodes, isAddonPlan } from '@/lib/entitlements';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
+
+const EDUZZ_TOKEN_MAPPING = getEduzzTokenMapping();
 
 // 🔍 FUNÇÃO PARA DETECTAR PLANO AUTOMATICAMENTE PELOS SEUS PRODUTOS EDUZZ
 function detectarPlanoEduzz(webhookData: any): { plan: string; productName: string } {
