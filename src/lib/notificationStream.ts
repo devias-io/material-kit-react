@@ -16,7 +16,7 @@ interface StreamOptions {
  */
 export async function createNotificationStreamResponse(
   request: NextRequest,
-  { routeLabel, keepAliveMs = 15000, connectionTimeoutMs = 120000 }: StreamOptions
+  { routeLabel, keepAliveMs = 10000, connectionTimeoutMs = 30000 }: StreamOptions
 ): Promise<Response> {
   const startTime = Date.now();
 
@@ -110,6 +110,7 @@ export async function createNotificationStreamResponse(
         };
 
         sendEvent({ type: 'connected' }, 'connected');
+        sendComment('handshake-ok');
 
         removeListener = addNotificationListener(
           userId,
@@ -120,6 +121,7 @@ export async function createNotificationStreamResponse(
 
         keepAliveTimer = setInterval(() => {
           sendComment('keep-alive');
+          sendEvent({ type: 'ping' }, 'ping');
         }, keepAliveMs);
 
         if (connectionTimeoutMs && connectionTimeoutMs > 0) {

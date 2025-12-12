@@ -15,7 +15,9 @@ import type { NotificationStreamEvent } from '@/types/notifications';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 const MAX_STREAM_RETRIES = 2;
-const STREAM_DEBOUNCE_MS = 5000;
+const STREAM_DEBOUNCE_MS = 10000;
+const AUTH_CHECK_TTL_MS = 5 * 60 * 1000;
+const FETCH_THROTTLE_MS = 15000;
 
 const logDev = (...args: Parameters<typeof console.log>) => {
   if (isDevelopment) {
@@ -70,6 +72,12 @@ function useNotificationsState(): UseNotificationsReturn {
   const retryCountRef = useRef(0);
   const isUnmountedRef = useRef(false);
   const hasAuthenticatedRef = useRef(false);
+  const lastAuthCheckRef = useRef<{ timestamp: number; result: boolean }>({
+    timestamp: 0,
+    result: false
+  });
+  const authCheckPromiseRef = useRef<Promise<boolean> | null>(null);
+  const lastFetchRef = useRef(0);
 
   const clearReconnectTimeout = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -93,15 +101,31 @@ function useNotificationsState(): UseNotificationsReturn {
 
   // Função para verificar se está autenticado
   const isAuthenticated = useCallback(async (): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/auth/check', {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      return response.ok;
-    } catch {
-      return false;
+    const now = Date.now();
+    const { timestamp, result } = lastAuthCheckRef.current;
+
+    if (now - timestamp < AUTH_CHECK_TTL_MS) {
+      return result;
     }
+
+    if (authCheckPromiseRef.current) {
+      return authCheckPromiseRef.current;
+    }
+
+    const promise = fetch('/api/auth/check', {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then(response => response.ok)
+      .catch(() => false)
+      .then(authenticated => {
+        lastAuthCheckRef.current = { timestamp: Date.now(), result: authenticated };
+        authCheckPromiseRef.current = null;
+        return authenticated;
+      });
+
+    authCheckPromiseRef.current = promise;
+    return promise;
   }, []);
 
   // Função para limpar estado quando não autenticado
@@ -112,6 +136,8 @@ function useNotificationsState(): UseNotificationsReturn {
     setError(null);
     setLoading(false);
     hasAuthenticatedRef.current = false;
+    lastAuthCheckRef.current = { timestamp: Date.now(), result: false };
+    authCheckPromiseRef.current = null;
   }, [closeEventSource]);
 
   const getAuthHeaders = useCallback(() => {
@@ -121,6 +147,11 @@ function useNotificationsState(): UseNotificationsReturn {
   }, []);
 
   const fetchNotifications = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastFetchRef.current < FETCH_THROTTLE_MS) {
+      return;
+    }
+
     const authenticated = await isAuthenticated();
     if (!authenticated) {
       logDev('useNotifications: Usuário não autenticado, limpando estado');
@@ -151,6 +182,7 @@ function useNotificationsState(): UseNotificationsReturn {
       const data = await response.json();
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
+      lastFetchRef.current = Date.now();
       
       logDev('useNotifications: Dados carregados', {
         total: data.notifications?.length || 0,
@@ -169,6 +201,7 @@ function useNotificationsState(): UseNotificationsReturn {
       // Para outros erros, manter dados mas mostrar erro
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
+      lastFetchRef.current = Date.now();
       setLoading(false);
     }
   }, [getAuthHeaders, isAuthenticated, clearState]);
@@ -212,6 +245,21 @@ function useNotificationsState(): UseNotificationsReturn {
         retryCountRef.current = 0;
         hasAuthenticatedRef.current = true;
         fetchNotifications();
+      });
+
+      eventSource.addEventListener('ping', () => {
+        lastFetchRef.current = Date.now();
+      });
+
+      eventSource.addEventListener('timeout', () => {
+        console.warn('useNotifications SSE: conexão atingiu timeout, reabrindo');
+        closeEventSource();
+        connectEventSourceDebounced();
+      });
+
+      eventSource.addEventListener('unauthorized', () => {
+        console.warn('useNotifications SSE: sessão inválida informada pelo servidor');
+        clearState();
       });
 
       eventSource.addEventListener('refresh', (event: MessageEvent<string>) => {
