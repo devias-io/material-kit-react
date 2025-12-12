@@ -18,6 +18,9 @@ const MAX_STREAM_RETRIES = 2;
 const STREAM_DEBOUNCE_MS = 10000;
 const AUTH_CHECK_TTL_MS = 5 * 60 * 1000;
 const FETCH_THROTTLE_MS = 15000;
+const AUTH_CHECK_CACHE_KEY = 'notifications-auth-check';
+const AUTH_BACKOFF_BASE_MS = 30000;
+const AUTH_BACKOFF_MAX_MS = 10 * 60 * 1000;
 
 const logDev = (...args: Parameters<typeof console.log>) => {
   if (isDevelopment) {
@@ -76,8 +79,54 @@ function useNotificationsState(): UseNotificationsReturn {
     timestamp: 0,
     result: false
   });
+  const authBackoffRef = useRef<{ delayMs: number; until: number }>({
+    delayMs: AUTH_BACKOFF_BASE_MS,
+    until: 0
+  });
   const authCheckPromiseRef = useRef<Promise<boolean> | null>(null);
   const lastFetchRef = useRef(0);
+
+  const getCachedAuthCheck = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    try {
+      const raw = window.localStorage.getItem(AUTH_CHECK_CACHE_KEY);
+      if (!raw) return null;
+
+      const parsed = JSON.parse(raw) as {
+        timestamp?: number;
+        result?: boolean;
+      };
+
+      if (
+        typeof parsed.timestamp === 'number' &&
+        typeof parsed.result === 'boolean'
+      ) {
+        return parsed as { timestamp: number; result: boolean };
+      }
+    } catch (error) {
+      console.warn('useNotifications: falha ao ler cache de auth', error);
+    }
+
+    return null;
+  }, []);
+
+  const setCachedAuthCheck = useCallback(
+    (payload: { timestamp: number; result: boolean }) => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
+      try {
+        window.localStorage.setItem(AUTH_CHECK_CACHE_KEY, JSON.stringify(payload));
+      } catch (error) {
+        console.warn('useNotifications: falha ao salvar cache de auth', error);
+      }
+    },
+    []
+  );
 
   const clearReconnectTimeout = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -104,8 +153,18 @@ function useNotificationsState(): UseNotificationsReturn {
     const now = Date.now();
     const { timestamp, result } = lastAuthCheckRef.current;
 
+    if (authBackoffRef.current.until && now < authBackoffRef.current.until) {
+      return result;
+    }
+
     if (now - timestamp < AUTH_CHECK_TTL_MS) {
       return result;
+    }
+
+    const cachedAuth = getCachedAuthCheck();
+    if (cachedAuth && now - cachedAuth.timestamp < AUTH_CHECK_TTL_MS) {
+      lastAuthCheckRef.current = cachedAuth;
+      return cachedAuth.result;
     }
 
     if (authCheckPromiseRef.current) {
@@ -116,17 +175,55 @@ function useNotificationsState(): UseNotificationsReturn {
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' }
     })
-      .then(response => response.ok)
-      .catch(() => false)
-      .then(authenticated => {
-        lastAuthCheckRef.current = { timestamp: Date.now(), result: authenticated };
-        authCheckPromiseRef.current = null;
+      .then(async response => {
+        if (response.status === 429) {
+          const retryAfterHeader = response.headers.get('Retry-After');
+          const retryAfterMs = retryAfterHeader
+            ? Number.parseInt(retryAfterHeader, 10) * 1000
+            : 0;
+
+          const computedDelay = Math.min(
+            AUTH_BACKOFF_MAX_MS,
+            Math.max(retryAfterMs || 0, authBackoffRef.current.delayMs)
+          );
+
+          const until = Date.now() + computedDelay;
+
+          authBackoffRef.current = {
+            delayMs: Math.min(
+              AUTH_BACKOFF_MAX_MS,
+              Math.max(AUTH_BACKOFF_BASE_MS, computedDelay * 2)
+            ),
+            until
+          };
+
+          const cached = {
+            timestamp: Date.now(),
+            result: lastAuthCheckRef.current.result
+          };
+
+          lastAuthCheckRef.current = cached;
+          setCachedAuthCheck(cached);
+          return cached.result;
+        }
+
+        const authenticated = response.ok;
+
+        const payload = { timestamp: Date.now(), result: authenticated };
+        lastAuthCheckRef.current = payload;
+        setCachedAuthCheck(payload);
+        authBackoffRef.current = { delayMs: AUTH_BACKOFF_BASE_MS, until: 0 };
+
         return authenticated;
+      })
+      .catch(() => false)
+      .finally(() => {
+        authCheckPromiseRef.current = null;
       });
 
     authCheckPromiseRef.current = promise;
     return promise;
-  }, []);
+  }, [getCachedAuthCheck, setCachedAuthCheck]);
 
   // Função para limpar estado quando não autenticado
   const clearState = useCallback(() => {
