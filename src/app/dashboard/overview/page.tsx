@@ -4,6 +4,7 @@
 import * as React from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
+import { buildQuotesUrl } from '@/utils/brapiProxy';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 import { useProventosPorAtivo } from '@/hooks/useProventosPorAtivo';
 import { useAuthAccess } from '@/hooks/use-auth-access';
@@ -72,8 +73,7 @@ function useSmllRealTime() {
       console.log('🔍 BUSCANDO SMLL - ESTRATÉGIA UNIFICADA...');
       console.log('📱 Device Info:', { isMobile });
 
-      const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
-      const smal11Url = `https://brapi.dev/api/quote/SMAL11?token=${BRAPI_TOKEN}`;
+      const smal11Url = buildQuotesUrl('SMAL11');
       
       let dadosSmllObtidos = false;
       let dadosSmll = null;
@@ -175,7 +175,7 @@ function useSmllRealTime() {
           try {
             console.log('📱🔄 SMLL: Fallback 2 - URL simplificada');
             
-            const response = await fetch(`https://brapi.dev/api/quote/SMAL11?token=${BRAPI_TOKEN}&range=1d`, {
+            const response = await fetch(buildQuotesUrl('SMAL11', { range: '1d' }), {
               method: 'GET',
               mode: 'cors'
             });
@@ -297,8 +297,7 @@ function useIbovespaRealTime() {
       console.log('🔍 BUSCANDO IBOVESPA - ESTRATÉGIA UNIFICADA...');
       console.log('📱 Device Info:', { isMobile });
 
-      const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
-      const ibovUrl = `https://brapi.dev/api/quote/^BVSP?token=${BRAPI_TOKEN}`;
+      const ibovUrl = buildQuotesUrl('^BVSP');
       
       let dadosIbovObtidos = false;
       let dadosIbovespa = null;
@@ -394,7 +393,7 @@ function useIbovespaRealTime() {
           try {
             console.log('📱🔄 IBOV: Fallback 2 - URL simplificada');
             
-            const response = await fetch(`https://brapi.dev/api/quote/^BVSP?token=${BRAPI_TOKEN}&range=1d`, {
+            const response = await fetch(buildQuotesUrl('^BVSP', { range: '1d' }), {
               method: 'GET',
               mode: 'cors'
             });
@@ -509,7 +508,6 @@ function useIbovespaPeriodo(ativosAtualizados: any[]) {
 
         console.log('📅 Data mais antiga da carteira:', dataMaisAntiga.toLocaleDateString('pt-BR'));
 
-        const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
         let ibovAtual = 134500;
         
         // 📊 BUSCAR IBOVESPA ATUAL
@@ -517,7 +515,7 @@ function useIbovespaPeriodo(ativosAtualizados: any[]) {
           const controller = new AbortController();
           setTimeout(() => controller.abort(), 3000);
           
-          const response = await fetch(`https://brapi.dev/api/quote/^BVSP?token=${BRAPI_TOKEN}`, {
+          const response = await fetch(buildQuotesUrl('^BVSP'), {
             signal: controller.signal,
             headers: {
               'Accept': 'application/json',
@@ -656,14 +654,13 @@ function calcularViesAutomatico(
 
 // 🚀 FUNÇÃO OTIMIZADA PARA BUSCAR COTAÇÕES - SEMPRE ESTRATÉGIA MOBILE
 async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Promise<Map<string, any>> {
-  const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
   const cotacoesMap = new Map();
   
   console.log('🚀 [OTIMIZADO] Buscando', tickers.length, 'cotações EM PARALELO...');
   
   // ✅ STRATEGY 1: Tentar batch request primeiro (1 requisição para todos)
   try {
-    const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?token=${BRAPI_TOKEN}`;
+    const batchUrl = buildQuotesUrl(tickers);
     const response = await Promise.race([
       fetch(batchUrl),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Batch timeout')), 5000))
@@ -700,7 +697,7 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
   const promises = tickers.map(async (ticker) => {
     try {
       const response = await Promise.race([
-        fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`, {
+        fetch(buildQuotesUrl(ticker), {
           headers: { 'Accept': 'application/json' }
         }),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Individual timeout')), 4000))
@@ -749,13 +746,12 @@ function registrarDyNoMapa(result: any, ticker: string, dyMap: Map<string, strin
 // 🔄 FUNÇÃO PARA BUSCAR DY - VERSÃO CORRETA (IGUAL AO SEU CÓDIGO QUE FUNCIONAVA)
 async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
-  const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
   
   console.log('📈 [CORRETO] Buscando DY para', tickers.length, 'tickers EM PARALELO...');
   
   // ✅ BATCH REQUEST - IGUAL AO SEU CÓDIGO ANTERIOR QUE FUNCIONAVA
   try {
-    const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?token=${BRAPI_TOKEN}&dividends=true`;
+    const batchUrl = buildQuotesUrl(tickers, { dividends: true });
     const response = await Promise.race([
       fetch(batchUrl),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY batch timeout')), 6000))
@@ -782,7 +778,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
   const promises = tickers.map(async (ticker) => {
     try {
       const response = await Promise.race([
-        fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
+        fetch(buildQuotesUrl(ticker, { dividends: true }), {
           headers: { 'Accept': 'application/json' }
         }),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY timeout')), 4000))

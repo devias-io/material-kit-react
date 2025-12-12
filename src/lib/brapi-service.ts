@@ -15,7 +15,7 @@ export class BrapiService {
   // Método estático (como seu código atual usa)
   static async fetchQuotes(
     symbols: string[],
-    options: { cacheTtlMs?: number } = {}
+    options: { cacheTtlMs?: number; queryParams?: Record<string, string | undefined | null> } = {}
   ): Promise<WithCacheResult<any[]>> {
     if (!symbols || symbols.length === 0) {
       return {
@@ -35,16 +35,28 @@ export class BrapiService {
 
     const symbolString = cleanSymbols.join(',');
 
+    const normalizedQuery = new URLSearchParams();
+    Object.entries(options.queryParams || {}).forEach(([key, value]) => {
+      if (value != null && value !== '') {
+        normalizedQuery.append(key, value);
+      }
+    });
+
+    const querySignature = normalizedQuery.toString();
+
     const cacheTtlMs = options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
     const ttlSeconds = Math.max(60, Math.floor(cacheTtlMs / 1000));
 
-    const cacheKey = CacheService.getCacheKey('brapi:quotes', symbolString);
+    const cacheKey = CacheService.getCacheKey('brapi:quotes', symbolString, querySignature || '');
 
     try {
       return await CacheService.withCache(
         cacheKey,
         async () => {
-          const url = `${this.baseUrl}/quote/${symbolString}?token=${this.apiKey}`;
+          const urlParams = new URLSearchParams(normalizedQuery);
+          urlParams.set('token', this.apiKey);
+
+          const url = `${this.baseUrl}/quote/${symbolString}?${urlParams}`;
 
           if (isDev) {
             console.log(`📡 Fetching quotes for ${symbolString} (masked key)`);

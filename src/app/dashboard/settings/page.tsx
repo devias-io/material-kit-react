@@ -8,6 +8,7 @@ import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 import { useProventosPorAtivo } from '@/hooks/useProventosPorAtivo';
+import { buildQuotesUrl, getQuoteResults } from '@/utils/brapiProxy';
 
 type PercentualParticipacao = {
   bruto: unknown;
@@ -48,111 +49,66 @@ function useIfixRealTime() {
 
       debugLog('🚀 IFIX: Buscando dados reais com IFIX.SA...');
 
-      const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
-      
-      // 🎯 ESTRATÉGIAS EM ORDEM DE PRIORIDADE (BASEADO NO TESTE)
-      const estrategias = [
-        // 1. IFIX.SA - COMPROVADAMENTE FUNCIONA
-        {
-          nome: 'IFIX.SA com token',
-          url: `https://brapi.dev/api/quote/IFIX.SA?token=${BRAPI_TOKEN}`,
-          headers: { 'Accept': 'application/json' }
-        },
-        // 2. IFIX.SA via Authorization header
-        {
-          nome: 'IFIX.SA via header',
-          url: 'https://brapi.dev/api/quote/IFIX.SA',
-          headers: { 
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${BRAPI_TOKEN}`
-          }
-        },
-        // 3. IFIX.SA sem token (plano gratuito)
-        {
-          nome: 'IFIX.SA sem token',
-          url: 'https://brapi.dev/api/quote/IFIX.SA',
-          headers: { 'Accept': 'application/json' }
-        }
-      ];
-
+      const ifixUrl = buildQuotesUrl('IFIX.SA');
       let dadosObtidos = false;
 
-      // 🎯 TENTAR CADA ESTRATÉGIA
-      for (const estrategia of estrategias) {
-        if (dadosObtidos) break;
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-        try {
-          debugLog(`🎯 IFIX: Tentando "${estrategia.nome}"...`);
-          
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 6000);
-          
-          const response = await fetch(estrategia.url, {
-            method: 'GET',
-            headers: estrategia.headers,
-            signal: controller.signal
-          });
+        const response = await fetch(ifixUrl, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: controller.signal
+        });
 
-          clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-          debugLog(`📊 IFIX: ${estrategia.nome} - Status: ${response.status}`);
+        debugLog(`📊 IFIX: Status ${response.status}`);
 
-          if (response.ok) {
-            const data = await response.json();
-            debugLog(`📊 IFIX: ${estrategia.nome} - Resposta:`, data);
+        if (response.ok) {
+          const data = await response.json();
+          const resultado = getQuoteResults(data)?.[0];
 
-            // ✅ VERIFICAR ERROS
-            if (data.error) {
-              debugLog(`❌ IFIX: ${estrategia.nome} - Erro: ${data.message}`);
-              continue;
-            }
+          debugLog('📊 IFIX: Resposta normalizada', data);
 
-            // ✅ PROCESSAR DADOS
-            const resultado = data.results?.[0];
-            if (resultado?.regularMarketPrice) {
-              const preco = resultado.regularMarketPrice;
-              
-              debugLog(`🔍 IFIX: ${estrategia.nome} - Preço: ${preco}`);
-              
-              // ✅ VALIDAÇÃO: IFIX.SA deve estar entre 3000-4000
-              if (preco >= 3000 && preco <= 4000) {
-                const dados = {
-                  valor: preco,
-                  valorFormatado: new Intl.NumberFormat('pt-BR', {
-                    maximumFractionDigits: 0
-                  }).format(Math.round(preco)),
-                  variacao: resultado.regularMarketChange || 0,
-                  variacaoPercent: resultado.regularMarketChangePercent || 0,
-                  trend: (resultado.regularMarketChangePercent || 0) >= 0 ? 'up' : 'down',
-                  timestamp: new Date().toISOString(),
-                  fonte: estrategia.nome,
-                  symbol: resultado.symbol,
-                  name: resultado.shortName || 'IFIX - Índice de Fundos Imobiliários'
-                };
+          if (resultado?.regularMarketPrice) {
+            const preco = resultado.regularMarketPrice;
 
-                debugLog(`✅ IFIX: DADOS REAIS OBTIDOS!`, dados);
-                setIfixData(dados);
-                dadosObtidos = true;
-                break;
-              } else {
-                debugLog(`❌ IFIX: ${estrategia.nome} - Preço fora da faixa válida: ${preco}`);
-              }
+            debugLog(`🔍 IFIX: Preço ${preco}`);
+
+            // ✅ VALIDAÇÃO: IFIX.SA deve estar entre 3000-4000
+            if (preco >= 3000 && preco <= 4000) {
+              const dados = {
+                valor: preco,
+                valorFormatado: new Intl.NumberFormat('pt-BR', {
+                  maximumFractionDigits: 0
+                }).format(Math.round(preco)),
+                variacao: resultado.regularMarketChange || 0,
+                variacaoPercent: resultado.regularMarketChangePercent || 0,
+                trend: (resultado.regularMarketChangePercent || 0) >= 0 ? 'up' : 'down',
+                timestamp: new Date().toISOString(),
+                fonte: 'BRAPI_PROXY',
+                symbol: resultado.symbol,
+                name: resultado.shortName || 'IFIX - Índice de Fundos Imobiliários'
+              };
+
+              debugLog(`✅ IFIX: DADOS REAIS OBTIDOS!`, dados);
+              setIfixData(dados);
+              dadosObtidos = true;
             } else {
-              debugLog(`❌ IFIX: ${estrategia.nome} - Sem dados de preço`);
+              debugLog(`❌ IFIX: Preço fora da faixa válida: ${preco}`);
             }
           } else {
-            debugLog(`❌ IFIX: ${estrategia.nome} - HTTP ${response.status}`);
-          }
-        } catch (error) {
-          if (error instanceof Error && error.name === 'AbortError') {
-            debugLog(`⏱️ IFIX: ${estrategia.nome} - Timeout`);
-          } else {
-            debugError(`❌ IFIX: ${estrategia.nome} - Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+            debugLog('❌ IFIX: Sem dados de preço');
           }
         }
-
-        // Delay entre tentativas
-        await new Promise(resolve => setTimeout(resolve, 800));
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          debugLog('⏱️ IFIX: Timeout');
+        } else {
+          debugLog('❌ IFIX: Erro ao buscar dados', error instanceof Error ? error.message : 'Erro desconhecido');
+        }
       }
 
       // ⚠️ FALLBACK (só se IFIX.SA não funcionar)
@@ -357,25 +313,25 @@ const normalizarTicker = (symbol?: string) => {
 };
 
 async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Promise<Map<string, any>> {
-  const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
   const cotacoesMap = new Map();
   
   debugLog('🚀 [OTIMIZADO] Buscando', tickers.length, 'cotações EM PARALELO...');
   
   // ✅ STRATEGY 1: Tentar batch request primeiro (1 requisição para todos)
   try {
-    const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?token=${BRAPI_TOKEN}`;
+    const batchUrl = buildQuotesUrl(tickers);
     const response = await Promise.race([
       fetch(batchUrl),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Batch timeout')), 5000))
     ]);
-    
+
     if (response.ok) {
       const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        debugLog('✅ BATCH REQUEST SUCESSO:', data.results.length, 'cotações em 1 só request');
-        
-        data.results.forEach((quote: any) => {
+      const results = getQuoteResults(data);
+      if (results.length > 0) {
+        debugLog('✅ BATCH REQUEST SUCESSO:', results.length, 'cotações em 1 só request');
+
+        results.forEach((quote: any) => {
           if (quote.regularMarketPrice > 0) {
             const tickerNormalizado = normalizarTicker(quote.symbol);
             const chavePrincipal = tickerNormalizado || (quote.symbol ? quote.symbol.toUpperCase() : '');
@@ -412,15 +368,13 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
   const promises = tickers.map(async (ticker) => {
     try {
       const response = await Promise.race([
-        fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`, {
-          headers: { 'Accept': 'application/json' }
-        }),
+        fetch(buildQuotesUrl(ticker), { headers: { 'Accept': 'application/json' } }),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Individual timeout')), 4000))
       ]);
 
       if (response.ok) {
         const data = await response.json();
-        const quote = data.results?.[0];
+        const quote = getQuoteResults(data)?.[0];
         
         if (quote?.regularMarketPrice > 0) {
           const tickerNormalizado = normalizarTicker(quote.symbol) || ticker;

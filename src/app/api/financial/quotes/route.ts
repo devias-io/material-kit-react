@@ -30,8 +30,17 @@ export async function GET(request: NextRequest) {
 
     const symbolsArray = symbols.split(',').map(s => s.trim().toUpperCase());
 
+    const queryParams: Record<string, string> = {};
+    searchParams.forEach((value, key) => {
+      if (key === 'symbols') return;
+      if (value) {
+        queryParams[key] = value;
+      }
+    });
+
     const { data, metadata } = await BrapiService.fetchQuotes(symbolsArray, {
       cacheTtlMs: 5 * 60 * 1000,
+      queryParams,
     });
 
     logApiMetric({
@@ -46,6 +55,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         quotes: data,
+        results: data,
         timestamp: new Date().toISOString(),
         symbols: symbolsArray,
         success: true

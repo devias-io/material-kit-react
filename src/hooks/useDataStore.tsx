@@ -14,6 +14,7 @@ import {
   sanitizeCarteirasData
 } from '@/utils/carteira-access';
 import { normalizeViesOverride, type ViesOverride } from '@/utils/vies';
+import { buildQuotesUrl, getQuoteResults } from '@/utils/brapiProxy';
 
 type AtivoComVies<T> = T & { viesOverride: ViesOverride };
 
@@ -928,15 +929,14 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     
     try {
       setLoading(true);
-      const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
-      const response = await fetch(`https://brapi.dev/api/quote/${tickers.join(',')}?token=${BRAPI_TOKEN}`);
-      
+      const response = await fetch(buildQuotesUrl(tickers));
+
       if (!response.ok) throw new Error('Erro na API');
-      
+
       const data = await response.json();
       const novasCotacoes: Record<string, number> = {};
-      
-      data.results?.forEach((item: any) => {
+
+      getQuoteResults(data)?.forEach((item: any) => {
         novasCotacoes[item.symbol] = item.regularMarketPrice;
       });
       

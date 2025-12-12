@@ -2,46 +2,69 @@
 import { useState, useCallback } from 'react';
 import { BRAPI_CONFIG, BrapiQuoteResponse, DadosTrimestre } from '@/lib/brapi-config';
 
+const CLIENT_CACHE = new Map<string, { data: BrapiQuoteResponse; timestamp: number }>();
+
+function buildCacheKey(symbols: string[], params: Record<string, string>) {
+  const normalizedSymbols = symbols.map((symbol) => symbol.trim().toUpperCase()).join(',');
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) {
+      normalizedParams.append(key, value);
+    }
+  });
+
+  return `${normalizedSymbols}|${normalizedParams.toString()}`;
+}
+
 export const useBrapi = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cache simples para evitar requests desnecessários
-  const cache = new Map<string, { data: any; timestamp: number }>();
-
-  // Função para fazer requests para BRAPI
+  // Função para fazer requests para BRAPI via API interna (com cache compartilhado)
   const brapiRequest = useCallback(async (endpoint: string, params: Record<string, string> = {}): Promise<BrapiQuoteResponse> => {
-    const queryParams = new URLSearchParams({
-      token: BRAPI_CONFIG.TOKEN,
-      ...params
+    const tickerSegment = endpoint.replace(/^\/quote\//, '');
+    const symbols = tickerSegment.split(',').map((symbol) => symbol.trim()).filter(Boolean);
+
+    const searchParams = new URLSearchParams();
+    if (symbols.length > 0) {
+      searchParams.set('symbols', symbols.join(','));
+    }
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) {
+        searchParams.append(key, value);
+      }
     });
-    
-    const url = `${BRAPI_CONFIG.BASE_URL}${endpoint}?${queryParams}`;
-    const cacheKey = url;
-    
-    // Verificar cache
-    const cached = cache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp) < BRAPI_CONFIG.RATE_LIMIT.CACHE_DURATION) {
-      console.log('📚 Usando cache BRAPI:', endpoint);
+
+    const cacheKey = buildCacheKey(symbols, params);
+    const cached = CLIENT_CACHE.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < BRAPI_CONFIG.RATE_LIMIT.CACHE_DURATION) {
+      console.log('📚 Usando cache BRAPI:', cacheKey);
       return cached.data;
     }
-    
+
     try {
-      console.log('🌐 Request BRAPI:', endpoint);
-      
-      const response = await fetch(url);
-      
+      console.log('🌐 Request BRAPI via API interna:', searchParams.toString());
+
+      const response = await fetch(`/api/financial/quotes?${searchParams.toString()}`);
+
       if (!response.ok) {
         throw new Error(`Erro BRAPI ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
-      // Armazenar no cache
-      cache.set(cacheKey, { data, timestamp: Date.now() });
-      
-      return data;
-      
+      const payload: BrapiQuoteResponse = {
+        results: data?.quotes || [],
+        requestedAt: new Date().toISOString(),
+        took: data?.timestamp || ''
+      };
+
+      CLIENT_CACHE.set(cacheKey, { data: payload, timestamp: Date.now() });
+
+      return payload;
+
     } catch (error) {
       console.error('❌ Erro na requisição BRAPI:', error);
       throw error;
