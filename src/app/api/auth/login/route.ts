@@ -1,11 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword } from '@/lib/auth/password';
+import { enforceRateLimit } from '@/lib/rate-limit';
 import jwt from 'jsonwebtoken';
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const rateLimitKey = `login:${request.ip ?? 'unknown'}`;
+    const rateLimit = await enforceRateLimit(rateLimitKey, 10, 60_000);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Muitas tentativas de login. Tente novamente em instantes.' },
+        {
+          status: 429,
+          headers: rateLimit.retryAfter
+            ? { 'Retry-After': rateLimit.retryAfter.toString() }
+            : undefined,
+        }
+      );
+    }
+
+    const payload = await request.json();
+    const parsed = loginSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Payload inválido', issues: parsed.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const { email, password } = parsed.data;
     const ip = request.ip || 'unknown';
     const userAgent = request.headers.get('user-agent') || '';
 

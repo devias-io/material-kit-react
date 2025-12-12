@@ -14,10 +14,17 @@ export async function GET(request: NextRequest) {
       },
       orderBy: [{ faqOrder: 'asc' }, { createdAt: 'desc' }]
     });
-    return NextResponse.json({
-      faqs,
-      pagination: { page: 1, limit: 20, total: faqs.length, totalPages: 1 }
-    });
+    return NextResponse.json(
+      {
+        faqs,
+        pagination: { page: 1, limit: 20, total: faqs.length, totalPages: 1 },
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=120',
+        },
+      }
+    );
 
   } catch (error) {
     console.error('Error fetching FAQs:', error);
