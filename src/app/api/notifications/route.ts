@@ -4,12 +4,26 @@ import { auth } from '@/lib/auth';
 import { emitNotificationEvent } from '@/lib/notificationsEmitter';
 import { CacheService } from '@/lib/redis';
 import { logApiMetric } from '@/lib/metrics';
+import { consumeRateLimit, getClientRateLimitKey } from '@/lib/rateLimiter';
 
 export const maxDuration = 5;
 
 // GET - Listar notificações do usuário
 export async function GET(request: NextRequest) {
   const startedAt = Date.now();
+
+  const { allowed, retryAfterMs } = consumeRateLimit({
+    key: `notifications:list:${getClientRateLimitKey(request)}`,
+    limit: 20,
+    windowMs: 5 * 60 * 1000
+  });
+
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Too many notification fetches, try again later' },
+      { status: 429, headers: { 'Retry-After': Math.ceil(retryAfterMs / 1000).toString() } }
+    );
+  }
 
   try {
     const { searchParams } = new URL(request.url);
