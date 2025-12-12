@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         quotes: data,
+        results: data,
         timestamp: new Date().toISOString(),
         symbols: symbolsArray,
         success: true
