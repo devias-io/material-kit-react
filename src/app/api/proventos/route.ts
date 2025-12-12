@@ -1,15 +1,147 @@
 // 📁 /src/app/api/proventos/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { CacheService } from '@/lib/redis';
 
-export async function GET() {
+type ProventoPayload = {
+  ticker: string;
+  valor: number;
+  tipo: string;
+  data: string;
+  dataObj: string;
+  dataCom?: string | null;
+  dataPagamento?: string | null;
+  dataFormatada: string;
+  valorFormatado: string;
+  dividendYield?: number | null;
+  fonte?: string | null;
+};
+
+type UploadJobState = {
+  id: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  total: number;
+  inserted: number;
+  failed: number;
+  startedAt: number;
+  finishedAt?: number;
+  error?: string;
+};
+
+type StatsJobState = {
+  id: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  totalTickers: number;
+  processed: number;
+  failed: number;
+  startedAt: number;
+  finishedAt?: number;
+  error?: string;
+};
+
+type DeleteJobState = {
+  id: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  total: number;
+  deleted: number;
+  startedAt: number;
+  finishedAt?: number;
+  error?: string;
+};
+
+const PROVENTOS_CACHE_TAG = 'proventos:list';
+const PROVENTOS_STATS_CACHE_TAG = 'proventos:stats';
+const UPLOAD_JOB_TTL_SECONDS = 60 * 60; // 1 hour
+const STATS_JOB_TTL_SECONDS = 60 * 60; // 1 hour
+const DELETE_JOB_TTL_SECONDS = 60 * 60; // 1 hour
+
+export async function GET(request: NextRequest) {
   try {
-    // 📊 BUSCAR TODOS OS PROVENTOS
-    const proventos = await prisma.provento.findMany({
-      orderBy: { dataObj: 'desc' }
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
+    const pageSize = Math.min(
+      Math.max(parseInt(searchParams.get('pageSize') || '50', 10), 1),
+      200
+    );
+    const ticker = searchParams.get('ticker') || undefined;
+    const tipo = searchParams.get('tipo') || undefined;
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const orderDirection = searchParams.get('order') === 'asc' ? 'asc' : 'desc';
+
+    const where = {
+      ...(ticker ? { ticker } : {}),
+      ...(tipo ? { tipo } : {}),
+      ...(startDate || endDate
+        ? {
+            dataObj: {
+              ...(startDate ? { gte: new Date(startDate) } : {}),
+              ...(endDate ? { lte: new Date(endDate) } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const cacheKey = CacheService.getCacheKey(
+      'proventos',
+      'list',
+      page,
+      pageSize,
+      ticker,
+      tipo,
+      startDate,
+      endDate,
+      orderDirection
+    );
+
+    const { data } = await CacheService.withCache(
+      cacheKey,
+      async () => {
+        const [items, total] = await Promise.all([
+          prisma.provento.findMany({
+            where,
+            orderBy: { dataObj: orderDirection },
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            select: {
+              id: true,
+              ticker: true,
+              valor: true,
+              tipo: true,
+              data: true,
+              dataObj: true,
+              dataCom: true,
+              dataPagamento: true,
+              dataFormatada: true,
+              valorFormatado: true,
+              dividendYield: true,
+              fonte: true,
+            },
+          }),
+          prisma.provento.count({ where }),
+        ]);
+
+        return {
+          items,
+          total,
+        };
+      },
+      {
+        ttlSeconds: 120,
+        tags: [PROVENTOS_CACHE_TAG],
+        logLabel: 'proventos:list',
+      }
+    );
+
+    return NextResponse.json({
+      data: data.items,
+      pagination: {
+        page,
+        pageSize,
+        total: data.total,
+        totalPages: Math.ceil(data.total / pageSize),
+      },
     });
-    
-    return NextResponse.json(proventos);
   } catch (error) {
     console.error('Erro ao buscar proventos:', error);
     return NextResponse.json(
@@ -22,114 +154,91 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { proventos } = body;
-    
+    const { proventos } = body as { proventos: ProventoPayload[] };
+
     if (!Array.isArray(proventos)) {
       return NextResponse.json(
         { error: 'Proventos deve ser um array' },
         { status: 400 }
       );
     }
-    
+
     console.log(`🚀 Iniciando upload de ${proventos.length} proventos`);
-    
-    // 🚀 INSERÇÃO EM LOTES MENORES SEM TRANSAÇÃO GIGANTE
-    const BATCH_SIZE = 50; // Reduzido para 50 (era 100)
-    let totalInseridos = 0;
-    let totalErros = 0;
-    
+
+    const uploadJobId = `proventos-upload-${Date.now()}`;
+    const uploadJob: UploadJobState = {
+      id: uploadJobId,
+      status: 'running',
+      total: proventos.length,
+      inserted: 0,
+      failed: 0,
+      startedAt: Date.now(),
+    };
+    await CacheService.set(uploadJobId, uploadJob, UPLOAD_JOB_TTL_SECONDS);
+
+    const BATCH_SIZE = 200;
+    const MAX_CONCURRENCY = 3;
+    const batches: ProventoPayload[][] = [];
     for (let i = 0; i < proventos.length; i += BATCH_SIZE) {
-      const batch = proventos.slice(i, i + BATCH_SIZE);
-      
-      try {
-        console.log(`📦 Processando lote ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(proventos.length/BATCH_SIZE)} (${batch.length} itens)`);
-        
-        // 🔄 CADA LOTE É UMA TRANSAÇÃO SEPARADA
-        const resultado = await prisma.$transaction(
-          async (tx) => {
-            return await tx.provento.createMany({
-              data: batch.map(p => ({
-                ticker: p.ticker,
-                valor: p.valor,
-                tipo: p.tipo,
-                data: p.data,
-                dataObj: new Date(p.dataObj),
-                dataCom: p.dataCom,
-                dataPagamento: p.dataPagamento,
-                dataFormatada: p.dataFormatada,
-                valorFormatado: p.valorFormatado,
-                dividendYield: p.dividendYield,
-                fonte: 'csv_upload'
-              })),
-              skipDuplicates: true
-            });
-          },
-          {
-            maxWait: 10000, // 10 segundos para aguardar
-            timeout: 20000, // 20 segundos para executar
-          }
-        );
-        
-        totalInseridos += resultado.count;
-        console.log(`✅ Lote processado: ${resultado.count} inseridos`);
-        
-        // 🛑 PAUSA PEQUENA ENTRE LOTES (evita sobrecarga)
-        if (i + BATCH_SIZE < proventos.length) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-        
-      } catch (error) {
-        console.error(`❌ Erro no lote ${Math.floor(i/BATCH_SIZE) + 1}:`, error);
-        totalErros += batch.length;
-        
-        // 🔄 TENTAR INSERÇÃO INDIVIDUAL EM CASO DE ERRO
-        console.log(`🔄 Tentando inserção individual para o lote com erro...`);
-        for (const provento of batch) {
-          try {
-            await prisma.provento.create({
-              data: {
-                ticker: provento.ticker,
-                valor: provento.valor,
-                tipo: provento.tipo,
-                data: provento.data,
-                dataObj: new Date(provento.dataObj),
-                dataCom: provento.dataCom,
-                dataPagamento: provento.dataPagamento,
-                dataFormatada: provento.dataFormatada,
-                valorFormatado: provento.valorFormatado,
-                dividendYield: provento.dividendYield,
-                fonte: 'csv_upload'
-              }
-            });
-            totalInseridos++;
-            totalErros--;
-          } catch (individualError) {
-            console.error(`❌ Erro individual para ${provento.ticker}:`, individualError);
-          }
-        }
-      }
+      batches.push(proventos.slice(i, i + BATCH_SIZE));
     }
-    
-    console.log(`🎉 Upload finalizado: ${totalInseridos} inseridos, ${totalErros} erros`);
-    
-    // 📊 ATUALIZAR ESTATÍSTICAS (FORA DA TRANSAÇÃO PRINCIPAL)
-    try {
-      console.log(`📊 Atualizando estatísticas...`);
-      await atualizarEstatisticas();
-      console.log(`✅ Estatísticas atualizadas`);
-    } catch (statsError) {
-      console.error(`⚠️ Erro ao atualizar estatísticas (não crítico):`, statsError);
+
+    for (let i = 0; i < batches.length; i += MAX_CONCURRENCY) {
+      const batchSlice = batches.slice(i, i + MAX_CONCURRENCY);
+      const results = await Promise.allSettled(
+        batchSlice.map(async (batch) => {
+          const resultado = await prisma.provento.createMany({
+            data: batch.map((p) => ({
+              ticker: p.ticker,
+              valor: p.valor,
+              tipo: p.tipo,
+              data: p.data,
+              dataObj: new Date(p.dataObj),
+              dataCom: p.dataCom ?? null,
+              dataPagamento: p.dataPagamento ?? null,
+              dataFormatada: p.dataFormatada,
+              valorFormatado: p.valorFormatado,
+              dividendYield: p.dividendYield ?? null,
+              fonte: p.fonte ?? 'csv_upload',
+            })),
+            skipDuplicates: true,
+          });
+          return { inserted: resultado.count, batchSize: batch.length };
+        })
+      );
+
+      results.forEach((result, idx) => {
+        const currentBatchSize = batchSlice[idx]?.length ?? 0;
+
+        if (result.status === 'fulfilled') {
+          uploadJob.inserted += result.value.inserted;
+          uploadJob.failed += result.value.batchSize - result.value.inserted;
+        } else {
+          uploadJob.failed += currentBatchSize;
+          console.error('❌ Erro ao processar lote:', result.reason);
+        }
+      });
+
+      await CacheService.set(uploadJobId, uploadJob, UPLOAD_JOB_TTL_SECONDS);
     }
-    
+
+    uploadJob.status = 'completed';
+    uploadJob.finishedAt = Date.now();
+    await CacheService.set(uploadJobId, uploadJob, UPLOAD_JOB_TTL_SECONDS);
+
+    await CacheService.invalidateTags([PROVENTOS_CACHE_TAG, PROVENTOS_STATS_CACHE_TAG]);
+
+    const statsJob = await startEstatisticasJob();
+
     return NextResponse.json({
-      message: `${totalInseridos} proventos inseridos com sucesso`,
-      total: totalInseridos,
-      erros: totalErros,
-      sucesso: totalErros === 0
+      message: 'Upload iniciado com sucesso',
+      totalInseridos: uploadJob.inserted,
+      totalErros: uploadJob.failed,
+      uploadJobId,
+      statsJobId: statsJob.id,
     });
-    
   } catch (error) {
-    console.error('Erro na API de proventos:', error);
+    console.error('Erro ao processar upload de proventos:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
@@ -139,53 +248,11 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE() {
   try {
-    // 🗑️ LIMPAR TODOS OS PROVENTOS EM LOTES
-    console.log(`🗑️ Iniciando limpeza de proventos...`);
-    
-    let totalRemovidos = 0;
-    const BATCH_SIZE = 1000;
-
-    while (true) {
-      const idsBatch = await prisma.provento.findMany({
-        select: { id: true },
-        orderBy: { id: 'asc' },
-        take: BATCH_SIZE
-      });
-
-      if (idsBatch.length === 0) {
-        break;
-      }
-
-      const ids = idsBatch.map(item => item.id);
-      const resultado = await prisma.provento.deleteMany({
-        where: {
-          id: {
-            in: ids
-          }
-        }
-      });
-
-      totalRemovidos += resultado.count;
-
-      console.log(`🗑️ Removidos ${resultado.count} proventos (total: ${totalRemovidos})`);
-
-      if (idsBatch.length < BATCH_SIZE) {
-        break;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-
-    // 🧹 LIMPAR TAMBÉM AS ESTATÍSTICAS
-    await prisma.proventoEstatistica.deleteMany({});
-    
-    console.log(`✅ Limpeza concluída: ${totalRemovidos} proventos removidos`);
-    
+    const deleteJob = await startDeleteJob();
     return NextResponse.json({
-      message: `${totalRemovidos} proventos removidos`,
-      total: totalRemovidos
+      message: 'Job de limpeza iniciado',
+      deleteJobId: deleteJob.id,
     });
-    
   } catch (error) {
     console.error('Erro ao deletar proventos:', error);
     return NextResponse.json(
@@ -195,35 +262,70 @@ export async function DELETE() {
   }
 }
 
-// 📊 FUNÇÃO OTIMIZADA PARA ATUALIZAR ESTATÍSTICAS
-async function atualizarEstatisticas() {
+async function mergeJobState<T extends { id: string }>(
+  jobId: string,
+  ttlSeconds: number,
+  partial: Partial<T> | ((state: T) => Partial<T>)
+) {
+  const existing = await CacheService.get<T>(jobId);
+  if (!existing) return;
+
+  const next = {
+    ...existing,
+    ...(typeof partial === 'function' ? partial(existing) : partial),
+  } as T;
+
+  await CacheService.set(jobId, next, ttlSeconds);
+}
+
+async function startEstatisticasJob(): Promise<StatsJobState> {
+  const jobId = `proventos-stats-${Date.now()}`;
+  const jobState: StatsJobState = {
+    id: jobId,
+    status: 'pending',
+    totalTickers: 0,
+    processed: 0,
+    failed: 0,
+    startedAt: Date.now(),
+  };
+
+  await CacheService.set(jobId, jobState, STATS_JOB_TTL_SECONDS);
+
+  setImmediate(() => {
+    rebuildEstatisticas(jobId).catch((error) => {
+      console.error('❌ Erro ao processar estatísticas:', error);
+    });
+  });
+
+  return jobState;
+}
+
+async function rebuildEstatisticas(jobId: string) {
   try {
-    // 🔍 BUSCAR TICKERS ÚNICOS EM LOTES
+    await mergeJobState<StatsJobState>(jobId, STATS_JOB_TTL_SECONDS, { status: 'running' });
+
     const tickers = await prisma.provento.findMany({
       select: { ticker: true },
-      distinct: ['ticker']
+      distinct: ['ticker'],
     });
-    
-    console.log(`📊 Atualizando estatísticas para ${tickers.length} tickers...`);
-    
-    // 🔄 PROCESSAR TICKERS EM LOTES DE 10
+
+    await mergeJobState<StatsJobState>(jobId, STATS_JOB_TTL_SECONDS, { totalTickers: tickers.length });
+
     const TICKER_BATCH_SIZE = 10;
-    
     for (let i = 0; i < tickers.length; i += TICKER_BATCH_SIZE) {
       const tickerBatch = tickers.slice(i, i + TICKER_BATCH_SIZE);
-      
-      // 📊 PROCESSAR CADA TICKER DO LOTE
-      for (const { ticker } of tickerBatch) {
-        try {
+
+      const results = await Promise.allSettled(
+        tickerBatch.map(async ({ ticker }) => {
           const stats = await prisma.provento.aggregate({
             where: { ticker },
             _count: { id: true },
             _sum: { valor: true },
             _avg: { valor: true },
             _min: { dataObj: true },
-            _max: { dataObj: true }
+            _max: { dataObj: true },
           });
-          
+
           await prisma.proventoEstatistica.upsert({
             where: { ticker },
             create: {
@@ -232,7 +334,7 @@ async function atualizarEstatisticas() {
               valorTotal: stats._sum.valor || 0,
               valorMedio: stats._avg.valor || 0,
               primeiroProvento: stats._min.dataObj,
-              ultimoProvento: stats._max.dataObj
+              ultimoProvento: stats._max.dataObj,
             },
             update: {
               totalProventos: stats._count.id,
@@ -240,25 +342,111 @@ async function atualizarEstatisticas() {
               valorMedio: stats._avg.valor || 0,
               primeiroProvento: stats._min.dataObj,
               ultimoProvento: stats._max.dataObj,
-              ultimaAtualizacao: new Date()
-            }
+              ultimaAtualizacao: new Date(),
+            },
           });
-          
-        } catch (tickerError) {
-          console.error(`❌ Erro ao processar estatísticas do ticker ${ticker}:`, tickerError);
-        }
+        })
+      );
+
+      const processedSuccess = results.filter((result) => result.status === 'fulfilled').length;
+      const processedFailed = results.length - processedSuccess;
+
+      await mergeJobState<StatsJobState>(jobId, STATS_JOB_TTL_SECONDS, (state) => ({
+        processed: state.processed + processedSuccess,
+        failed: state.failed + processedFailed,
+      }));
+    }
+
+    await CacheService.invalidateTags([PROVENTOS_STATS_CACHE_TAG, PROVENTOS_CACHE_TAG]);
+
+    await mergeJobState<StatsJobState>(jobId, STATS_JOB_TTL_SECONDS, {
+      status: 'completed',
+      finishedAt: Date.now(),
+    });
+  } catch (error) {
+    await mergeJobState<StatsJobState>(jobId, STATS_JOB_TTL_SECONDS, {
+      status: 'failed',
+      error: (error as Error).message,
+      finishedAt: Date.now(),
+    });
+    throw error;
+  }
+}
+
+async function startDeleteJob(): Promise<DeleteJobState> {
+  const jobId = `proventos-delete-${Date.now()}`;
+  const jobState: DeleteJobState = {
+    id: jobId,
+    status: 'pending',
+    total: 0,
+    deleted: 0,
+    startedAt: Date.now(),
+  };
+
+  await CacheService.set(jobId, jobState, DELETE_JOB_TTL_SECONDS);
+
+  setImmediate(() => {
+    processDeleteJob(jobId).catch((error) => {
+      console.error('❌ Erro no job de limpeza:', error);
+    });
+  });
+
+  return jobState;
+}
+
+async function processDeleteJob(jobId: string) {
+  try {
+    await mergeJobState<DeleteJobState>(jobId, DELETE_JOB_TTL_SECONDS, { status: 'running' });
+
+    const BATCH_SIZE = 1000;
+    let totalRemovidos = 0;
+
+    while (true) {
+      const idsBatch = await prisma.provento.findMany({
+        select: { id: true },
+        orderBy: { id: 'asc' },
+        take: BATCH_SIZE,
+      });
+
+      if (idsBatch.length === 0) {
+        break;
       }
-      
-      // 🛑 PAUSA ENTRE LOTES DE TICKERS
-      if (i + TICKER_BATCH_SIZE < tickers.length) {
-        await new Promise(resolve => setTimeout(resolve, 50));
+
+      const ids = idsBatch.map((item) => item.id);
+      const resultado = await prisma.provento.deleteMany({
+        where: {
+          id: {
+            in: ids,
+          },
+        },
+      });
+
+      totalRemovidos += resultado.count;
+
+      await mergeJobState<DeleteJobState>(jobId, DELETE_JOB_TTL_SECONDS, {
+        total: totalRemovidos,
+        deleted: totalRemovidos,
+      });
+
+      if (idsBatch.length < BATCH_SIZE) {
+        break;
       }
     }
-    
-    console.log(`✅ Estatísticas atualizadas para ${tickers.length} tickers`);
-    
+
+    await prisma.proventoEstatistica.deleteMany({});
+
+    await CacheService.invalidateTags([PROVENTOS_CACHE_TAG, PROVENTOS_STATS_CACHE_TAG]);
+
+    await mergeJobState<DeleteJobState>(jobId, DELETE_JOB_TTL_SECONDS, {
+      status: 'completed',
+      finishedAt: Date.now(),
+    });
   } catch (error) {
-    console.error('❌ Erro ao atualizar estatísticas:', error);
+    await mergeJobState<DeleteJobState>(jobId, DELETE_JOB_TTL_SECONDS, {
+      status: 'failed',
+      error: (error as Error).message,
+      finishedAt: Date.now(),
+    });
     throw error;
   }
 }
