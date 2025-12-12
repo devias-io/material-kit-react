@@ -2,48 +2,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { CacheService } from '@/lib/redis';
 
-// Função para tentar auth server-side primeiro, depois fallback
-async function getUserId(req: NextRequest): Promise<string | null> {
-  try {
-    // Tentar auth server-side (JWT + cookies)
-    const authData = await auth();
-    if (authData?.user?.id) {
-      return authData.user.id;
-    }
-  } catch (error) {
-    console.log('Auth server-side falhou, tentando client-side...');
-  }
-  // Fallback: tentar pegar do header Authorization ou usar ID temporário
-  const authHeader = req.headers.get('authorization');
-  if (authHeader) {
-    // Se vier um token no header, use ele
-    return 'user_from_token';
-  }
-  // Se tudo falhar, tentar usar um usuário admin como fallback
-  const adminUser = await prisma.user.findFirst({
-    where: {
-      OR: [
-        { email: 'jacbdias@gmail.com' },
-        { plan: 'ADMIN' }
-      ]
-    }
-  });
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+const RATE_LIMIT_MAX = 20;
 
-  return adminUser?.id || null;
+async function requireUser(req: NextRequest): Promise<string | null> {
+  const authData = await auth();
+  if (authData?.user?.id) {
+    return authData.user.id;
+  }
+
+  const tokenHeader = req.headers.get('authorization');
+  if (tokenHeader?.startsWith('Bearer ')) {
+    return null;
+  }
+
+  return null;
+}
+
+async function enforceRateLimit(userId: string) {
+  const key = CacheService.getCacheKey('instagram-cadastro', userId);
+  const current = (await CacheService.get<number>(key)) ?? 0;
+  if (current >= RATE_LIMIT_MAX) {
+    return false;
+  }
+  await CacheService.set(key, current + 1, RATE_LIMIT_WINDOW_SECONDS);
+  return true;
 }
 
 export async function POST(req: NextRequest) {
   try {
     console.log('📝 POST - Cadastrando Instagram...');
     
-    const userId = await getUserId(req);
-    
+    const userId = await requireUser(req);
+
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Usuário não autenticado' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Usuário não autenticado' }, { status: 401 });
+    }
+
+    const allowed = await enforceRateLimit(userId);
+    if (!allowed) {
+      return NextResponse.json({ error: 'Muitas requisições, tente novamente em instantes.' }, { status: 429 });
     }
     const { instagram } = await req.json();
     
@@ -103,8 +103,8 @@ export async function PUT(req: NextRequest) {
   try {
     console.log('🔄 PUT - Atualizando Instagram...');
     
-    const userId = await getUserId(req);
-    
+    const userId = await requireUser(req);
+
     if (!userId) {
       console.log('❌ Usuário não autenticado');
       return NextResponse.json(
@@ -191,8 +191,8 @@ export async function PUT(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserId(req);
-    
+    const userId = await requireUser(req);
+
     if (!userId) {
       return NextResponse.json(
         { error: 'Usuário não autenticado' },
