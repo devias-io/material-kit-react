@@ -1,5 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { enforceRateLimit } from '@/lib/rate-limit';
+
+const relatorioSchema = z.object({
+  ticker: z.string().min(1),
+  nome: z.string().min(1),
+  tipo: z.enum(['trimestral', 'anual', 'apresentacao', 'outros']),
+  dataReferencia: z.string().optional(),
+  linkCanva: z.string().url().optional().nullable(),
+  linkExterno: z.string().url().optional().nullable(),
+  tipoVisualizacao: z.enum(['iframe', 'canva', 'link', 'pdf']).optional(),
+  arquivoPdf: z.string().optional().nullable(),
+  nomeArquivoPdf: z.string().optional().nullable(),
+  tamanhoArquivo: z.number().optional().nullable(),
+  tipoPdf: z.enum(['base64', 'referencia']).optional().nullable(),
+  hashArquivo: z.string().optional().nullable(),
+  solicitarReupload: z.boolean().optional(),
+});
 
 // 📊 GET - Listar todos os relatórios
 export async function GET(request: NextRequest) {
@@ -57,11 +75,18 @@ export async function GET(request: NextRequest) {
       pdfUrl: relatorio.reportFiles[0]?.pdfUrl || undefined,
     }));
 
-    return NextResponse.json({
-      success: true,
-      relatorios: relatoriosFormatados,
-      total: relatoriosFormatados.length
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        relatorios: relatoriosFormatados,
+        total: relatoriosFormatados.length,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=120',
+        },
+      }
+    );
 
   } catch (error) {
     console.error('Erro ao buscar relatórios:', error);
@@ -79,18 +104,34 @@ export async function GET(request: NextRequest) {
 // ➕ POST - Criar novo relatório
 export async function POST(request: NextRequest) {
   try {
-    const dados = await request.json();
-
-    // Validar dados obrigatórios
-    if (!dados.ticker || !dados.nome || !dados.tipo) {
+    const rateLimitKey = `relatorios:create:${request.ip ?? 'unknown'}`;
+    const rateLimit = await enforceRateLimit(rateLimitKey, 20, 60_000);
+    if (!rateLimit.allowed) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Campos obrigatórios: ticker, nome, tipo' 
+        {
+          success: false,
+          error: 'Muitas requisições. Tente novamente em instantes.',
         },
+        {
+          status: 429,
+          headers: rateLimit.retryAfter
+            ? { 'Retry-After': rateLimit.retryAfter.toString() }
+            : undefined,
+        }
+      );
+    }
+
+    const payload = await request.json();
+    const parsed = relatorioSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: 'Payload inválido', issues: parsed.error.issues },
         { status: 400 }
       );
     }
+
+    const dados = parsed.data;
 
     // Criar relatório no banco
     const novoRelatorio = await prisma.relatorio.create({

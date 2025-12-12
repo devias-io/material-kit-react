@@ -1,7 +1,9 @@
 // 📁 /src/app/api/proventos/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { CacheService } from '@/lib/redis';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 type ProventoPayload = {
   ticker: string;
@@ -16,6 +18,24 @@ type ProventoPayload = {
   dividendYield?: number | null;
   fonte?: string | null;
 };
+
+const proventoSchema = z.object({
+  ticker: z.string().min(1),
+  valor: z.number().finite(),
+  tipo: z.string().min(1),
+  data: z.string().min(1),
+  dataObj: z.string().min(1),
+  dataCom: z.string().nullable().optional(),
+  dataPagamento: z.string().nullable().optional(),
+  dataFormatada: z.string().min(1),
+  valorFormatado: z.string().min(1),
+  dividendYield: z.number().nullable().optional(),
+  fonte: z.string().nullable().optional(),
+});
+
+const proventosUploadSchema = z.object({
+  proventos: z.array(proventoSchema).min(1),
+});
 
 type UploadJobState = {
   id: string;
@@ -133,15 +153,22 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    return NextResponse.json({
-      data: data.items,
-      pagination: {
-        page,
-        pageSize,
-        total: data.total,
-        totalPages: Math.ceil(data.total / pageSize),
+    return NextResponse.json(
+      {
+        data: data.items,
+        pagination: {
+          page,
+          pageSize,
+          total: data.total,
+          totalPages: Math.ceil(data.total / pageSize),
+        },
       },
-    });
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=60',
+        },
+      }
+    );
   } catch (error) {
     console.error('Erro ao buscar proventos:', error);
     return NextResponse.json(
@@ -153,15 +180,33 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { proventos } = body as { proventos: ProventoPayload[] };
-
-    if (!Array.isArray(proventos)) {
+    const rateLimitKey = `proventos:upload:${request.ip ?? 'unknown'}`;
+    const rateLimit = await enforceRateLimit(rateLimitKey, 5, 60_000);
+    if (!rateLimit.allowed) {
       return NextResponse.json(
-        { error: 'Proventos deve ser um array' },
+        {
+          error: 'Muitas requisições. Tente novamente em instantes.',
+        },
+        {
+          status: 429,
+          headers: rateLimit.retryAfter
+            ? { 'Retry-After': rateLimit.retryAfter.toString() }
+            : undefined,
+        }
+      );
+    }
+
+    const body = await request.json();
+    const parseResult = proventosUploadSchema.safeParse(body);
+
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Payload inválido', issues: parseResult.error.issues },
         { status: 400 }
       );
     }
+
+    const { proventos } = parseResult.data;
 
     console.log(`🚀 Iniciando upload de ${proventos.length} proventos`);
 
