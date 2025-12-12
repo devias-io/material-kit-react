@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BrapiService } from '@/lib/brapi-service';
 import { buildCacheHeaders } from '@/server/cache-headers';
-import { CacheService } from '@/lib/redis';
 import { logApiMetric } from '@/lib/metrics';
 
 // 🛡️ CONFIGURAÇÃO PARA VERCEL - EVITA ERRO DE STATIC GENERATION
@@ -22,26 +21,18 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const symbols = searchParams.get('symbols');
     
-    console.log('🚀 API quotes chamada com symbols:', symbols);
-    
     if (!symbols) {
       return NextResponse.json(
         { error: 'Parâmetro symbols é obrigatório' },
         { status: 400 }
       );
     }
-    
+
     const symbolsArray = symbols.split(',').map(s => s.trim().toUpperCase());
 
-    const cacheKey = CacheService.getCacheKey('financial-quotes', symbolsArray.join(','));
-
-    const { data, metadata } = await CacheService.withCache(
-      cacheKey,
-      async () => BrapiService.fetchQuotes(symbolsArray, { cacheTtlMs: 5 * 60 * 1000 }),
-      { ttlSeconds: 300, tags: ['financial:quotes'] }
-    );
-
-    console.log('✅ Quotes processadas:', data.length, 'ativos');
+    const { data, metadata } = await BrapiService.fetchQuotes(symbolsArray, {
+      cacheTtlMs: 5 * 60 * 1000,
+    });
 
     logApiMetric({
       route: '/api/financial/quotes',

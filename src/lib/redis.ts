@@ -17,13 +17,14 @@ interface CacheLayer {
   get<T>(key: string): Promise<T | null>;
   set(key: string, value: unknown, ttlSeconds: number): Promise<void>;
   delete(key: string): Promise<void>;
-  increment(key: string): Promise<number>;
+  increment(key: string, ttlSeconds?: number): Promise<number>;
   getNumber(key: string): Promise<number | null>;
+  getTtlSeconds(key: string): Promise<number | null>;
 }
 
 class MemoryCache implements CacheLayer {
   private store = new Map<string, CacheValue<unknown>>();
-  private tagVersions = new Map<string, number>();
+  private tagVersions = new Map<string, CacheValue<number>>();
 
   async get<T>(key: string): Promise<T | null> {
     const entry = this.store.get(key);
@@ -49,14 +50,40 @@ class MemoryCache implements CacheLayer {
   }
 
   async increment(key: string): Promise<number> {
-    const current = this.tagVersions.get(key) ?? 0;
-    const next = current + 1;
-    this.tagVersions.set(key, next);
+    const current = await this.getNumber(key);
+    const next = (current ?? 0) + 1;
+    const expiresAt = ttlSeconds
+      ? Date.now() + ttlSeconds * 1000
+      : Number.POSITIVE_INFINITY;
+
+    this.tagVersions.set(key, { value: next, expiresAt });
     return next;
   }
 
   async getNumber(key: string): Promise<number | null> {
-    return this.tagVersions.get(key) ?? null;
+    const entry = this.tagVersions.get(key);
+    if (!entry) return null;
+
+    if (Date.now() > entry.expiresAt) {
+      this.tagVersions.delete(key);
+      return null;
+    }
+
+    return entry.value;
+  }
+
+  async getTtlSeconds(key: string): Promise<number | null> {
+    const entry = this.store.get(key) ?? this.tagVersions.get(key);
+    if (!entry) return null;
+
+    const remaining = entry.expiresAt - Date.now();
+    if (remaining <= 0) {
+      this.store.delete(key);
+      this.tagVersions.delete(key);
+      return null;
+    }
+
+    return Math.ceil(remaining / 1000);
   }
 }
 
@@ -99,15 +126,30 @@ class UpstashCache implements CacheLayer {
     await this.client.del(key);
   }
 
-  async increment(key: string): Promise<number> {
+  async increment(key: string, ttlSeconds?: number): Promise<number> {
     this.ensureClient();
-    return this.client.incr(key);
+    const next = await this.client.incr(key);
+
+    if (ttlSeconds) {
+      const currentTtl = await this.client.ttl(key);
+      if (currentTtl === -1) {
+        await this.client.expire(key, ttlSeconds);
+      }
+    }
+
+    return next;
   }
 
   async getNumber(key: string): Promise<number | null> {
     if (!this.client) return null;
     const value = await this.client.get<number>(key);
     return value ?? null;
+  }
+
+  async getTtlSeconds(key: string): Promise<number | null> {
+    if (!this.client) return null;
+    const ttl = await this.client.ttl(key);
+    return ttl >= 0 ? ttl : null;
   }
 }
 
@@ -185,6 +227,24 @@ export class CacheService {
       await bumpTags(tags);
     } catch (error) {
       console.error('Cache tag bump error:', error);
+    }
+  }
+
+  static async increment(key: string, ttlSeconds?: number): Promise<number> {
+    try {
+      return await cacheLayer.increment(key, ttlSeconds);
+    } catch (error) {
+      console.error('Cache increment error:', error);
+      return 0;
+    }
+  }
+
+  static async getTtlSeconds(key: string): Promise<number | null> {
+    try {
+      return await cacheLayer.getTtlSeconds(key);
+    } catch (error) {
+      console.error('Cache ttl error:', error);
+      return null;
     }
   }
 
