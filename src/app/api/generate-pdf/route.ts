@@ -3,6 +3,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import puppeteer, { Browser } from 'puppeteer';
 import { auth } from '@/lib/auth';
 import { CacheService } from '@/lib/redis';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 const s3 = new S3Client({ region: process.env.AWS_REGION });
 
@@ -20,15 +21,6 @@ async function getBrowser() {
   return browserPromise;
 }
 
-async function enforceRateLimit(key: string) {
-  const counter = (await CacheService.get<number>(key)) ?? 0;
-  if (counter >= PDF_RATE_LIMIT.maxRequests) {
-    return false;
-  }
-  await CacheService.set(key, counter + 1, PDF_RATE_LIMIT.windowSeconds);
-  return true;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -38,10 +30,20 @@ export async function POST(request: NextRequest) {
     }
 
     const rateKey = CacheService.getCacheKey('pdf', session.user.id);
-    const allowed = await enforceRateLimit(rateKey);
+    const rateResult = await enforceRateLimit(
+      rateKey,
+      PDF_RATE_LIMIT.maxRequests,
+      PDF_RATE_LIMIT.windowSeconds * 1000
+    );
 
-    if (!allowed) {
-      return NextResponse.json({ error: 'Too many requests, try again later.' }, { status: 429 });
+    if (!rateResult.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests, try again later.' },
+        {
+          status: 429,
+          headers: rateResult.retryAfter ? { 'Retry-After': `${rateResult.retryAfter}` } : undefined,
+        }
+      );
     }
 
     const { html, fileName } = await request.json();

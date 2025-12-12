@@ -8,67 +8,58 @@ export async function GET(
   { params }: { params: { ticker: string } }
 ) {
   const ticker = params.ticker.toUpperCase();
-  const cacheKey = CacheService.getCacheKey(ticker);
+  const cacheKey = CacheService.getCacheKey('ativo', ticker);
   
   // Headers de cache para CDN
   const headers = new Headers();
   headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
   
   try {
-    // 1. Tentar cache Redis primeiro
-    const cached = await CacheService.get(cacheKey);
-    if (cached) {
-      return Response.json({
-        success: true,
-        data: cached,
-        cached: true,
-        source: 'redis'
-      }, { headers });
-    }
-    
-    // 2. Buscar dados de todas as fontes em paralelo
-    const [hgBrasilRes, yahooRes, brapiRes] = await Promise.allSettled([
-      fetchHGBrasilData(ticker),
-      fetchYahooData(ticker),
-      fetchBRAPIData(ticker)
-    ]);
-    
-    // 3. Consolidar dados com fallbacks inteligentes
-    const dadosConsolidados = {
-      ticker,
-      timestamp: new Date().toISOString(),
-      
-      preco: {
-        valor: extractPrice(brapiRes, yahooRes, hgBrasilRes),
-        variacao: extractVariation(brapiRes, yahooRes, hgBrasilRes),
-        fonte: getPriceSource(brapiRes, yahooRes, hgBrasilRes)
+    const { data, metadata } = await CacheService.withCache(
+      cacheKey,
+      async () => {
+        const [hgBrasilRes, yahooRes, brapiRes] = await Promise.allSettled([
+          fetchHGBrasilData(ticker),
+          fetchYahooData(ticker),
+          fetchBRAPIData(ticker)
+        ]);
+
+        const dadosConsolidados = {
+          ticker,
+          timestamp: new Date().toISOString(),
+
+          preco: {
+            valor: extractPrice(brapiRes, yahooRes, hgBrasilRes),
+            variacao: extractVariation(brapiRes, yahooRes, hgBrasilRes),
+            fonte: getPriceSource(brapiRes, yahooRes, hgBrasilRes)
+          },
+
+          multiplos: {
+            pl: extractPL(hgBrasilRes, brapiRes, yahooRes),
+            pvp: extractPVP(hgBrasilRes, brapiRes, yahooRes),
+            dividendYield: extractDY(brapiRes, hgBrasilRes, yahooRes),
+            fontes: {
+              pl: getPLSource(hgBrasilRes, brapiRes, yahooRes),
+              pvp: getPVPSource(hgBrasilRes, brapiRes, yahooRes),
+              dy: getDYSource(brapiRes, hgBrasilRes, yahooRes)
+            }
+          },
+
+          qualidadeData: calculateDataQuality(hgBrasilRes, yahooRes, brapiRes)
+        };
+
+        return dadosConsolidados;
       },
-      
-      multiplos: {
-        pl: extractPL(hgBrasilRes, brapiRes, yahooRes),
-        pvp: extractPVP(hgBrasilRes, brapiRes, yahooRes),
-        dividendYield: extractDY(brapiRes, hgBrasilRes, yahooRes),
-        fontes: {
-          pl: getPLSource(hgBrasilRes, brapiRes, yahooRes),
-          pvp: getPVPSource(hgBrasilRes, brapiRes, yahooRes),
-          dy: getDYSource(brapiRes, hgBrasilRes, yahooRes)
-        }
-      },
-      
-      qualidadeData: calculateDataQuality(hgBrasilRes, yahooRes, brapiRes)
-    };
-    
-    // 4. Salvar no cache (TTL baseado na qualidade)
-    const ttl = dadosConsolidados.qualidadeData.level === 'high' ? 300 : 180;
-    await CacheService.set(cacheKey, dadosConsolidados, ttl);
-    
+      { ttlSeconds: 300, tags: [`ativo:${ticker}`] }
+    );
+
     return Response.json({
       success: true,
-      data: dadosConsolidados,
-      cached: false,
-      source: 'api'
+      data,
+      cached: metadata.cached,
+      source: metadata.cached ? metadata.backend : 'api'
     }, { headers });
-    
+
   } catch (error) {
     console.error(`Erro ao buscar dados de ${ticker}:`, error);
     
