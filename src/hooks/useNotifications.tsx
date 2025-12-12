@@ -15,7 +15,12 @@ import type { NotificationStreamEvent } from '@/types/notifications';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 const MAX_STREAM_RETRIES = 2;
-const STREAM_DEBOUNCE_MS = 5000;
+const STREAM_DEBOUNCE_MS = 10000;
+const AUTH_CHECK_TTL_MS = 5 * 60 * 1000;
+const FETCH_THROTTLE_MS = 15000;
+const AUTH_CHECK_CACHE_KEY = 'notifications-auth-check';
+const AUTH_BACKOFF_BASE_MS = 30000;
+const AUTH_BACKOFF_MAX_MS = 10 * 60 * 1000;
 
 const logDev = (...args: Parameters<typeof console.log>) => {
   if (isDevelopment) {
@@ -70,6 +75,58 @@ function useNotificationsState(): UseNotificationsReturn {
   const retryCountRef = useRef(0);
   const isUnmountedRef = useRef(false);
   const hasAuthenticatedRef = useRef(false);
+  const lastAuthCheckRef = useRef<{ timestamp: number; result: boolean }>({
+    timestamp: 0,
+    result: false
+  });
+  const authBackoffRef = useRef<{ delayMs: number; until: number }>({
+    delayMs: AUTH_BACKOFF_BASE_MS,
+    until: 0
+  });
+  const authCheckPromiseRef = useRef<Promise<boolean> | null>(null);
+  const lastFetchRef = useRef(0);
+
+  const getCachedAuthCheck = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    try {
+      const raw = window.localStorage.getItem(AUTH_CHECK_CACHE_KEY);
+      if (!raw) return null;
+
+      const parsed = JSON.parse(raw) as {
+        timestamp?: number;
+        result?: boolean;
+      };
+
+      if (
+        typeof parsed.timestamp === 'number' &&
+        typeof parsed.result === 'boolean'
+      ) {
+        return parsed as { timestamp: number; result: boolean };
+      }
+    } catch (error) {
+      console.warn('useNotifications: falha ao ler cache de auth', error);
+    }
+
+    return null;
+  }, []);
+
+  const setCachedAuthCheck = useCallback(
+    (payload: { timestamp: number; result: boolean }) => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
+      try {
+        window.localStorage.setItem(AUTH_CHECK_CACHE_KEY, JSON.stringify(payload));
+      } catch (error) {
+        console.warn('useNotifications: falha ao salvar cache de auth', error);
+      }
+    },
+    []
+  );
 
   const clearReconnectTimeout = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -93,16 +150,80 @@ function useNotificationsState(): UseNotificationsReturn {
 
   // Função para verificar se está autenticado
   const isAuthenticated = useCallback(async (): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/auth/check', {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      return response.ok;
-    } catch {
-      return false;
+    const now = Date.now();
+    const { timestamp, result } = lastAuthCheckRef.current;
+
+    if (authBackoffRef.current.until && now < authBackoffRef.current.until) {
+      return result;
     }
-  }, []);
+
+    if (now - timestamp < AUTH_CHECK_TTL_MS) {
+      return result;
+    }
+
+    const cachedAuth = getCachedAuthCheck();
+    if (cachedAuth && now - cachedAuth.timestamp < AUTH_CHECK_TTL_MS) {
+      lastAuthCheckRef.current = cachedAuth;
+      return cachedAuth.result;
+    }
+
+    if (authCheckPromiseRef.current) {
+      return authCheckPromiseRef.current;
+    }
+
+    const promise = fetch('/api/auth/check', {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then(async response => {
+        if (response.status === 429) {
+          const retryAfterHeader = response.headers.get('Retry-After');
+          const retryAfterMs = retryAfterHeader
+            ? Number.parseInt(retryAfterHeader, 10) * 1000
+            : 0;
+
+          const computedDelay = Math.min(
+            AUTH_BACKOFF_MAX_MS,
+            Math.max(retryAfterMs || 0, authBackoffRef.current.delayMs)
+          );
+
+          const until = Date.now() + computedDelay;
+
+          authBackoffRef.current = {
+            delayMs: Math.min(
+              AUTH_BACKOFF_MAX_MS,
+              Math.max(AUTH_BACKOFF_BASE_MS, computedDelay * 2)
+            ),
+            until
+          };
+
+          const cached = {
+            timestamp: Date.now(),
+            result: lastAuthCheckRef.current.result
+          };
+
+          lastAuthCheckRef.current = cached;
+          setCachedAuthCheck(cached);
+          return cached.result;
+        }
+
+        const authenticated = response.ok;
+
+        const payload = { timestamp: Date.now(), result: authenticated };
+        lastAuthCheckRef.current = payload;
+        setCachedAuthCheck(payload);
+        authBackoffRef.current = { delayMs: AUTH_BACKOFF_BASE_MS, until: 0 };
+
+        return authenticated;
+      })
+      .catch(() => false)
+      .finally(() => {
+        authCheckPromiseRef.current = null;
+      });
+
+    authCheckPromiseRef.current = promise;
+    return promise;
+  }, [getCachedAuthCheck, setCachedAuthCheck]);
 
   // Função para limpar estado quando não autenticado
   const clearState = useCallback(() => {
@@ -112,6 +233,8 @@ function useNotificationsState(): UseNotificationsReturn {
     setError(null);
     setLoading(false);
     hasAuthenticatedRef.current = false;
+    lastAuthCheckRef.current = { timestamp: Date.now(), result: false };
+    authCheckPromiseRef.current = null;
   }, [closeEventSource]);
 
   const getAuthHeaders = useCallback(() => {
@@ -121,6 +244,11 @@ function useNotificationsState(): UseNotificationsReturn {
   }, []);
 
   const fetchNotifications = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastFetchRef.current < FETCH_THROTTLE_MS) {
+      return;
+    }
+
     const authenticated = await isAuthenticated();
     if (!authenticated) {
       logDev('useNotifications: Usuário não autenticado, limpando estado');
@@ -151,6 +279,7 @@ function useNotificationsState(): UseNotificationsReturn {
       const data = await response.json();
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
+      lastFetchRef.current = Date.now();
       
       logDev('useNotifications: Dados carregados', {
         total: data.notifications?.length || 0,
@@ -169,6 +298,7 @@ function useNotificationsState(): UseNotificationsReturn {
       // Para outros erros, manter dados mas mostrar erro
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
+      lastFetchRef.current = Date.now();
       setLoading(false);
     }
   }, [getAuthHeaders, isAuthenticated, clearState]);
@@ -212,6 +342,21 @@ function useNotificationsState(): UseNotificationsReturn {
         retryCountRef.current = 0;
         hasAuthenticatedRef.current = true;
         fetchNotifications();
+      });
+
+      eventSource.addEventListener('ping', () => {
+        lastFetchRef.current = Date.now();
+      });
+
+      eventSource.addEventListener('timeout', () => {
+        console.warn('useNotifications SSE: conexão atingiu timeout, reabrindo');
+        closeEventSource();
+        connectEventSourceDebounced();
+      });
+
+      eventSource.addEventListener('unauthorized', () => {
+        console.warn('useNotifications SSE: sessão inválida informada pelo servidor');
+        clearState();
       });
 
       eventSource.addEventListener('refresh', (event: MessageEvent<string>) => {
