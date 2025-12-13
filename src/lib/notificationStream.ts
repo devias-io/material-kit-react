@@ -52,6 +52,7 @@ export async function createNotificationStreamResponse(
     let abortHandler: (() => void) | null = null;
     let connectionTimeout: ReturnType<typeof setTimeout> | null = null;
     let connectionClosed = false;
+    let finalizeStream: ((context: string) => void) | null = null;
 
     const cleanup = (context: string) => {
       if (keepAliveTimer) {
@@ -96,6 +97,15 @@ export async function createNotificationStreamResponse(
           return;
         }
 
+        let controllerClosed = false;
+
+        finalizeStream = (context: string) => {
+          if (controllerClosed) return;
+          controllerClosed = true;
+          cleanup(context);
+          controller.close();
+        };
+
         const sendEvent = (
           event: NotificationStreamEvent,
           eventName?: NotificationStreamEvent['type']
@@ -135,21 +145,19 @@ export async function createNotificationStreamResponse(
               )
             );
             setTimeout(() => {
-              cleanup('timeout');
-              controller.close();
+              finalizeStream?.('timeout');
             }, 100);
           }, connectionTimeoutMs);
         }
 
         abortHandler = () => {
-          cleanup('abort');
-          controller.close();
+          finalizeStream?.('abort');
         };
 
         request.signal.addEventListener('abort', abortHandler);
       },
       cancel() {
-        cleanup('cancel');
+        finalizeStream?.('cancel');
       }
     });
 
