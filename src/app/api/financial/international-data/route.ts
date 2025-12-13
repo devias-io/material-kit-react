@@ -10,6 +10,7 @@ export const maxDuration = 5;
 
 // 🔑 SUA CHAVE DA API BRAPI
 const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
+const isDev = process.env.NODE_ENV !== 'production';
 
 // 🔧 FUNÇÕES AUXILIARES
 function getTrendDirection(change: number): 'up' | 'down' {
@@ -31,7 +32,9 @@ function formatPercent(value: number): string {
 // 🌎 FUNÇÃO PARA BUSCAR DADOS REAIS DA BRAPI
 async function fetchBrapiData() {
   try {
-    console.log('🔄 Buscando dados da Brapi...');
+    if (isDev) {
+      console.log('🔄 Buscando dados da Brapi...');
+    }
     
     // Buscar índices americanos via Brapi
     const symbols = [
@@ -58,7 +61,9 @@ async function fetchBrapiData() {
     }
     
     const data = await response.json();
-    console.log('✅ Dados recebidos da Brapi:', data.results?.length, 'símbolos');
+    if (isDev) {
+      console.log('✅ Dados recebidos da Brapi:', data.results?.length, 'símbolos');
+    }
     
     if (!data.results || data.results.length === 0) {
       throw new Error('Nenhum dado retornado pela Brapi');
@@ -71,7 +76,9 @@ async function fetchBrapiData() {
       const changePercent = stock.regularMarketChangePercent || 0;
       const currentPrice = stock.regularMarketPrice || 0;
       
-      console.log(`📊 ${stock.symbol}: ${currentPrice} (${changePercent.toFixed(2)}%)`);
+      if (isDev) {
+        console.log(`📊 ${stock.symbol}: ${currentPrice} (${changePercent.toFixed(2)}%)`);
+      }
       
       switch (stock.symbol) {
         case '^GSPC': // S&P 500
@@ -152,7 +159,9 @@ export async function GET(request: NextRequest) {
       fn: async () => {
         const startTime = Date.now();
 
-        console.log('🌎 International Data API - Iniciando com Brapi...');
+        if (isDev) {
+          console.log('🌎 International Data API - Iniciando com Brapi...');
+        }
 
         // Buscar dados reais da Brapi
         const brapiData = await fetchBrapiData();
@@ -212,7 +221,9 @@ export async function GET(request: NextRequest) {
           }
         };
 
-        console.log('✅ Dados internacionais compilados via', brapiData ? 'Brapi' : 'fallback');
+        if (isDev) {
+          console.log('✅ Dados internacionais compilados via', brapiData ? 'Brapi' : 'fallback');
+        }
 
         const processingTime = Date.now() - startTime;
 
@@ -281,7 +292,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('🌎 POST International Data API - Force refresh solicitado');
+    if (isDev) {
+      console.log('🌎 POST International Data API - Force refresh solicitado');
+    }
     
     // Forçar refresh dos dados
     const brapiData = await fetchBrapiData();
