@@ -49,7 +49,7 @@ class MemoryCache implements CacheLayer {
     this.store.delete(key);
   }
 
-  async increment(key: string): Promise<number> {
+  async increment(key: string, ttlSeconds?: number): Promise<number> {
     const current = await this.getNumber(key);
     const next = (current ?? 0) + 1;
     const expiresAt = ttlSeconds
