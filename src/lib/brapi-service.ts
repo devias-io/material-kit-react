@@ -3,7 +3,8 @@
 
 import { CacheService, type WithCacheResult } from './redis';
 
-const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
+// TTL padrão reduzido para evitar defasagem excessiva e alinhar com o consumo na overview
+const DEFAULT_CACHE_TTL_MS = 2 * 60 * 1000;
 const QUOTE_CACHE_TAG = 'financial:quotes';
 
 const isDev = process.env.NODE_ENV !== 'production';
@@ -68,10 +69,8 @@ export class BrapiService {
               Accept: 'application/json',
               'User-Agent': 'MembrosFatosBolsa/1.0',
             },
-            cache: 'force-cache',
-            next: {
-              revalidate: Math.max(30, Math.floor(cacheTtlMs / 1000)),
-            },
+            // Evitar cache duplicado do Next.js; o cache compartilhado fica a cargo do CacheService
+            cache: 'no-store',
           });
 
           if (!response.ok) {

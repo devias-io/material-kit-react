@@ -5,13 +5,13 @@ import { logApiMetric } from '@/lib/metrics';
 
 // 🛡️ CONFIGURAÇÃO PARA VERCEL - EVITA ERRO DE STATIC GENERATION
 export const dynamic = 'force-dynamic';
-export const revalidate = 300;
+export const revalidate = 120;
 export const fetchCache = 'default-cache';
 export const runtime = 'nodejs';
 
 export const maxDuration = 5;
 
-const CACHE_HEADERS = buildCacheHeaders({ ttl: 300, swr: 600 });
+const CACHE_HEADERS = buildCacheHeaders({ ttl: 120, swr: 180 });
 
 export async function GET(request: NextRequest) {
   const startedAt = Date.now();
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     });
 
     const { data, metadata } = await BrapiService.fetchQuotes(symbolsArray, {
-      cacheTtlMs: 5 * 60 * 1000,
+      cacheTtlMs: 2 * 60 * 1000,
       queryParams,
     });
 

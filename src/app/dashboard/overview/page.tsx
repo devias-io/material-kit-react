@@ -15,6 +15,9 @@ import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield'
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
 const globalCache = new Map<string, { data: any; timestamp: number }>();
 
+// Intervalo de atualização em tela para evitar dados defasados (sem sobrecarregar Brapi graças ao cache do backend)
+const REFRESH_INTERVAL_MS = 120 * 1000; // 2 minutos
+
 const getCachedData = (key: string) => {
   const cached = globalCache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -1108,6 +1111,15 @@ function useSmallCapsIntegradas() {
     setTodosOsDadosProntos(false); // Reset do flag
     buscarDadosCompletos();
   }, [buscarDadosCompletos]);
+
+  // ⏱️ Atualização periódica para manter dados próximos do real (usa cache do backend para evitar excesso de chamadas)
+  React.useEffect(() => {
+    const intervalId = setInterval(() => {
+      refetch();
+    }, REFRESH_INTERVAL_MS);
+
+    return () => clearInterval(intervalId);
+  }, [refetch]);
 
   return {
     ativosAtualizados,
