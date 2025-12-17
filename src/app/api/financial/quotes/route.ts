@@ -1,21 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BrapiService } from '@/lib/brapi-service';
-import { buildCacheHeaders } from '@/server/cache-headers';
 import { logApiMetric } from '@/lib/metrics';
 
 // 🛡️ CONFIGURAÇÃO PARA VERCEL - EVITA ERRO DE STATIC GENERATION
 export const dynamic = 'force-dynamic';
-export const revalidate = 120;
+export const revalidate = 60; // ✅ REDUZIDO: 1 minuto para dados mais frescos
 export const fetchCache = 'default-cache';
 export const runtime = 'nodejs';
-
 export const maxDuration = 5;
 
-const CACHE_HEADERS = buildCacheHeaders({ ttl: 120, swr: 180 });
+// ✅ HEADERS OTIMIZADOS PARA DADOS FINANCEIROS
+// - Sem stale-while-revalidate (evita servir dados vencidos)
+// - must-revalidate força checagem após expiração
+// - 60 segundos = equilíbrio entre frescor e performance
+const CACHE_HEADERS = {
+  'Cache-Control': 'public, s-maxage=60, must-revalidate',
+  'CDN-Cache-Control': 'public, s-maxage=60, must-revalidate',
+  'Vercel-CDN-Cache-Control': 'public, s-maxage=60, must-revalidate',
+} as const;
 
 export async function GET(request: NextRequest) {
   const startedAt = Date.now();
-
+  
   try {
     // ✅ USAR request.nextUrl EM VEZ DE new URL(request.url)
     const { searchParams } = request.nextUrl;
@@ -27,9 +33,9 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-
+    
     const symbolsArray = symbols.split(',').map(s => s.trim().toUpperCase());
-
+    
     const queryParams: Record<string, string> = {};
     searchParams.forEach((value, key) => {
       if (key === 'symbols') return;
@@ -37,12 +43,13 @@ export async function GET(request: NextRequest) {
         queryParams[key] = value;
       }
     });
-
+    
+    // ✅ TTL REDUZIDO: 60 segundos (alinhado com revalidate e cache headers)
     const { data, metadata } = await BrapiService.fetchQuotes(symbolsArray, {
-      cacheTtlMs: 2 * 60 * 1000,
+      cacheTtlMs: 60 * 1000, // 1 minuto
       queryParams,
     });
-
+    
     logApiMetric({
       route: '/api/financial/quotes',
       cacheHit: metadata.cached,
@@ -51,7 +58,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       extra: { symbolsCount: symbolsArray.length },
     });
-
+    
     return NextResponse.json(
       {
         quotes: data,
