@@ -647,6 +647,8 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
   const [fetchError, setFetchError] = React.useState<string | null>(null);
+  const [completedLessons, setCompletedLessons] = React.useState<Set<number>>(new Set());
+  const [isLoadingProgress, setIsLoadingProgress] = React.useState(true);
 
   const [isCompactViewport, setIsCompactViewport] = React.useState(() => {
     if (typeof window === 'undefined') {
@@ -676,6 +678,37 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
 
     mediaQuery.addListener?.(handleViewportChange);
     return () => mediaQuery.removeListener?.(handleViewportChange);
+  }, []);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    async function fetchProgress(): Promise<void> {
+      try {
+        const response = await fetch('/api/cf-renda-turbinada/progress');
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error ?? 'Erro ao carregar progresso');
+        }
+
+        if (isMounted && Array.isArray(data.completedLessons)) {
+          setCompletedLessons(new Set(data.completedLessons));
+        }
+      } catch (error) {
+        console.error('Erro ao carregar progresso:', error);
+      } finally {
+        if (isMounted) {
+          setIsLoadingProgress(false);
+        }
+      }
+    }
+
+    void fetchProgress();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const compactVideoStyles = React.useMemo<React.CSSProperties | null>(() => {
@@ -757,6 +790,63 @@ export default function CfRendaTurbinadaAulasPage(): React.JSX.Element {
         alert(`Não foi possível copiar automaticamente. Copie manualmente: ${link}`);
       });
   }, []);
+
+  const handleToggleLessonProgress = React.useCallback(
+    async (lessonId: number) => {
+      const wasCompleted = completedLessons.has(lessonId);
+
+      setCompletedLessons(prev => {
+        const next = new Set(prev);
+        if (wasCompleted) {
+          next.delete(lessonId);
+        } else {
+          next.add(lessonId);
+        }
+        return next;
+      });
+
+      try {
+        const response = await fetch(`/api/cf-renda-turbinada/progress/${lessonId}`, {
+          method: wasCompleted ? 'DELETE' : 'POST'
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao atualizar progresso');
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar progresso:', error);
+
+        setCompletedLessons(prev => {
+          const next = new Set(prev);
+          if (wasCompleted) {
+            next.add(lessonId);
+          } else {
+            next.delete(lessonId);
+          }
+          return next;
+        });
+
+        alert('Erro ao atualizar progresso. Tente novamente.');
+      }
+    },
+    [completedLessons]
+  );
+
+  const getModuleProgress = React.useCallback(
+    (module: Module): { completed: number; total: number; percentage: number } => {
+      const total = module.lessons.length;
+      const completed = module.lessons.filter(lesson =>
+        typeof lesson.id === 'number' && completedLessons.has(lesson.id)
+      ).length;
+
+      return {
+        completed,
+        total,
+        percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+      };
+    },
+    [completedLessons]
+  );
 
   const normalizeModule = React.useCallback((module: Module): Module => ({
     ...module,
@@ -2548,6 +2638,37 @@ const handleUpdateModule = React.useCallback(
                   {lesson.duration}
                 </span>
               </div>
+              {!isAdmin && !viewAsStudent && typeof lesson.id === 'number' && (
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: completedLessons.has(lesson.id) ? '#22c55e' : '#64748b',
+                    userSelect: 'none',
+                    transition: 'color 0.2s ease'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={completedLessons.has(lesson.id)}
+                    onChange={() => handleToggleLessonProgress(lesson.id!)}
+                    disabled={isLoadingProgress}
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      cursor: isLoadingProgress ? 'not-allowed' : 'pointer',
+                      accentColor: '#22c55e'
+                    }}
+                  />
+                  {completedLessons.has(lesson.id)
+                    ? '✓ Aula concluída'
+                    : 'Marcar como concluída'}
+                </label>
+              )}
               {lesson.description && lesson.description.trim().length > 0 && (
                 <div
                   style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}
@@ -2944,12 +3065,15 @@ const handleUpdateModule = React.useCallback(
       handleDeleteLesson,
       handleDeleteMaterial,
       handleToggleMoveLesson,
+      handleToggleLessonProgress,
       handleEditLessonFieldChange,
       handleStartEditLesson,
       handleUpdateLesson,
       handleUploadMaterial,
       compactVideoStyles,
+      completedLessons,
       isAdmin,
+      isLoadingProgress,
       isSaving,
       materialUploadState,
       modules,
@@ -3011,6 +3135,90 @@ const handleUpdateModule = React.useCallback(
           </p>
         </div>
       </div>
+
+      {!isAdmin && !isLoading && !fetchError && visibleModules.length > 0 && (
+        <>
+          {(() => {
+            const totalLessons = visibleModules.reduce((sum, module) => sum + module.lessons.length, 0);
+            const completedCount = visibleModules.reduce((sum, module) => {
+              return (
+                sum +
+                module.lessons.filter(lesson =>
+                  typeof lesson.id === 'number' && completedLessons.has(lesson.id)
+                ).length
+              );
+            }, 0);
+            const overallPercentage = totalLessons > 0
+              ? Math.round((completedCount / totalLessons) * 100)
+              : 0;
+
+            return (
+              <div style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                padding: cardPadding,
+                maxWidth: '1100px',
+                margin: '0 auto 32px',
+                boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '12px',
+                  gap: '16px',
+                  flexWrap: 'wrap'
+                }}>
+                  <h3 style={{ 
+                    margin: 0, 
+                    fontSize: '20px', 
+                    fontWeight: 700, 
+                    color: '#0f172a' 
+                  }}>
+                    🎯 Progresso Geral do Curso
+                  </h3>
+                  <span style={{ 
+                    fontSize: '28px', 
+                    fontWeight: 800,
+                    color: overallPercentage === 100 ? '#22c55e' : '#3b82f6'
+                  }}>
+                    {overallPercentage}%
+                  </span>
+                </div>
+                <div style={{ marginBottom: '8px' }}>
+                  <div style={{
+                    width: '100%',
+                    height: '14px',
+                    backgroundColor: '#e2e8f0',
+                    borderRadius: '9999px',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      width: `${overallPercentage}%`,
+                      height: '100%',
+                      background: overallPercentage === 100 
+                        ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+                        : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      transition: 'width 0.3s ease-in-out',
+                      borderRadius: '9999px'
+                    }} />
+                  </div>
+                </div>
+                <p style={{ 
+                  margin: 0, 
+                  fontSize: '14px', 
+                  color: '#64748b',
+                  fontWeight: 600
+                }}>
+                  {completedCount} de {totalLessons} aulas concluídas
+                  {overallPercentage === 100 && ' 🎉 Parabéns! Você completou todo o curso!'}
+                </p>
+              </div>
+            );
+          })()}
+        </>
+      )}
 
       {isAdmin && (
         <div
@@ -3498,6 +3706,61 @@ visibleModules.map(module => {
               </>
             )}
           </div>
+
+          {!isCollapsed && (isReleased || isAdmin) && module.lessons.length > 0 && !isAdmin && !viewAsStudent && (
+            <>
+              {(() => {
+                const progress = getModuleProgress(module);
+                return (
+                  <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '8px',
+                    marginTop: '12px',
+                    padding: '12px 16px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '10px',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      gap: '12px',
+                      flexWrap: 'wrap'
+                    }}>
+                      <span style={{ color: '#64748b' }}>Seu progresso neste módulo</span>
+                      <span style={{ 
+                        color: progress.percentage === 100 ? '#22c55e' : '#3b82f6',
+                        fontSize: '14px'
+                      }}>
+                        {progress.completed} de {progress.total} aulas • {progress.percentage}%
+                      </span>
+                    </div>
+                    <div style={{
+                      width: '100%',
+                      height: '10px',
+                      backgroundColor: '#e2e8f0',
+                      borderRadius: '9999px',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        width: `${progress.percentage}%`,
+                        height: '100%',
+                        background: progress.percentage === 100 
+                          ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+                          : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                        transition: 'width 0.3s ease-in-out',
+                        borderRadius: '9999px'
+                      }} />
+                    </div>
+                  </div>
+                );
+              })()}
+            </>
+          )}
 
           {/* MOSTRA AULAS APENAS SE LIBERADO OU SE FOR ADMIN */}
           {(isReleased || isAdmin) && !isCollapsed && (
