@@ -57,6 +57,8 @@ model User {
   smallCaps               UserSmallCaps[]
   comments                Comment[]
   analisesTecnicas        AnaliseTecnica[]
+  lessonProgress          LessonProgress[]
+  lessonProgressTurma2    LessonProgressTurma2[]
 }
 
 model Purchase {
@@ -836,8 +838,24 @@ model CfRendaTurbinadaLesson {
   updatedAt   DateTime                @updatedAt
   module      CfRendaTurbinadaModule  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   materials   CfRendaTurbinadaLessonMaterial[]
+  progress    LessonProgress[]
 
   @@map("lessons")
+}
+
+model LessonProgress {
+  id          Int      @id @default(autoincrement())
+  userId      String   @map("user_id")
+  lessonId    Int      @map("lesson_id")
+  completedAt DateTime @default(now()) @map("completed_at")
+
+  user   User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson CfRendaTurbinadaLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
+  @@map("lesson_progress")
 }
 
 model CfRendaTurbinadaLessonMaterial {
@@ -879,6 +897,7 @@ model CfRendaTurbinadaTurma2Lesson {
   updatedAt   DateTime                            @updatedAt
   module      CfRendaTurbinadaTurma2Module        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   materials   CfRendaTurbinadaTurma2LessonMaterial[]
+  progress    LessonProgressTurma2[]
 
   @@map("lessons_turma2")
 }
@@ -893,6 +912,21 @@ model CfRendaTurbinadaTurma2LessonMaterial {
   lesson    CfRendaTurbinadaTurma2Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@map("lesson_materials_turma2")
+}
+
+model LessonProgressTurma2 {
+  id          Int      @id @default(autoincrement())
+  userId      String   @map("user_id")
+  lessonId    Int      @map("lesson_id")
+  completedAt DateTime @default(now()) @map("completed_at")
+
+  user   User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson CfRendaTurbinadaTurma2Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
+  @@map("lesson_progress_turma2")
 }
 
 model CfRendaTurbinadaLiveEvent {
