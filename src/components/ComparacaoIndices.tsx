@@ -37,6 +37,18 @@ type HistoricoBruto = Array<{
   value?: number;
 }>;
 
+const normalizarData = (valor?: string | number): number | undefined => {
+  if (!valor) return undefined;
+
+  if (typeof valor === 'number' && !Number.isNaN(valor)) {
+    const ehTimestampEmSegundos = valor < 1_000_000_000_000;
+    return ehTimestampEmSegundos ? valor * 1000 : valor;
+  }
+
+  const parsed = new Date(valor).getTime();
+  return Number.isNaN(parsed) ? undefined : parsed;
+};
+
 const INVESTIMENTO_BASE = 1000;
 
 const RANGE_CONFIG: Record<RangeKey, { label: string; range: string; interval: string }> = {
@@ -59,7 +71,7 @@ const extrairHistorico = (dados: HistoricoBruto): HistoricoPonto[] => {
 
   return dados
     .map(item => ({
-      date: item.date ? new Date(item.date).getTime() : item.pricedAt ? new Date(item.pricedAt).getTime() : undefined,
+      date: normalizarData(item.date ?? item.pricedAt),
       close: item.close ?? item.adjClose ?? item.price ?? item.value
     }))
     .filter(ponto => typeof ponto.date === 'number' && typeof ponto.close === 'number' && ponto.close > 0)
@@ -114,7 +126,7 @@ const buscarHistorico = async (
               item.paymentDate || item.date || item.approvedOn || item.referenceDate || item.lastDatePrior || item.payDate;
             const valorDividendos =
               item.cashValue || item.rate || item.value || item.amount || item.dividend || item.netValue || item.grossValue;
-            const parsedDate = dataDividendos ? new Date(dataDividendos).getTime() : undefined;
+            const parsedDate = normalizarData(dataDividendos);
 
             if (!parsedDate || !valorDividendos || Number.isNaN(Number(valorDividendos))) return null;
 
