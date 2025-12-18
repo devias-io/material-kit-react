@@ -21,6 +21,7 @@ import { useCotacaoCompleta } from '../../../../hooks/ativo/useCotacaoCompleta';
 import { useBRAPIETF } from '@/hooks/useBRAPIETF';
 import { useRelatoriosEstatisticas } from '@/hooks/useRelatoriosAPI';
 import { useAuthAccess } from '@/hooks/use-auth-access';
+import ComparacaoIndices from '@/components/ComparacaoIndices';
 import {
   aplicarViesOverride,
   getViesBadgePalette,
@@ -3772,6 +3773,19 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
       {/* STAGE 3: COMPONENTES PESADOS COM LAZY LOADING */}
       {!loadingStages.stage3 && (
         <>
+          <LazyComponent
+            condition={!loadingStages.stage3}
+            fallback={<SkeletonLoader variant="card" count={1} />}
+          >
+            <ComparacaoIndices
+              ticker={ticker}
+              moeda={moedaPadrao}
+              corAtivo={carteiraConfig?.color}
+              isMobile={isMobileOrTablet}
+              formatCurrency={formatCurrency}
+            />
+          </LazyComponent>
+
           <LazyComponent
             condition={!loadingStages.stage3}
             fallback={<SkeletonLoader variant="card" count={2} />}
