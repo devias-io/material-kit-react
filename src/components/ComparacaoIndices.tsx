@@ -7,6 +7,7 @@ import { Chart } from '@/components/core/chart';
 import { API_CONFIG } from '@/config/apiConfig';
 
 type RangeKey = '2y' | '5y' | '10y';
+
 type SerieTipo = 'ativo' | 'indice';
 
 type HistoricoPonto = {
@@ -14,19 +15,12 @@ type HistoricoPonto = {
   close: number;
 };
 
-type Dividendo = {
-  date: number;
-  valor: number;
-};
-
 type SeriePreparada = {
   name: string;
   color: string;
   data: { x: number; y: number }[];
-  retornoSemDividendos: number;
-  retornoComDividendos: number;
+  retorno: number;
   tipo: SerieTipo;
-  totalDividendos: number;
 };
 
 type HistoricoBruto = Array<{
@@ -38,28 +32,20 @@ type HistoricoBruto = Array<{
   value?: number;
 }>;
 
-type DividendoBruto = Array<{
-  paymentDate?: string;
-  date?: string;
-  rate?: number;
-  value?: number;
-}>;
-
 const INVESTIMENTO_BASE = 1000;
 
-const RANGE_CONFIG: Record<RangeKey, { label: string; range: string; interval: string; diasAtras: number }> = {
-  '2y': { label: '2 anos', range: '2y', interval: '1mo', diasAtras: 730 },
-  '5y': { label: '5 anos', range: '5y', interval: '1mo', diasAtras: 1825 },
-  '10y': { label: '10 anos', range: '10y', interval: '1mo', diasAtras: 3650 }
+const RANGE_CONFIG: Record<RangeKey, { label: string; range: string; interval: string }> = {
+  '2y': { label: '2 anos', range: '2y', interval: '1mo' },
+  '5y': { label: '5 anos', range: '5y', interval: '1mo' },
+  '10y': { label: '10 anos', range: '10y', interval: '1mo' }
 };
 
-const INDICES_CONFIG = [
-  { ticker: '^BVSP', label: 'IBOV', color: '#0ea5e9', tipo: 'indice' as SerieTipo },
-  { ticker: 'IFIX.SA', label: 'IFIX', color: '#16a34a', tipo: 'indice' as SerieTipo },
-  { ticker: 'IVVB11', label: 'IVVB11', color: '#a855f7', tipo: 'indice' as SerieTipo }
+const INDICES_PADRAO = [
+  { ticker: 'IBOV', label: 'IBOV', color: '#0ea5e9' },
+  { ticker: 'IFIX', label: 'IFIX', color: '#16a34a' },
+  { ticker: 'IVVB11', label: 'IVVB11', color: '#a855f7' }
 ];
 
-// ✅ Extrair histórico de preços
 const extrairHistorico = (dados: HistoricoBruto): HistoricoPonto[] => {
   if (!Array.isArray(dados)) return [];
 
@@ -72,35 +58,9 @@ const extrairHistorico = (dados: HistoricoBruto): HistoricoPonto[] => {
     .sort((a, b) => a.date - b.date) as HistoricoPonto[];
 };
 
-// ✅ Extrair dividendos
-const extrairDividendos = (dados: DividendoBruto, dataInicio: number, dataFim: number): Dividendo[] => {
-  if (!Array.isArray(dados)) return [];
-
-  return dados
-    .map(item => {
-      const dateStr = item.paymentDate || item.date;
-      if (!dateStr) return null;
-
-      const date = new Date(dateStr).getTime();
-      const valor = item.rate ?? item.value ?? 0;
-
-      if (date < dataInicio || date > dataFim || valor <= 0) return null;
-
-      return { date, valor };
-    })
-    .filter(Boolean)
-    .sort((a, b) => a!.date - b!.date) as Dividendo[];
-};
-
-// ✅ Buscar histórico + dividendos
-const buscarDadosCompletos = async (
-  ticker: string,
-  range: RangeKey,
-  signal?: AbortSignal
-): Promise<{ historico: HistoricoPonto[]; dividendos: Dividendo[] }> => {
-  const { range: rangeParam, interval, diasAtras } = RANGE_CONFIG[range];
-  
-  const url = `${API_CONFIG.ENDPOINTS.BRAPI_HISTORICAL}/${ticker}?range=${rangeParam}&interval=${interval}&dividends=true&token=${API_CONFIG.BRAPI_TOKEN}`;
+const buscarHistorico = async (ticker: string, range: RangeKey, signal?: AbortSignal): Promise<HistoricoPonto[]> => {
+  const { range: rangeParam, interval } = RANGE_CONFIG[range];
+  const url = `${API_CONFIG.ENDPOINTS.BRAPI_HISTORICAL}/${ticker}?range=${rangeParam}&interval=${interval}&token=${API_CONFIG.BRAPI_TOKEN}`;
 
   const resposta = await fetch(url, {
     method: 'GET',
@@ -113,142 +73,48 @@ const buscarDadosCompletos = async (
   }
 
   const payload = await resposta.json();
-  const resultado = payload?.results?.[0];
+  const historico =
+    payload?.results?.[0]?.historicalDataPrice || payload?.results?.[0]?.historicalData || payload?.results?.[0]?.prices;
 
-  if (!resultado) {
-    throw new Error(`Sem dados para ${ticker}`);
-  }
-
-  // Histórico de preços
-  const historicoBruto =
-    resultado.historicalDataPrice ||
-    resultado.historicalData ||
-    resultado.prices ||
-    [];
-
-  const historico = extrairHistorico(historicoBruto);
-
-  // Dividendos
-  const dataInicio = Date.now() - diasAtras * 24 * 60 * 60 * 1000;
-  const dataFim = Date.now();
-
-  const dividendosBruto =
-    resultado.dividendsData?.cashDividends ||
-    resultado.dividends ||
-    [];
-
-  const dividendos = extrairDividendos(dividendosBruto, dataInicio, dataFim);
-
-  return { historico, dividendos };
+  return extrairHistorico(historico);
 };
 
-// 🔥 ALGORITMO DE REINVESTIMENTO DE DIVIDENDOS
-const calcularRetornoComReinvestimento = (
-  historico: HistoricoPonto[],
-  dividendos: Dividendo[],
-  investimentoInicial: number
-): { retornoComDividendos: number; retornoSemDividendos: number; totalDividendos: number } => {
-  if (historico.length < 2) {
-    return { retornoComDividendos: 0, retornoSemDividendos: 0, totalDividendos: 0 };
-  }
-
-  const precoInicial = historico[0].close;
-  const precoFinal = historico[historico.length - 1].close;
-
-  // Retorno sem dividendos (só price appreciation)
-  const retornoSemDividendos = ((precoFinal - precoInicial) / precoInicial) * 100;
-
-  // Simular compra inicial
-  let cotas = investimentoInicial / precoInicial;
-  let totalDividendosRecebidos = 0;
-
-  // Para cada dividendo pago
-  for (const div of dividendos) {
-    // Encontrar preço na data do dividendo (ou mais próximo)
-    const pontoMaisProximo = historico.reduce((prev, curr) => {
-      return Math.abs(curr.date - div.date) < Math.abs(prev.date - div.date) ? curr : prev;
-    });
-
-    const precoNaData = pontoMaisProximo.close;
-    
-    // Dividendo total = dividendo por cota * número de cotas
-    const dividendoTotal = div.valor * cotas;
-    totalDividendosRecebidos += dividendoTotal;
-
-    // Reinvestir: comprar mais cotas com o dividendo
-    const novasCotas = dividendoTotal / precoNaData;
-    cotas += novasCotas;
-  }
-
-  // Patrimônio final = cotas totais * preço final
-  const patrimonioFinal = cotas * precoFinal;
-  const retornoComDividendos = ((patrimonioFinal - investimentoInicial) / investimentoInicial) * 100;
-
-  return {
-    retornoComDividendos,
-    retornoSemDividendos,
-    totalDividendos: totalDividendosRecebidos
-  };
-};
-
-// ✅ Preparar séries com reinvestimento
-const prepararSeriesComReinvestimento = (
-  series: Array<{
-    name: string;
-    color: string;
-    tipo: SerieTipo;
-    historico: HistoricoPonto[];
-    dividendos: Dividendo[];
-  }>
-): SeriePreparada[] => {
-  // Encontrar data inicial comum
+const prepararSeriesAlinhadas = (series: Array<{ name: string; color: string; tipo: SerieTipo; pontos: HistoricoPonto[] }>): SeriePreparada[] => {
   const datasIniciais = series
-    .map(s => (s.historico.length > 0 ? s.historico[0].date : 0))
-    .filter(v => v > 0);
+    .map(serie => (serie.pontos.length > 0 ? serie.pontos[0].date : 0))
+    .filter(valor => valor > 0);
 
   const inicioComum = datasIniciais.length > 0 ? Math.max(...datasIniciais) : 0;
 
   return series
     .map(serie => {
-      const historicoAlinhado = serie.historico.filter(p => p.date >= inicioComum);
-      
-      if (historicoAlinhado.length < 2) return null;
+      const pontosValidos = serie.pontos.filter(ponto => ponto.date >= inicioComum);
+      if (pontosValidos.length < 2) return null;
 
-      const base = historicoAlinhado[0].close;
-      
-      // Calcular retornos
-      const { retornoComDividendos, retornoSemDividendos, totalDividendos } =
-        calcularRetornoComReinvestimento(
-          historicoAlinhado,
-          serie.dividendos,
-          INVESTIMENTO_BASE
-        );
+      const base = pontosValidos[0].close;
+      if (!base) return null;
 
-      // Gerar série normalizada (usando retorno COM dividendos)
-      const data = historicoAlinhado.map(ponto => ({
+      const data = pontosValidos.map(ponto => ({
         x: ponto.date,
-        y: ((ponto.close - base) / base) * 100 // Aproximação visual
+        y: ((ponto.close - base) / base) * 100
       }));
 
-      // Ajustar último ponto para refletir retorno real com dividendos
-      if (data.length > 0) {
-        data[data.length - 1].y = retornoComDividendos;
-      }
+      const ultimo = pontosValidos[pontosValidos.length - 1];
+      const retorno = ((ultimo.close - base) / base) * 100;
 
       return {
         name: serie.name,
         color: serie.color,
         data,
-        retornoSemDividendos,
-        retornoComDividendos,
-        tipo: serie.tipo,
-        totalDividendos
+        retorno,
+        tipo: serie.tipo
       } as SeriePreparada;
     })
     .filter(Boolean) as SeriePreparada[];
 };
 
 const formatarPercentual = (valor: number) => `${valor >= 0 ? '+' : ''}${valor.toFixed(2)}%`;
+
 const formatarData = (valor: number) => dayjs(valor).format('DD/MM/YY');
 
 interface ComparacaoIndicesProps {
@@ -275,44 +141,26 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
     if (!ticker) return;
 
     const controller = new AbortController();
-    
     const carregar = async () => {
       setLoading(true);
       setErro(null);
 
       const ativosParaBuscar = [
         { ticker, label: ticker, color: corAtivo, tipo: 'ativo' as SerieTipo },
-        ...INDICES_CONFIG
+        ...INDICES_PADRAO
       ];
 
       const resultados = await Promise.allSettled(
         ativosParaBuscar.map(async item => {
-          const { historico, dividendos } = await buscarDadosCompletos(
-            item.ticker,
-            range,
-            controller.signal
-          );
-          
-          return {
-            name: item.label,
-            color: item.color,
-            tipo: item.tipo,
-            historico,
-            dividendos
-          };
+          const pontos = await buscarHistorico(item.ticker, range, controller.signal);
+          return { name: item.label, color: item.color, tipo: item.tipo, pontos };
         })
       );
 
-      const seriesProcessadas = prepararSeriesComReinvestimento(
+      const seriesProcessadas = prepararSeriesAlinhadas(
         resultados
-          .filter(
-            (resultado): resultado is PromiseFulfilledResult<{
-              name: string;
-              color: string;
-              tipo: SerieTipo;
-              historico: HistoricoPonto[];
-              dividendos: Dividendo[];
-            }> => resultado.status === 'fulfilled'
+          .filter((resultado): resultado is PromiseFulfilledResult<{ name: string; color: string; tipo: SerieTipo; pontos: HistoricoPonto[] }> =>
+            resultado.status === 'fulfilled'
           )
           .map(resultado => resultado.value)
       );
@@ -326,19 +174,17 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
       }
     };
 
-    carregar()
-      .catch(error => {
-        if (!controller.signal.aborted) {
-          console.error('Erro ao carregar comparação:', error);
-          setErro('Não conseguimos carregar o comparativo. Tente novamente.');
-          setSeries([]);
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      });
+    carregar().catch(error => {
+      if (!controller.signal.aborted) {
+        console.error('Erro ao carregar comparação com índices:', error);
+        setErro('Não conseguimos carregar o comparativo agora. Tente novamente em instantes.');
+        setSeries([]);
+      }
+    }).finally(() => {
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
+    });
 
     return () => controller.abort();
   }, [ticker, corAtivo, range]);
@@ -349,13 +195,11 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
         .map(item => ({
           name: item.name,
           color: item.color,
-          retornoComDividendos: item.retornoComDividendos,
-          retornoSemDividendos: item.retornoSemDividendos,
-          valorFinal: INVESTIMENTO_BASE * (1 + item.retornoComDividendos / 100),
-          totalDividendos: item.totalDividendos,
+          retorno: item.retorno,
+          valorFinal: INVESTIMENTO_BASE * (1 + item.retorno / 100),
           tipo: item.tipo
         }))
-        .sort((a, b) => b.retornoComDividendos - a.retornoComDividendos),
+        .sort((a, b) => b.retorno - a.retorno),
     [series]
   );
 
@@ -417,7 +261,6 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
         marginBottom: '28px'
       }}
     >
-      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -428,7 +271,13 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
             <h3
               style={{
                 margin: 0,
@@ -441,15 +290,15 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
             </h3>
             <span
               style={{
-                background: '#dcfce7',
-                color: '#166534',
+                background: '#e2e8f0',
+                color: '#334155',
                 borderRadius: '999px',
                 padding: '4px 10px',
                 fontSize: '11px',
                 fontWeight: 700
               }}
             >
-              🔄 Reinvestindo dividendos
+              Retorno percentual
             </span>
           </div>
           <p
@@ -459,12 +308,17 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
               fontSize: isMobile ? '12px' : '13px'
             }}
           >
-            Retorno total incluindo reinvestimento automático de todos os dividendos recebidos.
+            Acompanhe como o ativo performou frente aos principais benchmarks da bolsa.
           </p>
         </div>
 
-        {/* Filtros de período */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
           {Object.entries(RANGE_CONFIG).map(([chave, config]) => (
             <button
               key={chave}
@@ -488,7 +342,6 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
         </div>
       </div>
 
-      {/* Erro */}
       {erro && (
         <div
           style={{
@@ -505,7 +358,6 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
         </div>
       )}
 
-      {/* Gráfico */}
       <div style={{ marginTop: '16px' }}>
         {loading ? (
           <div
@@ -537,7 +389,6 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
         )}
       </div>
 
-      {/* Resumo de investimento */}
       {resumoInvestimento.length > 0 && (
         <div style={{ marginTop: '18px' }}>
           <h4
@@ -555,7 +406,7 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
             style={{
               marginTop: '12px',
               display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(260px, 1fr))',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(240px, 1fr))',
               gap: '10px'
             }}
           >
@@ -565,17 +416,17 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
                 style={{
                   border: '1px solid #e2e8f0',
                   borderRadius: '10px',
-                  padding: '14px 16px',
+                  padding: '12px 14px',
                   background: '#f8fafc',
                   display: 'flex',
                   gap: '12px',
-                  alignItems: 'flex-start'
+                  alignItems: 'center'
                 }}
               >
                 <div
                   style={{
-                    width: '40px',
-                    height: '40px',
+                    width: '36px',
+                    height: '36px',
                     borderRadius: '8px',
                     background: item.color,
                     display: 'flex',
@@ -583,20 +434,18 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
                     justifyContent: 'center',
                     color: '#fff',
                     fontWeight: 800,
-                    fontSize: '12px',
-                    flexShrink: 0
+                    fontSize: '12px'
                   }}
                 >
                   {item.name.slice(0, 4).toUpperCase()}
                 </div>
 
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1 }}>
                   <div
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '8px'
+                      alignItems: 'center'
                     }}
                   >
                     <span
@@ -611,58 +460,21 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
                     <span
                       style={{
                         fontWeight: 800,
-                        color: item.retornoComDividendos >= 0 ? '#16a34a' : '#dc2626',
-                        fontSize: '14px',
-                        whiteSpace: 'nowrap'
+                        color: item.retorno >= 0 ? '#16a34a' : '#dc2626'
                       }}
                     >
-                      {formatarPercentual(item.retornoComDividendos)}
+                      {formatarPercentual(item.retorno)}
                     </span>
                   </div>
-
                   <p
                     style={{
                       margin: '4px 0 0',
                       color: '#475569',
-                      fontSize: '13px',
-                      fontWeight: 500
+                      fontSize: '13px'
                     }}
                   >
-                    {formatCurrency(item.valorFinal, moeda)} hoje
+                    {formatCurrency(item.valorFinal, moeda)} após o período selecionado.
                   </p>
-
-                  {item.totalDividendos > 0 && (
-                    <div
-                      style={{
-                        marginTop: '6px',
-                        fontSize: '11px',
-                        color: '#059669',
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}
-                    >
-                      <span>💰</span>
-                      <span>
-                        {formatCurrency(item.totalDividendos, moeda)} em dividendos reinvestidos
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Comparativo: com vs sem dividendos */}
-                  {Math.abs(item.retornoComDividendos - item.retornoSemDividendos) > 1 && (
-                    <div
-                      style={{
-                        marginTop: '6px',
-                        fontSize: '11px',
-                        color: '#64748b',
-                        fontStyle: 'italic'
-                      }}
-                    >
-                      Sem reinvestir: {formatarPercentual(item.retornoSemDividendos)}
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
