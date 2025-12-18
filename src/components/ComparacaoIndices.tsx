@@ -15,6 +15,11 @@ type HistoricoPonto = {
   close: number;
 };
 
+type DividendoPonto = {
+  date: number;
+  valor: number;
+};
+
 type SeriePreparada = {
   name: string;
   color: string;
@@ -43,7 +48,10 @@ const RANGE_CONFIG: Record<RangeKey, { label: string; range: string; interval: s
 const INDICES_PADRAO = [
   { ticker: 'IBOV', label: 'IBOV', color: '#0ea5e9' },
   { ticker: 'IFIX', label: 'IFIX', color: '#16a34a' },
-  { ticker: 'IVVB11', label: 'IVVB11', color: '#a855f7' }
+  { ticker: 'IVVB11', label: 'IVVB11', color: '#a855f7' },
+  { ticker: 'CDI', label: 'CDI', color: '#0f766e' },
+  { ticker: 'IPCA', label: 'IPCA', color: '#ea580c' },
+  { ticker: 'SELIC', label: 'SELIC', color: '#2563eb' }
 ];
 
 const extrairHistorico = (dados: HistoricoBruto): HistoricoPonto[] => {
@@ -58,28 +66,101 @@ const extrairHistorico = (dados: HistoricoBruto): HistoricoPonto[] => {
     .sort((a, b) => a.date - b.date) as HistoricoPonto[];
 };
 
-const buscarHistorico = async (ticker: string, range: RangeKey, signal?: AbortSignal): Promise<HistoricoPonto[]> => {
+const buscarHistorico = async (
+  ticker: string,
+  range: RangeKey,
+  signal?: AbortSignal
+): Promise<{ historico: HistoricoPonto[]; dividendos: DividendoPonto[] }> => {
   const { range: rangeParam, interval } = RANGE_CONFIG[range];
-  const url = `${API_CONFIG.ENDPOINTS.BRAPI_HISTORICAL}/${ticker}?range=${rangeParam}&interval=${interval}&token=${API_CONFIG.BRAPI_TOKEN}`;
+  const historicoUrl = `${API_CONFIG.ENDPOINTS.BRAPI_HISTORICAL}/${ticker}?range=${rangeParam}&interval=${interval}&token=${API_CONFIG.BRAPI_TOKEN}`;
+  const dividendosUrl = `${API_CONFIG.ENDPOINTS.BRAPI_QUOTE}/${ticker}?fundamental=true&dividends=true&token=${API_CONFIG.BRAPI_TOKEN}`;
 
-  const resposta = await fetch(url, {
-    method: 'GET',
-    headers: API_CONFIG.DEFAULT_HEADERS,
-    signal
-  });
+  const [historicoResp, dividendosResp] = await Promise.all([
+    fetch(historicoUrl, {
+      method: 'GET',
+      headers: API_CONFIG.DEFAULT_HEADERS,
+      signal
+    }),
+    fetch(dividendosUrl, {
+      method: 'GET',
+      headers: API_CONFIG.DEFAULT_HEADERS,
+      signal
+    })
+  ]);
 
-  if (!resposta.ok) {
-    throw new Error(`BRAPI ${ticker}: ${resposta.status}`);
+  if (!historicoResp.ok) {
+    throw new Error(`BRAPI ${ticker} histórico: ${historicoResp.status}`);
   }
 
-  const payload = await resposta.json();
+  const payloadHistorico = await historicoResp.json();
   const historico =
-    payload?.results?.[0]?.historicalDataPrice || payload?.results?.[0]?.historicalData || payload?.results?.[0]?.prices;
+    payloadHistorico?.results?.[0]?.historicalDataPrice ||
+    payloadHistorico?.results?.[0]?.historicalData ||
+    payloadHistorico?.results?.[0]?.prices;
 
-  return extrairHistorico(historico);
+  let dividendos: DividendoPonto[] = [];
+  if (dividendosResp.ok) {
+    const payloadDividendos = await dividendosResp.json();
+    const dividendosBrutos =
+      payloadDividendos?.results?.[0]?.dividendsData ||
+      payloadDividendos?.results?.[0]?.dividends ||
+      payloadDividendos?.results?.[0]?.cashDividends ||
+      [];
+
+    dividendos = Array.isArray(dividendosBrutos)
+      ? dividendosBrutos
+          .map((item: any) => {
+            const dataDividendos =
+              item.paymentDate || item.date || item.approvedOn || item.referenceDate || item.lastDatePrior || item.payDate;
+            const valorDividendos =
+              item.cashValue || item.rate || item.value || item.amount || item.dividend || item.netValue || item.grossValue;
+            const parsedDate = dataDividendos ? new Date(dataDividendos).getTime() : undefined;
+
+            if (!parsedDate || !valorDividendos || Number.isNaN(Number(valorDividendos))) return null;
+
+            return { date: parsedDate, valor: Number(valorDividendos) } as DividendoPonto;
+          })
+          .filter(Boolean)
+          .sort((a: DividendoPonto, b: DividendoPonto) => a.date - b.date)
+      : [];
+  }
+
+  return { historico: extrairHistorico(historico), dividendos };
 };
 
-const prepararSeriesAlinhadas = (series: Array<{ name: string; color: string; tipo: SerieTipo; pontos: HistoricoPonto[] }>): SeriePreparada[] => {
+const aplicarDividendosComReinvestimento = (historico: HistoricoPonto[], dividendos: DividendoPonto[]) => {
+  if (historico.length === 0) return { data: [], retornoFinal: 0 };
+
+  const dividendosOrdenados = [...dividendos].sort((a, b) => a.date - b.date);
+  let indiceDividendo = 0;
+  let cotas = 1; // começa com 1 cota
+  const precoInicial = historico[0].close;
+
+  const data = historico.map(ponto => {
+    while (indiceDividendo < dividendosOrdenados.length && dividendosOrdenados[indiceDividendo].date <= ponto.date) {
+      const valorDividendo = dividendosOrdenados[indiceDividendo].valor;
+      if (valorDividendo && ponto.close > 0) {
+        const novasCotas = valorDividendo / ponto.close;
+        cotas += novasCotas;
+      }
+      indiceDividendo += 1;
+    }
+
+    const valorAtual = ponto.close * cotas;
+    const retornoPercentual = ((valorAtual - precoInicial) / precoInicial) * 100;
+
+    return { x: ponto.date, y: retornoPercentual };
+  });
+
+  const ultimoValor = historico[historico.length - 1].close * cotas;
+  const retornoFinal = ((ultimoValor - precoInicial) / precoInicial) * 100;
+
+  return { data, retornoFinal };
+};
+
+const prepararSeriesAlinhadas = (
+  series: Array<{ name: string; color: string; tipo: SerieTipo; pontos: HistoricoPonto[]; dividendos: DividendoPonto[] }>
+): SeriePreparada[] => {
   const datasIniciais = series
     .map(serie => (serie.pontos.length > 0 ? serie.pontos[0].date : 0))
     .filter(valor => valor > 0);
@@ -91,22 +172,14 @@ const prepararSeriesAlinhadas = (series: Array<{ name: string; color: string; ti
       const pontosValidos = serie.pontos.filter(ponto => ponto.date >= inicioComum);
       if (pontosValidos.length < 2) return null;
 
-      const base = pontosValidos[0].close;
-      if (!base) return null;
-
-      const data = pontosValidos.map(ponto => ({
-        x: ponto.date,
-        y: ((ponto.close - base) / base) * 100
-      }));
-
-      const ultimo = pontosValidos[pontosValidos.length - 1];
-      const retorno = ((ultimo.close - base) / base) * 100;
+      const { data, retornoFinal } = aplicarDividendosComReinvestimento(pontosValidos, serie.dividendos);
+      if (data.length === 0) return null;
 
       return {
         name: serie.name,
         color: serie.color,
         data,
-        retorno,
+        retorno: retornoFinal,
         tipo: serie.tipo
       } as SeriePreparada;
     })
@@ -145,21 +218,27 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
       setLoading(true);
       setErro(null);
 
-      const ativosParaBuscar = [
-        { ticker, label: ticker, color: corAtivo, tipo: 'ativo' as SerieTipo },
-        ...INDICES_PADRAO
-      ];
+      const ativosParaBuscar = [{ ticker, label: ticker, color: corAtivo, tipo: 'ativo' as SerieTipo }, ...INDICES_PADRAO];
 
       const resultados = await Promise.allSettled(
         ativosParaBuscar.map(async item => {
-          const pontos = await buscarHistorico(item.ticker, range, controller.signal);
-          return { name: item.label, color: item.color, tipo: item.tipo, pontos };
+          const { historico, dividendos } = await buscarHistorico(item.ticker, range, controller.signal);
+          return { name: item.label, color: item.color, tipo: item.tipo, pontos: historico, dividendos };
         })
       );
 
       const seriesProcessadas = prepararSeriesAlinhadas(
         resultados
-          .filter((resultado): resultado is PromiseFulfilledResult<{ name: string; color: string; tipo: SerieTipo; pontos: HistoricoPonto[] }> =>
+          .filter(
+            (
+              resultado
+            ): resultado is PromiseFulfilledResult<{
+              name: string;
+              color: string;
+              tipo: SerieTipo;
+              pontos: HistoricoPonto[];
+              dividendos: DividendoPonto[];
+            }> =>
             resultado.status === 'fulfilled'
           )
           .map(resultado => resultado.value)
@@ -308,7 +387,7 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
               fontSize: isMobile ? '12px' : '13px'
             }}
           >
-            Acompanhe como o ativo performou frente aos principais benchmarks da bolsa.
+            Acompanhe como o ativo performou frente aos principais benchmarks da bolsa (retorno total com reinvestimento de dividendos).
           </p>
         </div>
 
