@@ -96,6 +96,7 @@ jest.mock('../../../../hooks/useAtivoDetalhes', () => ({
 jest.mock('@/components/AnalisesTrimesestrais', () => () => null);
 jest.mock('@/components/ETFHoldings', () => () => null);
 jest.mock('@/components/ETFMetricCards', () => () => null);
+jest.mock('@/components/ComparacaoIndices', () => () => null);
 
 const { useParams, useRouter } = require('next/navigation');
 const { useDataStore } = require('../../../../hooks/useDataStore');
