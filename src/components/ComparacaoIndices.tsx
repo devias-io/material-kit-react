@@ -37,6 +37,15 @@ type HistoricoBruto = Array<{
   value?: number;
 }>;
 
+type IndiceStatus = {
+  ticker: string;
+  sucesso: boolean;
+  pontos: number;
+  erro?: string;
+  primeiraData?: string;
+  ultimaData?: string;
+};
+
 const normalizarData = (valor?: string | number): number | undefined => {
   if (!valor) return undefined;
 
@@ -145,7 +154,7 @@ const aplicarDividendosComReinvestimento = (historico: HistoricoPonto[], dividen
 
   const dividendosOrdenados = [...dividendos].sort((a, b) => a.date - b.date);
   let indiceDividendo = 0;
-  let cotas = 1; // começa com 1 cota
+  let cotas = 1;
   const precoInicial = historico[0].close;
 
   const data = historico.map(ponto => {
@@ -170,19 +179,28 @@ const aplicarDividendosComReinvestimento = (historico: HistoricoPonto[], dividen
   return { data, retornoFinal };
 };
 
-const prepararSeriesAlinhadas = (
+// 🎯 NOVA FUNÇÃO: Alinhamento mais flexível
+const prepararSeriesAlinhadasFlexivel = (
   series: Array<{ name: string; color: string; tipo: SerieTipo; pontos: HistoricoPonto[]; dividendos: DividendoPonto[] }>
 ): SeriePreparada[] => {
+  // Em vez de forçar todos a começarem da data mais recente,
+  // vamos usar a data mais ANTIGA que tenha pelo menos 2 séries
   const datasIniciais = series
     .map(serie => (serie.pontos.length > 0 ? serie.pontos[0].date : 0))
-    .filter(valor => valor > 0);
+    .filter(valor => valor > 0)
+    .sort((a, b) => a - b); // Ordena do mais antigo para o mais recente
 
-  const inicioComum = datasIniciais.length > 0 ? Math.max(...datasIniciais) : 0;
+  if (datasIniciais.length === 0) return [];
+
+  // Usa a data mais ANTIGA se houver pelo menos 2 séries com dados
+  const inicioComum = datasIniciais.length >= 2 ? datasIniciais[0] : datasIniciais[0];
 
   return series
     .map(serie => {
       const pontosValidos = serie.pontos.filter(ponto => ponto.date >= inicioComum);
-      if (pontosValidos.length < 2) return null;
+      
+      // Reduz o mínimo de pontos para 1 (em vez de 2)
+      if (pontosValidos.length < 1) return null;
 
       const { data, retornoFinal } = aplicarDividendosComReinvestimento(pontosValidos, serie.dividendos);
       if (data.length === 0) return null;
@@ -221,6 +239,7 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
   const [series, setSeries] = useState<SeriePreparada[]>([]);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [indicesStatus, setIndicesStatus] = useState<IndiceStatus[]>([]);
 
   useEffect(() => {
     if (!ticker) return;
@@ -230,16 +249,73 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
       setLoading(true);
       setErro(null);
 
-      const ativosParaBuscar = [{ ticker, label: ticker, color: corAtivo, tipo: 'ativo' as SerieTipo }, ...INDICES_PADRAO];
+      const ativosParaBuscar = [
+        { ticker, label: ticker, color: corAtivo, tipo: 'ativo' as SerieTipo },
+        ...INDICES_PADRAO.map(idx => ({ ...idx, tipo: 'indice' as SerieTipo }))
+      ];
+
+      console.log('🔍 === INICIANDO BUSCA DE ÍNDICES ===');
+      console.log(`Range selecionado: ${range} (${RANGE_CONFIG[range].label})`);
 
       const resultados = await Promise.allSettled(
         ativosParaBuscar.map(async item => {
-          const { historico, dividendos } = await buscarHistorico(item.ticker, range, controller.signal);
-          return { name: item.label, color: item.color, tipo: item.tipo, pontos: historico, dividendos };
+          try {
+            const { historico, dividendos } = await buscarHistorico(item.ticker, range, controller.signal);
+            
+            console.log(`✅ ${item.ticker}:`, {
+              pontos: historico.length,
+              dividendos: dividendos.length,
+              primeiraData: historico[0]?.date ? new Date(historico[0].date).toLocaleDateString('pt-BR') : 'N/A',
+              ultimaData: historico[historico.length - 1]?.date 
+                ? new Date(historico[historico.length - 1].date).toLocaleDateString('pt-BR') 
+                : 'N/A'
+            });
+
+            return { name: item.label, color: item.color, tipo: item.tipo, pontos: historico, dividendos };
+          } catch (error) {
+            console.error(`❌ ${item.ticker} FALHOU:`, error);
+            throw error;
+          }
         })
       );
 
-      const seriesProcessadas = prepararSeriesAlinhadas(
+      // 🔍 Gera relatório de status
+      const status: IndiceStatus[] = resultados.map((resultado, index) => {
+        const ativo = ativosParaBuscar[index];
+        
+        if (resultado.status === 'fulfilled') {
+          const { pontos } = resultado.value;
+          return {
+            ticker: ativo.ticker,
+            sucesso: pontos.length > 0,
+            pontos: pontos.length,
+            primeiraData: pontos[0]?.date ? new Date(pontos[0].date).toLocaleDateString('pt-BR') : undefined,
+            ultimaData: pontos[pontos.length - 1]?.date 
+              ? new Date(pontos[pontos.length - 1].date).toLocaleDateString('pt-BR') 
+              : undefined
+          };
+        } else {
+          return {
+            ticker: ativo.ticker,
+            sucesso: false,
+            pontos: 0,
+            erro: resultado.reason?.message || 'Erro desconhecido'
+          };
+        }
+      });
+
+      setIndicesStatus(status);
+
+      console.log('📊 === RELATÓRIO DE STATUS ===');
+      status.forEach(s => {
+        if (s.sucesso) {
+          console.log(`✅ ${s.ticker}: ${s.pontos} pontos (${s.primeiraData} → ${s.ultimaData})`);
+        } else {
+          console.log(`❌ ${s.ticker}: ${s.erro || 'Sem dados'}`);
+        }
+      });
+
+      const seriesProcessadas = prepararSeriesAlinhadasFlexivel(
         resultados
           .filter(
             (
@@ -251,31 +327,38 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
               pontos: HistoricoPonto[];
               dividendos: DividendoPonto[];
             }> =>
-            resultado.status === 'fulfilled'
+            resultado.status === 'fulfilled' && resultado.value.pontos.length > 0
           )
           .map(resultado => resultado.value)
       );
+
+      console.log(`📈 Séries processadas com sucesso: ${seriesProcessadas.length}`);
+      console.log('=== FIM DO DEBUG ===\n');
 
       if (!controller.signal.aborted) {
         setSeries(seriesProcessadas);
 
         if (seriesProcessadas.length === 0) {
           setErro('Não encontramos histórico suficiente para comparar este ativo.');
+        } else if (seriesProcessadas.length === 1) {
+          setErro('Conseguimos carregar apenas o ativo principal. Os índices de comparação não estão disponíveis.');
         }
       }
     };
 
-    carregar().catch(error => {
-      if (!controller.signal.aborted) {
-        console.error('Erro ao carregar comparação com índices:', error);
-        setErro('Não conseguimos carregar o comparativo agora. Tente novamente em instantes.');
-        setSeries([]);
-      }
-    }).finally(() => {
-      if (!controller.signal.aborted) {
-        setLoading(false);
-      }
-    });
+    carregar()
+      .catch(error => {
+        if (!controller.signal.aborted) {
+          console.error('❌ Erro geral ao carregar comparação:', error);
+          setErro('Não conseguimos carregar o comparativo agora. Tente novamente em instantes.');
+          setSeries([]);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      });
 
     return () => controller.abort();
   }, [ticker, corAtivo, range]);
@@ -447,6 +530,55 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
         >
           {erro}
         </div>
+      )}
+
+      {/* 🆕 Painel de Status dos Índices */}
+      {indicesStatus.length > 0 && (
+        <details
+          style={{
+            marginTop: '16px',
+            padding: '12px 14px',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '10px',
+            fontSize: '12px'
+          }}
+        >
+          <summary
+            style={{
+              cursor: 'pointer',
+              fontWeight: 700,
+              color: '#0f172a',
+              userSelect: 'none'
+            }}
+          >
+            📊 Status dos Índices ({indicesStatus.filter(s => s.sucesso).length}/{indicesStatus.length} disponíveis)
+          </summary>
+          <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {indicesStatus.map(status => (
+              <div
+                key={status.ticker}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '6px 8px',
+                  background: status.sucesso ? '#f0fdf4' : '#fef2f2',
+                  borderRadius: '6px',
+                  fontSize: '11px'
+                }}
+              >
+                <span style={{ fontWeight: 700, color: status.sucesso ? '#166534' : '#991b1b' }}>
+                  {status.sucesso ? '✅' : '❌'} {status.ticker}
+                </span>
+                <span style={{ color: '#64748b' }}>
+                  {status.sucesso
+                    ? `${status.pontos} pontos (${status.primeiraData} → ${status.ultimaData})`
+                    : status.erro || 'Sem dados'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </details>
       )}
 
       <div style={{ marginTop: '16px' }}>
