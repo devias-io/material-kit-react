@@ -37,6 +37,7 @@ import { Newspaper } from '@phosphor-icons/react/dist/ssr/Newspaper';
 import { Article } from '@phosphor-icons/react/dist/ssr/Article';
 // 🆕 ÍCONE PARA SUPORTE
 import { Headset } from '@phosphor-icons/react/dist/ssr/Headset';
+import { ArrowsClockwise } from '@phosphor-icons/react/dist/ssr/ArrowsClockwise';
 
 export const navIcons = {
   'chart-pie': ChartPie,
@@ -81,4 +82,5 @@ export const navIcons = {
   'clipboard-text': ClipboardText, // Alternativa
   'newspaper': Newspaper,         // Para notícias/relatórios
   'article': Article,             // Para artigos
+  'arrows-clockwise': ArrowsClockwise,
 } as Record<string, Icon>;
