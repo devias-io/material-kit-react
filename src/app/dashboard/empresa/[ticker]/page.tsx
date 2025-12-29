@@ -2026,6 +2026,45 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, isFII = false }: 
       if (dadosSalvos) {
         try {
           const proventosSalvos = JSON.parse(dadosSalvos);
+
+          const normalizarData = (valor: any) => {
+            if (!valor) return '';
+
+            const tentarConverter = (entrada: any) => {
+              const data = new Date(entrada);
+              return !isNaN(data.getTime()) ? data.toISOString().split('T')[0] : '';
+            };
+
+            if (valor instanceof Date) {
+              return tentarConverter(valor);
+            }
+
+            if (typeof valor === 'string') {
+              const viaDate = tentarConverter(valor);
+              if (viaDate) return viaDate;
+
+              const partes = valor.split('/');
+              if (partes.length === 3) {
+                const [dia, mes, ano] = partes.map(Number);
+                const data = new Date(ano, mes - 1, dia);
+                if (!isNaN(data.getTime())) return data.toISOString().split('T')[0];
+              }
+
+              return valor.trim();
+            }
+
+            if (typeof valor === 'number') {
+              return tentarConverter(valor);
+            }
+
+            return '';
+          };
+
+          const normalizarValor = (valor: any) => {
+            const numero = typeof valor === 'string' ? Number(valor.replace(',', '.')) : Number(valor);
+            return Number.isFinite(numero) ? numero.toFixed(6) : String(valor ?? '');
+          };
+
           const proventosLimitados = proventosSalvos.slice(0, 500).map((item: any) => ({
             ...item,
             dataObj: new Date(item.dataCom || item.data || item.dataObj || item.dataFormatada)
@@ -2039,10 +2078,21 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, isFII = false }: 
           // Remover duplicidades quando data com, pagamento e valor são iguais
           const combinacoesVistas = new Set<string>();
           const proventosUnicos = proventosValidos.filter((item: any) => {
-            const dataComKey = item.dataCom || item.data || item.dataFormatada || (item.dataObj ? item.dataObj.toISOString() : '');
-            const dataPagamentoKey = item.dataPagamento || item.dataPagamentoFormatada || '';
-            const valorKey = typeof item.valor === 'number' ? item.valor.toFixed(6) : String(item.valor || '');
-            const chave = dataComKey && dataPagamentoKey ? `${dataComKey}|${dataPagamentoKey}|${valorKey}` : null;
+            const dataComKey =
+              normalizarData(item.dataCom) ||
+              normalizarData(item.data) ||
+              normalizarData(item.dataFormatada) ||
+              normalizarData(item.dataObj);
+
+            const dataPagamentoKey =
+              normalizarData(item.dataPagamento) ||
+              normalizarData(item.dataPagamentoFormatada);
+
+            const valorKey = normalizarValor(item.valor);
+
+            const chave = dataComKey && dataPagamentoKey && valorKey
+              ? `${dataComKey}|${dataPagamentoKey}|${valorKey}`
+              : null;
 
             if (!chave) return true;
             if (combinacoesVistas.has(chave)) return false;
