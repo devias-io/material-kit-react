@@ -79,7 +79,7 @@ const INDICES_PADRAO: Array<{
   { ticker: 'IVVB11', label: 'IVVB11', color: '#a855f7', fonte: 'brapi-historical' },
   { ticker: 'SMAL11', label: 'SMLL', color: '#f59e0b', fonte: 'brapi-historical' },
   { ticker: 'CDI', label: 'CDI', color: '#0f766e', fonte: 'bcb' },
-  { ticker: 'IPCA', label: 'IPCA', color: '#ea580c', fonte: 'brapi-v2-inflation' },
+  { ticker: 'DIVO11', label: 'IDIV', color: '#ea580c', fonte: 'brapi-historical' },
   { ticker: 'SELIC', label: 'SELIC', color: '#2563eb', fonte: 'brapi-v2-prime' }
 ];
 
