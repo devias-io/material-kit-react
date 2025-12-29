@@ -1657,6 +1657,18 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
 
   const dataEntradaNormalizada = useMemo(() => normalizarData(dataEntrada), [dataEntrada, normalizarData]);
   const dataSaidaNormalizada = useMemo(() => normalizarData(dataSaida), [dataSaida, normalizarData]);
+  const dataHoje = useMemo(() => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    return hoje;
+  }, []);
+  const limiteDataFinal = useMemo(() => {
+    if (dataSaidaNormalizada && dataSaidaNormalizada.getTime() < dataHoje.getTime()) {
+      return dataSaidaNormalizada;
+    }
+
+    return dataHoje;
+  }, [dataHoje, dataSaidaNormalizada]);
 
   const processarProventos = useCallback((listaProventos) => {
     if (!Array.isArray(listaProventos)) return [];
@@ -1664,40 +1676,56 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
     return listaProventos
       .map((item) => {
         const valorNumerico = typeof item.valor === 'number' ? item.valor : Number(item.valor ?? 0) || 0;
-        const dataBruta = item.dataObj ?? item.dataCom ?? item.data;
-        const dataNormalizada = normalizarData(dataBruta) || criarDataFallback();
+        const dataComNormalizada = normalizarData(item.dataCom ?? item.data ?? item.dataObj);
+        const dataPagamentoBruta = item.dataPagamento ?? item.dataPgto ?? item.dataObj ?? item.dataCom ?? item.data;
+        const dataPagamentoNormalizada = normalizarData(dataPagamentoBruta) || criarDataFallback();
 
         const valorParaFormatacao = Number.isFinite(valorNumerico) ? valorNumerico : 0;
 
         return {
           ...item,
           valor: valorNumerico,
-          dataObj: dataNormalizada,
+          dataObj: dataPagamentoNormalizada,
+          dataPagamentoObj: dataPagamentoNormalizada,
+          dataComObj: dataComNormalizada,
           valorFormatado: formatCurrency(valorParaFormatacao, moeda),
           tipo: item.tipo || (isFII ? 'Rendimento' : 'Dividendo')
         };
       })
       .filter((item) => {
-        if (!item.dataObj) return false;
+        if (!item.dataPagamentoObj) return false;
 
-        const dataValida = item.dataObj instanceof Date ? item.dataObj : normalizarData(item.dataObj);
-        if (!dataValida || isNaN(dataValida.getTime())) return false;
+        const dataPagamentoValida = item.dataPagamentoObj instanceof Date
+          ? item.dataPagamentoObj
+          : normalizarData(item.dataPagamentoObj);
+        const dataComValida = item.dataComObj instanceof Date
+          ? item.dataComObj
+          : normalizarData(item.dataComObj);
+
+        if (!dataPagamentoValida || isNaN(dataPagamentoValida.getTime())) return false;
 
         if (!item.valor || item.valor <= 0) return false;
 
-        if (dataEntradaNormalizada && dataValida.getTime() < dataEntradaNormalizada.getTime()) return false;
-        if (dataSaidaNormalizada && dataValida.getTime() > dataSaidaNormalizada.getTime()) return false;
+        if (dataEntradaNormalizada && dataPagamentoValida.getTime() < dataEntradaNormalizada.getTime()) return false;
+        if (dataSaidaNormalizada && dataPagamentoValida.getTime() > dataSaidaNormalizada.getTime()) return false;
+        if (dataPagamentoValida.getTime() > limiteDataFinal.getTime()) return false;
 
-        item.dataObj = dataValida;
+        item.dataPagamentoObj = dataPagamentoValida;
+        item.dataObj = dataPagamentoValida;
+        item.dataComObj = dataComValida;
         return true;
       })
       .sort((a, b) => {
-        const dataA = a.dataObj instanceof Date ? a.dataObj : normalizarData(a.dataObj) || criarDataFallback();
-        const dataB = b.dataObj instanceof Date ? b.dataObj : normalizarData(b.dataObj) || criarDataFallback();
+        const dataA = a.dataPagamentoObj instanceof Date
+          ? a.dataPagamentoObj
+          : normalizarData(a.dataPagamentoObj) || criarDataFallback();
+        const dataB = b.dataPagamentoObj instanceof Date
+          ? b.dataPagamentoObj
+          : normalizarData(b.dataPagamentoObj) || criarDataFallback();
 
         return dataB.getTime() - dataA.getTime();
       });
-  }, [criarDataFallback, dataEntradaNormalizada, dataSaidaNormalizada, isFII, moeda, normalizarData]);
+  }, [criarDataFallback, dataEntradaNormalizada, dataSaidaNormalizada, isFII, limiteDataFinal, moeda, normalizarData]);
 
   useEffect(() => {
     if (!inView || !ticker) return;
@@ -1903,17 +1931,25 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
                   }}>
                     Valor
                   </th>
-                  <th style={{ 
+                  <th style={{
                     padding: isMobile ? '10px 8px' : '12px',
-                    textAlign: 'center', 
-                    fontWeight: '700', 
+                    textAlign: 'center',
+                    fontWeight: '700',
                     fontSize: isMobile ? '12px' : '14px'
                   }}>
-                    Data
+                    Data Com
                   </th>
-                  <th style={{ 
+                  <th style={{
                     padding: isMobile ? '10px 8px' : '12px',
-                    textAlign: 'center', 
+                    textAlign: 'center',
+                    fontWeight: '700',
+                    fontSize: isMobile ? '12px' : '14px'
+                  }}>
+                    Pagamento
+                  </th>
+                  <th style={{
+                    padding: isMobile ? '10px 8px' : '12px',
+                    textAlign: 'center',
                     fontWeight: '700', 
                     fontSize: isMobile ? '12px' : '14px'
                   }}>
@@ -1923,8 +1959,8 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
               </thead>
               <tbody>
                 {proventosExibidos.map((provento, index) => (
-                  <tr 
-                    key={`${provento.id || provento.data}-${index}`} 
+                  <tr
+                    key={`${provento.id || provento.data}-${index}`}
                     style={{ borderBottom: '1px solid #f1f5f9' }}
                   >
                     <td style={{ 
@@ -1943,19 +1979,31 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
                     }}>
                       {provento.valorFormatado}
                     </td>
-                    <td style={{ 
+                    <td style={{
                       padding: isMobile ? '10px 8px' : '12px',
-                      textAlign: 'center', 
+                      textAlign: 'center',
                       fontWeight: '500',
                       fontSize: isMobile ? '12px' : '14px'
                     }}>
-                      {provento.dataObj ? (
-                        provento.dataObj instanceof Date ? 
-                          provento.dataObj.toLocaleDateString('pt-BR') :
-                          new Date(provento.dataObj).toLocaleDateString('pt-BR')
+                      {provento.dataComObj ? (
+                        provento.dataComObj instanceof Date ?
+                          provento.dataComObj.toLocaleDateString('pt-BR') :
+                          new Date(provento.dataComObj).toLocaleDateString('pt-BR')
                       ) : 'N/A'}
                     </td>
-                    <td style={{ 
+                    <td style={{
+                      padding: isMobile ? '10px 8px' : '12px',
+                      textAlign: 'center',
+                      fontWeight: '500',
+                      fontSize: isMobile ? '12px' : '14px'
+                    }}>
+                      {provento.dataPagamentoObj ? (
+                        provento.dataPagamentoObj instanceof Date ?
+                          provento.dataPagamentoObj.toLocaleDateString('pt-BR') :
+                          new Date(provento.dataPagamentoObj).toLocaleDateString('pt-BR')
+                      ) : 'N/A'}
+                    </td>
+                    <td style={{
                       padding: isMobile ? '10px 8px' : '12px',
                       textAlign: 'center'
                     }}>
