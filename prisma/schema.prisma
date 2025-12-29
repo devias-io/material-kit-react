@@ -12,6 +12,18 @@ enum ViesOverride {
   MANTER
 }
 
+enum ProventoOrigem {
+  BRAPI
+  CSV
+  MANUAL
+}
+
+enum ProventoSincronizacaoStatus {
+  EM_PROGRESSO
+  CONCLUIDO
+  ERRO
+}
+
 model User {
   id                      String                        @id @default(cuid())
   firstName               String
@@ -170,25 +182,25 @@ model CfRendaTurbinadaCarteiraOperacao {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@map("cf_renda_turbinada_carteira_operacoes")
   @@index([tipoOperacao])
+  @@map("cf_renda_turbinada_carteira_operacoes")
 }
 
 model AnaliseTecnica {
-  id          String   @id @default(cuid())
-  ticker      String
-  slug        String   @unique
-  titulo      String
-  resumo      String?
-  conteudo    String
-  imagemCapa  String?
-  fonte       String?
-  publicado   Boolean  @default(true)
-  destaque    Boolean  @default(false)
-  autorId     String?
-  autor       User?    @relation(fields: [autorId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  ticker     String
+  slug       String   @unique
+  titulo     String
+  resumo     String?
+  conteudo   String
+  imagemCapa String?
+  fonte      String?
+  publicado  Boolean  @default(true)
+  destaque   Boolean  @default(false)
+  autorId    String?
+  autor      User?    @relation(fields: [autorId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([ticker])
   @@map("analises_tecnicas")
@@ -208,14 +220,14 @@ model HotmartIntegration {
 }
 
 model UserEntitlement {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
   code      String
-  status    String   @default("ACTIVE")
+  status    String    @default("ACTIVE")
   expiresAt DateTime?
   origin    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -249,7 +261,7 @@ model RelatorioSemanal {
 }
 
 model UserMicroCaps {
-  id                 String   @id @default(cuid())
+  id                 String        @id @default(cuid())
   userId             String
   ticker             String
   setor              String
@@ -258,21 +270,21 @@ model UserMicroCaps {
   precoTeto          Float?
   precoTetoBDR       Float?
   viesOverride       ViesOverride? @default(AUTO)
-  posicaoEncerrada   Boolean  @default(false)
+  posicaoEncerrada   Boolean       @default(false)
   dataSaida          String?
   precoSaida         Float?
   motivoEncerramento String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  editadoEm          DateTime @default(now())
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  editadoEm          DateTime      @default(now())
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, ticker])
   @@map("user_micro_caps")
 }
 
 model UserSmallCaps {
-  id                 String   @id @default(cuid())
+  id                 String        @id @default(cuid())
   userId             String
   ticker             String
   setor              String
@@ -280,21 +292,21 @@ model UserSmallCaps {
   precoEntrada       Float
   precoTeto          Float?
   viesOverride       ViesOverride? @default(AUTO)
-  posicaoEncerrada   Boolean  @default(false)
+  posicaoEncerrada   Boolean       @default(false)
   dataSaida          String?
   precoSaida         Float?
   motivoEncerramento String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  editadoEm          DateTime @default(now())
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  editadoEm          DateTime      @default(now())
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, ticker])
   @@map("user_small_caps")
 }
 
 model UserDividendos {
-  id                 String   @id @default(cuid())
+  id                 String        @id @default(cuid())
   userId             String
   ticker             String
   setor              String
@@ -302,21 +314,21 @@ model UserDividendos {
   precoEntrada       Float
   precoTeto          Float?
   viesOverride       ViesOverride? @default(AUTO)
-  posicaoEncerrada   Boolean  @default(false)
+  posicaoEncerrada   Boolean       @default(false)
   dataSaida          String?
   precoSaida         Float?
   motivoEncerramento String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  editadoEm          DateTime @default(now())
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  editadoEm          DateTime      @default(now())
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, ticker])
   @@map("user_dividendos")
 }
 
 model UserFiis {
-  id                 String   @id @default(cuid())
+  id                 String        @id @default(cuid())
   userId             String
   ticker             String
   setor              String
@@ -324,21 +336,21 @@ model UserFiis {
   precoEntrada       Float
   precoTeto          Float?
   viesOverride       ViesOverride? @default(AUTO)
-  posicaoEncerrada   Boolean  @default(false)
+  posicaoEncerrada   Boolean       @default(false)
   dataSaida          String?
   precoSaida         Float?
   motivoEncerramento String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  editadoEm          DateTime @default(now())
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  editadoEm          DateTime      @default(now())
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, ticker])
   @@map("user_fiis")
 }
 
 model UserRendaTurbinada {
-  id                 String   @id @default(cuid())
+  id                 String        @id @default(cuid())
   userId             String
   ticker             String
   setor              String
@@ -350,20 +362,20 @@ model UserRendaTurbinada {
   premioEntrada      Float?
   vencimento         String?
   tipoOperacao       String?
-  posicaoEncerrada   Boolean  @default(false)
+  posicaoEncerrada   Boolean       @default(false)
   dataSaida          String?
   precoSaida         Float?
   motivoEncerramento String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  editadoEm          DateTime @default(now())
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  editadoEm          DateTime      @default(now())
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_renda_turbinada")
 }
 
 model UserDividendosInternacional {
-  id                 String   @id @default(cuid())
+  id                 String        @id @default(cuid())
   userId             String
   ticker             String
   setor              String
@@ -372,42 +384,42 @@ model UserDividendosInternacional {
   precoTeto          Float?
   precoTetoBDR       Float?
   viesOverride       ViesOverride? @default(AUTO)
-  posicaoEncerrada   Boolean  @default(false)
+  posicaoEncerrada   Boolean       @default(false)
   dataSaida          String?
   precoSaida         Float?
   motivoEncerramento String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  editadoEm          DateTime @default(now())
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  editadoEm          DateTime      @default(now())
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, ticker])
   @@map("user_dividendos_internacional")
 }
 
 model UserEtfs {
-  id                 String   @id @default(cuid())
+  id                 String        @id @default(cuid())
   userId             String
   ticker             String
   setor              String
   dataEntrada        String
   precoEntrada       Float
   viesOverride       ViesOverride? @default(AUTO)
-  posicaoEncerrada   Boolean  @default(false)
+  posicaoEncerrada   Boolean       @default(false)
   dataSaida          String?
   precoSaida         Float?
   motivoEncerramento String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  editadoEm          DateTime @default(now())
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  editadoEm          DateTime      @default(now())
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, ticker])
   @@map("user_etfs")
 }
 
 model UserProjetoAmerica {
-  id                 String   @id @default(cuid())
+  id                 String        @id @default(cuid())
   userId             String
   ticker             String
   setor              String
@@ -416,21 +428,21 @@ model UserProjetoAmerica {
   precoTeto          Float?
   precoTetoBDR       Float?
   viesOverride       ViesOverride? @default(AUTO)
-  posicaoEncerrada   Boolean  @default(false)
+  posicaoEncerrada   Boolean       @default(false)
   dataSaida          String?
   precoSaida         Float?
   motivoEncerramento String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  editadoEm          DateTime @default(now())
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  editadoEm          DateTime      @default(now())
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, ticker])
   @@map("user_projeto_america")
 }
 
 model UserExteriorStocks {
-  id                 String   @id @default(cuid())
+  id                 String        @id @default(cuid())
   userId             String
   ticker             String
   setor              String
@@ -439,45 +451,66 @@ model UserExteriorStocks {
   precoTeto          Float?
   precoTetoBDR       Float?
   viesOverride       ViesOverride? @default(AUTO)
-  posicaoEncerrada   Boolean  @default(false)
+  posicaoEncerrada   Boolean       @default(false)
   dataSaida          String?
   precoSaida         Float?
   motivoEncerramento String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  editadoEm          DateTime @default(now())
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  editadoEm          DateTime      @default(now())
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, ticker])
   @@map("user_exterior_stocks")
 }
 
 model Provento {
-  id             String   @id @default(cuid())
-  ticker         String
-  valor          Float
-  tipo           String
-  data           String
-  dataObj        DateTime
-  dataCom        String?
-  dataPagamento  String?
-  dataFormatada  String
-  valorFormatado String
-  dividendYield  Float?
-  nomeEmpresa    String?
-  setor          String?
-  fonte          String?
-  observacoes    String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                    String         @id @default(cuid())
+  ticker                String
+  valor                 Float
+  tipo                  String
+  data                  String
+  dataObj               DateTime
+  dataCom               String?
+  dataPagamento         String?
+  dataFormatada         String
+  valorFormatado        String
+  dividendYield         Float?
+  nomeEmpresa           String?
+  setor                 String?
+  fonte                 String?
+  observacoes           String?
+  origem                ProventoOrigem @default(CSV)
+  dataUltimaAtualizacao DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
   @@unique([ticker, dataObj, valor, tipo], name: "unique_provento")
+  @@unique([ticker, dataCom, tipo], name: "unique_provento_ticker_dataCom_tipo")
   @@index([ticker])
   @@index([dataObj])
   @@index([ticker, dataObj])
   @@index([tipo])
   @@index([createdAt])
   @@map("proventos")
+}
+
+model ProventoSincronizacao {
+  id               Int                         @id @default(autoincrement())
+  ticker           String?
+  dataInicio       DateTime
+  dataFim          DateTime?
+  status           ProventoSincronizacaoStatus
+  totalProcessados Int                         @default(0)
+  totalNovos       Int                         @default(0)
+  totalAtualizados Int                         @default(0)
+  totalErros       Int                         @default(0)
+  erros            Json?
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
+
+  @@index([ticker])
+  @@map("proventos_sincronizacao")
 }
 
 model ProventoEstatistica {
@@ -547,23 +580,23 @@ model EventoCorporativo {
 }
 
 model Relatorio {
-  id                String   @id @default(cuid())
+  id                String       @id @default(cuid())
   ticker            String
   nome              String
   tipo              String
   dataReferencia    String
   linkCanva         String?
   linkExterno       String?
-  tipoVisualizacao  String   @default("iframe")
+  tipoVisualizacao  String       @default("iframe")
   arquivoPdf        String?
   nomeArquivoPdf    String?
   tamanhoArquivo    Int?
   tipoPdf           String?
   hashArquivo       String?
-  solicitarReupload Boolean  @default(false)
-  dataUpload        DateTime @default(now())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  solicitarReupload Boolean      @default(false)
+  dataUpload        DateTime     @default(now())
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
   reportFiles       ReportFile[]
 
   @@index([ticker])
@@ -578,7 +611,7 @@ model ReportFile {
   reportId  String
   pdfUrl    String?
   status    String
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   report    Relatorio @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   @@id([reportId, createdAt])
@@ -656,19 +689,19 @@ model Question {
 }
 
 model Answer {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   content    String
   questionId String
   adminId    String
-  isOfficial Boolean  @default(true)
-  readByUser Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  faqOrder   Int      @default(0)
+  isOfficial Boolean   @default(true)
+  readByUser Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  faqOrder   Int       @default(0)
   faqTitle   String?
-  isFaq      Boolean  @default(false)
-  admin      User     @relation("AdminAnswers", fields: [adminId], references: [id])
-  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  isFaq      Boolean   @default(false)
+  admin      User      @relation("AdminAnswers", fields: [adminId], references: [id])
+  question   Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
   comments   Comment[]
 
   @@index([questionId])
@@ -766,34 +799,34 @@ enum QuestionCategory {
 }
 
 model AtivoInformacao {
-  id          String   @id @default(cuid())
-  codigo      String   @unique // ITUB4, PETR4, etc.
-  nome        String   // Itaú Unibanco, Petrobras, etc.
-  setor       String   // Bancário, Petróleo, etc.
-  subsetor    String?  // Bancos Múltiplos, Exploração, etc.
-  tipo        String   // ACAO, FII, ETF, etc.
-  
+  id       String  @id @default(cuid())
+  codigo   String  @unique // ITUB4, PETR4, etc.
+  nome     String // Itaú Unibanco, Petrobras, etc.
+  setor    String // Bancário, Petróleo, etc.
+  subsetor String? // Bancos Múltiplos, Exploração, etc.
+  tipo     String // ACAO, FII, ETF, etc.
+
   // Análise Padrão
-  qualidade         Int     @default(7)  // 0-10
+  qualidade         Int     @default(7) // 0-10
   risco             String  @default("MEDIO") // BAIXO, MEDIO, ALTO
   recomendacao      String  @default("NEUTRO") // COMPRA, VENDA, NEUTRO, MANTER
   fundamentosResumo String? // Resumo dos fundamentos
   pontosFortes      String? // Pontos positivos (JSON array como string)
   pontosFracos      String? // Pontos negativos (JSON array como string)
   observacoes       String? // Observações gerais
-  
+
   // Categorização
   segmento       String? // Large Cap, Small Cap, etc.
   governanca     String? // N1, N2, NM, etc.
-  dividend_yield Float?  // Último dividend yield conhecido
-  
+  dividend_yield Float? // Último dividend yield conhecido
+
   // Metadata
-  ativo          Boolean  @default(true)
-  ultimaRevisao  DateTime @default(now())
-  criadoPor      String? // ID do admin que criou
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
+  ativo         Boolean  @default(true)
+  ultimaRevisao DateTime @default(now())
+  criadoPor     String? // ID do admin que criou
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
   @@map("ativos_informacao")
 }
 
@@ -812,13 +845,13 @@ model Report {
 }
 
 model CfRendaTurbinadaModule {
-  id          String                      @id @default(cuid())
+  id          String                   @id @default(cuid())
   title       String
   highlight   String?
   releaseDate DateTime
-  isHidden    Boolean                     @default(false)
-  createdAt   DateTime                    @default(now())
-  updatedAt   DateTime                    @updatedAt
+  isHidden    Boolean                  @default(false)
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
   sortOrder   Int?
   lessons     CfRendaTurbinadaLesson[]
 
@@ -826,7 +859,7 @@ model CfRendaTurbinadaModule {
 }
 
 model CfRendaTurbinadaLesson {
-  id          Int                     @id @default(autoincrement())
+  id          Int                              @id @default(autoincrement())
   moduleId    String
   title       String
   duration    String
@@ -834,9 +867,9 @@ model CfRendaTurbinadaLesson {
   videoUrl    String?
   content     String?
   sortOrder   Int?
-  createdAt   DateTime                @default(now())
-  updatedAt   DateTime                @updatedAt
-  module      CfRendaTurbinadaModule  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  createdAt   DateTime                         @default(now())
+  updatedAt   DateTime                         @updatedAt
+  module      CfRendaTurbinadaModule           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   materials   CfRendaTurbinadaLessonMaterial[]
   progress    LessonProgress[]
 
@@ -871,13 +904,13 @@ model CfRendaTurbinadaLessonMaterial {
 }
 
 model CfRendaTurbinadaTurma2Module {
-  id          String                            @id @default(cuid())
+  id          String                         @id @default(cuid())
   title       String
   highlight   String?
   releaseDate DateTime
-  isHidden    Boolean                           @default(false)
-  createdAt   DateTime                          @default(now())
-  updatedAt   DateTime                          @updatedAt
+  isHidden    Boolean                        @default(false)
+  createdAt   DateTime                       @default(now())
+  updatedAt   DateTime                       @updatedAt
   sortOrder   Int?
   lessons     CfRendaTurbinadaTurma2Lesson[]
 
@@ -885,7 +918,7 @@ model CfRendaTurbinadaTurma2Module {
 }
 
 model CfRendaTurbinadaTurma2Lesson {
-  id          Int                                 @id @default(autoincrement())
+  id          Int                                    @id @default(autoincrement())
   moduleId    String
   title       String
   duration    String
@@ -893,9 +926,9 @@ model CfRendaTurbinadaTurma2Lesson {
   videoUrl    String?
   content     String?
   sortOrder   Int?
-  createdAt   DateTime                            @default(now())
-  updatedAt   DateTime                            @updatedAt
-  module      CfRendaTurbinadaTurma2Module        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  createdAt   DateTime                               @default(now())
+  updatedAt   DateTime                               @updatedAt
+  module      CfRendaTurbinadaTurma2Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   materials   CfRendaTurbinadaTurma2LessonMaterial[]
   progress    LessonProgressTurma2[]
 
@@ -903,13 +936,13 @@ model CfRendaTurbinadaTurma2Lesson {
 }
 
 model CfRendaTurbinadaTurma2LessonMaterial {
-  id        Int                              @id @default(autoincrement())
+  id        Int                          @id @default(autoincrement())
   lessonId  Int
   title     String
   fileUrl   String
-  createdAt DateTime                         @default(now())
-  updatedAt DateTime                         @updatedAt
-  lesson    CfRendaTurbinadaTurma2Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  createdAt DateTime                     @default(now())
+  updatedAt DateTime                     @updatedAt
+  lesson    CfRendaTurbinadaTurma2Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@map("lesson_materials_turma2")
 }
@@ -920,8 +953,8 @@ model LessonProgressTurma2 {
   lessonId    Int      @map("lesson_id")
   completedAt DateTime @default(now()) @map("completed_at")
 
-  user   User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson CfRendaTurbinadaTurma2Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user   User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson CfRendaTurbinadaTurma2Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
   @@index([userId])
@@ -958,71 +991,71 @@ model CfRendaTurbinadaTurma2LiveEvent {
 }
 
 model CfRendaTurbinadaMentoria {
-  id              Int                               @id @default(autoincrement())
+  id              Int                                @id @default(autoincrement())
   title           String
   description     String?
   content         String?
-  videoUrl        String?                           @map("video_url")
-  recordedAt      DateTime                          @map("recorded_at")
-  releaseDate     DateTime?                         @map("release_date")
-  durationMinutes Int?                              @map("duration_minutes")
-  sortOrder       Int?                              @map("sort_order")
-  createdAt       DateTime                          @default(now()) @map("created_at")
-  updatedAt       DateTime                          @updatedAt @map("updated_at")
+  videoUrl        String?                            @map("video_url")
+  recordedAt      DateTime                           @map("recorded_at")
+  releaseDate     DateTime?                          @map("release_date")
+  durationMinutes Int?                               @map("duration_minutes")
+  sortOrder       Int?                               @map("sort_order")
+  createdAt       DateTime                           @default(now()) @map("created_at")
+  updatedAt       DateTime                           @updatedAt @map("updated_at")
   materials       CfRendaTurbinadaMentoriaMaterial[]
 
   @@map("mentorias")
 }
 
 model CfRendaTurbinadaMentoriaMaterial {
-  id         Int                     @id @default(autoincrement())
-  mentoriaId Int                     @map("mentoria_id")
+  id         Int                      @id @default(autoincrement())
+  mentoriaId Int                      @map("mentoria_id")
   title      String
-  fileUrl    String                  @map("file_url")
-  createdAt  DateTime                @default(now()) @map("created_at")
-  updatedAt  DateTime                @updatedAt @map("updated_at")
+  fileUrl    String                   @map("file_url")
+  createdAt  DateTime                 @default(now()) @map("created_at")
+  updatedAt  DateTime                 @updatedAt @map("updated_at")
   mentoria   CfRendaTurbinadaMentoria @relation(fields: [mentoriaId], references: [id], onDelete: Cascade)
 
   @@map("mentoria_materials")
 }
 
 model CfRendaTurbinadaTurma2Mentoria {
-  id              Int                                   @id @default(autoincrement())
+  id              Int                                      @id @default(autoincrement())
   title           String
   description     String?
   content         String?
-  videoUrl        String?                               @map("video_url")
-  recordedAt      DateTime                              @map("recorded_at")
-  releaseDate     DateTime?                             @map("release_date")
-  durationMinutes Int?                                  @map("duration_minutes")
-  sortOrder       Int?                                  @map("sort_order")
-  createdAt       DateTime                              @default(now()) @map("created_at")
-  updatedAt       DateTime                              @updatedAt @map("updated_at")
+  videoUrl        String?                                  @map("video_url")
+  recordedAt      DateTime                                 @map("recorded_at")
+  releaseDate     DateTime?                                @map("release_date")
+  durationMinutes Int?                                     @map("duration_minutes")
+  sortOrder       Int?                                     @map("sort_order")
+  createdAt       DateTime                                 @default(now()) @map("created_at")
+  updatedAt       DateTime                                 @updatedAt @map("updated_at")
   materials       CfRendaTurbinadaTurma2MentoriaMaterial[]
 
   @@map("mentorias_turma2")
 }
 
 model CfRendaTurbinadaTurma2MentoriaMaterial {
-  id         Int                                       @id @default(autoincrement())
-  mentoriaId Int                                       @map("mentoria_id")
+  id         Int                            @id @default(autoincrement())
+  mentoriaId Int                            @map("mentoria_id")
   title      String
-  fileUrl    String                                    @map("file_url")
-  createdAt  DateTime                                  @default(now()) @map("created_at")
-  updatedAt  DateTime                                  @updatedAt @map("updated_at")
-  mentoria   CfRendaTurbinadaTurma2Mentoria            @relation(fields: [mentoriaId], references: [id], onDelete: Cascade)
+  fileUrl    String                         @map("file_url")
+  createdAt  DateTime                       @default(now()) @map("created_at")
+  updatedAt  DateTime                       @updatedAt @map("updated_at")
+  mentoria   CfRendaTurbinadaTurma2Mentoria @relation(fields: [mentoriaId], references: [id], onDelete: Cascade)
 
   @@map("mentoria_materials_turma2")
 }
 
 model BastidoresDaBolsaModule {
-  id          String                        @id @default(cuid())
+  id          String                    @id @default(cuid())
   title       String
   highlight   String?
   releaseDate DateTime
-  isHidden    Boolean                       @default(false)
-  createdAt   DateTime                      @default(now())
-  updatedAt   DateTime                      @updatedAt
+  isHidden    Boolean                   @default(false)
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
   sortOrder   Int?
   lessons     BastidoresDaBolsaLesson[]
 
@@ -1030,7 +1063,7 @@ model BastidoresDaBolsaModule {
 }
 
 model BastidoresDaBolsaLesson {
-  id          Int                            @id @default(autoincrement())
+  id          Int                               @id @default(autoincrement())
   moduleId    String
   title       String
   duration    String
@@ -1038,22 +1071,22 @@ model BastidoresDaBolsaLesson {
   videoUrl    String?
   content     String?
   sortOrder   Int?
-  createdAt   DateTime                       @default(now())
-  updatedAt   DateTime                       @updatedAt
-  module      BastidoresDaBolsaModule        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  createdAt   DateTime                          @default(now())
+  updatedAt   DateTime                          @updatedAt
+  module      BastidoresDaBolsaModule           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   materials   BastidoresDaBolsaLessonMaterial[]
 
   @@map("bastidores_lessons")
 }
 
 model BastidoresDaBolsaLessonMaterial {
-  id        Int                      @id @default(autoincrement())
+  id        Int                     @id @default(autoincrement())
   lessonId  Int
   title     String
   fileUrl   String
-  createdAt DateTime                 @default(now())
-  updatedAt DateTime                 @updatedAt
-  lesson    BastidoresDaBolsaLesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+  lesson    BastidoresDaBolsaLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@map("bastidores_lesson_materials")
 }
