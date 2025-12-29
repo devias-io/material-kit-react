@@ -79,12 +79,17 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
-    const pageSize = Math.min(
-      Math.max(parseInt(searchParams.get('pageSize') || '50', 10), 1),
-      200
-    );
+    const limitParam = parseInt(searchParams.get('limit') || '', 10);
+    const pageSizeParam = parseInt(searchParams.get('pageSize') || '', 10);
+    const resolvedPageSize = Number.isFinite(limitParam)
+      ? limitParam
+      : Number.isFinite(pageSizeParam)
+        ? pageSizeParam
+        : 20;
+    const pageSize = Math.min(Math.max(resolvedPageSize, 1), 200);
     const ticker = searchParams.get('ticker') || undefined;
     const tipo = searchParams.get('tipo') || undefined;
+    const origem = searchParams.get('origem') || undefined;
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const orderDirection = searchParams.get('order') === 'asc' ? 'asc' : 'desc';
@@ -92,6 +97,7 @@ export async function GET(request: NextRequest) {
     const where = {
       ...(ticker ? { ticker } : {}),
       ...(tipo ? { tipo } : {}),
+      ...(origem ? { origem } : {}),
       ...(startDate || endDate
         ? {
             dataObj: {
@@ -111,7 +117,8 @@ export async function GET(request: NextRequest) {
       tipo,
       startDate,
       endDate,
-      orderDirection
+      orderDirection,
+      origem
     );
 
     const { data } = await CacheService.withCache(
@@ -136,6 +143,8 @@ export async function GET(request: NextRequest) {
               valorFormatado: true,
               dividendYield: true,
               fonte: true,
+              origem: true,
+              observacoes: true,
             },
           }),
           prisma.provento.count({ where }),
