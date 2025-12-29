@@ -2026,23 +2026,88 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, isFII = false }: 
       if (dadosSalvos) {
         try {
           const proventosSalvos = JSON.parse(dadosSalvos);
+
+          const normalizarData = (valor: any) => {
+            if (!valor) return '';
+
+            const tentarConverter = (entrada: any) => {
+              const data = new Date(entrada);
+              return !isNaN(data.getTime()) ? data.toISOString().split('T')[0] : '';
+            };
+
+            if (valor instanceof Date) {
+              return tentarConverter(valor);
+            }
+
+            if (typeof valor === 'string') {
+              const viaDate = tentarConverter(valor);
+              if (viaDate) return viaDate;
+
+              const partes = valor.split('/');
+              if (partes.length === 3) {
+                const [dia, mes, ano] = partes.map(Number);
+                const data = new Date(ano, mes - 1, dia);
+                if (!isNaN(data.getTime())) return data.toISOString().split('T')[0];
+              }
+
+              return valor.trim();
+            }
+
+            if (typeof valor === 'number') {
+              return tentarConverter(valor);
+            }
+
+            return '';
+          };
+
+          const normalizarValor = (valor: any) => {
+            const numero = typeof valor === 'string' ? Number(valor.replace(',', '.')) : Number(valor);
+            return Number.isFinite(numero) ? numero.toFixed(6) : String(valor ?? '');
+          };
+
           const proventosLimitados = proventosSalvos.slice(0, 500).map((item: any) => ({
             ...item,
             dataObj: new Date(item.dataCom || item.data || item.dataObj || item.dataFormatada)
           }));
-          
+
           // Filtrar dados inválidos
-          const proventosValidos = proventosLimitados.filter((item: any) => 
+          const proventosValidos = proventosLimitados.filter((item: any) =>
             item.dataObj && !isNaN(item.dataObj.getTime()) && item.valor && item.valor > 0
           );
-          
-          proventosValidos.sort((a, b) => b.dataObj.getTime() - a.dataObj.getTime());
-          setProventos(proventosValidos);
-          
+
+          // Remover duplicidades quando data com, pagamento e valor são iguais
+          const combinacoesVistas = new Set<string>();
+          const proventosUnicos = proventosValidos.filter((item: any) => {
+            const dataComKey =
+              normalizarData(item.dataCom) ||
+              normalizarData(item.data) ||
+              normalizarData(item.dataFormatada) ||
+              normalizarData(item.dataObj);
+
+            const dataPagamentoKey =
+              normalizarData(item.dataPagamento) ||
+              normalizarData(item.dataPagamentoFormatada);
+
+            const valorKey = normalizarValor(item.valor);
+
+            const chave = dataComKey && dataPagamentoKey && valorKey
+              ? `${dataComKey}|${dataPagamentoKey}|${valorKey}`
+              : null;
+
+            if (!chave) return true;
+            if (combinacoesVistas.has(chave)) return false;
+
+            combinacoesVistas.add(chave);
+            return true;
+          });
+
+          proventosUnicos.sort((a, b) => b.dataObj.getTime() - a.dataObj.getTime());
+          setProventos(proventosUnicos);
+
           console.log(`✅ Proventos carregados para ${ticker}:`, {
-            total: proventosValidos.length,
+            total: proventosUnicos.length,
             isFII,
-            primeiros2: proventosValidos.slice(0, 2)
+            primeiros2: proventosUnicos.slice(0, 2)
           });
           
         } catch (err) {
