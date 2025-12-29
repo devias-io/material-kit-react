@@ -75,8 +75,9 @@ const INDICES_PADRAO: Array<{
   fonte: FonteIndice;
 }> = [
   { ticker: '^BVSP', label: 'IBOV', color: '#0ea5e9', fonte: 'brapi-historical' },
-  { ticker: 'IFIX', label: 'IFIX', color: '#16a34a', fonte: 'brapi-historical' },
+  { ticker: 'XFIX11', label: 'IFIX', color: '#16a34a', fonte: 'brapi-historical' },
   { ticker: 'IVVB11', label: 'IVVB11', color: '#a855f7', fonte: 'brapi-historical' },
+  { ticker: 'SMLL11', label: 'SMLL', color: '#f59e0b', fonte: 'brapi-historical' },
   { ticker: 'CDI', label: 'CDI', color: '#0f766e', fonte: 'bcb' },
   { ticker: 'IPCA', label: 'IPCA', color: '#ea580c', fonte: 'brapi-v2-inflation' },
   { ticker: 'SELIC', label: 'SELIC', color: '#2563eb', fonte: 'brapi-v2-prime' }
