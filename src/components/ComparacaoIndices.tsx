@@ -66,13 +66,20 @@ const RANGE_CONFIG: Record<RangeKey, { label: string; range: string; interval: s
   '10y': { label: '10 anos', range: '10y', interval: '1mo' }
 };
 
-const INDICES_PADRAO = [
-  { ticker: 'IBOV', label: 'IBOV', color: '#0ea5e9' },
-  { ticker: 'IFIX', label: 'IFIX', color: '#16a34a' },
-  { ticker: 'IVVB11', label: 'IVVB11', color: '#a855f7' },
-  { ticker: 'CDI', label: 'CDI', color: '#0f766e' },
-  { ticker: 'IPCA', label: 'IPCA', color: '#ea580c' },
-  { ticker: 'SELIC', label: 'SELIC', color: '#2563eb' }
+type FonteIndice = 'brapi-historical' | 'brapi-v2-prime' | 'brapi-v2-inflation' | 'bcb';
+
+const INDICES_PADRAO: Array<{
+  ticker: string;
+  label: string;
+  color: string;
+  fonte: FonteIndice;
+}> = [
+  { ticker: '^BVSP', label: 'IBOV', color: '#0ea5e9', fonte: 'brapi-historical' },
+  { ticker: 'IFIX', label: 'IFIX', color: '#16a34a', fonte: 'brapi-historical' },
+  { ticker: 'IVVB11', label: 'IVVB11', color: '#a855f7', fonte: 'brapi-historical' },
+  { ticker: 'CDI', label: 'CDI', color: '#0f766e', fonte: 'bcb' },
+  { ticker: 'IPCA', label: 'IPCA', color: '#ea580c', fonte: 'brapi-v2-inflation' },
+  { ticker: 'SELIC', label: 'SELIC', color: '#2563eb', fonte: 'brapi-v2-prime' }
 ];
 
 const extrairHistorico = (dados: HistoricoBruto): HistoricoPonto[] => {
@@ -147,6 +154,120 @@ const buscarHistorico = async (
   }
 
   return { historico: extrairHistorico(historico), dividendos };
+};
+
+// Converter datas DD/MM/YYYY para timestamp
+const converterDataBR = (dataBR: string): number => {
+  const [dia, mes, ano] = dataBR.split('/');
+  return new Date(`${ano}-${mes}-${dia}`).getTime();
+};
+
+// Gerar datas para requisições baseado no range
+const gerarDatasRange = (range: RangeKey): { dataInicial: string; dataFinal: string } => {
+  const hoje = new Date();
+  const dataFinal = dayjs(hoje).format('DD/MM/YYYY');
+
+  let dataInicial = hoje;
+  switch (range) {
+    case '2y':
+      dataInicial = dayjs(hoje).subtract(2, 'year').toDate();
+      break;
+    case '5y':
+      dataInicial = dayjs(hoje).subtract(5, 'year').toDate();
+      break;
+    case '10y':
+      dataInicial = dayjs(hoje).subtract(10, 'year').toDate();
+      break;
+    default:
+      break;
+  }
+
+  return {
+    dataInicial: dayjs(dataInicial).format('DD/MM/YYYY'),
+    dataFinal
+  };
+};
+
+// Converter taxas mensais para índice acumulado (base 100)
+// CDI, SELIC e IPCA são taxas mensais que precisam ser compostas
+const calcularIndiceAcumulado = (taxasMensais: { date: number; value: number }[]): HistoricoPonto[] => {
+  let indice = 100;
+  const taxasOrdenadas = [...taxasMensais].sort((a, b) => a.date - b.date);
+
+  return taxasOrdenadas.map(ponto => {
+    indice = indice * (1 + ponto.value / 100);
+    return { date: ponto.date, close: indice };
+  });
+};
+
+const agruparUltimoValorMensal = (pontos: { date: number; value: number }[]): { date: number; value: number }[] => {
+  const pontosValidos = pontos
+    .filter(ponto => typeof ponto.date === 'number' && !Number.isNaN(ponto.date) && typeof ponto.value === 'number')
+    .sort((a, b) => a.date - b.date);
+
+  const ultimoPorMes = new Map<string, { date: number; value: number }>();
+
+  pontosValidos.forEach(ponto => {
+    const chaveMes = dayjs(ponto.date).format('YYYY-MM');
+    const existente = ultimoPorMes.get(chaveMes);
+    if (!existente || ponto.date > existente.date) {
+      ultimoPorMes.set(chaveMes, ponto);
+    }
+  });
+
+  return Array.from(ultimoPorMes.values()).sort((a, b) => a.date - b.date);
+};
+
+const buscarSelic = async (range: RangeKey, signal?: AbortSignal): Promise<HistoricoPonto[]> => {
+  const { dataInicial, dataFinal } = gerarDatasRange(range);
+  const url = `https://brapi.dev/api/v2/prime-rate?country=brazil&historical=true&start=${dataInicial}&end=${dataFinal}&token=${API_CONFIG.BRAPI_TOKEN}`;
+
+  const response = await fetch(url, { signal, headers: API_CONFIG.DEFAULT_HEADERS });
+  if (!response.ok) throw new Error(`SELIC: ${response.status}`);
+
+  const data = await response.json();
+  const taxas = data['prime-rate'].map((item: { date: string | number; value: string }) => ({
+    date: normalizarData(item.date) || converterDataBR(String(item.date)),
+    value: parseFloat(item.value)
+  }));
+
+  const taxasMensais = agruparUltimoValorMensal(taxas);
+
+  return calcularIndiceAcumulado(taxasMensais);
+};
+
+const buscarIPCA = async (range: RangeKey, signal?: AbortSignal): Promise<HistoricoPonto[]> => {
+  const { dataInicial, dataFinal } = gerarDatasRange(range);
+  const url = `https://brapi.dev/api/v2/inflation?country=brazil&historical=true&start=${dataInicial}&end=${dataFinal}&token=${API_CONFIG.BRAPI_TOKEN}`;
+
+  const response = await fetch(url, { signal, headers: API_CONFIG.DEFAULT_HEADERS });
+  if (!response.ok) throw new Error(`IPCA: ${response.status}`);
+
+  const data = await response.json();
+  const taxas = data.inflation.map((item: { date: string | number; value: string }) => ({
+    date: normalizarData(item.date) || converterDataBR(String(item.date)),
+    value: parseFloat(item.value)
+  }));
+
+  const taxasMensais = agruparUltimoValorMensal(taxas);
+
+  return calcularIndiceAcumulado(taxasMensais);
+};
+
+const buscarCDI = async (range: RangeKey, signal?: AbortSignal): Promise<HistoricoPonto[]> => {
+  const { dataInicial, dataFinal } = gerarDatasRange(range);
+  const url = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados?formato=json&dataInicial=${dataInicial}&dataFinal=${dataFinal}`;
+
+  const response = await fetch(url, { signal });
+  if (!response.ok) throw new Error(`CDI: ${response.status}`);
+
+  const data = await response.json();
+  const taxas = data.map((item: { data: string; valor: string }) => ({
+    date: converterDataBR(item.data),
+    value: parseFloat(item.valor)
+  }));
+
+  return calcularIndiceAcumulado(taxas);
 };
 
 const aplicarDividendosComReinvestimento = (historico: HistoricoPonto[], dividendos: DividendoPonto[]) => {
@@ -250,7 +371,7 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
       setErro(null);
 
       const ativosParaBuscar = [
-        { ticker, label: ticker, color: corAtivo, tipo: 'ativo' as SerieTipo },
+        { ticker, label: ticker, color: corAtivo, tipo: 'ativo' as SerieTipo, fonte: 'brapi-historical' as FonteIndice },
         ...INDICES_PADRAO.map(idx => ({ ...idx, tipo: 'indice' as SerieTipo }))
       ];
 
@@ -260,14 +381,27 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
       const resultados = await Promise.allSettled(
         ativosParaBuscar.map(async item => {
           try {
-            const { historico, dividendos } = await buscarHistorico(item.ticker, range, controller.signal);
-            
+            let historico: HistoricoPonto[] = [];
+            let dividendos: DividendoPonto[] = [];
+
+            if (item.fonte === 'brapi-historical') {
+              const resultadoHistorico = await buscarHistorico(item.ticker, range, controller.signal);
+              historico = resultadoHistorico.historico;
+              dividendos = resultadoHistorico.dividendos;
+            } else if (item.fonte === 'brapi-v2-prime') {
+              historico = await buscarSelic(range, controller.signal);
+            } else if (item.fonte === 'brapi-v2-inflation') {
+              historico = await buscarIPCA(range, controller.signal);
+            } else if (item.fonte === 'bcb') {
+              historico = await buscarCDI(range, controller.signal);
+            }
+
             console.log(`✅ ${item.ticker}:`, {
               pontos: historico.length,
               dividendos: dividendos.length,
               primeiraData: historico[0]?.date ? new Date(historico[0].date).toLocaleDateString('pt-BR') : 'N/A',
-              ultimaData: historico[historico.length - 1]?.date 
-                ? new Date(historico[historico.length - 1].date).toLocaleDateString('pt-BR') 
+              ultimaData: historico[historico.length - 1]?.date
+                ? new Date(historico[historico.length - 1].date).toLocaleDateString('pt-BR')
                 : 'N/A'
             });
 
