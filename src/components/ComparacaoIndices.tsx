@@ -218,6 +218,12 @@ const agruparUltimoValorMensal = (pontos: { date: number; value: number }[]): { 
   return Array.from(ultimoPorMes.values()).sort((a, b) => a.date - b.date);
 };
 
+const converterTaxaAnualParaMensal = (pontos: { date: number; value: number }[]): { date: number; value: number }[] =>
+  pontos.map(ponto => ({
+    date: ponto.date,
+    value: (Math.pow(1 + ponto.value / 100, 1 / 12) - 1) * 100
+  }));
+
 const buscarSelic = async (range: RangeKey, signal?: AbortSignal): Promise<HistoricoPonto[]> => {
   const { dataInicial, dataFinal } = gerarDatasRange(range);
   const url = `https://brapi.dev/api/v2/prime-rate?country=brazil&historical=true&start=${dataInicial}&end=${dataFinal}&token=${API_CONFIG.BRAPI_TOKEN}`;
@@ -231,7 +237,7 @@ const buscarSelic = async (range: RangeKey, signal?: AbortSignal): Promise<Histo
     value: parseFloat(item.value)
   }));
 
-  const taxasMensais = agruparUltimoValorMensal(taxas);
+  const taxasMensais = converterTaxaAnualParaMensal(agruparUltimoValorMensal(taxas));
 
   return calcularIndiceAcumulado(taxasMensais);
 };
