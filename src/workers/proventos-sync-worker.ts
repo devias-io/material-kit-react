@@ -8,6 +8,13 @@ const PROVENTOS_STATS_CACHE_TAG = 'proventos:stats';
 const PROGRESS_CACHE_TTL_SECONDS = 60 * 60;
 const ESTATISTICAS_BATCH_SIZE = 10;
 
+// Funções auxiliares de formatação (necessárias para campos legados)
+const formatarValor = (valor: number) =>
+  valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const formatarData = (data: Date) => 
+  new Intl.DateTimeFormat('pt-BR').format(data);
+
 export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
   console.log('🚀 Iniciando sincronização de proventos...', config);
 
@@ -83,22 +90,34 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
         if (config.dataInicio && provento.dataCom < config.dataInicio) continue;
         if (config.dataFim && provento.dataCom > config.dataFim) continue;
 
+        // Preparar datas (usar dataPagamento ou dataCom como fallback)
+        const dataBase = provento.dataPagamento || provento.dataCom;
+        const dataComString = provento.dataCom.toISOString();
+        const dataPagamentoString = provento.dataPagamento 
+          ? provento.dataPagamento.toISOString() 
+          : null;
+
         // Verificar se provento já existe
         const existente = await prisma.provento.findFirst({
           where: {
             ticker: provento.ticker,
-            dataCom: provento.dataCom,
+            dataCom: dataComString,
             tipo: provento.tipo,
           },
         });
 
-        // Dados para criar/atualizar (APENAS campos que existem no schema)
+        // Dados para criar/atualizar (incluindo campos legados obrigatórios)
         const dadosProvento = {
           tipo: provento.tipo,
           valor: provento.valor,
-          dataCom: provento.dataCom,
-          dataPagamento: provento.dataPagamento,
-          descricao: provento.descricao,
+          data: dataBase.toISOString(),          // Campo legado obrigatório
+          dataObj: dataBase,                     // Campo legado obrigatório
+          dataCom: dataComString,
+          dataPagamento: dataPagamentoString,
+          dataFormatada: formatarData(dataBase), // Campo legado obrigatório
+          valorFormatado: formatarValor(provento.valor), // Campo legado obrigatório
+          observacoes: provento.descricao,       // Mapeamento: descricao → observacoes
+          fonte: 'BRAPI',                        // Campo legado
           origem: 'BRAPI' as const,
           dataUltimaAtualizacao: new Date(),
         };
@@ -129,7 +148,7 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
             },
           });
           totalAtualizados++;
-          console.log(`⚠️ CSV sobrescrito: ${ticker} - ${provento.tipo} - ${provento.dataCom}`);
+          console.log(`⚠️ CSV sobrescrito: ${ticker} - ${provento.tipo} - ${dataComString}`);
         } else {
           // CASO 4: Provento EXISTE (CSV) - PULAR (CSV tem prioridade)
           totalPulados++;
@@ -227,8 +246,8 @@ async function recalcularEstatisticasProventos(tickers: string[]) {
           _count: { id: true },
           _sum: { valor: true },
           _avg: { valor: true },
-          _min: { dataCom: true },
-          _max: { dataCom: true },
+          _min: { dataObj: true },
+          _max: { dataObj: true },
         });
 
         await prisma.proventoEstatistica.upsert({
@@ -238,15 +257,15 @@ async function recalcularEstatisticasProventos(tickers: string[]) {
             totalProventos: stats._count.id,
             valorTotal: stats._sum.valor || 0,
             valorMedio: stats._avg.valor || 0,
-            primeiroProvento: stats._min.dataCom,
-            ultimoProvento: stats._max.dataCom,
+            primeiroProvento: stats._min.dataObj,
+            ultimoProvento: stats._max.dataObj,
           },
           update: {
             totalProventos: stats._count.id,
             valorTotal: stats._sum.valor || 0,
             valorMedio: stats._avg.valor || 0,
-            primeiroProvento: stats._min.dataCom,
-            ultimoProvento: stats._max.dataCom,
+            primeiroProvento: stats._min.dataObj,
+            ultimoProvento: stats._max.dataObj,
             ultimaAtualizacao: new Date(),
           },
         });
