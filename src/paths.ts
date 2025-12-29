@@ -47,6 +47,8 @@ export const paths = {
     adminIntegracoes: '/dashboard/central-agenda',
     adminSettings: '/dashboard/admin/settings',
     adminPlans: '/dashboard/admin/plans',
+    adminProventosSync: '/admin/proventos/sincronizacao',
+    adminProventosListagem: '/admin/proventos/listagem',
   },
   errors: {
     notFound: '/errors/not-found'
