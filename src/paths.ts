@@ -48,6 +48,7 @@ export const paths = {
     adminSettings: '/dashboard/admin/settings',
     adminPlans: '/dashboard/admin/plans',
     adminProventosSync: '/admin/proventos/sincronizacao',
+    adminProventosListagem: '/admin/proventos/listagem',
   },
   errors: {
     notFound: '/errors/not-found'

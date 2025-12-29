@@ -254,6 +254,14 @@ export const navItems = [
         page: 'admin-proventos'
       },
       {
+        key: 'admin-proventos-listagem',
+        title: 'Listagem de Proventos',
+        href: paths.dashboard.adminProventosListagem,
+        icon: 'table',
+        page: 'admin-proventos',
+        requiresAdmin: true,
+      },
+      {
         key: 'admin-proventos-sync',
         title: 'Sincronização Proventos',
         href: paths.dashboard.adminProventosSync,
