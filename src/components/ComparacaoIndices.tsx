@@ -188,9 +188,33 @@ const gerarDatasRange = (range: RangeKey): { dataInicial: string; dataFinal: str
   };
 };
 
+// 🆕 FUNÇÃO CRÍTICA: Agrupa dados diários em mensais
+// Pega o ÚLTIMO valor de cada mês (mais representativo)
+const agruparDadosDiariosPorMes = (dadosDiarios: { date: number; value: number }[]): { date: number; value: number }[] => {
+  if (dadosDiarios.length === 0) return [];
+
+  // Agrupa por ano-mês
+  const porMes = new Map<string, { date: number; value: number }>();
+
+  dadosDiarios.forEach(ponto => {
+    const data = new Date(ponto.date);
+    const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Mantém apenas o último valor de cada mês (ou substitui se já existe)
+    if (!porMes.has(chave) || ponto.date > porMes.get(chave)!.date) {
+      porMes.set(chave, ponto);
+    }
+  });
+
+  // Converte de volta para array e ordena
+  return Array.from(porMes.values()).sort((a, b) => a.date - b.date);
+};
+
 // Converter taxas mensais para índice acumulado (base 100)
 // CDI, SELIC e IPCA são taxas mensais que precisam ser compostas
 const calcularIndiceAcumulado = (taxasMensais: { date: number; value: number }[]): HistoricoPonto[] => {
+  if (taxasMensais.length === 0) return [];
+
   let indice = 100;
   const taxasOrdenadas = [...taxasMensais].sort((a, b) => a.date - b.date);
 
@@ -208,12 +232,18 @@ const buscarSelic = async (range: RangeKey, signal?: AbortSignal): Promise<Histo
   if (!response.ok) throw new Error(`SELIC: ${response.status}`);
 
   const data = await response.json();
-  const taxas = data['prime-rate'].map((item: { date: string | number; value: string }) => ({
+  const taxasDiarias = data['prime-rate'].map((item: { date: string | number; value: string }) => ({
     date: normalizarData(item.date) || converterDataBR(String(item.date)),
     value: parseFloat(item.value)
   }));
 
-  return calcularIndiceAcumulado(taxas);
+  console.log(`🔍 SELIC - Dados diários: ${taxasDiarias.length} pontos`);
+  
+  // 🎯 AGRUPAMENTO POR MÊS
+  const taxasMensais = agruparDadosDiariosPorMes(taxasDiarias);
+  console.log(`🔍 SELIC - Dados mensais: ${taxasMensais.length} pontos`);
+
+  return calcularIndiceAcumulado(taxasMensais);
 };
 
 const buscarIPCA = async (range: RangeKey, signal?: AbortSignal): Promise<HistoricoPonto[]> => {
@@ -224,12 +254,14 @@ const buscarIPCA = async (range: RangeKey, signal?: AbortSignal): Promise<Histor
   if (!response.ok) throw new Error(`IPCA: ${response.status}`);
 
   const data = await response.json();
-  const taxas = data.inflation.map((item: { date: string | number; value: string }) => ({
+  const taxasMensais = data.inflation.map((item: { date: string | number; value: string }) => ({
     date: normalizarData(item.date) || converterDataBR(String(item.date)),
     value: parseFloat(item.value)
   }));
 
-  return calcularIndiceAcumulado(taxas);
+  console.log(`🔍 IPCA - Dados mensais: ${taxasMensais.length} pontos`);
+
+  return calcularIndiceAcumulado(taxasMensais);
 };
 
 const buscarCDI = async (range: RangeKey, signal?: AbortSignal): Promise<HistoricoPonto[]> => {
@@ -240,12 +272,18 @@ const buscarCDI = async (range: RangeKey, signal?: AbortSignal): Promise<Histori
   if (!response.ok) throw new Error(`CDI: ${response.status}`);
 
   const data = await response.json();
-  const taxas = data.map((item: { data: string; valor: string }) => ({
+  const taxasDiarias = data.map((item: { data: string; valor: string }) => ({
     date: converterDataBR(item.data),
     value: parseFloat(item.valor)
   }));
 
-  return calcularIndiceAcumulado(taxas);
+  console.log(`🔍 CDI - Dados diários: ${taxasDiarias.length} pontos`);
+  
+  // 🎯 AGRUPAMENTO POR MÊS
+  const taxasMensais = agruparDadosDiariosPorMes(taxasDiarias);
+  console.log(`🔍 CDI - Dados mensais: ${taxasMensais.length} pontos`);
+
+  return calcularIndiceAcumulado(taxasMensais);
 };
 
 const aplicarDividendosComReinvestimento = (historico: HistoricoPonto[], dividendos: DividendoPonto[]) => {
@@ -278,27 +316,22 @@ const aplicarDividendosComReinvestimento = (historico: HistoricoPonto[], dividen
   return { data, retornoFinal };
 };
 
-// 🎯 NOVA FUNÇÃO: Alinhamento mais flexível
 const prepararSeriesAlinhadasFlexivel = (
   series: Array<{ name: string; color: string; tipo: SerieTipo; pontos: HistoricoPonto[]; dividendos: DividendoPonto[] }>
 ): SeriePreparada[] => {
-  // Em vez de forçar todos a começarem da data mais recente,
-  // vamos usar a data mais ANTIGA que tenha pelo menos 2 séries
   const datasIniciais = series
     .map(serie => (serie.pontos.length > 0 ? serie.pontos[0].date : 0))
     .filter(valor => valor > 0)
-    .sort((a, b) => a - b); // Ordena do mais antigo para o mais recente
+    .sort((a, b) => a - b);
 
   if (datasIniciais.length === 0) return [];
 
-  // Usa a data mais ANTIGA se houver pelo menos 2 séries com dados
   const inicioComum = datasIniciais.length >= 2 ? datasIniciais[0] : datasIniciais[0];
 
   return series
     .map(serie => {
       const pontosValidos = serie.pontos.filter(ponto => ponto.date >= inicioComum);
       
-      // Reduz o mínimo de pontos para 1 (em vez de 2)
       if (pontosValidos.length < 1) return null;
 
       const { data, retornoFinal } = aplicarDividendosComReinvestimento(pontosValidos, serie.dividendos);
@@ -391,7 +424,6 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
         })
       );
 
-      // 🔍 Gera relatório de status
       const status: IndiceStatus[] = resultados.map((resultado, index) => {
         const ativo = ativosParaBuscar[index];
         
@@ -644,7 +676,6 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
         </div>
       )}
 
-      {/* 🆕 Painel de Status dos Índices */}
       {indicesStatus.length > 0 && (
         <details
           style={{
