@@ -1658,106 +1658,74 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, dataSaida, isFII 
   const dataEntradaNormalizada = useMemo(() => normalizarData(dataEntrada), [dataEntrada, normalizarData]);
   const dataSaidaNormalizada = useMemo(() => normalizarData(dataSaida), [dataSaida, normalizarData]);
 
-const processarProventos = useCallback((listaProventos) => {
-  if (!Array.isArray(listaProventos)) return [];
+  const processarProventos = useCallback((listaProventos) => {
+    if (!Array.isArray(listaProventos)) return [];
 
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
 
-  return listaProventos
-    .map((item) => {
-      const valorNumerico = typeof item.valor === 'number' ? item.valor : Number(item.valor ?? 0) || 0;
-      
-      // ✅ USAR DATA DE PAGAMENTO para filtrar
-      const dataPagamentoBruta = item.dataPagamento || item.dataObj || item.data;
-      const dataPagamentoNormalizada = normalizarData(dataPagamentoBruta) || criarDataFallback();
+    return listaProventos
+      .map((item) => {
+        const valorNumerico = typeof item.valor === 'number' ? item.valor : Number(item.valor ?? 0) || 0;
+        
+        // ✅ USAR DATA DE PAGAMENTO para filtrar
+        const dataPagamentoBruta = item.dataPagamento || item.dataObj || item.data;
+        const dataPagamentoNormalizada = normalizarData(dataPagamentoBruta) || criarDataFallback();
 
-      // Data COM para exibição (se disponível)
-      const dataComNormalizada = item.dataCom ? normalizarData(item.dataCom) : null;
-
-      const valorParaFormatacao = Number.isFinite(valorNumerico) ? valorNumerico : 0;
-
-      return {
-        ...item,
-        valor: valorNumerico,
-        dataPagamentoObj: dataPagamentoNormalizada,
-        dataComObj: dataComNormalizada,
-        valorFormatado: formatCurrency(valorParaFormatacao, moeda),
-        tipo: item.tipo || (isFII ? 'Rendimento' : 'Dividendo')
-      };
-    })
-    .filter((item) => {
-      // ✅ Verificar se a data de pagamento é válida
-      if (!item.dataPagamentoObj) return false;
-
-      const dataPagamentoValida = item.dataPagamentoObj instanceof Date 
-        ? item.dataPagamentoObj 
-        : normalizarData(item.dataPagamentoObj);
-      
-      if (!dataPagamentoValida || isNaN(dataPagamentoValida.getTime())) return false;
-
-      // ✅ Verificar valor
-      if (!item.valor || item.valor <= 0) return false;
-
-      // ✅ FILTRO PRINCIPAL: Data de pagamento deve ser <= HOJE
-      if (dataPagamentoValida.getTime() > hoje.getTime()) {
-        return false; // ❌ Não mostrar pagamentos futuros
-      }
-
-      // ✅ Filtro por data de entrada
-      if (dataEntradaNormalizada && dataPagamentoValida.getTime() < dataEntradaNormalizada.getTime()) {
-        return false;
-      }
-
-      // ✅ Filtro por data de saída
-      if (dataSaidaNormalizada && dataPagamentoValida.getTime() > dataSaidaNormalizada.getTime()) {
-        return false;
-      }
-
-      item.dataPagamentoObj = dataPagamentoValida;
-      return true;
-    })
-    .sort((a, b) => {
-      const dataA = a.dataPagamentoObj instanceof Date 
-        ? a.dataPagamentoObj 
-        : normalizarData(a.dataPagamentoObj) || criarDataFallback();
-      const dataB = b.dataPagamentoObj instanceof Date 
-        ? b.dataPagamentoObj 
-        : normalizarData(b.dataPagamentoObj) || criarDataFallback();
-
-      return dataB.getTime() - dataA.getTime(); // Mais recente primeiro
-    });
-}, [criarDataFallback, dataEntradaNormalizada, dataSaidaNormalizada, isFII, moeda, normalizarData]);
+        // Data COM para exibição (se disponível)
+        const dataComNormalizada = item.dataCom ? normalizarData(item.dataCom) : null;
 
         const valorParaFormatacao = Number.isFinite(valorNumerico) ? valorNumerico : 0;
 
         return {
           ...item,
           valor: valorNumerico,
-          dataObj: dataNormalizada,
+          dataPagamentoObj: dataPagamentoNormalizada,
+          dataComObj: dataComNormalizada,
           valorFormatado: formatCurrency(valorParaFormatacao, moeda),
           tipo: item.tipo || (isFII ? 'Rendimento' : 'Dividendo')
         };
       })
       .filter((item) => {
-        if (!item.dataObj) return false;
+        // ✅ Verificar se a data de pagamento é válida
+        if (!item.dataPagamentoObj) return false;
 
-        const dataValida = item.dataObj instanceof Date ? item.dataObj : normalizarData(item.dataObj);
-        if (!dataValida || isNaN(dataValida.getTime())) return false;
+        const dataPagamentoValida = item.dataPagamentoObj instanceof Date 
+          ? item.dataPagamentoObj 
+          : normalizarData(item.dataPagamentoObj);
+        
+        if (!dataPagamentoValida || isNaN(dataPagamentoValida.getTime())) return false;
 
+        // ✅ Verificar valor
         if (!item.valor || item.valor <= 0) return false;
 
-        if (dataEntradaNormalizada && dataValida.getTime() < dataEntradaNormalizada.getTime()) return false;
-        if (dataSaidaNormalizada && dataValida.getTime() > dataSaidaNormalizada.getTime()) return false;
+        // ✅ FILTRO PRINCIPAL: Data de pagamento deve ser <= HOJE
+        if (dataPagamentoValida.getTime() > hoje.getTime()) {
+          return false; // ❌ Não mostrar pagamentos futuros
+        }
 
-        item.dataObj = dataValida;
+        // ✅ Filtro por data de entrada
+        if (dataEntradaNormalizada && dataPagamentoValida.getTime() < dataEntradaNormalizada.getTime()) {
+          return false;
+        }
+
+        // ✅ Filtro por data de saída
+        if (dataSaidaNormalizada && dataPagamentoValida.getTime() > dataSaidaNormalizada.getTime()) {
+          return false;
+        }
+
+        item.dataPagamentoObj = dataPagamentoValida;
         return true;
       })
       .sort((a, b) => {
-        const dataA = a.dataObj instanceof Date ? a.dataObj : normalizarData(a.dataObj) || criarDataFallback();
-        const dataB = b.dataObj instanceof Date ? b.dataObj : normalizarData(b.dataObj) || criarDataFallback();
+        const dataA = a.dataPagamentoObj instanceof Date 
+          ? a.dataPagamentoObj 
+          : normalizarData(a.dataPagamentoObj) || criarDataFallback();
+        const dataB = b.dataPagamentoObj instanceof Date 
+          ? b.dataPagamentoObj 
+          : normalizarData(b.dataPagamentoObj) || criarDataFallback();
 
-        return dataB.getTime() - dataA.getTime();
+        return dataB.getTime() - dataA.getTime(); // Mais recente primeiro
       });
   }, [criarDataFallback, dataEntradaNormalizada, dataSaidaNormalizada, isFII, moeda, normalizarData]);
 
@@ -1843,12 +1811,12 @@ const processarProventos = useCallback((listaProventos) => {
     if (proventos.length > 0) {
       ultimo = proventos[0];
       // Garantir que o último provento tem uma data válida
-      if (ultimo && ultimo.dataObj) {
-        if (!(ultimo.dataObj instanceof Date)) {
-          ultimo.dataObj = new Date(ultimo.dataObj);
+      if (ultimo && ultimo.dataPagamentoObj) {
+        if (!(ultimo.dataPagamentoObj instanceof Date)) {
+          ultimo.dataPagamentoObj = new Date(ultimo.dataPagamentoObj);
         }
-        if (isNaN(ultimo.dataObj.getTime())) {
-          ultimo.dataObj = new Date();
+        if (isNaN(ultimo.dataPagamentoObj.getTime())) {
+          ultimo.dataPagamentoObj = new Date();
         }
       }
     }
@@ -1926,10 +1894,10 @@ const processarProventos = useCallback((listaProventos) => {
             />
             <MetricCard
               title="Último"
-              value={ultimoProvento && ultimoProvento.dataObj ? 
-                (ultimoProvento.dataObj instanceof Date ? 
-                  ultimoProvento.dataObj.toLocaleDateString('pt-BR').replace(/\/\d{4}/, '') : 
-                  new Date(ultimoProvento.dataObj).toLocaleDateString('pt-BR').replace(/\/\d{4}/, '')
+              value={ultimoProvento && ultimoProvento.dataPagamentoObj ? 
+                (ultimoProvento.dataPagamentoObj instanceof Date ? 
+                  ultimoProvento.dataPagamentoObj.toLocaleDateString('pt-BR').replace(/\/\d{4}/, '') : 
+                  new Date(ultimoProvento.dataPagamentoObj).toLocaleDateString('pt-BR').replace(/\/\d{4}/, '')
                 ) : 'N/A'
               }
               color="#9ca3af"
@@ -2005,18 +1973,18 @@ const processarProventos = useCallback((listaProventos) => {
                     }}>
                       {provento.valorFormatado}
                     </td>
-<td style={{ 
-  padding: isMobile ? '10px 8px' : '12px',
-  textAlign: 'center', 
-  fontWeight: '500',
-  fontSize: isMobile ? '12px' : '14px'
-}}>
-  {provento.dataPagamentoObj ? (
-    provento.dataPagamentoObj instanceof Date ? 
-      provento.dataPagamentoObj.toLocaleDateString('pt-BR') :
-      new Date(provento.dataPagamentoObj).toLocaleDateString('pt-BR')
-  ) : 'N/A'}
-</td>
+                    <td style={{ 
+                      padding: isMobile ? '10px 8px' : '12px',
+                      textAlign: 'center', 
+                      fontWeight: '500',
+                      fontSize: isMobile ? '12px' : '14px'
+                    }}>
+                      {provento.dataPagamentoObj ? (
+                        provento.dataPagamentoObj instanceof Date ? 
+                          provento.dataPagamentoObj.toLocaleDateString('pt-BR') :
+                          new Date(provento.dataPagamentoObj).toLocaleDateString('pt-BR')
+                      ) : 'N/A'}
+                    </td>
                     <td style={{ 
                       padding: isMobile ? '10px 8px' : '12px',
                       textAlign: 'center'
