@@ -2030,19 +2030,34 @@ const HistoricoDividendos = React.memo(({ ticker, dataEntrada, isFII = false }: 
             ...item,
             dataObj: new Date(item.dataCom || item.data || item.dataObj || item.dataFormatada)
           }));
-          
+
           // Filtrar dados inválidos
-          const proventosValidos = proventosLimitados.filter((item: any) => 
+          const proventosValidos = proventosLimitados.filter((item: any) =>
             item.dataObj && !isNaN(item.dataObj.getTime()) && item.valor && item.valor > 0
           );
-          
-          proventosValidos.sort((a, b) => b.dataObj.getTime() - a.dataObj.getTime());
-          setProventos(proventosValidos);
-          
+
+          // Remover duplicidades quando data com, pagamento e valor são iguais
+          const combinacoesVistas = new Set<string>();
+          const proventosUnicos = proventosValidos.filter((item: any) => {
+            const dataComKey = item.dataCom || item.data || item.dataFormatada || (item.dataObj ? item.dataObj.toISOString() : '');
+            const dataPagamentoKey = item.dataPagamento || item.dataPagamentoFormatada || '';
+            const valorKey = typeof item.valor === 'number' ? item.valor.toFixed(6) : String(item.valor || '');
+            const chave = dataComKey && dataPagamentoKey ? `${dataComKey}|${dataPagamentoKey}|${valorKey}` : null;
+
+            if (!chave) return true;
+            if (combinacoesVistas.has(chave)) return false;
+
+            combinacoesVistas.add(chave);
+            return true;
+          });
+
+          proventosUnicos.sort((a, b) => b.dataObj.getTime() - a.dataObj.getTime());
+          setProventos(proventosUnicos);
+
           console.log(`✅ Proventos carregados para ${ticker}:`, {
-            total: proventosValidos.length,
+            total: proventosUnicos.length,
             isFII,
-            primeiros2: proventosValidos.slice(0, 2)
+            primeiros2: proventosUnicos.slice(0, 2)
           });
           
         } catch (err) {
