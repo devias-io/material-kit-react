@@ -1,6 +1,29 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
+  Grid,
+  MenuItem,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+  TableSortLabel,
+  LinearProgress,
+  Paper,
+} from '@mui/material';
 import { useProventos } from '@/hooks/useProventos';
 
 const tipoOptions = [
@@ -14,6 +37,16 @@ const origemOptions = [
   { label: 'BRAPI', value: 'BRAPI' },
   { label: 'CSV', value: 'CSV' },
 ];
+
+const badgeTipoColor: Record<string, 'primary' | 'success' | 'default'> = {
+  DIVIDENDO: 'primary',
+  JCP: 'success',
+};
+
+const badgeOrigemColor: Record<string, 'secondary' | 'warning' | 'default'> = {
+  BRAPI: 'secondary',
+  CSV: 'warning',
+};
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('pt-BR', {
@@ -93,241 +126,320 @@ export default function ListagemProventosPage() {
     ];
   }, [estatisticas]);
 
-  const badgeTipoClasses: Record<string, string> = {
-    DIVIDENDO: 'bg-blue-100 text-blue-700 border-blue-200',
-    JCP: 'bg-green-100 text-green-700 border-green-200',
-  };
-
-  const badgeOrigemClasses: Record<string, string> = {
-    BRAPI: 'bg-purple-100 text-purple-700 border-purple-200',
-    CSV: 'bg-amber-100 text-amber-700 border-amber-200',
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 pb-12">
-      <div className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">
-              Admin · Proventos
-            </p>
-            <h1 className="mt-1 text-3xl font-extrabold text-slate-900">
-              Listagem de Proventos
-            </h1>
-            <p className="mt-1 text-base text-slate-600">
-              Consulte proventos, filtre por ticker, tipo ou origem e navegue pelos últimos lançamentos.
-            </p>
-          </div>
-          <div className="hidden rounded-full bg-white/60 px-4 py-2 text-sm font-semibold text-slate-600 shadow sm:block">
-            Ordenação: {order === 'desc' ? 'Mais recentes' : 'Mais antigos'}
-          </div>
-        </div>
-
-        <div className="grid gap-4 rounded-2xl bg-white/80 p-4 shadow-lg ring-1 ring-slate-200 sm:grid-cols-4">
-          <div className="sm:col-span-4 grid gap-3 sm:grid-cols-4">
-            <div className="sm:col-span-2">
-              <label className="text-sm font-semibold text-slate-700">Ticker</label>
-              <input
-                type="text"
-                value={tickerInput}
-                onChange={(e) => setTickerInput(e.target.value)}
-                placeholder="VALE3"
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-semibold text-slate-700">Tipo</label>
-              <select
-                value={tipoInput}
-                onChange={(e) => setTipoInput(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+    <Box
+      sx={{
+        p: { xs: 3, md: 4 },
+        maxWidth: 1400,
+        mx: 'auto',
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      }}
+    >
+      <Stack spacing={3}>
+        <Card
+          sx={{
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+          }}
+        >
+          <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2} mb={3}>
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mb: 1 }}>
+                  📑 Listagem de Proventos
+                </Typography>
+                <Typography variant="body1" sx={{ color: '#475569' }}>
+                  Consulte proventos, filtre por ticker, tipo ou origem e navegue pelos últimos lançamentos.
+                </Typography>
+              </Box>
+              <Button
+                variant="outlined"
+                onClick={toggleOrder}
+                sx={{
+                  alignSelf: { xs: 'flex-start', md: 'center' },
+                  borderRadius: '12px',
+                  borderColor: '#cbd5e1',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  color: '#0f172a',
+                  '&:hover': { backgroundColor: '#f8fafc', borderColor: '#94a3b8' },
+                }}
               >
-                {tipoOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-semibold text-slate-700">Origem</label>
-              <select
-                value={origemInput}
-                onChange={(e) => setOrigemInput(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                Ordenar por data {order === 'desc' ? '▼' : '▲'}
+              </Button>
+            </Stack>
+
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={4}>
+                <TextField
+                  label="Ticker"
+                  value={tickerInput}
+                  onChange={(e) => setTickerInput(e.target.value)}
+                  placeholder="VALE3"
+                  fullWidth
+                  size="small"
+                  sx={{ backgroundColor: '#fff', borderRadius: '12px' }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <TextField
+                  select
+                  label="Tipo"
+                  value={tipoInput}
+                  onChange={(e) => setTipoInput(e.target.value)}
+                  fullWidth
+                  size="small"
+                  sx={{ backgroundColor: '#fff', borderRadius: '12px' }}
+                >
+                  {tipoOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <TextField
+                  select
+                  label="Origem"
+                  value={origemInput}
+                  onChange={(e) => setOrigemInput(e.target.value)}
+                  fullWidth
+                  size="small"
+                  sx={{ backgroundColor: '#fff', borderRadius: '12px' }}
+                >
+                  {origemOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            </Grid>
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} mt={3} justifyContent="flex-end">
+              <Button
+                onClick={handleApplyFilters}
+                variant="contained"
+                disabled={loading}
+                sx={{
+                  background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)',
+                  textTransform: 'none',
+                  borderRadius: '12px',
+                  px: 3,
+                  fontWeight: 700,
+                  boxShadow: '0 10px 15px -3px rgba(99,102,241,0.25)',
+                }}
               >
-                {origemOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+                Filtrar
+              </Button>
+              <Button
+                onClick={handleClearFilters}
+                variant="outlined"
+                disabled={loading || !filtersActive}
+                sx={{
+                  textTransform: 'none',
+                  borderRadius: '12px',
+                  px: 3,
+                  fontWeight: 700,
+                  borderColor: '#cbd5e1',
+                  color: '#0f172a',
+                  '&:hover': { backgroundColor: '#f8fafc', borderColor: '#94a3b8' },
+                }}
+              >
+                Limpar filtros
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
 
-          <div className="sm:col-span-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-            <button
-              onClick={handleApplyFilters}
-              className="inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-200 sm:w-auto"
-              disabled={loading}
-            >
-              Filtrar
-            </button>
-            <button
-              onClick={handleClearFilters}
-              className="inline-flex w-full items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 sm:w-auto"
-              disabled={loading || !filtersActive}
-            >
-              Limpar Filtros
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {(loadingStats || !estatisticas) && (
-            <div className="col-span-full text-sm text-slate-500">Carregando estatísticas...</div>
-          )}
-          {statsCards.map((card) => (
-            <div
-              key={card.title}
-              className="rounded-2xl bg-white/90 p-4 shadow-lg ring-1 ring-slate-200"
-            >
-              <p className="text-sm font-semibold text-slate-600">{card.title}</p>
-              <p className="mt-2 text-2xl font-extrabold text-slate-900">{card.value}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-6 rounded-2xl bg-white/90 p-4 shadow-lg ring-1 ring-slate-200">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">Resultados</h2>
-              <p className="text-sm text-slate-500">
-                Mostrando {range.start || 0}-{range.end || 0} de {pagination.total.toLocaleString('pt-BR')}
-              </p>
-            </div>
-            <button
-              onClick={toggleOrder}
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-            >
-              Ordenar por data {order === 'desc' ? '▼' : '▲'}
-            </button>
-          </div>
-
-          {error && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
-          <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Ticker
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Tipo
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Valor
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 cursor-pointer"
-                    onClick={toggleOrder}
+        <Card
+          sx={{
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
+          }}
+        >
+          <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+            {loadingStats && (
+              <Box mb={2}>
+                <LinearProgress />
+              </Box>
+            )}
+            <Grid container spacing={2}>
+              {statsCards.map((card) => (
+                <Grid key={card.title} item xs={12} sm={6} md={3}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2.5,
+                      borderRadius: '14px',
+                      backgroundColor: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                    }}
                   >
-                    Data COM {order === 'desc' ? '▼' : '▲'}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Data Pagamento
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Origem
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Descrição
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {loading ? (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500">
-                      Carregando proventos...
-                    </td>
-                  </tr>
-                ) : proventos.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500">
-                      Nenhum provento encontrado com os filtros selecionados.
-                    </td>
-                  </tr>
-                ) : (
-                  proventos.map((provento) => (
-                    <tr key={provento.id}>
-                      <td className="px-4 py-3 text-sm font-semibold text-slate-900">
-                        {provento.ticker}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-800">
-                        <span
-                          className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
-                            badgeTipoClasses[provento.tipo as string] || 'bg-slate-100 text-slate-700 border-slate-200'
-                          }`}
-                        >
-                          {provento.tipo}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm font-semibold text-slate-900">
-                        {formatCurrency(provento.valor)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{formatDate(provento.dataCom || provento.dataObj)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{formatDate(provento.dataPagamento)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-800">
-                        <span
-                          className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
-                            badgeOrigemClasses[provento.origem || ''] || 'bg-slate-100 text-slate-700 border-slate-200'
-                          }`}
-                        >
-                          {provento.origem || '—'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700">
-                        {provento.observacoes || '—'}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      {card.title}
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
+                      {card.value}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </CardContent>
+        </Card>
 
-          <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
-            <p className="text-sm text-slate-600">
-              Mostrando {range.start || 0}-{range.end || 0} de {pagination.total.toLocaleString('pt-BR')}
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => goToPage(Math.max(pagination.page - 1, 1))}
-                disabled={pagination.page <= 1 || loading}
-                className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition enabled:hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Anterior
-              </button>
-              <span className="text-sm font-semibold text-slate-700">
-                Página {pagination.page} de {Math.max(pagination.totalPages, 1)}
-              </span>
-              <button
-                onClick={() => goToPage(pagination.page + 1)}
-                disabled={pagination.page >= pagination.totalPages || loading}
-                className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition enabled:hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Próximo
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        <Card
+          sx={{
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
+          }}
+        >
+          <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ md: 'center' }} spacing={2} mb={2}>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a' }}>
+                  Resultados
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#64748b' }}>
+                  Mostrando {range.start || 0}-{range.end || 0} de {pagination.total.toLocaleString('pt-BR')}
+                </Typography>
+              </Box>
+              <Typography variant="body2" sx={{ color: '#475569', fontWeight: 600 }}>
+                Ordenação: {order === 'desc' ? 'Mais recentes' : 'Mais antigos'}
+              </Typography>
+            </Stack>
+
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            <TableContainer component={Paper} sx={{ borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <Table size="small">
+                <TableHead sx={{ backgroundColor: '#f8fafc' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Ticker</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Tipo</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Valor</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#475569' }}>
+                      <TableSortLabel
+                        active
+                        direction={order === 'desc' ? 'desc' : 'asc'}
+                        onClick={toggleOrder}
+                      >
+                        Data COM
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Data Pagamento</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Origem</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Descrição</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                        <LinearProgress />
+                      </TableCell>
+                    </TableRow>
+                  ) : proventos.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 3, color: '#64748b' }}>
+                        Nenhum provento encontrado com os filtros selecionados.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    proventos.map((provento) => (
+                      <TableRow key={provento.id} hover>
+                        <TableCell sx={{ fontWeight: 700, color: '#0f172a' }}>{provento.ticker}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={provento.tipo}
+                            color={badgeTipoColor[provento.tipo] || 'default'}
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontWeight: 700 }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: '#0f172a' }}>
+                          {formatCurrency(provento.valor)}
+                        </TableCell>
+                        <TableCell sx={{ color: '#334155' }}>
+                          {formatDate(provento.dataCom || provento.dataObj)}
+                        </TableCell>
+                        <TableCell sx={{ color: '#334155' }}>{formatDate(provento.dataPagamento)}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={provento.origem || '—'}
+                            color={badgeOrigemColor[provento.origem || ''] || 'default'}
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontWeight: 700 }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ color: '#475569', maxWidth: 280 }}>
+                          {provento.observacoes || '—'}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Divider sx={{ my: 3 }} />
+
+            <Stack direction={{ xs: 'column', md: 'row' }} alignItems={{ md: 'center' }} justifyContent="space-between" spacing={2}>
+              <Typography variant="body2" sx={{ color: '#475569' }}>
+                Mostrando {range.start || 0}-{range.end || 0} de {pagination.total.toLocaleString('pt-BR')}
+              </Typography>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Button
+                  variant="outlined"
+                  onClick={() => goToPage(Math.max(pagination.page - 1, 1))}
+                  disabled={pagination.page <= 1 || loading}
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    borderColor: '#cbd5e1',
+                    color: '#0f172a',
+                    '&:hover': { backgroundColor: '#f8fafc', borderColor: '#94a3b8' },
+                  }}
+                >
+                  Anterior
+                </Button>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
+                  Página {pagination.page} de {Math.max(pagination.totalPages, 1)}
+                </Typography>
+                <Button
+                  variant="outlined"
+                  onClick={() => goToPage(pagination.page + 1)}
+                  disabled={pagination.page >= pagination.totalPages || loading}
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    borderColor: '#cbd5e1',
+                    color: '#0f172a',
+                    '&:hover': { backgroundColor: '#f8fafc', borderColor: '#94a3b8' },
+                  }}
+                >
+                  Próximo
+                </Button>
+              </Stack>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Stack>
+    </Box>
   );
 }
