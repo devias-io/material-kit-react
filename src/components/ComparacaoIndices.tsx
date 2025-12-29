@@ -200,6 +200,24 @@ const calcularIndiceAcumulado = (taxasMensais: { date: number; value: number }[]
   });
 };
 
+const agruparUltimoValorMensal = (pontos: { date: number; value: number }[]): { date: number; value: number }[] => {
+  const pontosValidos = pontos
+    .filter(ponto => typeof ponto.date === 'number' && !Number.isNaN(ponto.date) && typeof ponto.value === 'number')
+    .sort((a, b) => a.date - b.date);
+
+  const ultimoPorMes = new Map<string, { date: number; value: number }>();
+
+  pontosValidos.forEach(ponto => {
+    const chaveMes = dayjs(ponto.date).format('YYYY-MM');
+    const existente = ultimoPorMes.get(chaveMes);
+    if (!existente || ponto.date > existente.date) {
+      ultimoPorMes.set(chaveMes, ponto);
+    }
+  });
+
+  return Array.from(ultimoPorMes.values()).sort((a, b) => a.date - b.date);
+};
+
 const buscarSelic = async (range: RangeKey, signal?: AbortSignal): Promise<HistoricoPonto[]> => {
   const { dataInicial, dataFinal } = gerarDatasRange(range);
   const url = `https://brapi.dev/api/v2/prime-rate?country=brazil&historical=true&start=${dataInicial}&end=${dataFinal}&token=${API_CONFIG.BRAPI_TOKEN}`;
@@ -213,7 +231,9 @@ const buscarSelic = async (range: RangeKey, signal?: AbortSignal): Promise<Histo
     value: parseFloat(item.value)
   }));
 
-  return calcularIndiceAcumulado(taxas);
+  const taxasMensais = agruparUltimoValorMensal(taxas);
+
+  return calcularIndiceAcumulado(taxasMensais);
 };
 
 const buscarIPCA = async (range: RangeKey, signal?: AbortSignal): Promise<HistoricoPonto[]> => {
@@ -229,7 +249,9 @@ const buscarIPCA = async (range: RangeKey, signal?: AbortSignal): Promise<Histor
     value: parseFloat(item.value)
   }));
 
-  return calcularIndiceAcumulado(taxas);
+  const taxasMensais = agruparUltimoValorMensal(taxas);
+
+  return calcularIndiceAcumulado(taxasMensais);
 };
 
 const buscarCDI = async (range: RangeKey, signal?: AbortSignal): Promise<HistoricoPonto[]> => {
