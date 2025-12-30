@@ -7,7 +7,7 @@ const PROVENTOS_CACHE_TAG = 'proventos:list';
 const PROVENTOS_STATS_CACHE_TAG = 'proventos:stats';
 const PROGRESS_CACHE_TTL_SECONDS = 60 * 60;
 const ESTATISTICAS_BATCH_SIZE = 10;
-const BATCH_SIZE = 100; // ✅ Processar em lotes
+const BATCH_SIZE = 100;
 
 // Funções auxiliares de formatação
 const formatarValor = (valor: number) =>
@@ -84,7 +84,7 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
     let totalPulados = 0;
     let totalErrosProcessamento = 0;
 
-    // ✅ PROCESSAR TODOS OS PROVENTOS EM LOTES
+    // PROCESSAR TODOS OS PROVENTOS EM LOTES
     const todosProventos: Array<{
       ticker: string;
       provento: any;
@@ -102,14 +102,14 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
 
     console.log(`📦 Total de proventos para processar: ${todosProventos.length}`);
 
-    // ✅ PROCESSAR EM LOTES COM UPSERT
+    // PROCESSAR EM LOTES
     for (let i = 0; i < todosProventos.length; i += BATCH_SIZE) {
       const batch = todosProventos.slice(i, i + BATCH_SIZE);
       
       console.log(`📊 Processando lote ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(todosProventos.length / BATCH_SIZE)} (${batch.length} proventos)`);
 
       try {
-        // ✅ PROCESSAR CADA PROVENTO DO LOTE
+        // PROCESSAR CADA PROVENTO DO LOTE
         const results = await Promise.allSettled(
           batch.map(async ({ ticker, provento }) => {
             const dataBase = provento.dataPagamento || provento.dataCom;
@@ -118,14 +118,14 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
               ? provento.dataPagamento.toISOString() 
               : null;
 
-            // ✅ VERIFICAR SE JÁ EXISTE (usando índice único)
-            const existente = await prisma.provento.findUnique({
+            // ✅ VERIFICAR SE JÁ EXISTE (todos os campos importantes)
+            const existente = await prisma.provento.findFirst({
               where: {
-unique_provento_ticker_dataCom_tipo: {
-                  ticker: provento.ticker,
-                  dataCom: dataComString,
-                  tipo: provento.tipo
-                }
+                ticker: provento.ticker,
+                dataCom: dataComString,
+                tipo: provento.tipo,
+                valor: provento.valor,
+                dataPagamento: dataPagamentoString,
               },
               select: { id: true, origem: true }
             });
@@ -154,6 +154,7 @@ unique_provento_ticker_dataCom_tipo: {
                 },
               });
               return { acao: 'CRIADO', ticker: provento.ticker };
+              
             } else if (existente.origem === 'BRAPI') {
               // ATUALIZAR (origem BRAPI)
               await prisma.provento.update({
@@ -161,6 +162,7 @@ unique_provento_ticker_dataCom_tipo: {
                 data: dadosProvento,
               });
               return { acao: 'ATUALIZADO', ticker: provento.ticker };
+              
             } else if (existente.origem === 'CSV' && config.forcarAtualizacao) {
               // SOBRESCREVER CSV
               await prisma.provento.update({
@@ -172,6 +174,7 @@ unique_provento_ticker_dataCom_tipo: {
               });
               console.log(`⚠️ CSV sobrescrito: ${ticker} - ${provento.tipo} - ${dataComString}`);
               return { acao: 'SOBRESCRITO', ticker: provento.ticker };
+              
             } else {
               // PULAR (CSV tem prioridade)
               return { acao: 'PULADO', ticker: provento.ticker };
