@@ -12,8 +12,10 @@ const ESTATISTICAS_BATCH_SIZE = 10;
 const formatarValor = (valor: number) =>
   valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const formatarData = (data: Date) => 
+const formatarData = (data: Date) =>
   new Intl.DateTimeFormat('pt-BR').format(data);
+
+const normalizarDataISO = (data: Date) => data.toISOString().split('T')[0];
 
 export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
   console.log('🚀 Iniciando sincronização de proventos...', config);
@@ -92,17 +94,24 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
 
         // Preparar datas (usar dataPagamento ou dataCom como fallback)
         const dataBase = provento.dataPagamento || provento.dataCom;
-        const dataComString = provento.dataCom.toISOString();
-        const dataPagamentoString = provento.dataPagamento 
-          ? provento.dataPagamento.toISOString() 
+        const dataComString = normalizarDataISO(provento.dataCom);
+        const dataComLegado = provento.dataCom.toISOString();
+        const dataPagamentoString = provento.dataPagamento
+          ? normalizarDataISO(provento.dataPagamento)
           : null;
+        const dataPagamentoLegado = provento.dataPagamento?.toISOString();
+        const dataBaseString = normalizarDataISO(dataBase);
 
         // Verificar se provento já existe
         const existente = await prisma.provento.findFirst({
           where: {
             ticker: provento.ticker,
-            dataCom: dataComString,
             tipo: provento.tipo,
+            valor: provento.valor,
+            dataCom: { in: [dataComString, dataComLegado] },
+            ...(dataPagamentoString
+              ? { dataPagamento: { in: [dataPagamentoString, dataPagamentoLegado] } }
+              : { dataPagamento: null }),
           },
         });
 
@@ -110,7 +119,7 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
         const dadosProvento = {
           tipo: provento.tipo,
           valor: provento.valor,
-          data: dataBase.toISOString(),          // Campo legado obrigatório
+          data: dataBaseString,                  // Campo legado obrigatório
           dataObj: dataBase,                     // Campo legado obrigatório
           dataCom: dataComString,
           dataPagamento: dataPagamentoString,
