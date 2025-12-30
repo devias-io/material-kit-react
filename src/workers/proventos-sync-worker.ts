@@ -24,7 +24,12 @@ const normalizarDataISO = (data: Date | string | null): string | null => {
   if (!data) return null;
   
   const dateObj = data instanceof Date ? data : new Date(data);
-  return dateObj.toISOString(); // Sempre retorna formato completo: 2025-04-29T00:00:00.000Z
+  return dateObj.toISOString();
+};
+
+// ✅ ARREDONDAR VALOR para 2 casas decimais
+const arredondarValor = (valor: number): number => {
+  return Math.round(valor * 100) / 100;
 };
 
 export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
@@ -129,26 +134,30 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
             const tipoNormalizado = normalizarTipo(provento.tipo);
             const dataComString = normalizarDataISO(provento.dataCom);
             const dataPagamentoString = normalizarDataISO(provento.dataPagamento);
+            const valorArredondado = arredondarValor(provento.valor);
 
-            // ✅ VERIFICAR SE JÁ EXISTE (com dados normalizados)
+            // ✅ VERIFICAR SE JÁ EXISTE (com margem de erro no valor)
             const existente = await prisma.provento.findFirst({
               where: {
                 ticker: provento.ticker,
                 tipo: tipoNormalizado,
-                valor: provento.valor,
+                valor: {
+                  gte: valorArredondado - 0.005,  // Margem de ±0.005
+                  lte: valorArredondado + 0.005,
+                },
                 dataCom: dataComString,
                 dataPagamento: dataPagamentoString,
               },
-              select: { id: true, origem: true }
+              select: { id: true, origem: true, valor: true }
             });
 
             const dadosProvento = {
-              tipo: tipoNormalizado,                    // ✅ Normalizado
-              valor: provento.valor,
-              data: normalizarDataISO(dataBase),        // ✅ Normalizado
+              tipo: tipoNormalizado,
+              valor: provento.valor,  // ✅ Salva valor original (não arredondado)
+              data: normalizarDataISO(dataBase),
               dataObj: dataBase,
-              dataCom: dataComString,                   // ✅ Normalizado
-              dataPagamento: dataPagamentoString,       // ✅ Normalizado
+              dataCom: dataComString,
+              dataPagamento: dataPagamentoString,
               dataFormatada: formatarData(dataBase),
               valorFormatado: formatarValor(provento.valor),
               observacoes: provento.descricao,
@@ -168,7 +177,7 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
               return { acao: 'CRIADO', ticker: provento.ticker };
               
             } else if (existente.origem === 'BRAPI') {
-              // ATUALIZAR (origem BRAPI)
+              // ATUALIZAR (origem BRAPI) - sempre atualiza para ter valor mais preciso
               await prisma.provento.update({
                 where: { id: existente.id },
                 data: dadosProvento,
@@ -176,7 +185,7 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
               return { acao: 'ATUALIZADO', ticker: provento.ticker };
               
             } else if (existente.origem === 'CSV' && config.forcarAtualizacao) {
-              // SOBRESCREVER CSV
+              // SOBRESCREVER CSV (forçar)
               await prisma.provento.update({
                 where: { id: existente.id },
                 data: {
@@ -184,11 +193,15 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
                   origem: 'BRAPI',
                 },
               });
-              console.log(`⚠️ CSV sobrescrito: ${ticker} - ${tipoNormalizado} - ${dataComString}`);
+              console.log(`⚠️ CSV sobrescrito: ${ticker} - ${tipoNormalizado} - valor ${existente.valor} → ${provento.valor}`);
               return { acao: 'SOBRESCRITO', ticker: provento.ticker };
               
             } else {
               // PULAR (CSV tem prioridade)
+              // Log se valores são diferentes mas considerados duplicatas
+              if (Math.abs(existente.valor - provento.valor) > 0.001) {
+                console.log(`ℹ️ Pulado (CSV): ${ticker} - ${tipoNormalizado} - CSV: ${existente.valor} vs BRAPI: ${provento.valor}`);
+              }
               return { acao: 'PULADO', ticker: provento.ticker };
             }
           })
