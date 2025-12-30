@@ -121,7 +121,7 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
             // ✅ VERIFICAR SE JÁ EXISTE (usando índice único)
             const existente = await prisma.provento.findUnique({
               where: {
-                ticker_dataCom_tipo: {
+unique_provento_ticker_dataCom_tipo:
                   ticker: provento.ticker,
                   dataCom: dataComString,
                   tipo: provento.tipo
