@@ -16,6 +16,17 @@ const formatarValor = (valor: number) =>
 const formatarData = (data: Date) =>
   new Intl.DateTimeFormat('pt-BR').format(data);
 
+// ✅ NORMALIZAR TIPO (sempre uppercase)
+const normalizarTipo = (tipo: string): string => tipo.toUpperCase().trim();
+
+// ✅ NORMALIZAR DATA (sempre ISO completo)
+const normalizarDataISO = (data: Date | string | null): string | null => {
+  if (!data) return null;
+  
+  const dateObj = data instanceof Date ? data : new Date(data);
+  return dateObj.toISOString(); // Sempre retorna formato completo: 2025-04-29T00:00:00.000Z
+};
+
 export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
   console.log('🚀 Iniciando sincronização de proventos...', config);
 
@@ -113,30 +124,31 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
         const results = await Promise.allSettled(
           batch.map(async ({ ticker, provento }) => {
             const dataBase = provento.dataPagamento || provento.dataCom;
-            const dataComString = provento.dataCom.toISOString();
-            const dataPagamentoString = provento.dataPagamento 
-              ? provento.dataPagamento.toISOString() 
-              : null;
+            
+            // ✅ NORMALIZAR DADOS
+            const tipoNormalizado = normalizarTipo(provento.tipo);
+            const dataComString = normalizarDataISO(provento.dataCom);
+            const dataPagamentoString = normalizarDataISO(provento.dataPagamento);
 
-            // ✅ VERIFICAR SE JÁ EXISTE (todos os campos importantes)
+            // ✅ VERIFICAR SE JÁ EXISTE (com dados normalizados)
             const existente = await prisma.provento.findFirst({
               where: {
                 ticker: provento.ticker,
-                dataCom: dataComString,
-                tipo: provento.tipo,
+                tipo: tipoNormalizado,
                 valor: provento.valor,
+                dataCom: dataComString,
                 dataPagamento: dataPagamentoString,
               },
               select: { id: true, origem: true }
             });
 
             const dadosProvento = {
-              tipo: provento.tipo,
+              tipo: tipoNormalizado,                    // ✅ Normalizado
               valor: provento.valor,
-              data: dataBase.toISOString(),
+              data: normalizarDataISO(dataBase),        // ✅ Normalizado
               dataObj: dataBase,
-              dataCom: dataComString,
-              dataPagamento: dataPagamentoString,
+              dataCom: dataComString,                   // ✅ Normalizado
+              dataPagamento: dataPagamentoString,       // ✅ Normalizado
               dataFormatada: formatarData(dataBase),
               valorFormatado: formatarValor(provento.valor),
               observacoes: provento.descricao,
@@ -172,7 +184,7 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
                   origem: 'BRAPI',
                 },
               });
-              console.log(`⚠️ CSV sobrescrito: ${ticker} - ${provento.tipo} - ${dataComString}`);
+              console.log(`⚠️ CSV sobrescrito: ${ticker} - ${tipoNormalizado} - ${dataComString}`);
               return { acao: 'SOBRESCRITO', ticker: provento.ticker };
               
             } else {
