@@ -7,15 +7,14 @@ const PROVENTOS_CACHE_TAG = 'proventos:list';
 const PROVENTOS_STATS_CACHE_TAG = 'proventos:stats';
 const PROGRESS_CACHE_TTL_SECONDS = 60 * 60;
 const ESTATISTICAS_BATCH_SIZE = 10;
+const BATCH_SIZE = 100; // ✅ Processar em lotes
 
-// Funções auxiliares de formatação (necessárias para campos legados)
+// Funções auxiliares de formatação
 const formatarValor = (valor: number) =>
   valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const formatarData = (data: Date) =>
   new Intl.DateTimeFormat('pt-BR').format(data);
-
-const normalizarDataISO = (data: Date) => data.toISOString().split('T')[0];
 
 export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
   console.log('🚀 Iniciando sincronização de proventos...', config);
@@ -83,102 +82,135 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
     let totalNovos = 0;
     let totalAtualizados = 0;
     let totalPulados = 0;
+    let totalErrosProcessamento = 0;
+
+    // ✅ PROCESSAR TODOS OS PROVENTOS EM LOTES
+    const todosProventos: Array<{
+      ticker: string;
+      provento: any;
+    }> = [];
 
     for (const [ticker, proventos] of sucessos.entries()) {
-      console.log(`📊 Processando ${ticker}: ${proventos.length} proventos`);
-
       for (const provento of proventos) {
-        // Aplicar filtros de data se configurados
+        // Aplicar filtros de data
         if (config.dataInicio && provento.dataCom < config.dataInicio) continue;
         if (config.dataFim && provento.dataCom > config.dataFim) continue;
+        
+        todosProventos.push({ ticker, provento });
+      }
+    }
 
-        // Preparar datas (usar dataPagamento ou dataCom como fallback)
-        const dataBase = provento.dataPagamento || provento.dataCom;
-        const dataComString = normalizarDataISO(provento.dataCom);
-        const dataComLegado = provento.dataCom.toISOString();
-        const dataPagamentoString = provento.dataPagamento
-          ? normalizarDataISO(provento.dataPagamento)
-          : null;
-        const dataPagamentoLegado = provento.dataPagamento?.toISOString();
-        const dataBaseString = normalizarDataISO(dataBase);
+    console.log(`📦 Total de proventos para processar: ${todosProventos.length}`);
 
-        // Verificar se provento já existe
-        const existente = await prisma.provento.findFirst({
-          where: {
-            ticker: provento.ticker,
-            tipo: provento.tipo,
-            valor: provento.valor,
-            dataCom: { in: [dataComString, dataComLegado] },
-            ...(dataPagamentoString
-              ? { dataPagamento: { in: [dataPagamentoString, dataPagamentoLegado] } }
-              : { dataPagamento: null }),
-          },
+    // ✅ PROCESSAR EM LOTES COM UPSERT
+    for (let i = 0; i < todosProventos.length; i += BATCH_SIZE) {
+      const batch = todosProventos.slice(i, i + BATCH_SIZE);
+      
+      console.log(`📊 Processando lote ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(todosProventos.length / BATCH_SIZE)} (${batch.length} proventos)`);
+
+      try {
+        // ✅ PROCESSAR CADA PROVENTO DO LOTE
+        const results = await Promise.allSettled(
+          batch.map(async ({ ticker, provento }) => {
+            const dataBase = provento.dataPagamento || provento.dataCom;
+            const dataComString = provento.dataCom.toISOString();
+            const dataPagamentoString = provento.dataPagamento 
+              ? provento.dataPagamento.toISOString() 
+              : null;
+
+            // ✅ VERIFICAR SE JÁ EXISTE (usando índice único)
+            const existente = await prisma.provento.findUnique({
+              where: {
+                ticker_dataCom_tipo: {
+                  ticker: provento.ticker,
+                  dataCom: dataComString,
+                  tipo: provento.tipo
+                }
+              },
+              select: { id: true, origem: true }
+            });
+
+            const dadosProvento = {
+              tipo: provento.tipo,
+              valor: provento.valor,
+              data: dataBase.toISOString(),
+              dataObj: dataBase,
+              dataCom: dataComString,
+              dataPagamento: dataPagamentoString,
+              dataFormatada: formatarData(dataBase),
+              valorFormatado: formatarValor(provento.valor),
+              observacoes: provento.descricao,
+              fonte: 'BRAPI',
+              origem: 'BRAPI' as const,
+              dataUltimaAtualizacao: new Date(),
+            };
+
+            if (!existente) {
+              // CRIAR NOVO
+              await prisma.provento.create({
+                data: {
+                  ticker: provento.ticker,
+                  ...dadosProvento,
+                },
+              });
+              return { acao: 'CRIADO', ticker: provento.ticker };
+            } else if (existente.origem === 'BRAPI') {
+              // ATUALIZAR (origem BRAPI)
+              await prisma.provento.update({
+                where: { id: existente.id },
+                data: dadosProvento,
+              });
+              return { acao: 'ATUALIZADO', ticker: provento.ticker };
+            } else if (existente.origem === 'CSV' && config.forcarAtualizacao) {
+              // SOBRESCREVER CSV
+              await prisma.provento.update({
+                where: { id: existente.id },
+                data: {
+                  ...dadosProvento,
+                  origem: 'BRAPI',
+                },
+              });
+              console.log(`⚠️ CSV sobrescrito: ${ticker} - ${provento.tipo} - ${dataComString}`);
+              return { acao: 'SOBRESCRITO', ticker: provento.ticker };
+            } else {
+              // PULAR (CSV tem prioridade)
+              return { acao: 'PULADO', ticker: provento.ticker };
+            }
+          })
+        );
+
+        // Contar resultados
+        results.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            if (result.value.acao === 'CRIADO') totalNovos++;
+            else if (result.value.acao === 'ATUALIZADO' || result.value.acao === 'SOBRESCRITO') totalAtualizados++;
+            else if (result.value.acao === 'PULADO') totalPulados++;
+          } else {
+            totalErrosProcessamento++;
+            console.error('❌ Erro ao processar provento:', result.reason);
+          }
         });
 
-        // Dados para criar/atualizar (incluindo campos legados obrigatórios)
-        const dadosProvento = {
-          tipo: provento.tipo,
-          valor: provento.valor,
-          data: dataBaseString,                  // Campo legado obrigatório
-          dataObj: dataBase,                     // Campo legado obrigatório
-          dataCom: dataComString,
-          dataPagamento: dataPagamentoString,
-          dataFormatada: formatarData(dataBase), // Campo legado obrigatório
-          valorFormatado: formatarValor(provento.valor), // Campo legado obrigatório
-          observacoes: provento.descricao,       // Mapeamento: descricao → observacoes
-          fonte: 'BRAPI',                        // Campo legado
-          origem: 'BRAPI' as const,
-          dataUltimaAtualizacao: new Date(),
-        };
-
-        if (!existente) {
-          // CASO 1: Provento NÃO EXISTE - CRIAR NOVO
-          await prisma.provento.create({
-            data: {
-              ticker: provento.ticker,
-              ...dadosProvento,
-            },
-          });
-          totalNovos++;
-        } else if (existente.origem === 'BRAPI') {
-          // CASO 2: Provento EXISTE e veio da BRAPI - ATUALIZAR
-          await prisma.provento.update({
-            where: { id: existente.id },
-            data: dadosProvento,
-          });
-          totalAtualizados++;
-        } else if (existente.origem === 'CSV' && config.forcarAtualizacao) {
-          // CASO 3: Provento EXISTE (CSV) mas FORÇAR ATUALIZAÇÃO
-          await prisma.provento.update({
-            where: { id: existente.id },
-            data: {
-              ...dadosProvento,
-              origem: 'BRAPI', // Muda origem para BRAPI
-            },
-          });
-          totalAtualizados++;
-          console.log(`⚠️ CSV sobrescrito: ${ticker} - ${provento.tipo} - ${dataComString}`);
-        } else {
-          // CASO 4: Provento EXISTE (CSV) - PULAR (CSV tem prioridade)
-          totalPulados++;
-        }
+      } catch (error) {
+        console.error(`❌ Erro ao processar lote:`, error);
+        totalErrosProcessamento += batch.length;
       }
     }
 
     console.log(
-      `📈 Resultados: ${totalNovos} novos, ${totalAtualizados} atualizados, ${totalPulados} pulados (CSV)`
+      `📈 Resultados: ${totalNovos} novos, ${totalAtualizados} atualizados, ${totalPulados} pulados (CSV), ${totalErrosProcessamento} erros`
     );
 
     // Atualizar registro de sincronização
     await prisma.proventoSincronizacao.update({
       where: { id: syncId },
       data: {
-        status: erros.size > 0 ? 'ERRO' : 'CONCLUIDO',
+        status: totalErrosProcessamento > 0 ? 'ERRO' : 'CONCLUIDO',
         dataFim: new Date(),
         totalProcessados: sucessos.size,
         totalNovos,
         totalAtualizados,
-        totalErros: erros.size,
+        totalErros: totalErrosProcessamento + erros.size,
         erros: erros.size > 0 ? Object.fromEntries(erros) : null,
       },
     });
@@ -201,13 +233,12 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
       totalNovos,
       totalAtualizados,
       totalPulados,
-      totalErros: erros.size,
+      totalErros: totalErrosProcessamento + erros.size,
       erros: Array.from(erros.entries()),
     };
   } catch (error) {
     console.error('❌ Erro na sincronização:', error);
 
-    // Marcar sincronização como erro
     await prisma.proventoSincronizacao.update({
       where: { id: syncId },
       data: {
@@ -219,7 +250,6 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
       },
     });
 
-    // Limpar progresso
     await CacheService.delete(`sync:progress:${syncId}`);
 
     throw error;
@@ -248,7 +278,7 @@ async function recalcularEstatisticasProventos(tickers: string[]) {
   for (let i = 0; i < tickersUnicos.length; i += ESTATISTICAS_BATCH_SIZE) {
     const batch = tickersUnicos.slice(i, i + ESTATISTICAS_BATCH_SIZE);
 
-    await Promise.all(
+    await Promise.allSettled(
       batch.map(async (ticker) => {
         const stats = await prisma.provento.aggregate({
           where: { ticker },
