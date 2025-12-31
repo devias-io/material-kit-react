@@ -100,8 +100,10 @@ const buscarHistorico = async (
   range: RangeKey,
   signal?: AbortSignal
 ): Promise<{ historico: HistoricoPonto[]; dividendos: DividendoPonto[] }> => {
-  const { range: rangeParam, interval } = RANGE_CONFIG[range];
-  const historicoUrl = `${API_CONFIG.ENDPOINTS.BRAPI_HISTORICAL}/${ticker}?range=${rangeParam}&interval=${interval}&token=${API_CONFIG.BRAPI_TOKEN}`;
+  // BRAPI mudou: apenas 'max' retorna dados históricos consistentemente
+  // Buscamos todos os dados e filtramos no client-side pelo range solicitado
+  const { range: rangeParam } = RANGE_CONFIG[range];
+  const historicoUrl = `${API_CONFIG.ENDPOINTS.BRAPI_HISTORICAL}/${ticker}?range=max&interval=1d&token=${API_CONFIG.BRAPI_TOKEN}`;
   const dividendosUrl = `${API_CONFIG.ENDPOINTS.BRAPI_QUOTE}/${ticker}?fundamental=true&dividends=true&token=${API_CONFIG.BRAPI_TOKEN}`;
 
   const [historicoResp, dividendosResp] = await Promise.all([
@@ -154,7 +156,19 @@ const buscarHistorico = async (
       : [];
   }
 
-  return { historico: extrairHistorico(historico), dividendos };
+  const historicoExtraido = extrairHistorico(historico);
+
+  // Filtrar dados pelo range solicitado (2y, 5y, 10y)
+  const agora = Date.now();
+  const anosEmMillis = rangeParam === '2y' ? 2 * 365 * 24 * 60 * 60 * 1000 :
+                      rangeParam === '5y' ? 5 * 365 * 24 * 60 * 60 * 1000 :
+                      rangeParam === '10y' ? 10 * 365 * 24 * 60 * 60 * 1000 :
+                      Infinity;
+
+  const dataCorte = agora - anosEmMillis;
+  const historicoFiltrado = historicoExtraido.filter(ponto => ponto.date >= dataCorte);
+
+  return { historico: historicoFiltrado, dividendos };
 };
 
 // Converter datas DD/MM/YYYY para timestamp
