@@ -42,45 +42,33 @@ const arredondarValor = (valor: number): number => {
   return Math.round(valor * 100) / 100;
 };
 
-// ✅ FUNÇÃO AUXILIAR: Buscar tickers de AtivoInformacao
-async function buscarTickersDeAtivosInformacao(): Promise<string[]> {
-  try {
-    console.log('📊 Buscando tickers de ativos_informacao...');
-    
-    const ativosInfo = await prisma.ativoInformacao.findMany({
-      where: {
-        ativo: true, // Apenas ativos
-        tipo: {
-          in: ['ACAO', 'FII'] // Apenas ações e FIIs
-        }
-      },
-      select: { 
-        codigo: true,
-        nome: true,
-        tipo: true 
-      },
-      orderBy: { codigo: 'asc' },
-    });
+// ✅ VERIFICAR SE TICKER É BRASILEIRO VÁLIDO
+const isTickerBrasileiroValido = (ticker: string): boolean => {
+  const tickerUpper = ticker.toUpperCase();
+  
+  // Filtros:
+  // - Não pode ter ponto (ações americanas: AAPL, MSFT)
+  // - Não pode começar com número
+  // - Deve ter entre 4 e 6 caracteres (padrão BR: PETR4, VALE3, etc)
+  // - Não pode ter espaços ou caracteres especiais
+  
+  if (tickerUpper.includes('.')) return false;
+  if (tickerUpper.includes(' ')) return false;
+  if (/^\d/.test(tickerUpper)) return false;
+  if (tickerUpper.length < 4 || tickerUpper.length > 6) return false;
+  if (!/^[A-Z0-9]+$/.test(tickerUpper)) return false;
+  
+  return true;
+};
 
-    const tickers = ativosInfo.map((a) => a.codigo.toUpperCase());
-    
-    console.log(`✅ Encontrados ${tickers.length} tickers em ativos_informacao`);
-    
-    return tickers;
-  } catch (error) {
-    console.error('❌ Erro ao buscar de ativos_informacao:', error);
-    return [];
-  }
-}
-
-// ✅ FUNÇÃO AUXILIAR: Buscar tickers de todas as carteiras de usuários
+// ✅ FUNÇÃO PRINCIPAL: Buscar tickers de TODAS as 9 tabelas de carteiras
 async function buscarTickersDasCarteiras(): Promise<string[]> {
   try {
-    console.log('📦 Buscando tickers das carteiras de usuários...');
+    console.log('📦 Buscando tickers das 9 tabelas de carteiras...');
     
     const tickers = new Set<string>();
     
-    // Buscar de todas as tabelas de carteiras
+    // Buscar de TODAS as 9 tabelas de carteiras
     const [
       microCaps,
       smallCaps,
@@ -92,55 +80,75 @@ async function buscarTickersDasCarteiras(): Promise<string[]> {
       projetoAmerica,
       exteriorStocks
     ] = await Promise.all([
+      // 1. user_micro_caps
       prisma.userMicroCaps.findMany({ 
         select: { ticker: true }, 
-        distinct: ['ticker'],
-        where: { posicaoEncerrada: false } // Apenas posições ativas
+        distinct: ['ticker']
       }),
+      
+      // 2. user_small_caps
       prisma.userSmallCaps.findMany({ 
         select: { ticker: true }, 
-        distinct: ['ticker'],
-        where: { posicaoEncerrada: false }
+        distinct: ['ticker']
       }),
+      
+      // 3. user_dividendos
       prisma.userDividendos.findMany({ 
         select: { ticker: true }, 
-        distinct: ['ticker'],
-        where: { posicaoEncerrada: false }
+        distinct: ['ticker']
       }),
+      
+      // 4. user_fiis
       prisma.userFiis.findMany({ 
         select: { ticker: true }, 
-        distinct: ['ticker'],
-        where: { posicaoEncerrada: false }
+        distinct: ['ticker']
       }),
+      
+      // 5. user_renda_turbinada
       prisma.userRendaTurbinada.findMany({ 
         select: { ticker: true }, 
-        distinct: ['ticker'],
-        where: { posicaoEncerrada: false }
+        distinct: ['ticker']
       }),
+      
+      // 6. user_dividendos_internacional
       prisma.userDividendosInternacional.findMany({ 
         select: { ticker: true }, 
-        distinct: ['ticker'],
-        where: { posicaoEncerrada: false }
+        distinct: ['ticker']
       }),
+      
+      // 7. user_etfs
       prisma.userEtfs.findMany({ 
         select: { ticker: true }, 
-        distinct: ['ticker'],
-        where: { posicaoEncerrada: false }
+        distinct: ['ticker']
       }),
+      
+      // 8. user_projeto_america
       prisma.userProjetoAmerica.findMany({ 
         select: { ticker: true }, 
-        distinct: ['ticker'],
-        where: { posicaoEncerrada: false }
+        distinct: ['ticker']
       }),
+      
+      // 9. user_exterior_stocks
       prisma.userExteriorStocks.findMany({ 
         select: { ticker: true }, 
-        distinct: ['ticker'],
-        where: { posicaoEncerrada: false }
+        distinct: ['ticker']
       }),
     ]);
     
+    // Contar por tabela (para debug)
+    console.log('📊 Tickers por tabela:');
+    console.log(`  - Micro Caps: ${microCaps.length}`);
+    console.log(`  - Small Caps: ${smallCaps.length}`);
+    console.log(`  - Dividendos: ${dividendos.length}`);
+    console.log(`  - FIIs: ${fiis.length}`);
+    console.log(`  - Renda Turbinada: ${rendaTurbinada.length}`);
+    console.log(`  - Dividendos Internacional: ${dividendosInternacional.length}`);
+    console.log(`  - ETFs: ${etfs.length}`);
+    console.log(`  - Projeto América: ${projetoAmerica.length}`);
+    console.log(`  - Exterior Stocks: ${exteriorStocks.length}`);
+    
     // Adicionar todos ao Set (remove duplicatas automaticamente)
-    [
+    const todosOsAtivos = [
       ...microCaps,
       ...smallCaps,
       ...dividendos,
@@ -150,15 +158,20 @@ async function buscarTickersDasCarteiras(): Promise<string[]> {
       ...etfs,
       ...projetoAmerica,
       ...exteriorStocks
-    ].forEach(({ ticker }) => {
-      // Filtrar tickers internacionais (não tem proventos BR)
-      if (!ticker.includes('.') && !ticker.match(/^\d/)) {
+    ];
+    
+    // Filtrar apenas tickers brasileiros válidos
+    todosOsAtivos.forEach(({ ticker }) => {
+      if (isTickerBrasileiroValido(ticker)) {
         tickers.add(ticker.toUpperCase());
+      } else {
+        console.log(`⚠️ Ticker ignorado (inválido/internacional): ${ticker}`);
       }
     });
     
     const tickersArray = Array.from(tickers).sort();
-    console.log(`✅ Encontrados ${tickersArray.length} tickers únicos nas carteiras`);
+    console.log(`✅ Total de ${tickersArray.length} tickers únicos e válidos encontrados`);
+    console.log(`📝 Primeiros 20 tickers:`, tickersArray.slice(0, 20));
     
     return tickersArray;
   } catch (error) {
@@ -194,18 +207,13 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
       console.log(`🎯 Sincronizando ${tickersParaSincronizar.length} tickers específicos`);
       
     } else {
-      // ✅ 2ª PRIORIDADE: Buscar de ativos_informacao
-      tickersParaSincronizar = await buscarTickersDeAtivosInformacao();
+      // ✅ 2ª PRIORIDADE: Buscar das 9 tabelas de carteiras (FONTE PRINCIPAL)
+      console.log('📦 Buscando tickers das carteiras de usuários...');
+      tickersParaSincronizar = await buscarTickersDasCarteiras();
       
-      // ✅ 3ª PRIORIDADE: Se não encontrar, buscar das carteiras
+      // ✅ 3ª PRIORIDADE: Se não encontrar nada, usar lista default
       if (tickersParaSincronizar.length === 0) {
-        console.log('⚠️ Nenhum ticker em ativos_informacao, buscando das carteiras...');
-        tickersParaSincronizar = await buscarTickersDasCarteiras();
-      }
-      
-      // ✅ 4ª PRIORIDADE: Se ainda estiver vazio, usar lista default
-      if (tickersParaSincronizar.length === 0) {
-        console.log('⚠️ Nenhum ticker encontrado, usando lista default...');
+        console.log('⚠️ Nenhum ticker encontrado nas carteiras, usando lista default...');
         tickersParaSincronizar = TICKERS_DEFAULT;
       }
       
