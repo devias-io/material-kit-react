@@ -1,3 +1,5 @@
+// src/workers/proventos-sync-worker.ts
+
 import { prisma } from '@/lib/prisma';
 import { CacheService } from '@/lib/redis';
 import { buscarProventosEmLoteParaSincronizacao } from '@/services/proventos-brapi-sync';
@@ -8,6 +10,14 @@ const PROVENTOS_STATS_CACHE_TAG = 'proventos:stats';
 const PROGRESS_CACHE_TTL_SECONDS = 60 * 60;
 const ESTATISTICAS_BATCH_SIZE = 10;
 const BATCH_SIZE = 100;
+
+// ✅ LISTA DEFAULT (caso não encontre em lugar nenhum)
+const TICKERS_DEFAULT = [
+  'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3',
+  'B3SA3', 'MGLU3', 'WEGE3', 'RENT3', 'EGIE3',
+  'BBAS3', 'SANB11', 'ELET3', 'BPAC11', 'TAEE11',
+  'ITSA4', 'VIVT3', 'CPLE6', 'CMIG4', 'ENBR3'
+];
 
 // Funções auxiliares de formatação
 const formatarValor = (valor: number) =>
@@ -32,6 +42,131 @@ const arredondarValor = (valor: number): number => {
   return Math.round(valor * 100) / 100;
 };
 
+// ✅ FUNÇÃO AUXILIAR: Buscar tickers de AtivoInformacao
+async function buscarTickersDeAtivosInformacao(): Promise<string[]> {
+  try {
+    console.log('📊 Buscando tickers de ativos_informacao...');
+    
+    const ativosInfo = await prisma.ativoInformacao.findMany({
+      where: {
+        ativo: true, // Apenas ativos
+        tipo: {
+          in: ['ACAO', 'FII'] // Apenas ações e FIIs
+        }
+      },
+      select: { 
+        codigo: true,
+        nome: true,
+        tipo: true 
+      },
+      orderBy: { codigo: 'asc' },
+    });
+
+    const tickers = ativosInfo.map((a) => a.codigo.toUpperCase());
+    
+    console.log(`✅ Encontrados ${tickers.length} tickers em ativos_informacao`);
+    
+    return tickers;
+  } catch (error) {
+    console.error('❌ Erro ao buscar de ativos_informacao:', error);
+    return [];
+  }
+}
+
+// ✅ FUNÇÃO AUXILIAR: Buscar tickers de todas as carteiras de usuários
+async function buscarTickersDasCarteiras(): Promise<string[]> {
+  try {
+    console.log('📦 Buscando tickers das carteiras de usuários...');
+    
+    const tickers = new Set<string>();
+    
+    // Buscar de todas as tabelas de carteiras
+    const [
+      microCaps,
+      smallCaps,
+      dividendos,
+      fiis,
+      rendaTurbinada,
+      dividendosInternacional,
+      etfs,
+      projetoAmerica,
+      exteriorStocks
+    ] = await Promise.all([
+      prisma.userMicroCaps.findMany({ 
+        select: { ticker: true }, 
+        distinct: ['ticker'],
+        where: { posicaoEncerrada: false } // Apenas posições ativas
+      }),
+      prisma.userSmallCaps.findMany({ 
+        select: { ticker: true }, 
+        distinct: ['ticker'],
+        where: { posicaoEncerrada: false }
+      }),
+      prisma.userDividendos.findMany({ 
+        select: { ticker: true }, 
+        distinct: ['ticker'],
+        where: { posicaoEncerrada: false }
+      }),
+      prisma.userFiis.findMany({ 
+        select: { ticker: true }, 
+        distinct: ['ticker'],
+        where: { posicaoEncerrada: false }
+      }),
+      prisma.userRendaTurbinada.findMany({ 
+        select: { ticker: true }, 
+        distinct: ['ticker'],
+        where: { posicaoEncerrada: false }
+      }),
+      prisma.userDividendosInternacional.findMany({ 
+        select: { ticker: true }, 
+        distinct: ['ticker'],
+        where: { posicaoEncerrada: false }
+      }),
+      prisma.userEtfs.findMany({ 
+        select: { ticker: true }, 
+        distinct: ['ticker'],
+        where: { posicaoEncerrada: false }
+      }),
+      prisma.userProjetoAmerica.findMany({ 
+        select: { ticker: true }, 
+        distinct: ['ticker'],
+        where: { posicaoEncerrada: false }
+      }),
+      prisma.userExteriorStocks.findMany({ 
+        select: { ticker: true }, 
+        distinct: ['ticker'],
+        where: { posicaoEncerrada: false }
+      }),
+    ]);
+    
+    // Adicionar todos ao Set (remove duplicatas automaticamente)
+    [
+      ...microCaps,
+      ...smallCaps,
+      ...dividendos,
+      ...fiis,
+      ...rendaTurbinada,
+      ...dividendosInternacional,
+      ...etfs,
+      ...projetoAmerica,
+      ...exteriorStocks
+    ].forEach(({ ticker }) => {
+      // Filtrar tickers internacionais (não tem proventos BR)
+      if (!ticker.includes('.') && !ticker.match(/^\d/)) {
+        tickers.add(ticker.toUpperCase());
+      }
+    });
+    
+    const tickersArray = Array.from(tickers).sort();
+    console.log(`✅ Encontrados ${tickersArray.length} tickers únicos nas carteiras`);
+    
+    return tickersArray;
+  } catch (error) {
+    console.error('❌ Erro ao buscar das carteiras:', error);
+    return [];
+  }
+}
+
 export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
   console.log('🚀 Iniciando sincronização de proventos...', config);
 
@@ -54,17 +189,27 @@ export async function sincronizarProventos(config: ProventoSyncConfig = {}) {
     let tickersParaSincronizar: string[];
 
     if (config.tickers && config.tickers.length > 0) {
+      // ✅ 1ª PRIORIDADE: Tickers específicos passados na configuração
       tickersParaSincronizar = config.tickers.map((ticker) => ticker.toUpperCase());
       console.log(`🎯 Sincronizando ${tickersParaSincronizar.length} tickers específicos`);
+      
     } else {
-      const tickersUnicos = await prisma.provento.findMany({
-        select: { ticker: true },
-        distinct: ['ticker'],
-        orderBy: { ticker: 'asc' },
-      });
-
-      tickersParaSincronizar = tickersUnicos.map((t) => t.ticker.toUpperCase());
-      console.log(`🌍 Sincronizando TODOS os tickers: ${tickersParaSincronizar.length}`);
+      // ✅ 2ª PRIORIDADE: Buscar de ativos_informacao
+      tickersParaSincronizar = await buscarTickersDeAtivosInformacao();
+      
+      // ✅ 3ª PRIORIDADE: Se não encontrar, buscar das carteiras
+      if (tickersParaSincronizar.length === 0) {
+        console.log('⚠️ Nenhum ticker em ativos_informacao, buscando das carteiras...');
+        tickersParaSincronizar = await buscarTickersDasCarteiras();
+      }
+      
+      // ✅ 4ª PRIORIDADE: Se ainda estiver vazio, usar lista default
+      if (tickersParaSincronizar.length === 0) {
+        console.log('⚠️ Nenhum ticker encontrado, usando lista default...');
+        tickersParaSincronizar = TICKERS_DEFAULT;
+      }
+      
+      console.log(`🌍 Sincronizando ${tickersParaSincronizar.length} tickers`);
     }
 
     if (tickersParaSincronizar.length === 0) {
