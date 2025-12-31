@@ -302,10 +302,20 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE() {
   try {
-    const deleteJob = await startDeleteJob();
+    const totalAntes = await prisma.provento.count();
+
+    const resultado = await prisma.$transaction(async (tx) => {
+      const deleteResult = await tx.provento.deleteMany({});
+      await tx.proventoEstatistica.deleteMany({});
+      return deleteResult;
+    });
+
+    await CacheService.invalidateTags([PROVENTOS_CACHE_TAG, PROVENTOS_STATS_CACHE_TAG]);
+
     return NextResponse.json({
-      message: 'Job de limpeza iniciado',
-      deleteJobId: deleteJob.id,
+      message: 'Todos os proventos foram removidos com sucesso',
+      totalRemovido: resultado.count,
+      totalAntes,
     });
   } catch (error) {
     console.error('Erro ao deletar proventos:', error);

@@ -68,6 +68,8 @@ export default function CentralProventos() {
   const [arquivoSelecionado, setArquivoSelecionado] = useState<File | null>(null);
   const [csvTexto, setCsvTexto] = useState<string>('');
   const [etapaProcessamento, setEtapaProcessamento] = useState<string>('');
+  const [limpandoTudo, setLimpandoTudo] = useState(false);
+  const [atualizandoStats, setAtualizandoStats] = useState(false);
 
   // 🔄 USAR NOVOS HOOKS DA API
   const { 
@@ -499,16 +501,36 @@ if (!dataCom || isNaN(dataCom.getTime())) {
     }
   };
 
+  const handleAtualizarEstatisticas = async () => {
+    try {
+      setAtualizandoStats(true);
+      await carregarEstatisticas();
+      alert('Estatísticas atualizadas com sucesso.');
+    } catch (error) {
+      alert('Erro ao atualizar estatísticas');
+    } finally {
+      setAtualizandoStats(false);
+    }
+  };
+
   // ✅ LIMPAR VIA API
   const handleLimparTudo = async () => {
     if (!confirm('Tem certeza que deseja apagar todos os dados?')) return;
-    
+
     try {
-      await limparTodos();
+      setLimpandoTudo(true);
+      const resultado = await limparTodos();
       await carregarEstatisticas();
-      alert('Dados removidos com sucesso.');
+
+      const mensagemResultado = resultado?.totalRemovido
+        ? `Dados removidos com sucesso. Registros excluídos: ${resultado.totalRemovido.toLocaleString('pt-BR')}.`
+        : 'Dados removidos com sucesso.';
+
+      alert(mensagemResultado);
     } catch (error) {
       alert('Erro ao remover dados');
+    } finally {
+      setLimpandoTudo(false);
     }
   };
 
@@ -826,11 +848,11 @@ if (!dataCom || isNaN(dataCom.getTime())) {
           </Button>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Button 
-            fullWidth 
-            onClick={carregarEstatisticas} 
+          <Button
+            fullWidth
+            onClick={handleAtualizarEstatisticas}
             startIcon={<SyncIcon />}
-            disabled={statsLoading}
+            disabled={statsLoading || atualizandoStats}
             sx={{
               border: '1px solid #e2e8f0',
               color: '#64748b',
@@ -845,15 +867,15 @@ if (!dataCom || isNaN(dataCom.getTime())) {
               }
             }}
           >
-            {statsLoading ? 'Atualizando...' : 'Atualizar'}
+            {statsLoading || atualizandoStats ? 'Atualizando...' : 'Atualizar'}
           </Button>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Button 
-            fullWidth 
-            onClick={handleLimparTudo} 
+          <Button
+            fullWidth
+            onClick={handleLimparTudo}
             startIcon={<DeleteIcon />}
-            disabled={uploadLoading}
+            disabled={uploadLoading || limpandoTudo}
             sx={{
               border: '1px solid #fecaca',
               color: '#dc2626',
@@ -868,7 +890,7 @@ if (!dataCom || isNaN(dataCom.getTime())) {
               }
             }}
           >
-            Limpar Tudo
+            {limpandoTudo ? 'Limpando...' : 'Limpar Tudo'}
           </Button>
         </Grid>
       </Grid>
