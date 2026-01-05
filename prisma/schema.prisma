@@ -486,7 +486,7 @@ model Provento {
   updatedAt             DateTime       @updatedAt
 
   @@unique([ticker, dataObj, valor, tipo], name: "unique_provento")
-  @@unique([ticker, dataCom, tipo], name: "unique_provento_ticker_dataCom_tipo")
+  @@unique([ticker, dataPagamento, tipo], name: "unique_provento_ticker_dataPagamento_tipo")
   @@index([ticker])
   @@index([dataObj])
   @@index([ticker, dataObj])

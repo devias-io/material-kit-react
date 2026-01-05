@@ -40,19 +40,19 @@ export async function POST(request: NextRequest) {
       try {
         const compositeKey = {
           ticker: provento.ticker,
-          dataCom: provento.dataCom ?? null,
+          dataPagamento: provento.dataPagamento ?? null,
           tipo: provento.tipo,
         };
 
         const existente = await prisma.provento.findUnique({
-          where: { unique_provento_ticker_dataCom_tipo: compositeKey },
+          where: { unique_provento_ticker_dataPagamento_tipo: compositeKey },
         });
 
         await prisma.provento.upsert({
-          where: { unique_provento_ticker_dataCom_tipo: compositeKey },
+          where: { unique_provento_ticker_dataPagamento_tipo: compositeKey },
           update: {
             valor: provento.valor,
-            dataPagamento: provento.dataPagamento,
+            dataPagamento: provento.dataPagamento ?? null,
             observacoes: provento.descricao ?? provento.observacoes,
             origem: 'CSV',
             dataUltimaAtualizacao: new Date(),
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
             data: provento.data,
             dataObj: new Date(provento.dataObj),
             dataCom: provento.dataCom ?? null,
-            dataPagamento: provento.dataPagamento,
+            dataPagamento: provento.dataPagamento ?? null,
             dataFormatada: provento.dataFormatada,
             valorFormatado: provento.valorFormatado,
             dividendYield: provento.dividendYield,
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
           if (existente.origem === 'BRAPI') {
             totalSobrescritosBRAPI++;
             console.log(
-              `⚠️ CSV sobrescreveu provento BRAPI: ${provento.ticker} - ${provento.dataCom} - ${provento.tipo}`
+              `⚠️ CSV sobrescreveu provento BRAPI: ${provento.ticker} - ${provento.dataPagamento} - ${provento.tipo}`
             );
           }
         } else {
