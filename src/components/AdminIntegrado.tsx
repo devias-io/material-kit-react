@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { buildQuotesUrl, getQuoteResults } from '@/utils/brapiProxy';
 
 // Dados existentes do seu sistema (importados do arquivo original)
 const dadosIniciais = {
@@ -179,11 +180,14 @@ const AdminIntegrado = () => {
     buscarDadosAPI();
     buscarIbovespa();
     
-    // Atualizar dados da API a cada 30 segundos
+    // Atualizar dados da API a cada 2 minutos (pausa quando a aba não está visível)
     const interval = setInterval(() => {
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
       buscarDadosAPI();
       buscarIbovespa();
-    }, 30000);
+    }, 120000);
     return () => clearInterval(interval);
   }, []);
 
@@ -206,22 +210,31 @@ const AdminIntegrado = () => {
     }
   };
 
+  const fetchQuotes = useCallback(async (symbols: string[], query?: Record<string, string | number | boolean>) => {
+    const url = buildQuotesUrl(symbols, query);
+    const response = await fetch(url, {
+      headers: { Accept: 'application/json' }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro na API: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return getQuoteResults(data);
+  }, []);
+
   // Buscar dados do Ibovespa
   const buscarIbovespa = async () => {
     try {
-      const response = await fetch(
-        `https://brapi.dev/api/quote/^BVSP?token=jJrMYVy9MATGEicx3GxBp8`
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.results && data.results[0]) {
-          const ibov = data.results[0];
-          setDadosIbovespa({
-            valor: `${Math.round(ibov.regularMarketPrice).toLocaleString('pt-BR')}`,
-            variacao: `${ibov.regularMarketChangePercent >= 0 ? '+' : ''}${ibov.regularMarketChangePercent.toFixed(2)}%`.replace('.', ',')
-          });
-        }
+      const results = await fetchQuotes(['^BVSP']);
+      const ibov = results?.[0];
+
+      if (ibov) {
+        setDadosIbovespa({
+          valor: `${Math.round(ibov.regularMarketPrice).toLocaleString('pt-BR')}`,
+          variacao: `${ibov.regularMarketChangePercent >= 0 ? '+' : ''}${ibov.regularMarketChangePercent.toFixed(2)}%`.replace('.', ',')
+        });
       }
     } catch (error) {
       console.error('Erro ao buscar Ibovespa:', error);
@@ -241,25 +254,19 @@ const AdminIntegrado = () => {
         return;
       }
 
-      // Chamada para a API da Brapi
-      const response = await fetch(
-        `https://brapi.dev/api/quote/${tickers}?token=jJrMYVy9MATGEicx3GxBp8&fundamental=true&dividends=true`
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Erro na API: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (!data.results || data.results.length === 0) {
+      const results = await fetchQuotes(tickers.split(','), {
+        fundamental: true,
+        dividends: true
+      });
+
+      if (!results || results.length === 0) {
         throw new Error('Nenhum dado retornado da API');
       }
 
       // Processar dados da API Brapi
       const dadosProcessados: DadosAPI = {};
       
-      data.results.forEach((stock: any) => {
+      results.forEach((stock: any) => {
         const ticker = stock.symbol;
         const preco = stock.regularMarketPrice;
         const variacao = stock.regularMarketChangePercent;
