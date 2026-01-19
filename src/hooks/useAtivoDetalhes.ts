@@ -115,6 +115,7 @@ export interface Relatorio {
 // ========================================
 const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
 const HG_BRASIL_KEY = 'a666e15c';
+const PRICE_CACHE_TTL_MS = 30 * 60 * 1000;
 
 function getFrequenciaDividendos(ticker: string): number {
   const tickerUpper = ticker.toUpperCase();
@@ -346,7 +347,7 @@ export function useDadosFinanceiros(ticker: string | undefined) {
       const cachedData = localStorage.getItem(`cache_${ticker}`);
       if (cachedData) {
         const parsed = JSON.parse(cachedData);
-if (parsed.timestamp && (Date.now() - parsed.timestamp) < 6 * 60 * 60 * 1000) {
+        if (parsed.timestamp && (Date.now() - parsed.timestamp) < PRICE_CACHE_TTL_MS) {
           setDadosFinanceiros(parsed.data);
           setUltimaAtualizacao('Cache: ' + new Date(parsed.timestamp).toLocaleString('pt-BR'));
           setLoading(false);
@@ -358,11 +359,10 @@ if (parsed.timestamp && (Date.now() - parsed.timestamp) < 6 * 60 * 60 * 1000) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-      const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
+      const response = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent(ticker)}&dividends=true`, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Portfolio-App/1.0'
+          'Accept': 'application/json'
         },
         signal: controller.signal
       });
@@ -371,8 +371,8 @@ if (parsed.timestamp && (Date.now() - parsed.timestamp) < 6 * 60 * 60 * 1000) {
 
       if (response.ok) {
         const data = await response.json();
-        if (data.results && data.results.length > 0) {
-          const quote = data.results[0];
+        const quote = data.results?.[0] ?? data.quotes?.[0];
+        if (quote) {
 
           const { valor: dyCalculado, origem: origemDy } = calcularDyAPartirDoResultado(quote, ticker);
           const dyPercentual = dyCalculado && dyCalculado > 0 ? dyCalculado * 100 : 0;
