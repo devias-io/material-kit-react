@@ -97,6 +97,7 @@ function verificarPermissaoCarteiraPorPlano(plano: string, carteira: string): bo
     'FIIS': ['fiis'], // 🔒 SÓ FIIS
     'RENDA_TURBINADA': ['cfRendaTurbinada'], // 🔒 Plano focado nas recomendações exclusivas do CF Renda Turbinada
     'RENDA_TURBINADA_T2': ['cfRendaTurbinada'], // 🔒 Plano focado nas recomendações exclusivas do CF Renda Turbinada Turma 2
+    'RENDA_TURBINADA_T3': ['cfRendaTurbinada'], // 🔒 Plano focado nas recomendações exclusivas do CF Renda Turbinada Turma 3
     'AMERICA': ['dividendosInternacional', 'etfs', 'projetoAmerica', 'exteriorStocks'], // 🔒 SÓ INTERNACIONAL
     'ADMIN': ['smallCaps', 'microCaps', 'dividendos', 'fiis', 'cfRendaTurbinada', 'dividendosInternacional', 'etfs', 'projetoAmerica', 'exteriorStocks'] // 🔓 TUDO
   };
@@ -270,6 +271,9 @@ function aplicarFiltrosRigorososPorPlano(
       filtros: {} // Conteúdo específico é entregue em páginas dedicadas
     },
     'RENDA_TURBINADA_T2': {
+      filtros: {}
+    },
+    'RENDA_TURBINADA_T3': {
       filtros: {}
     },
     'AMERICA': {

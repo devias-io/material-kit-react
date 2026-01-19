@@ -181,6 +181,7 @@ export default function ImportUsuariosPage() {
       'FIIS': '#D97706',
       'RENDA_TURBINADA': '#F97316',
       'RENDA_TURBINADA_T2': '#FB923C',
+      'RENDA_TURBINADA_T3': '#FDBA74',
       'AMERICA': '#DC2626'
     };
     return colors[plan] || '#6B7280';

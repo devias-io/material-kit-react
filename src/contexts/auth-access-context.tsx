@@ -107,7 +107,7 @@ function ensureGuaranteedPages(pages: string[], options: EnsureGuaranteedPagesOp
   const pageSet = new Set<string>([...GUARANTEED_PAGES, ...pages]);
 
   const { planKey } = options;
-  const shouldIncludeDefaultOpenPages = !planKey || (planKey !== 'RENDA_TURBINADA' && planKey !== 'RENDA_TURBINADA_T2');
+  const shouldIncludeDefaultOpenPages = !planKey || (planKey !== 'RENDA_TURBINADA' && planKey !== 'RENDA_TURBINADA_T2' && planKey !== 'RENDA_TURBINADA_T3');
 
   if (shouldIncludeDefaultOpenPages) {
     DEFAULT_OPEN_PAGES.forEach(page => pageSet.add(page));

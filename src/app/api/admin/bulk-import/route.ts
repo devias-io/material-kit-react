@@ -48,6 +48,11 @@ const PLAN_MAPPINGS: Record<string, string> = {
   RENDA_TURMA_2: 'RENDA_TURBINADA_T2',
   CF_RENDA_TURBINADA_T2: 'RENDA_TURBINADA_T2',
   CFRENDA_TURBINADA_T2: 'RENDA_TURBINADA_T2',
+  RENDA_TURBINADA_T3: 'RENDA_TURBINADA_T3',
+  RENDA_TURBINADA_TURMA3: 'RENDA_TURBINADA_T3',
+  RENDA_TURMA_3: 'RENDA_TURBINADA_T3',
+  CF_RENDA_TURBINADA_T3: 'RENDA_TURBINADA_T3',
+  CFRENDA_TURBINADA_T3: 'RENDA_TURBINADA_T3',
   AMERICA: 'AMERICA',
   PROJETO_AMERICA: 'AMERICA',
   PROJETOAMERICA: 'AMERICA',
@@ -90,6 +95,10 @@ function normalizePlan(plan?: string): string {
   const directMatch = PLAN_MAPPINGS[key];
   if (directMatch) {
     return directMatch;
+  }
+
+  if (key.includes('RENDA') && key.includes('TURBIN') && (key.includes('T3') || key.includes('TURMA_3') || key.includes('TURMA3'))) {
+    return 'RENDA_TURBINADA_T3';
   }
 
   if (key.includes('RENDA') && key.includes('TURBIN') && (key.includes('T2') || key.includes('TURMA'))) {

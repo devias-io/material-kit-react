@@ -63,11 +63,57 @@ href: paths.dashboard.cfRendaTurbinadaCarteira,
   };
 }
 
+function remapToTurma3(item: NavItemConfig): NavItemConfig {
+  const remapChildren = item.items?.map(subItem => {
+    if (subItem.key === 'cf-renda-turbinada-aulas') {
+      return {
+        ...subItem,
+        key: 'cf-renda-turbinada-turma-3-aulas',
+        href: paths.dashboard.cfRendaTurbinadaTurma3Aulas,
+        page: 'cf-renda-turbinada-turma-3-aulas',
+      };
+    }
+
+    if (subItem.key === 'cf-renda-turbinada-bastidores') {
+      return {
+        ...subItem,
+        key: 'cf-renda-turbinada-turma-3-bastidores',
+        href: paths.dashboard.cfRendaTurbinadaTurma3Bastidores,
+        page: 'cf-renda-turbinada-turma-3-bastidores',
+      };
+    }
+
+    if (subItem.key === 'cf-renda-turbinada-carteira') {
+      return {
+        ...subItem,
+        key: 'cf-renda-turbinada-turma-3-carteira',
+        href: paths.dashboard.cfRendaTurbinadaCarteira,
+        page: 'cf-renda-turbinada-turma-3-carteira',
+      };
+    }
+
+    return subItem;
+  });
+
+  return {
+    ...item,
+    key: 'cf-renda-turbinada-turma-3',
+    title: 'Renda Turbinada',
+    href: paths.dashboard.cfRendaTurbinadaTurma3,
+    page: 'cf-renda-turbinada-turma-3',
+    items: remapChildren,
+  };
+}
+
 function applyPlanOverrides(items: NavItemConfig[], plan?: string): NavItemConfig[] {
   return items.flatMap(item => {
     const withChildren = item.items
       ? { ...item, items: applyPlanOverrides(item.items, plan) }
       : { ...item };
+
+    if (plan === 'RENDA_TURBINADA_T3' && withChildren.key === 'cf-renda-turbinada') {
+      return [remapToTurma3(withChildren)];
+    }
 
     if (plan === 'RENDA_TURBINADA_T2' && withChildren.key === 'cf-renda-turbinada') {
       return [remapToTurma2(withChildren)];
@@ -77,9 +123,10 @@ function applyPlanOverrides(items: NavItemConfig[], plan?: string): NavItemConfi
 
     if (plan === 'ADMIN' && withChildren.key === 'cf-renda-turbinada') {
       results.push(remapToTurma2(withChildren));
+      results.push(remapToTurma3(withChildren));
     }
 
-    if ((plan === 'RENDA_TURBINADA' || plan === 'RENDA_TURBINADA_T2') && withChildren.key === 'recursos-telegram') {
+    if ((plan === 'RENDA_TURBINADA' || plan === 'RENDA_TURBINADA_T2' || plan === 'RENDA_TURBINADA_T3') && withChildren.key === 'recursos-telegram') {
       return [
         {
           ...withChildren,

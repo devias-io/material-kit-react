@@ -15,7 +15,7 @@ export interface User {
   email?: string;
   firstName?: string;
   lastName?: string;
-  plan?: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'RENDA_TURBINADA_T2' | 'AMERICA' | 'ANALISTA' | 'ADMIN';
+  plan?: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'RENDA_TURBINADA_T2' | 'RENDA_TURBINADA_T3' | 'AMERICA' | 'ANALISTA' | 'ADMIN';
   customPermissions?: string[];
   entitlements?: UserEntitlement[];
   activeEntitlements?: string[];
