@@ -1,0 +1,362 @@
+warning: in the working copy of 'prisma/schema.prisma', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/prisma/schema.prisma b/prisma/schema.prisma[m
+[1mindex 3b47391f..81ef3b3c 100644[m
+[1m--- a/prisma/schema.prisma[m
+[1m+++ b/prisma/schema.prisma[m
+[36m@@ -7,23 +7,6 @@[m [mdatasource db {[m
+   url      = env("DATABASE_URL")[m
+ }[m
+ [m
+[31m-enum ViesOverride {[m
+[31m-  AUTO[m
+[31m-  MANTER[m
+[31m-}[m
+[31m-[m
+[31m-enum ProventoOrigem {[m
+[31m-  BRAPI[m
+[31m-  CSV[m
+[31m-  MANUAL[m
+[31m-}[m
+[31m-[m
+[31m-enum ProventoSincronizacaoStatus {[m
+[31m-  EM_PROGRESSO[m
+[31m-  CONCLUIDO[m
+[31m-  ERRO[m
+[31m-}[m
+[31m-[m
+ model User {[m
+   id                      String                        @id @default(cuid())[m
+   firstName               String[m
+[36m@@ -33,7 +16,6 @@[m [mmodel User {[m
+   avatar                  String?[m
+   plan                    String                        @default("LITE")[m
+   status                  String                        @default("ACTIVE")[m
+[31m-  origin                  String                        @default("MANUAL")[m
+   hotmartCustomerId       String?[m
+   expirationDate          DateTime?[m
+   customPermissions       String?                       @default("[]")[m
+[36m@@ -44,33 +26,34 @@[m [mmodel User {[m
+   createdAt               DateTime                      @default(now())[m
+   updatedAt               DateTime                      @updatedAt[m
+   lastLogin               DateTime?[m
+[32m+[m[32m  origin                  String                        @default("MANUAL")[m
+   loginLogs               LoginLog[][m
+   resetTokens             PasswordResetToken[][m
+   purchases               Purchase[][m
+[32m+[m[32m  entitlements            UserEntitlement[][m
+[32m+[m[32m  analisesTecnicas        AnaliseTecnica[][m
+   analisesTrimestrais     AnaliseTrimestreData[]        @relation("AnalisesTrimestrais")[m
+   adminAnswers            Answer[]                      @relation("AdminAnswers")[m
+   carteirasAnalista       CarteiraAnalise[]             @relation("CarteirasAnalista")[m
+   carteiras               CarteiraAnalise[]             @relation("CarteirasUsuario")[m
+[32m+[m[32m  comments                Comment[][m
+   instagramCadastro       InstagramCadastro?[m
+[32m+[m[32m  lessonProgress          LessonProgress[][m
+[32m+[m[32m  lessonProgressTurma2    LessonProgressTurma2[][m
+   notifications           Notification[]                @relation("UserNotifications")[m
+   proventoUploads         ProventoUpload[]              @relation("ProventoUploads")[m
+   questionsClosed         Question[]                    @relation("QuestionsClosed")[m
+   userQuestions           Question[]                    @relation("UserQuestions")[m
+   responseTemplates       ResponseTemplate[]            @relation("ResponseTemplates")[m
+[31m-  entitlements            UserEntitlement[][m
+   dividendos              UserDividendos[][m
+   dividendosInternacional UserDividendosInternacional[][m
+   etfs                    UserEtfs[][m
+   exteriorStocks          UserExteriorStocks[][m
+   fiis                    UserFiis[][m
+[31m-  rendaTurbinada          UserRendaTurbinada[][m
+   microCaps               UserMicroCaps[][m
+   projetoAmerica          UserProjetoAmerica[][m
+[32m+[m[32m  rendaTurbinada          UserRendaTurbinada[][m
+   smallCaps               UserSmallCaps[][m
+[31m-  comments                Comment[][m
+[31m-  analisesTecnicas        AnaliseTecnica[][m
+[31m-  lessonProgress          LessonProgress[][m
+[31m-  lessonProgressTurma2    LessonProgressTurma2[][m
+ }[m
+ [m
+ model Purchase {[m
+[36m@@ -198,9 +181,9 @@[m [mmodel AnaliseTecnica {[m
+   publicado  Boolean  @default(true)[m
+   destaque   Boolean  @default(false)[m
+   autorId    String?[m
+[31m-  autor      User?    @relation(fields: [autorId], references: [id])[m
+   createdAt  DateTime @default(now())[m
+   updatedAt  DateTime @updatedAt[m
+[32m+[m[32m  autor      User?    @relation(fields: [autorId], references: [id])[m
+ [m
+   @@index([ticker])[m
+   @@map("analises_tecnicas")[m
+[36m@@ -228,8 +211,7 @@[m [mmodel UserEntitlement {[m
+   origin    String?[m
+   createdAt DateTime  @default(now())[m
+   updatedAt DateTime  @updatedAt[m
+[31m-[m
+[31m-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)[m
+[32m+[m[32m  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)[m
+ [m
+   @@unique([userId, code])[m
+ }[m
+[36m@@ -269,7 +251,6 @@[m [mmodel UserMicroCaps {[m
+   precoEntrada       Float[m
+   precoTeto          Float?[m
+   precoTetoBDR       Float?[m
+[31m-  viesOverride       ViesOverride? @default(AUTO)[m
+   posicaoEncerrada   Boolean       @default(false)[m
+   dataSaida          String?[m
+   precoSaida         Float?[m
+[36m@@ -277,6 +258,7 @@[m [mmodel UserMicroCaps {[m
+   createdAt          DateTime      @default(now())[m
+   updatedAt          DateTime      @updatedAt[m
+   editadoEm          DateTime      @default(now())[m
+[32m+[m[32m  viesOverride       ViesOverride? @default(AUTO)[m
+   user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)[m
+ [m
+   @@unique([userId, ticker])[m
+[36m@@ -291,7 +273,6 @@[m [mmodel UserSmallCaps {[m
+   dataEntrada        String[m
+   precoEntrada       Float[m
+   precoTeto          Float?[m
+[31m-  viesOverride       ViesOverride? @default(AUTO)[m
+   posicaoEncerrada   Boolean       @default(false)[m
+   dataSaida          String?[m
+   precoSaida         Float?[m
+[36m@@ -299,6 +280,7 @@[m [mmodel UserSmallCaps {[m
+   createdAt          DateTime      @default(now())[m
+   updatedAt          DateTime      @updatedAt[m
+   editadoEm          DateTime      @default(now())[m
+[32m+[m[32m  viesOverride       ViesOverride? @default(AUTO)[m
+   user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)[m
+ [m
+   @@unique([userId, ticker])[m
+[36m@@ -313,7 +295,6 @@[m [mmodel UserDividendos {[m
+   dataEntrada        String[m
+   precoEntrada       Float[m
+   precoTeto          Float?[m
+[31m-  viesOverride       ViesOverride? @default(AUTO)[m
+   posicaoEncerrada   Boolean       @default(false)[m
+   dataSaida          String?[m
+   precoSaida         Float?[m
+[36m@@ -321,6 +302,7 @@[m [mmodel UserDividendos {[m
+   createdAt          DateTime      @default(now())[m
+   updatedAt          DateTime      @updatedAt[m
+   editadoEm          DateTime      @default(now())[m
+[32m+[m[32m  viesOverride       ViesOverride? @default(AUTO)[m
+   user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)[m
+ [m
+   @@unique([userId, ticker])[m
+[36m@@ -335,7 +317,6 @@[m [mmodel UserFiis {[m
+   dataEntrada        String[m
+   precoEntrada       Float[m
+   precoTeto          Float?[m
+[31m-  viesOverride       ViesOverride? @default(AUTO)[m
+   posicaoEncerrada   Boolean       @default(false)[m
+   dataSaida          String?[m
+   precoSaida         Float?[m
+[36m@@ -343,6 +324,7 @@[m [mmodel UserFiis {[m
+   createdAt          DateTime      @default(now())[m
+   updatedAt          DateTime      @updatedAt[m
+   editadoEm          DateTime      @default(now())[m
+[32m+[m[32m  viesOverride       ViesOverride? @default(AUTO)[m
+   user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)[m
+ [m
+   @@unique([userId, ticker])[m
+[36m@@ -357,7 +339,6 @@[m [mmodel UserRendaTurbinada {[m
+   dataEntrada        String[m
+   precoEntrada       Float[m
+   precoTeto          Float?[m
+[31m-  viesOverride       ViesOverride? @default(AUTO)[m
+   strike             Float?[m
+   premioEntrada      Float?[m
+   vencimento         String?[m
+[36m@@ -369,6 +350,7 @@[m [mmodel UserRendaTurbinada {[m
+   createdAt          DateTime      @default(now())[m
+   updatedAt          DateTime      @updatedAt[m
+   editadoEm          DateTime      @default(now())[m
+[32m+[m[32m  viesOverride       ViesOverride? @default(AUTO)[m
+   user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)[m
+ [m
+   @@map("user_renda_turbinada")[m
+[36m@@ -383,7 +365,6 @@[m [mmodel UserDividendosInternacional {[m
+   precoEntrada       Float[m
+   precoTeto          Float?[m
+   precoTetoBDR       Float?[m
+[31m-  viesOverride       ViesOverride? @default(AUTO)[m
+   posicaoEncerrada   Boolean       @default(false)[m
+   dataSaida          String?[m
+   precoSaida         Float?[m
+[36m@@ -391,6 +372,7 @@[m [mmodel UserDividendosInternacional {[m
+   createdAt          DateTime      @default(now())[m
+   updatedAt          DateTime      @updatedAt[m
+   editadoEm          DateTime      @default(now())[m
+[32m+[m[32m  viesOverride       ViesOverride? @default(AUTO)[m
+   user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)[m
+ [m
+   @@unique([userId, ticker])[m
+[36m@@ -404,7 +386,6 @@[m [mmodel UserEtfs {[m
+   setor              String[m
+   dataEntrada        String[m
+   precoEntrada       Float[m
+[31m-  viesOverride       ViesOverride? @default(AUTO)[m
+   posicaoEncerrada   Boolean       @default(false)[m
+   dataSaida          String?[m
+   precoSaida         Float?[m
+[36m@@ -412,6 +393,7 @@[m [mmodel UserEtfs {[m
+   createdAt          DateTime      @default(now())[m
+   updatedAt          DateTime      @updatedAt[m
+   editadoEm          DateTime      @default(now())[m
+[32m+[m[32m  viesOverride       ViesOverride? @default(AUTO)[m
+   user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)[m
+ [m
+   @@unique([userId, ticker])[m
+[36m@@ -427,7 +409,6 @@[m [mmodel UserProjetoAmerica {[m
+   precoEntrada       Float[m
+   precoTeto          Float?[m
+   precoTetoBDR       Float?[m
+[31m-  viesOverride       ViesOverride? @default(AUTO)[m
+   posicaoEncerrada   Boolean       @default(false)[m
+   dataSaida          String?[m
+   precoSaida         Float?[m
+[36m@@ -435,6 +416,7 @@[m [mmodel UserProjetoAmerica {[m
+   createdAt          DateTime      @default(now())[m
+   updatedAt          DateTime      @updatedAt[m
+   editadoEm          DateTime      @default(now())[m
+[32m+[m[32m  viesOverride       ViesOverride? @default(AUTO)[m
+   user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)[m
+ [m
+   @@unique([userId, ticker])[m
+[36m@@ -450,7 +432,6 @@[m [mmodel UserExteriorStocks {[m
+   precoEntrada       Float[m
+   precoTeto          Float?[m
+   precoTetoBDR       Float?[m
+[31m-  viesOverride       ViesOverride? @default(AUTO)[m
+   posicaoEncerrada   Boolean       @default(false)[m
+   dataSaida          String?[m
+   precoSaida         Float?[m
+[36m@@ -458,6 +439,7 @@[m [mmodel UserExteriorStocks {[m
+   createdAt          DateTime      @default(now())[m
+   updatedAt          DateTime      @updatedAt[m
+   editadoEm          DateTime      @default(now())[m
+[32m+[m[32m  viesOverride       ViesOverride? @default(AUTO)[m
+   user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)[m
+ [m
+   @@unique([userId, ticker])[m
+[36m@@ -480,13 +462,12 @@[m [mmodel Provento {[m
+   setor                 String?[m
+   fonte                 String?[m
+   observacoes           String?[m
+[31m-  origem                ProventoOrigem @default(CSV)[m
+[31m-  dataUltimaAtualizacao DateTime?[m
+   createdAt             DateTime       @default(now())[m
+   updatedAt             DateTime       @updatedAt[m
+[32m+[m[32m  dataUltimaAtualizacao DateTime?[m
+[32m+[m[32m  origem                ProventoOrigem @default(CSV)[m
+ [m
+   @@unique([ticker, dataObj, valor, tipo], name: "unique_provento")[m
+[31m-  @@unique([ticker, dataCom, tipo], name: "unique_provento_ticker_dataCom_tipo")[m
+   @@index([ticker])[m
+   @@index([dataObj])[m
+   @@index([ticker, dataObj])[m
+[36m@@ -667,7 +648,7 @@[m [mmodel Question {[m
+   id          String           @id @default(cuid())[m
+   title       String[m
+   content     String[m
+[31m-  category    QuestionCategory @default(GERAL) // deprecated[m
+[32m+[m[32m  category    QuestionCategory @default(GERAL)[m
+   priority    QuestionPriority @default(NORMAL)[m
+   status      QuestionStatus   @default(NOVA)[m
+   userId      String[m
+[36m@@ -720,9 +701,9 @@[m [mmodel Comment {[m
+   authorId   String[m
+   createdAt  DateTime @default(now())[m
+   updatedAt  DateTime @updatedAt[m
+[31m-  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)[m
+   answer     Answer?  @relation(fields: [answerId], references: [id], onDelete: Cascade)[m
+   author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)[m
+[32m+[m[32m  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)[m
+ [m
+   @@index([questionId])[m
+   @@index([answerId])[m
+[36m@@ -772,60 +753,28 @@[m [mmodel Notification {[m
+   @@map("notifications")[m
+ }[m
+ [m
+[31m-enum QuestionStatus {[m
+[31m-  NOVA[m
+[31m-  RESPONDIDA[m
+[31m-  FECHADA[m
+[31m-}[m
+[31m-[m
+[31m-enum QuestionPriority {[m
+[31m-  BAIXA[m
+[31m-  NORMAL[m
+[31m-  URGENTE[m
+[31m-}[m
+[31m-[m
+[31m-enum QuestionCategory {[m
+[31m-  SMALL_CAPS[m
+[31m-  MICRO_CAPS[m
+[31m-  DIVIDENDOS[m
+[31m-  FIIS[m
+[31m-  INTERNACIONAL_ETFS[m
+[31m-  INTERNACIONAL_STOCKS[m
+[31m-  INTERNACIONAL_DIVIDENDOS[m
+[31m-  PROJETO_AMERICA[m
+[31m-  GERAL[m
+[31m-  TECNICO[m
+[31m-  FISCAL[m
+[31m-}[m
+[31m-[m
+ model AtivoInformacao {[m
+[31m-  id       String  @id @default(cuid())[m
+[31m-  codigo   String  @unique // ITUB4, PETR4, etc.[m
+[31m-  nome     String // Itaú Unibanco, Petrobras, etc.[m
+[31m-  setor    String // Bancário, Petróleo, etc.[m
+[31m-  subsetor String? // Bancos Múltiplos, Exploração, etc.[m
+[31m-  tipo     String // ACAO, FII, ETF, etc.[m
+[31m-[m
+[31m-  // Análise Padrão[m
+[31m-  qualidade         Int     @default(7) // 0-10[m
+[31m-  risco             String  @default("MEDIO") // BAIXO, MEDIO, ALTO[m
+[31m-  recomendacao      String  @default("NEUTRO") // COMPRA, VENDA, NEUTRO, MANTER[m
+[31m-  fundamentosResumo String? // Resumo dos fundamentos[m
+[31m-  pontosFortes      String? // Pontos positivos (JSON array como string)[m
+[31m-  pontosFracos      String? // Pontos negativos (JSON array como string)[m
+[31m-  observacoes       String? // Observações gerais[m
+[31m-[m
+[31m-  // Categorização[m
+[31m-  segmento       String? // Large Cap, Small Cap, etc.[m
+[31m-  governanca     String? // N1, N2, NM, etc.[m
+[31m-  dividend_yield Float? // Último dividend yield conhecido[m
+[31m-[m
+[31m-  // Metadata[m
+[31m-  ativo         Boolean  @default(true)[m
+[31m-  ultimaRevisao DateTime @default(now())[m
+[31m-  criadoPor     String? // ID do admin que criou[m
+[31m-  createdAt     DateTime @default(now())[m
+[31m-  updatedAt     DateTime @updatedAt[m
+[32m+[m[32m  id                String   @id @default(cuid())[m
+[32m+[m[32m  codigo            String   @unique[m
+[32m+[m[32m  nome              String[m
+[32m+[m[32m  setor             String[m
+[32m+[m[32m  subsetor          String?[m
+[32m+[m[32m  tipo              String[m
+[32m+[m[32m  qualidade         Int      @default(7)[m
+[32m+[m[32m  risco             String   @default("MEDIO")[m
+[32m+[m[32m  recomendacao      String   @default("NEUTRO")[m
+[32m+[m[32m  fundamentosResumo String?[m
+[32m+[m[32m  pontosFortes      String?[m
+[32m+[m[32m  pontosFracos      String?[m
+[32m+[m[32m  observacoes       String?[m
+[32m+[m[32m  segmento          String?[m
+[32m+[m[32m  governanca        String?[m
+[32m+[m[32m  dividend_yield    Float?[m
+[32m+[m[32m  ativo             Boolean  @default(true)[m
+[32m+[m[32m  ultimaRevisao     DateTime @default(now())[m
+[32m+[m[32m  criadoPor         String?[m
+[32m+[m[32m  createdAt         DateTime @default(now())[m
+[32m+[m[32m  updatedAt         DateTime @updatedAt[m
+ [m
+   @@map("ativos_informacao")[m
+ }[m
+[36m@@ -869,2
