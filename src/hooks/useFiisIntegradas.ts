@@ -86,7 +86,6 @@ function calcularDyFII(result: any, ticker: string): { valor: number | null; ori
 
 // 🚀 FUNÇÃO OTIMIZADA PARA BUSCAR COTAÇÕES DE FIIs EM PARALELO (CORS RESOLVIDO)
 async function buscarCotacoesFIIsParalelas(tickers: string[], isMobile: boolean): Promise<Map<string, any>> {
-  const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
   const cotacoesMap = new Map();
   
   console.log(`📊 Iniciando busca cotações para ${tickers.length} FIIs - Mobile: ${isMobile}`);
@@ -105,7 +104,7 @@ async function buscarCotacoesFIIsParalelas(tickers: string[], isMobile: boolean)
       const controller = new AbortController();
       setTimeout(() => controller.abort(), 8000); // ✅ TIMEOUT MAIOR PARA FIIs
       
-      const response = await fetch(`https://brapi.dev/api/quote/${tickers.join(',')}?token=${BRAPI_TOKEN}`, {
+      const response = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent(tickers.join(','))}`, {
         signal: controller.signal,
         headers: {
           'Accept': 'application/json',
@@ -115,9 +114,10 @@ async function buscarCotacoesFIIsParalelas(tickers: string[], isMobile: boolean)
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`📊 [COTAÇÕES-FII-DESKTOP] Resposta para ${data.results?.length || 0} FIIs`);
-        
-        data.results?.forEach((quote: any) => {
+        const results = data.results ?? data.quotes ?? [];
+        console.log(`📊 [COTAÇÕES-FII-DESKTOP] Resposta para ${results.length || 0} FIIs`);
+
+        results.forEach((quote: any) => {
           if (quote.regularMarketPrice > 0) {
             cotacoesMap.set(quote.symbol, {
               precoAtual: quote.regularMarketPrice,
@@ -157,7 +157,7 @@ async function buscarCotacoesFIIsParalelas(tickers: string[], isMobile: boolean)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000); // ✅ TIMEOUT MAIOR
       
-      const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`, {
+      const response = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent(ticker)}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -171,8 +171,8 @@ async function buscarCotacoesFIIsParalelas(tickers: string[], isMobile: boolean)
 
       if (response.ok) {
         const data = await response.json();
-        if (data.results?.[0]?.regularMarketPrice > 0) {
-          const quote = data.results[0];
+        const quote = data.results?.[0] ?? data.quotes?.[0];
+        if (quote?.regularMarketPrice > 0) {
           console.log(`📱✅ [COTAÇÕES-FII] ${ticker}: R$ ${quote.regularMarketPrice.toFixed(2)} (Estratégia Unificada)`);
           
           dadosFii = {
@@ -198,15 +198,15 @@ async function buscarCotacoesFIIsParalelas(tickers: string[], isMobile: boolean)
       try {
         console.log(`📱🔄 [COTAÇÕES-FII] ${ticker}: Fallback 1 - Sem User-Agent`);
         
-        const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`, {
+        const response = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent(ticker)}`, {
           method: 'GET',
           headers: { 'Accept': 'application/json' }
         });
 
         if (response.ok) {
           const data = await response.json();
-          if (data.results?.[0]?.regularMarketPrice > 0) {
-            const quote = data.results[0];
+          const quote = data.results?.[0] ?? data.quotes?.[0];
+          if (quote?.regularMarketPrice > 0) {
             console.log(`📱✅ [COTAÇÕES-FII] ${ticker}: R$ ${quote.regularMarketPrice.toFixed(2)} (Fallback 1)`);
             
             dadosFii = {
@@ -233,15 +233,15 @@ async function buscarCotacoesFIIsParalelas(tickers: string[], isMobile: boolean)
       try {
         console.log(`📱🔄 [COTAÇÕES-FII] ${ticker}: Fallback 2 - URL simplificada`);
         
-        const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&range=1d`, {
+        const response = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent(ticker)}&range=1d`, {
           method: 'GET',
           mode: 'cors'
         });
 
         if (response.ok) {
           const data = await response.json();
-          if (data.results?.[0]?.regularMarketPrice > 0) {
-            const quote = data.results[0];
+          const quote = data.results?.[0] ?? data.quotes?.[0];
+          if (quote?.regularMarketPrice > 0) {
             console.log(`📱✅ [COTAÇÕES-FII] ${ticker}: R$ ${quote.regularMarketPrice.toFixed(2)} (Fallback 2)`);
             
             dadosFii = {
@@ -293,7 +293,6 @@ async function buscarCotacoesFIIsParalelas(tickers: string[], isMobile: boolean)
 // 🔄 FUNÇÃO PARA BUSCAR DY DE FIIs COM ESTRATÉGIA MOBILE/DESKTOP (CORS RESOLVIDO)
 async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
-  const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
   
   console.log(`📈 Iniciando busca DY para ${tickers.length} FIIs - Mobile: ${isMobile}`);
   
@@ -319,7 +318,7 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000); // ✅ TIMEOUT MAIOR
         
-        const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
+        const response = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent(ticker)}&dividends=true`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -333,7 +332,7 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
 
         if (response.ok) {
           const data = await response.json();
-          const result = data.results?.[0];
+          const result = data.results?.[0] ?? data.quotes?.[0];
           const { valor, origem } = calcularDyFII(result, ticker);
 
           if (valor && valor > 0) {
@@ -355,7 +354,7 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
         try {
           console.log(`📱🔄 [DY-FII] ${ticker}: Fallback 1 - Sem User-Agent`);
           
-          const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
+          const response = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent(ticker)}&dividends=true`, {
             method: 'GET',
             headers: {
               'Accept': 'application/json'
@@ -364,7 +363,7 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
 
           if (response.ok) {
             const data = await response.json();
-            const result = data.results?.[0];
+            const result = data.results?.[0] ?? data.quotes?.[0];
             const { valor, origem } = calcularDyFII(result, ticker);
 
             if (valor && valor > 0) {
@@ -387,14 +386,14 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
         try {
           console.log(`📱🔄 [DY-FII] ${ticker}: Fallback 2 - URL simplificada`);
           
-          const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true&range=1d`, {
+          const response = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent(ticker)}&dividends=true&range=1d`, {
             method: 'GET',
             mode: 'cors'
           });
 
           if (response.ok) {
             const data = await response.json();
-            const result = data.results?.[0];
+            const result = data.results?.[0] ?? data.quotes?.[0];
             const { valor, origem } = calcularDyFII(result, ticker);
 
             if (valor && valor > 0) {
@@ -427,7 +426,7 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
     console.log('🖥️ [DY-FII-DESKTOP] Buscando DY em lote no desktop');
     
     try {
-      const url = `https://brapi.dev/api/quote/${tickers.join(',')}?token=${BRAPI_TOKEN}&dividends=true`;
+      const url = `/api/financial/quotes?symbols=${encodeURIComponent(tickers.join(','))}&dividends=true`;
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000); // ✅ TIMEOUT MAIOR PARA FIIs
@@ -445,9 +444,10 @@ async function buscarDYsFiisComEstrategia(tickers: string[], isMobile: boolean):
       
       if (response.ok) {
         const data = await response.json();
-        console.log(`📊 [DY-FII-DESKTOP] Resposta recebida para ${data.results?.length || 0} FIIs`);
-        
-        data.results?.forEach((result: any) => {
+        const results = data.results ?? data.quotes ?? [];
+        console.log(`📊 [DY-FII-DESKTOP] Resposta recebida para ${results.length || 0} FIIs`);
+
+        results.forEach((result: any) => {
           const ticker = result.symbol;
           const { valor, origem } = calcularDyFII(result, ticker);
 

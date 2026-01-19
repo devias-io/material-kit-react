@@ -85,7 +85,7 @@ export function useHGBrasilAcoes(ticker: string) {
 
       // MÉTODO 2: Fallback para BRAPI
       try {
-        const brapiUrl = `https://brapi.dev/api/quote/${ticker}?modules=summaryProfile&token=jJrMYVy9MATGEicx3GxBp8`;
+        const brapiUrl = `/api/financial/quotes?symbols=${encodeURIComponent(ticker)}&modules=summaryProfile`;
         console.log(`📡 Tentando BRAPI como fallback para ${ticker}...`);
         
         const brapiResponse = await fetch(brapiUrl);
@@ -93,8 +93,8 @@ export function useHGBrasilAcoes(ticker: string) {
         if (brapiResponse.ok) {
           const brapiData = await brapiResponse.json();
           
-          if (brapiData.results && brapiData.results[0]) {
-            const result = brapiData.results[0];
+          const result = brapiData.results?.[0] ?? brapiData.quotes?.[0];
+          if (result) {
             
             const dadosBrapi = {
               ticker: result.symbol,

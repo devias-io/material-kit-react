@@ -83,8 +83,7 @@ export function useIfixRealTime() {
       try {
         debugLog('📊 Tentativa 2: BRAPI IFIX.SA...');
         
-        const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
-        const brapiUrl = `https://brapi.dev/api/quote/IFIX.SA?token=${BRAPI_TOKEN}`;
+        const brapiUrl = `/api/financial/quotes?symbols=${encodeURIComponent('IFIX.SA')}`;
         
         const brapiResponse = await fetch(brapiUrl, {
           method: 'GET',
@@ -98,8 +97,8 @@ export function useIfixRealTime() {
           const brapiData = await brapiResponse.json();
           debugLog('📊 Resposta BRAPI:', brapiData);
 
-          if (brapiData.results && brapiData.results.length > 0) {
-            const ifixBrapi = brapiData.results[0];
+          const ifixBrapi = brapiData.results?.[0] ?? brapiData.quotes?.[0];
+          if (ifixBrapi) {
             
             if (ifixBrapi.regularMarketPrice && ifixBrapi.regularMarketPrice > 0) {
               const dadosIfix = {

@@ -22,7 +22,7 @@ function useDividendosAtivo(
 
       console.log(`🔍 HOOK - Buscando dividendos para ${ticker}`);
 
-      const url = `https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`;
+      const url = `/api/financial/quotes?symbols=${encodeURIComponent(ticker)}&dividends=true`;
       console.log(`📡 URL: ${url}`);
 
       const response = await fetch(url);
@@ -30,16 +30,14 @@ function useDividendosAtivo(
 
       const data = await response.json();
 
+      const result = data.results?.[0] ?? data.quotes?.[0] ?? data;
       let cashDividends: any[] = [];
 
-      if (data.results?.[0]?.dividendsData?.cashDividends) {
-        cashDividends = [...cashDividends, ...data.results[0].dividendsData.cashDividends];
+      if (result?.dividendsData?.cashDividends) {
+        cashDividends = [...cashDividends, ...result.dividendsData.cashDividends];
       }
-      if (data.dividendsData?.cashDividends) {
-        cashDividends = [...cashDividends, ...data.dividendsData.cashDividends];
-      }
-      if (data.cashDividends) {
-        cashDividends = [...cashDividends, ...data.cashDividends];
+      if (result?.cashDividends) {
+        cashDividends = [...cashDividends, ...result.cashDividends];
       }
 
       console.log(`💰 Total bruto: ${cashDividends.length}`);

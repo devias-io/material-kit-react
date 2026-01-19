@@ -113,9 +113,9 @@ export interface Relatorio {
 // ========================================
 // CONSTANTES
 // ========================================
-const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
 const HG_BRASIL_KEY = 'a666e15c';
 const PRICE_CACHE_TTL_MS = 30 * 60 * 1000;
+const FUNDAMENTAL_CACHE_TTL_MS = 2 * 60 * 60 * 1000;
 
 function getFrequenciaDividendos(ticker: string): number {
   const tickerUpper = ticker.toUpperCase();
@@ -478,7 +478,7 @@ export function useDadosBDR(bdrTicker: string | null) {
       const cachedBDR = localStorage.getItem(`cache_bdr_${bdrTicker}`);
       if (cachedBDR) {
         const parsed = JSON.parse(cachedBDR);
-        if (parsed.timestamp && (Date.now() - parsed.timestamp) < 3 * 60 * 60 * 1000) { // Cache de 3 horas
+        if (parsed.timestamp && (Date.now() - parsed.timestamp) < PRICE_CACHE_TTL_MS) {
           setBDRData(parsed.data);
           setBDRLoading(false);
           console.log(`✅ BDR ${bdrTicker} carregado do cache`);
@@ -489,7 +489,7 @@ export function useDadosBDR(bdrTicker: string | null) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
-      const response = await fetch(`https://brapi.dev/api/quote/${bdrTicker}?token=${BRAPI_TOKEN}`, {
+      const response = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent(bdrTicker)}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -503,8 +503,8 @@ export function useDadosBDR(bdrTicker: string | null) {
       if (response.ok) {
         const data = await response.json();
         
-        if (data?.results?.[0]) {
-          const result = data.results[0];
+        const result = data?.results?.[0] ?? data?.quotes?.[0];
+        if (result) {
           const pickNumber = (...values: Array<number | null | undefined>) => {
             for (const value of values) {
               if (typeof value === 'number' && !Number.isNaN(value)) {
@@ -675,7 +675,7 @@ export function useHGBrasilAcoes(ticker: string | undefined) {
       const cachedData = localStorage.getItem(`cache_hg_${ticker}`);
       if (cachedData) {
         const parsed = JSON.parse(cachedData);
-        if (parsed.timestamp && (Date.now() - parsed.timestamp) < 6 * 60 * 60 * 1000) {
+        if (parsed.timestamp && (Date.now() - parsed.timestamp) < FUNDAMENTAL_CACHE_TTL_MS) {
           setDadosHGBrasil(parsed.data);
           setLoading(false);
           console.log(`✅ Dados ${ticker} carregados do cache`);
@@ -691,7 +691,7 @@ export function useHGBrasilAcoes(ticker: string | undefined) {
       // 🎯 ESTRATÉGIA CORRIGIDA: BRAPI PRIMEIRO PARA P/L (MOBILE E DESKTOP)
       console.log(`🎯 PRIORIDADE 1: Buscando P/L via BRAPI com módulo correto...`);
 
-      const brapiBaseUrl = `https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`;
+      const brapiBaseUrl = `/api/financial/quotes?symbols=${encodeURIComponent(ticker)}&dividends=true`;
       const brapiHeaders: Record<string, string> = {
         'Accept': 'application/json'
       };
@@ -1056,7 +1056,7 @@ export function useYahooFinanceInternacional(ticker: string | undefined) {
       const cachedData = localStorage.getItem(`cache_international_${ticker}`);
       if (cachedData) {
         const parsed = JSON.parse(cachedData);
-        if (parsed.timestamp && (Date.now() - parsed.timestamp) < 2 * 60 * 60 * 1000) {
+        if (parsed.timestamp && (Date.now() - parsed.timestamp) < FUNDAMENTAL_CACHE_TTL_MS) {
           setDadosYahoo(parsed.data);
           setLoading(false);
           console.log(`✅ Dados internacionais ${ticker} carregados do cache`);
@@ -1157,7 +1157,7 @@ export function useYahooFinanceInternacional(ticker: string | undefined) {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000);
             
-            const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
+            const response = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent(ticker)}&dividends=true`, {
               method: 'GET',
               headers: {
                 'Accept': 'application/json'
@@ -1171,8 +1171,8 @@ export function useYahooFinanceInternacional(ticker: string | undefined) {
               const data = await response.json();
               console.log(`📱📊 BRAPI Resposta:`, data);
 
-              if (data.results?.[0]) {
-                const result = data.results[0];
+              const result = data.results?.[0] ?? data.quotes?.[0];
+              if (result) {
                 const { valor: dyCalculado, origem: origemDy } = calcularDyAPartirDoResultado(result, ticker);
 
                 dadosColetados = {
@@ -1529,7 +1529,7 @@ export function useDadosFII(ticker: string, dadosFinanceiros?: DadosFinanceiros 
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-          const response = await fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`, {
+          const response = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent(ticker)}&dividends=true`, {
             method: 'GET',
             headers: { 'Accept': 'application/json' },
             signal: controller.signal
@@ -1539,8 +1539,8 @@ export function useDadosFII(ticker: string, dadosFinanceiros?: DadosFinanceiros 
 
           if (response.ok) {
             const data = await response.json();
-            if (data.results && data.results.length > 0) {
-              const fii = data.results[0] || {};
+            const fii = data.results?.[0] ?? data.quotes?.[0] ?? {};
+            if (Object.keys(fii).length > 0) {
 
               const ultimoDividendo = extrairNumeroBrApi(
                 fii.dividendsData?.cashDividends?.[0]?.rate ??
@@ -1903,7 +1903,7 @@ export function useCotacaoUSD() {
       try {
         console.log('📡 Tentando BRAPI para USD/BRL...');
         
-        const brapiResponse = await fetch(`https://brapi.dev/api/quote/USDBRL=X?token=${BRAPI_TOKEN}`, {
+        const brapiResponse = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent('USDBRL=X')}`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -1914,8 +1914,9 @@ export function useCotacaoUSD() {
         if (brapiResponse.ok) {
           const brapiData = await brapiResponse.json();
           
-          if (brapiData.results && brapiData.results[0]) {
-            const usdBrl = brapiData.results[0].regularMarketPrice;
+          const usdQuote = brapiData.results?.[0] ?? brapiData.quotes?.[0];
+          if (usdQuote) {
+            const usdBrl = usdQuote.regularMarketPrice;
             
             if (usdBrl && usdBrl > 0) {
               setCotacaoUSD(usdBrl);

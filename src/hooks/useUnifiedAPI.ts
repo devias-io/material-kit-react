@@ -59,6 +59,18 @@ interface ApiHookReturn<T> {
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 const globalCache = new Map<string, CacheItem>();
 
+const buildInternalQuoteUrl = (symbols: string, queryParams?: Record<string, string>) => {
+  const params = new URLSearchParams({ symbols });
+  if (queryParams) {
+    Object.entries(queryParams).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      }
+    });
+  }
+  return `/api/financial/quotes?${params.toString()}`;
+};
+
 const getCachedData = (key: string): any | null => {
   const cached = globalCache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -93,13 +105,8 @@ export const useDeviceDetection = (): boolean => {
 
 // 🚀 FUNÇÃO DE FETCH COM URLs CORRETAS E DEBUG MELHORADO
 async function fetchComEstrategiasCorrigidas(url: string, isMobile: boolean = false): Promise<ApiResponse> {
-  console.log(`🌐 [CORRIGIDO] Buscando: ${url.replace(/token=[^&]+/, 'token=***')}`);
+  console.log(`🌐 [CORRIGIDO] Buscando: ${url}`);
   console.log(`📱 [CORRIGIDO] Device: ${isMobile ? 'MOBILE' : 'DESKTOP'}`);
-  
-  // ✅ VALIDAR URL ANTES DE TENTAR
-  if (!url.includes('brapi.dev')) {
-    throw new Error('URL inválida - deve ser brapi.dev');
-  }
   
   const estrategias = [
     {
@@ -161,12 +168,13 @@ async function fetchComEstrategiasCorrigidas(url: string, isMobile: boolean = fa
           try {
             const data: ApiResponse = JSON.parse(text);
             
-            if (data && data.results && data.results.length > 0) {
+            const results = data?.results ?? data?.quotes ?? [];
+            if (results.length > 0) {
               console.log(`✅ SUCESSO ${estrategia.name}:`, {
-                ticker: data.results[0].symbol,
-                preco: data.results[0].regularMarketPrice
+                ticker: results[0].symbol,
+                preco: results[0].regularMarketPrice
               });
-              return data;
+              return { ...data, results };
             } else {
               console.log(`⚠️ ${estrategia.name}: Sem results válidos`);
               console.log(`🔍 Estrutura recebida:`, Object.keys(data));
@@ -209,12 +217,11 @@ export function useIbovespaUnificado(): ApiHookReturn<IbovespaData> {
       console.log('🚀 INICIANDO busca Ibovespa CORRIGIDA...');
       
       // ✅ TENTAR MÚLTIPLAS URLS PARA IBOVESPA
-      const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
       const ibovespaUrls = [
-        `https://brapi.dev/api/quote/^BVSP?token=${BRAPI_TOKEN}`,
-        `https://brapi.dev/api/quote/BVSP?token=${BRAPI_TOKEN}`, 
-        `https://brapi.dev/api/quote/IBOV?token=${BRAPI_TOKEN}`,
-        `https://brapi.dev/api/quote/BOVV11?token=${BRAPI_TOKEN}` // ETF do Ibovespa
+        buildInternalQuoteUrl('^BVSP'),
+        buildInternalQuoteUrl('BVSP'),
+        buildInternalQuoteUrl('IBOV'),
+        buildInternalQuoteUrl('BOVV11') // ETF do Ibovespa
       ];
       
       let dadosObtidos = false;
@@ -320,12 +327,11 @@ export function useIfixUnificado(): ApiHookReturn<SmllData> {
       console.log('🚀 INICIANDO busca IFIX CORRIGIDA...');
 
       // ✅ MÚLTIPLAS OPÇÕES PARA IFIX
-      const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
       const ifixUrls = [
-        `https://brapi.dev/api/quote/IFIX11?token=${BRAPI_TOKEN}`,
-        `https://brapi.dev/api/quote/XFIX11?token=${BRAPI_TOKEN}`,
-        `https://brapi.dev/api/quote/FIIB11?token=${BRAPI_TOKEN}`,
-        `https://brapi.dev/api/quote/HGFF11?token=${BRAPI_TOKEN}` // FII grande como proxy
+        buildInternalQuoteUrl('IFIX11'),
+        buildInternalQuoteUrl('XFIX11'),
+        buildInternalQuoteUrl('FIIB11'),
+        buildInternalQuoteUrl('HGFF11') // FII grande como proxy
       ];
       
       let dadosObtidos = false;
@@ -433,8 +439,7 @@ export function useSmllUnificado(): ApiHookReturn<SmllData> {
 
       console.log('🚀 INICIANDO busca SMLL CORRIGIDA...');
 
-      const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
-      const url = `https://brapi.dev/api/quote/SMAL11?token=${BRAPI_TOKEN}`;
+      const url = buildInternalQuoteUrl('SMAL11');
       
       const data = await fetchComEstrategiasCorrigidas(url, isMobile);
       

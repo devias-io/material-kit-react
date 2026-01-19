@@ -66,8 +66,7 @@ export const useBRAPIETF = (ticker: string) => {
 
       console.log(`🔍 Buscando dados do ETF ${ticker} na BRAPI...`);
 
-      // URL da API BRAPI com token
-      const apiUrl = `https://brapi.dev/api/quote/${ticker}?token=jJrMYVy9MATGEicx3GxBp8&dividends=true`;
+      const apiUrl = `/api/financial/quotes?symbols=${encodeURIComponent(ticker)}&dividends=true`;
       
       const response = await fetch(apiUrl);
       
@@ -77,8 +76,8 @@ export const useBRAPIETF = (ticker: string) => {
 
       const data = await response.json();
       
-      if (data.results && data.results.length > 0) {
-        const result = data.results[0];
+      const result = data.results?.[0] ?? data.quotes?.[0];
+      if (result) {
         
         // Processar e estruturar os dados
         const processedData: BRAPIETFData = {
