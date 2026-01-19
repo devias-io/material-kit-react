@@ -268,7 +268,7 @@ function useSmllRealTime() {
 
   React.useEffect(() => {
     buscarSmllReal();
-    const interval = setInterval(buscarSmllReal, 5 * 60 * 1000);
+    const interval = setInterval(buscarSmllReal, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [buscarSmllReal]);
 
@@ -472,7 +472,7 @@ function useIbovespaRealTime() {
 
   React.useEffect(() => {
     buscarIbovespaReal();
-    const interval = setInterval(buscarIbovespaReal, 5 * 60 * 1000);
+    const interval = setInterval(buscarIbovespaReal, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [buscarIbovespaReal]);
 
