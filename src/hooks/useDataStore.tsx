@@ -1212,14 +1212,14 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     
     buscarCotacaoUSD();
     
-    // Timer controlado
+    // Timer controlado (10 minutos)
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
     
     intervalRef.current = setInterval(() => {
       buscarCotacaoUSD();
-    }, 5 * 60 * 1000);
+    }, 10 * 60 * 1000);
     
     return () => {
       if (intervalRef.current) {

@@ -167,7 +167,7 @@ function useIfixRealTime() {
 
   React.useEffect(() => {
     buscarIfixReal();
-    const interval = setInterval(buscarIfixReal, 5 * 60 * 1000);
+    const interval = setInterval(buscarIfixReal, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [buscarIfixReal]);
 

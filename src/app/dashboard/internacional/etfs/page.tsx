@@ -269,7 +269,7 @@ function useIndicesInternacionaisRealTime() {
 
   React.useEffect(() => {
     buscarIndicesReal();
-    const interval = setInterval(buscarIndicesReal, 5 * 60 * 1000);
+    const interval = setInterval(buscarIndicesReal, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [buscarIndicesReal]);
 
