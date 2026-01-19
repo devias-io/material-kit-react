@@ -18,7 +18,7 @@ export function useBDRDataAPI(bdrTicker: string | null) {
       setBDRError(null);
       console.log(`🇧🇷 Buscando cotação do BDR: ${bdrTicker}...`);
       
-      const response = await fetch(`https://brapi.dev/api/quote/${bdrTicker}?token=jJrMYVy9MATGEicx3GxBp8`);
+      const response = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent(bdrTicker)}`);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -26,8 +26,8 @@ export function useBDRDataAPI(bdrTicker: string | null) {
       
       const data = await response.json();
 
-      if (data?.results?.[0]) {
-        const result = data.results[0];
+      const result = data?.results?.[0] ?? data?.quotes?.[0];
+      if (result) {
 
         const pickNumber = (...values: Array<number | null | undefined>) => {
           for (const value of values) {

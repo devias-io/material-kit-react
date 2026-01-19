@@ -196,7 +196,6 @@ export function useFiisCotacoesBrapi() {
       }
 
       // 🔑 TOKEN BRAPI FUNCIONANDO
-      const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
 
       // 📋 EXTRAIR TODOS OS TICKERS
       const tickers = fiisData.map(fii => fii.ticker);
@@ -217,7 +216,7 @@ export function useFiisCotacoesBrapi() {
           const lote = tickers.slice(i, i + LOTE_SIZE_MOBILE);
           const tickersString = lote.join(',');
           
-          const apiUrl = `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}`;
+          const apiUrl = `/api/financial/quotes?symbols=${encodeURIComponent(tickersString)}`;
           
           console.log(`📱 Lote mobile ${Math.floor(i/LOTE_SIZE_MOBILE) + 1}: ${lote.join(', ')}`);
 
@@ -228,8 +227,9 @@ export function useFiisCotacoesBrapi() {
               const apiData = await response.json();
               console.log(`📊 [MOBILE] Resposta para lote ${Math.floor(i/LOTE_SIZE_MOBILE) + 1}:`, apiData);
 
-              if (apiData.results && Array.isArray(apiData.results)) {
-                apiData.results.forEach((quote: any) => {
+              const results = apiData.results ?? apiData.quotes ?? [];
+              if (Array.isArray(results)) {
+                results.forEach((quote: any) => {
                   if (quote.symbol && quote.regularMarketPrice && quote.regularMarketPrice > 0) {
                     cotacoesMap.set(quote.symbol, {
                       precoAtual: quote.regularMarketPrice,
@@ -276,7 +276,7 @@ export function useFiisCotacoesBrapi() {
           const lote = tickers.slice(i, i + LOTE_SIZE);
           const tickersString = lote.join(',');
           
-          const apiUrl = `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}&range=1d&interval=1d&fundamental=true`;
+          const apiUrl = `/api/financial/quotes?symbols=${encodeURIComponent(tickersString)}&range=1d&interval=1d&fundamental=true`;
           
           console.log(`🖥️ Lote desktop ${Math.floor(i/LOTE_SIZE) + 1}: ${lote.join(', ')}`);
 
@@ -287,8 +287,9 @@ export function useFiisCotacoesBrapi() {
               const apiData = await response.json();
               console.log(`📊 [DESKTOP] Resposta para lote ${Math.floor(i/LOTE_SIZE) + 1}:`, apiData);
 
-              if (apiData.results && Array.isArray(apiData.results)) {
-                apiData.results.forEach((quote: any) => {
+              const results = apiData.results ?? apiData.quotes ?? [];
+              if (Array.isArray(results)) {
+                results.forEach((quote: any) => {
                   if (quote.symbol && quote.regularMarketPrice && quote.regularMarketPrice > 0) {
                     cotacoesMap.set(quote.symbol, {
                       precoAtual: quote.regularMarketPrice,

@@ -133,11 +133,7 @@ export function useIFIXRealTime() {
 
       debugLog('🔍 BUSCANDO DADOS IFIX EM TEMPO REAL...');
 
-      // 🔑 TOKEN BRAPI VALIDADO
-      const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
-      
-      // 📊 BUSCAR IFIX VIA BRAPI
-      const ifixUrl = `https://brapi.dev/api/quote/IFIX?token=${BRAPI_TOKEN}`;
+      const ifixUrl = `/api/financial/quotes?symbols=${encodeURIComponent('IFIX')}`;
       
       const response = await fetch(ifixUrl, {
         method: 'GET',
@@ -150,8 +146,8 @@ export function useIFIXRealTime() {
       if (response.ok) {
         const data = await response.json();
         
-        if (data.results && data.results.length > 0) {
-          const ifixQuote = data.results[0];
+        const ifixQuote = data.results?.[0] ?? data.quotes?.[0];
+        if (ifixQuote) {
           
           const processedData = {
             valor: ifixQuote.regularMarketPrice,

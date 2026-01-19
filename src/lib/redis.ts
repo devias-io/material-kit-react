@@ -221,6 +221,10 @@ export class CacheService {
     }
   }
 
+  static async invalidate(key: string): Promise<void> {
+    await this.delete(key);
+  }
+
   static async invalidateTags(tags: string[]): Promise<void> {
     if (tags.length === 0) return;
     try {

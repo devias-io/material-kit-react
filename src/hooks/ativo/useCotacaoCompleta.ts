@@ -35,7 +35,6 @@ export function useCotacaoCompleta(ticker: string, ehBDREstrangeiro: boolean = f
       setError(null);
       setLoading(true);
       
-      const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
       let cotacaoObtida = false;
       let cotacaoData: any = null;
       
@@ -56,8 +55,9 @@ export function useCotacaoCompleta(ticker: string, ehBDREstrangeiro: boolean = f
           }
 
           const data = await response.json();
-          if (data.results?.[0]?.regularMarketPrice > 0) {
-            cotacaoData = data.results[0];
+          const result = data.results?.[0] ?? data.quotes?.[0];
+          if (result?.regularMarketPrice > 0) {
+            cotacaoData = result;
             cotacaoObtida = true;
             console.log(`${descricao} ✅`);
           } else {
@@ -68,7 +68,7 @@ export function useCotacaoCompleta(ticker: string, ehBDREstrangeiro: boolean = f
         }
       };
 
-      const baseUrl = `https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`;
+      const baseUrl = `/api/financial/quotes?symbols=${encodeURIComponent(ticker)}`;
 
       const tentativasMobile = [
         {
