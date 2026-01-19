@@ -41,32 +41,30 @@ export const navItems = [
     page: 'fundos-imobiliarios'
   },
   {
-    key: 'cf-renda-turbinada',
+    key: 'cf-renda-turbinada-group',
     title: 'CF Renda Turbinada',
-    href: paths.dashboard.cfRendaTurbinada,
-    icon: 'star',
-    page: 'cf-renda-turbinada',
+    icon: 'star-filled',
     items: [
       {
-        key: 'cf-renda-turbinada-aulas',
-        title: 'Aulas',
-        href: paths.dashboard.cfRendaTurbinadaAulas,
-        icon: 'video',
-        page: 'cf-renda-turbinada-aulas'
+        key: 'cf-renda-turbinada-turma-1',
+        title: 'Renda Turbinada 1',
+        href: paths.dashboard.cfRendaTurbinada,
+        icon: 'star',
+        page: 'cf-renda-turbinada'
       },
       {
-        key: 'cf-renda-turbinada-bastidores',
-        title: 'Bastidores da Bolsa',
-        href: paths.dashboard.cfRendaTurbinadaBastidores,
-        icon: 'briefcase',
-        page: 'cf-renda-turbinada-bastidores'
+        key: 'cf-renda-turbinada-turma-2',
+        title: 'Renda Turbinada 2',
+        href: paths.dashboard.cfRendaTurbinadaTurma2,
+        icon: 'star',
+        page: 'cf-renda-turbinada-turma-2'
       },
       {
-        key: 'cf-renda-turbinada-carteira',
-        title: 'Carteira Recomendada',
-        href: paths.dashboard.cfRendaTurbinadaCarteira,
-        icon: 'chart-line',
-        page: 'cf-renda-turbinada-carteira'
+        key: 'cf-renda-turbinada-turma-3',
+        title: 'Renda Turbinada 3',
+        href: paths.dashboard.cfRendaTurbinadaTurma3,
+        icon: 'star',
+        page: 'cf-renda-turbinada-turma-3'
       }
     ]
   },

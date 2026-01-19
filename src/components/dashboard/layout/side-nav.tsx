@@ -20,110 +20,13 @@ import { useAuthAccess } from '@/hooks/use-auth-access';
 import { navItems } from './config';
 import { navIcons } from './nav-icons';
 
-function remapToTurma2(item: NavItemConfig): NavItemConfig {
-  const remapChildren = item.items?.map(subItem => {
-    if (subItem.key === 'cf-renda-turbinada-aulas') {
-      return {
-        ...subItem,
-        key: 'cf-renda-turbinada-turma-2-aulas',
-        href: paths.dashboard.cfRendaTurbinadaTurma2Aulas,
-        page: 'cf-renda-turbinada-turma-2-aulas',
-      };
-    }
-
-    if (subItem.key === 'cf-renda-turbinada-bastidores') {
-      return {
-        ...subItem,
-        key: 'cf-renda-turbinada-turma-2-bastidores',
-        href: paths.dashboard.cfRendaTurbinadaTurma2Bastidores,
-        page: 'cf-renda-turbinada-turma-2-bastidores',
-      };
-    }
-
-    if (subItem.key === 'cf-renda-turbinada-carteira') {
-      return {
-        ...subItem,
-        key: 'cf-renda-turbinada-turma-2-carteira',
-        href: paths.dashboard.cfRendaTurbinadaCarteira,
-       page: 'cf-renda-turbinada-carteira',
-      };
-    }
-
-    return subItem;
-  });
-
-  return {
-    ...item,
-    key: 'cf-renda-turbinada-turma-2',
-    title: 'Renda Turbinada',
-    href: paths.dashboard.cfRendaTurbinadaTurma2,
-    page: 'cf-renda-turbinada-turma-2',
-    items: remapChildren,
-  };
-}
-
-function remapToTurma3(item: NavItemConfig): NavItemConfig {
-  const remapChildren = item.items?.map(subItem => {
-    if (subItem.key === 'cf-renda-turbinada-aulas') {
-      return {
-        ...subItem,
-        key: 'cf-renda-turbinada-turma-3-aulas',
-        href: paths.dashboard.cfRendaTurbinadaTurma3Aulas,
-        page: 'cf-renda-turbinada-turma-3-aulas',
-      };
-    }
-
-    if (subItem.key === 'cf-renda-turbinada-bastidores') {
-      return {
-        ...subItem,
-        key: 'cf-renda-turbinada-turma-3-bastidores',
-        href: paths.dashboard.cfRendaTurbinadaTurma3Bastidores,
-        page: 'cf-renda-turbinada-turma-3-bastidores',
-      };
-    }
-
-    if (subItem.key === 'cf-renda-turbinada-carteira') {
-      return {
-        ...subItem,
-        key: 'cf-renda-turbinada-turma-3-carteira',
-        href: paths.dashboard.cfRendaTurbinadaCarteira,
-        page: 'cf-renda-turbinada-carteira',
-      };
-    }
-
-    return subItem;
-  });
-
-  return {
-    ...item,
-    key: 'cf-renda-turbinada-turma-3',
-    title: 'Renda Turbinada',
-    href: paths.dashboard.cfRendaTurbinadaTurma3,
-    page: 'cf-renda-turbinada-turma-3',
-    items: remapChildren,
-  };
-}
-
 function applyPlanOverrides(items: NavItemConfig[], plan?: string): NavItemConfig[] {
   return items.flatMap(item => {
     const withChildren = item.items
       ? { ...item, items: applyPlanOverrides(item.items, plan) }
       : { ...item };
 
-    if (plan === 'RENDA_TURBINADA_T3' && withChildren.key === 'cf-renda-turbinada') {
-      return [remapToTurma3(withChildren)];
-    }
-
-    if (plan === 'RENDA_TURBINADA_T2' && withChildren.key === 'cf-renda-turbinada') {
-      return [remapToTurma2(withChildren)];
-    }
-
     const results = [withChildren];
-
-    if (plan === 'ADMIN' && withChildren.key === 'cf-renda-turbinada') {
-      results.push(remapToTurma2(withChildren));
-      results.push(remapToTurma3(withChildren));
-    }
 
     if ((plan === 'RENDA_TURBINADA' || plan === 'RENDA_TURBINADA_T2' || plan === 'RENDA_TURBINADA_T3') && withChildren.key === 'recursos-telegram') {
       return [
@@ -164,7 +67,7 @@ function filterNavItems(
           })
           .filter((subItem): subItem is NavItemConfig => subItem !== null);
 
-        const hasMainAccess = !item.page || hasAccessSync(item.page);
+        const hasMainAccess = item.page ? hasAccessSync(item.page) : false;
         const hasSubItems = filteredSubItems.length > 0;
 
         if (hasMainAccess || hasSubItems) {
@@ -178,7 +81,7 @@ function filterNavItems(
       }
 
       if (!item.page) {
-        return item;
+        return null;
       }
 
       return hasAccessSync(item.page) ? item : null;
@@ -207,6 +110,25 @@ export function SideNav(): React.JSX.Element {
       [key]: !prev[key],
     }));
   };
+
+  React.useEffect(() => {
+    if (loading) {
+      return;
+    }
+
+    const shouldExpandRendaTurbinada = [
+      'cf-renda-turbinada',
+      'cf-renda-turbinada-turma-2',
+      'cf-renda-turbinada-turma-3'
+    ].some(permission => hasAccessSync(permission));
+
+    if (shouldExpandRendaTurbinada) {
+      setExpandedItems(prev => ({
+        ...prev,
+        'cf-renda-turbinada-group': true,
+      }));
+    }
+  }, [hasAccessSync, loading]);
 
   return (
     <Box
@@ -392,18 +314,28 @@ function NavItem({
   const hasChildren = items && items.length > 0;
   const isExpanded = expandedItems[itemKey] || false;
 
-  if (href && hasChildren) {
+  if (hasChildren) {
     return (
       <li>
         <Box sx={{ position: 'relative' }}>
           <Box
-            component={external ? 'a' : RouterLink}
+            component={href ? (external ? 'a' : RouterLink) : 'button'}
             href={href}
-            target={external ? '_blank' : undefined}
-            rel={external ? 'noreferrer' : undefined}
+            target={href && external ? '_blank' : undefined}
+            rel={href && external ? 'noreferrer' : undefined}
+            type={href ? undefined : 'button'}
+            onClick={
+              href
+                ? undefined
+                : () => {
+                    toggleExpanded(itemKey);
+                  }
+            }
             sx={{
               alignItems: 'center',
+              background: 'none',
               borderRadius: 1,
+              border: 'none',
               color: 'var(--NavItem-color)',
               cursor: 'pointer',
               display: 'flex',
@@ -413,7 +345,9 @@ function NavItem({
               pr: '40px',
               position: 'relative',
               textDecoration: 'none',
+              textAlign: 'left',
               whiteSpace: 'nowrap',
+              width: '100%',
               ...(disabled && {
                 bgcolor: 'var(--NavItem-disabled-background)',
                 color: 'var(--NavItem-disabled-color)',
