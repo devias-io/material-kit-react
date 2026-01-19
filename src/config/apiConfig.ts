@@ -31,8 +31,8 @@ export const API_CONFIG = {
     'Pragma': 'no-cache'
   },
   
-  // Intervalo de atualização (5 minutos)
-  UPDATE_INTERVAL: 5 * 60 * 1000,
+  // Intervalo de atualização (10 minutos)
+  UPDATE_INTERVAL: 10 * 60 * 1000,
   
   // Tickers especiais
   SPECIAL_TICKERS: {

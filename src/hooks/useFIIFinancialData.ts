@@ -100,8 +100,8 @@ export function useFIIFinancialData() {
   React.useEffect(() => {
     fetchFIIData();
 
-    // 🔄 ATUALIZAR A CADA 5 MINUTOS
-    const interval = setInterval(fetchFIIData, 5 * 60 * 1000);
+    // 🔄 ATUALIZAR A CADA 10 MINUTOS
+    const interval = setInterval(fetchFIIData, 10 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, [fetchFIIData]);
@@ -189,8 +189,8 @@ export function useIFIXRealTime() {
   React.useEffect(() => {
     fetchIFIXData();
     
-    // 🔄 ATUALIZAR A CADA 3 MINUTOS (IFIX muda menos frequentemente)
-    const interval = setInterval(fetchIFIXData, 3 * 60 * 1000);
+    // 🔄 ATUALIZAR A CADA 15 MINUTOS (IFIX muda menos frequentemente)
+    const interval = setInterval(fetchIFIXData, 15 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, [fetchIFIXData]);

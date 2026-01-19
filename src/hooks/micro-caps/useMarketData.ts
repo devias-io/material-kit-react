@@ -182,7 +182,7 @@ export function useMarketData() {
   useEffect(() => {
     buscarDadosMercado();
     
-    // 🔄 ATUALIZAR A CADA 5 MINUTOS
+    // 🔄 ATUALIZAR A CADA 10 MINUTOS
     const interval = setInterval(buscarDadosMercado, API_CONFIG.UPDATE_INTERVAL);
     
     return () => clearInterval(interval);
