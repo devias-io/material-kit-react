@@ -97,6 +97,7 @@ const planLabels: Record<string, string> = {
   FIIS: 'Projeto FIIs',
   RENDA_TURBINADA: 'CF Renda Turbinada',
   RENDA_TURBINADA_T2: 'CF Renda Turbinada - Turma 2',
+  RENDA_TURBINADA_T3: 'CF Renda Turbinada - Turma 3',
   AMERICA: 'Projeto América',
   ADMIN: 'Administrador',
   ANALISTA: 'Analista',

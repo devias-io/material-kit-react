@@ -16,17 +16,23 @@ interface NavigationCard {
 export default function DashboardOverview() {
   const { hasAccessSync, loading } = useAuthAccess();
 
-  const rendaTurbinadaAccess = hasAccessSync('cf-renda-turbinada-turma-2')
+  const rendaTurbinadaAccess = hasAccessSync('cf-renda-turbinada-turma-3')
     ? {
-        title: 'CF Renda Turbinada - Turma 2',
-        permission: 'cf-renda-turbinada-turma-2',
-        href: '/dashboard/cf-renda-turbinada-turma-2',
+        title: 'CF Renda Turbinada - Turma 3',
+        permission: 'cf-renda-turbinada-turma-3',
+        href: '/dashboard/cf-renda-turbinada-turma-3',
       }
-    : {
-        title: 'CF Renda Turbinada',
-        permission: 'cf-renda-turbinada',
-        href: '/dashboard/cf-renda-turbinada',
-      };
+    : hasAccessSync('cf-renda-turbinada-turma-2')
+      ? {
+          title: 'CF Renda Turbinada - Turma 2',
+          permission: 'cf-renda-turbinada-turma-2',
+          href: '/dashboard/cf-renda-turbinada-turma-2',
+        }
+      : {
+          title: 'CF Renda Turbinada',
+          permission: 'cf-renda-turbinada',
+          href: '/dashboard/cf-renda-turbinada',
+        };
 
   const navigationCards: NavigationCard[] = [
     {

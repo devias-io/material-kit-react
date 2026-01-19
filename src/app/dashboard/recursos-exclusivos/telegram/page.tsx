@@ -11,7 +11,7 @@ const TelegramPage = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [existingInstagram, setExistingInstagram] = useState('');
-  const isRendaTurbinada = user?.plan === 'RENDA_TURBINADA' || user?.plan === 'RENDA_TURBINADA_T2';
+  const isRendaTurbinada = user?.plan === 'RENDA_TURBINADA' || user?.plan === 'RENDA_TURBINADA_T2' || user?.plan === 'RENDA_TURBINADA_T3';
 
   // Carregar Instagram existente quando a página carregar
   useEffect(() => {
