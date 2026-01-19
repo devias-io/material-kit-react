@@ -59,6 +59,15 @@ const planPermissions = {
       'recursos-reserva'
     ]
   },
+  'RENDA_TURBINADA_T3': {
+    displayName: 'CF Renda Turbinada - Turma 3',
+    isAdmin: false,
+    pages: [
+      'cf-renda-turbinada-turma-3', 'cf-renda-turbinada-turma-3-aulas', 'cf-renda-turbinada-turma-3-bastidores', 'cf-renda-turbinada-carteira',
+      'recursos-exclusivos', 'recursos-dicas', 'recursos-ebooks', 'recursos-planilhas', 'recursos-telegram',
+      'recursos-reserva'
+    ]
+  },
   'AMERICA': {
     displayName: 'Projeto América',
     isAdmin: false,
@@ -76,6 +85,7 @@ const planPermissions = {
         'internacional', 'internacional-etfs', 'internacional-stocks', 'internacional-dividendos', 'internacional-projeto-america',
         'cf-renda-turbinada', 'cf-renda-turbinada-aulas', 'cf-renda-turbinada-bastidores', 'cf-renda-turbinada-carteira',
   'cf-renda-turbinada-turma-2', 'cf-renda-turbinada-turma-2-aulas', 'cf-renda-turbinada-turma-2-bastidores', 'cf-renda-turbinada-carteira',
+  'cf-renda-turbinada-turma-3', 'cf-renda-turbinada-turma-3-aulas', 'cf-renda-turbinada-turma-3-bastidores', 'cf-renda-turbinada-carteira',
         'recursos-exclusivos', 'recursos-dicas', 'recursos-analise', 'recursos-ebooks',
         'recursos-imposto', 'recursos-lives', 'recursos-milhas', 'recursos-planilhas', 'recursos-telegram',
         'recursos-reserva',

@@ -10,6 +10,7 @@ type PlanValue =
   | 'FIIS'
   | 'RENDA_TURBINADA'
   | 'RENDA_TURBINADA_T2'
+  | 'RENDA_TURBINADA_T3'
   | 'AMERICA'
   | 'ADMIN';
 
@@ -34,6 +35,7 @@ const PLAN_OPTIONS: Array<{
   { value: 'FIIS', label: 'Projeto FIIs', description: 'Investidores focados em fundos imobiliários.', color: '#D97706', emoji: '🏢' },
   { value: 'RENDA_TURBINADA', label: 'CF Renda Turbinada', description: 'Alunos do programa Renda Turbinada.', color: '#F97316', emoji: '⚡' },
   { value: 'RENDA_TURBINADA_T2', label: 'CF Renda Turbinada - Turma 2', description: 'Alunos da segunda turma do Renda Turbinada.', color: '#FB923C', emoji: '⚡' },
+  { value: 'RENDA_TURBINADA_T3', label: 'CF Renda Turbinada - Turma 3', description: 'Alunos da terceira turma do Renda Turbinada.', color: '#FDBA74', emoji: '⚡' },
   { value: 'AMERICA', label: 'Projeto América', description: 'Assinantes do hub internacional.', color: '#DC2626', emoji: '🗽' },
   { value: 'ADMIN', label: 'Administradores', description: 'Time interno e contas administrativas.', color: '#4B5563', emoji: '🛠️' }
 ];

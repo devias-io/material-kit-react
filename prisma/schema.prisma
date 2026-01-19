@@ -71,6 +71,7 @@ model User {
   analisesTecnicas        AnaliseTecnica[]
   lessonProgress          LessonProgress[]
   lessonProgressTurma2    LessonProgressTurma2[]
+  lessonProgressTurma3    LessonProgressTurma3[]
 }
 
 model Purchase {
@@ -962,6 +963,65 @@ model LessonProgressTurma2 {
   @@map("lesson_progress_turma2")
 }
 
+model CfRendaTurbinadaTurma3Module {
+  id          String                         @id @default(cuid())
+  title       String
+  highlight   String?
+  releaseDate DateTime
+  isHidden    Boolean                        @default(false)
+  createdAt   DateTime                       @default(now())
+  updatedAt   DateTime                       @updatedAt
+  sortOrder   Int?
+  lessons     CfRendaTurbinadaTurma3Lesson[]
+
+  @@map("modules_turma3")
+}
+
+model CfRendaTurbinadaTurma3Lesson {
+  id          Int                                    @id @default(autoincrement())
+  moduleId    String
+  title       String
+  duration    String
+  description String?
+  videoUrl    String?
+  content     String?
+  sortOrder   Int?
+  createdAt   DateTime                               @default(now())
+  updatedAt   DateTime                               @updatedAt
+  module      CfRendaTurbinadaTurma3Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  materials   CfRendaTurbinadaTurma3LessonMaterial[]
+  progress    LessonProgressTurma3[]
+
+  @@map("lessons_turma3")
+}
+
+model CfRendaTurbinadaTurma3LessonMaterial {
+  id        Int                          @id @default(autoincrement())
+  lessonId  Int
+  title     String
+  fileUrl   String
+  createdAt DateTime                     @default(now())
+  updatedAt DateTime                     @updatedAt
+  lesson    CfRendaTurbinadaTurma3Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("lesson_materials_turma3")
+}
+
+model LessonProgressTurma3 {
+  id          Int      @id @default(autoincrement())
+  userId      String   @map("user_id")
+  lessonId    Int      @map("lesson_id")
+  completedAt DateTime @default(now()) @map("completed_at")
+
+  user   User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson CfRendaTurbinadaTurma3Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
+  @@map("lesson_progress_turma3")
+}
+
 model CfRendaTurbinadaLiveEvent {
   id              Int      @id @default(autoincrement())
   title           String
@@ -988,6 +1048,20 @@ model CfRendaTurbinadaTurma2LiveEvent {
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   @@map("live_events_turma2")
+}
+
+model CfRendaTurbinadaTurma3LiveEvent {
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String?  @map("description")
+  eventDate       DateTime @map("event_date")
+  durationMinutes Int      @default(60) @map("duration_minutes")
+  meetingUrl      String?  @map("meeting_url")
+  isCancelled     Boolean  @default(false) @map("is_cancelled")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("live_events_turma3")
 }
 
 model CfRendaTurbinadaMentoria {
@@ -1046,6 +1120,35 @@ model CfRendaTurbinadaTurma2MentoriaMaterial {
   mentoria   CfRendaTurbinadaTurma2Mentoria @relation(fields: [mentoriaId], references: [id], onDelete: Cascade)
 
   @@map("mentoria_materials_turma2")
+}
+
+model CfRendaTurbinadaTurma3Mentoria {
+  id              Int                                      @id @default(autoincrement())
+  title           String
+  description     String?
+  content         String?
+  videoUrl        String?                                  @map("video_url")
+  recordedAt      DateTime                                 @map("recorded_at")
+  releaseDate     DateTime?                                @map("release_date")
+  durationMinutes Int?                                     @map("duration_minutes")
+  sortOrder       Int?                                     @map("sort_order")
+  createdAt       DateTime                                 @default(now()) @map("created_at")
+  updatedAt       DateTime                                 @updatedAt @map("updated_at")
+  materials       CfRendaTurbinadaTurma3MentoriaMaterial[]
+
+  @@map("mentorias_turma3")
+}
+
+model CfRendaTurbinadaTurma3MentoriaMaterial {
+  id         Int                            @id @default(autoincrement())
+  mentoriaId Int                            @map("mentoria_id")
+  title      String
+  fileUrl    String                         @map("file_url")
+  createdAt  DateTime                       @default(now()) @map("created_at")
+  updatedAt  DateTime                       @updatedAt @map("updated_at")
+  mentoria   CfRendaTurbinadaTurma3Mentoria @relation(fields: [mentoriaId], references: [id], onDelete: Cascade)
+
+  @@map("mentoria_materials_turma3")
 }
 
 model BastidoresDaBolsaModule {

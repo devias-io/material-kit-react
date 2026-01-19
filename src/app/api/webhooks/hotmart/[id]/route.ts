@@ -25,6 +25,7 @@ const HOTMART_PRODUCT_IDS = {
 };
 
 const RENDA_TURBINADA_TURMA2_START = new Date('2025-11-28T00:00:00Z');
+const RENDA_TURBINADA_TURMA3_START = new Date('2026-01-20T00:00:00Z');
 
 // ✅ IDs DOS PRODUTOS QUE DEVEM ENVIAR EMAIL AUTOMÁTICO
 const PRODUTOS_COM_EMAIL_AUTOMATICO = new Set([
@@ -68,13 +69,14 @@ function getPurchaseDate(webhookData: any): Date | null {
   return null;
 }
 
-function resolveRendaTurbinadaPlan(webhookData: any): { plan: 'RENDA_TURBINADA' | 'RENDA_TURBINADA_T2'; label: string; purchaseDate: Date | null } {
+function resolveRendaTurbinadaPlan(webhookData: any): { plan: 'RENDA_TURBINADA' | 'RENDA_TURBINADA_T2' | 'RENDA_TURBINADA_T3'; label: string; purchaseDate: Date | null } {
   const purchaseDate = getPurchaseDate(webhookData);
-  const isTurma2 = !purchaseDate || purchaseDate >= RENDA_TURBINADA_TURMA2_START;
+  const isTurma3 = !purchaseDate || purchaseDate >= RENDA_TURBINADA_TURMA3_START;
+  const isTurma2 = !isTurma3 && purchaseDate >= RENDA_TURBINADA_TURMA2_START;
 
   return {
-    plan: isTurma2 ? 'RENDA_TURBINADA_T2' : 'RENDA_TURBINADA',
-    label: isTurma2 ? 'CF Renda Turbinada - Turma 2' : 'CF Renda Turbinada',
+    plan: isTurma3 ? 'RENDA_TURBINADA_T3' : isTurma2 ? 'RENDA_TURBINADA_T2' : 'RENDA_TURBINADA',
+    label: isTurma3 ? 'CF Renda Turbinada - Turma 3' : isTurma2 ? 'CF Renda Turbinada - Turma 2' : 'CF Renda Turbinada',
     purchaseDate,
   };
 }

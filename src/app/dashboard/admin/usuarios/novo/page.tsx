@@ -199,6 +199,13 @@ export default function NovoUsuarioPage() {
         emoji: '⚡',
         isNew: true
       },
+      'RENDA_TURBINADA_T3': {
+        label: 'CF Renda Turbinada - Turma 3',
+        description: 'Terceira turma do Renda Turbinada com novos conteúdos',
+        color: '#FDBA74',
+        emoji: '⚡',
+        isNew: true
+      },
       'ANALISTA': {
         label: 'Perfil Analista',
         description: 'Acesso administrativo personalizado à central e ferramentas selecionadas',
@@ -426,6 +433,25 @@ export default function NovoUsuarioPage() {
                           size="small"
                           sx={{
                             bgcolor: '#FB923C',
+                            color: 'white',
+                            fontWeight: '700',
+                            fontSize: '10px',
+                            height: '18px',
+                            ml: 1
+                          }}
+                        />
+                      </Box>
+                    </MenuItem>
+
+                    <MenuItem value="RENDA_TURBINADA_T3">
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <span>⚡</span>
+                        <span>CF Renda Turbinada - Turma 3</span>
+                        <Chip
+                          label="NOVO"
+                          size="small"
+                          sx={{
+                            bgcolor: '#FDBA74',
                             color: 'white',
                             fontWeight: '700',
                             fontSize: '10px',

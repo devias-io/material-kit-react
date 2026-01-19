@@ -39,6 +39,8 @@ import { Article } from '@phosphor-icons/react/dist/ssr/Article';
 import { Headset } from '@phosphor-icons/react/dist/ssr/Headset';
 import { ArrowsClockwise } from '@phosphor-icons/react/dist/ssr/ArrowsClockwise';
 
+const StarFilled: Icon = (props) => <Star {...props} weight="fill" />;
+
 export const navIcons = {
   'chart-pie': ChartPie,
   'chart-bar': ChartBar,
@@ -62,6 +64,7 @@ export const navIcons = {
   'table': Table,                 // Para Planilhas
   'chat': ChatCircle,             // Para Telegram
   'star': Star,                   // Para Projeto América
+  'star-filled': StarFilled,      // Para CF Renda Turbinada
   'shield': Shield,               // Para Reserva de Emergência
   'support': Headset,             // Para Suporte/Central de Dúvidas
   

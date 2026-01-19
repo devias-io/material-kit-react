@@ -70,6 +70,7 @@ function getPermissions(user: any, isPublic: boolean) {
     'FIIS': { canView: true, viewAll: true, accessType: 'fiis' },
     'RENDA_TURBINADA': { canView: true, viewAll: true, accessType: 'renda_turbinada' },
     'RENDA_TURBINADA_T2': { canView: true, viewAll: true, accessType: 'renda_turbinada_t2' },
+    'RENDA_TURBINADA_T3': { canView: true, viewAll: true, accessType: 'renda_turbinada_t3' },
     'AMERICA': { canView: true, viewAll: true, accessType: 'america' }
   };
   
