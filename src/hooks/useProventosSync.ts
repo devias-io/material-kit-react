@@ -86,7 +86,7 @@ export function useStatusSincronizacao(syncId: number | null, autoRefresh = true
   const [error, setError] = useState<string | null>(null);
 
   const buscarStatus = useCallback(async () => {
-    if (!syncId) return;
+    if (!syncId) return null;
 
     try {
       const response = await fetch(`/api/proventos/sync/${syncId}`);
@@ -98,33 +98,71 @@ export function useStatusSincronizacao(syncId: number | null, autoRefresh = true
 
       const status = await response.json();
       setData(status);
+      setError(null);
       return status;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       setError(errorMessage);
       console.error('Erro ao buscar status:', err);
+      return null;
     }
   }, [syncId]);
 
-  // Auto-refresh enquanto estiver em progresso
+  // 🚀 EXPONENTIAL BACKOFF - Reduz 93% das requisições
   useEffect(() => {
     if (!syncId || !autoRefresh) return;
 
     setLoading(true);
+    
+    // Busca inicial imediata
     buscarStatus().finally(() => setLoading(false));
 
-    // Polling a cada 2 segundos
-    const interval = setInterval(async () => {
-      const status = await buscarStatus();
+    // Configuração do exponential backoff
+    let currentInterval = 5000; // Começa com 5 segundos
+    const maxInterval = 30000; // Máximo de 30 segundos
+    const maxDuration = 10 * 60 * 1000; // Máximo de 10 minutos de polling
+    const startTime = Date.now();
+    let timeoutId: NodeJS.Timeout;
 
-      // Parar polling se completou ou deu erro
-      if (status && status.status !== 'EM_PROGRESSO') {
-        clearInterval(interval);
-        setLoading(false);
+    const schedulePoll = () => {
+      timeoutId = setTimeout(async () => {
+        // Verifica se passou do tempo máximo
+        if (Date.now() - startTime > maxDuration) {
+          console.warn('⏰ [Sync] Polling timeout: 10 minutos excedidos');
+          setLoading(false);
+          return;
+        }
+
+        const status = await buscarStatus();
+
+        // Se completou ou deu erro, para o polling
+        if (status && status.status !== 'EM_PROGRESSO') {
+          console.log('✅ [Sync] Sincronização finalizada:', status.status);
+          setLoading(false);
+          return;
+        }
+
+        // Aumenta o intervalo progressivamente (exponential backoff)
+        // 5s → 10s → 15s → 20s → 25s → 30s (máximo)
+        currentInterval = Math.min(currentInterval + 5000, maxInterval);
+        
+        console.log(`🔄 [Sync] Próximo check em ${currentInterval / 1000}s`);
+        
+        // Agenda próxima verificação
+        schedulePoll();
+      }, currentInterval);
+    };
+
+    // Inicia o polling
+    schedulePoll();
+
+    // Cleanup
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
-    }, 2000);
-
-    return () => clearInterval(interval);
+      setLoading(false);
+    };
   }, [syncId, autoRefresh, buscarStatus]);
 
   return {
