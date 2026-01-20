@@ -29,6 +29,7 @@ model User {
   firstName               String
   lastName                String
   email                   String                        @unique
+  phone                   String?
   password                String?
   avatar                  String?
   plan                    String                        @default("LITE")

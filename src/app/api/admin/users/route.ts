@@ -99,7 +99,8 @@ export async function GET(request: NextRequest) {
           origin: true,
           createdAt: true,
           lastLogin: true,
-          hotmartCustomerId: true
+          hotmartCustomerId: true,
+          phone: true
         },
         orderBy: { createdAt: 'desc' },
         skip: offset,
@@ -238,7 +239,7 @@ export async function GET(request: NextRequest) {
           origin: user.origin,
 
           // 📞 Contatos das plataformas
-          phone: (user as any)?.phone || hotmartInfo?.phone || kiwifyInfo?.phone || eduzzInfo?.phone || null,
+          phone: user.phone || hotmartInfo?.phone || kiwifyInfo?.phone || eduzzInfo?.phone || null,
           hotmartPhone: hotmartInfo?.phone || null,
           kiwifyPhone: kiwifyInfo?.phone || null,
           eduzzPhone: eduzzInfo?.phone || null,

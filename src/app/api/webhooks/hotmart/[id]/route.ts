@@ -7,6 +7,7 @@ import { hashPassword } from '@/lib/auth/password';
 import { activateEntitlement, deactivateEntitlement, getActiveEntitlementCodes, isAddonPlan } from '@/lib/entitlements';
 import { enviarEmailCredenciais } from '@/lib/auth/email'; // ✅ ADICIONAR ENVIO DE EMAIL
 import { isLifetimePlan } from '@/lib/lifetime-plans';
+import { getHotmartBuyerPhone } from '@/lib/phone';
 
 // ✅ TOKEN ÚNICO DA HOTMART CONFIGURADO
 const TOKEN_MAPPING: Record<string, { name: string; plan: string; integrationId: string }> = {
@@ -373,6 +374,7 @@ export async function POST(
     const productData = webhookData.data?.product || webhookData.product || webhookData;
     const buyerEmail = buyerData?.email || webhookData.email;
     const buyerName = buyerData?.name || buyerData?.full_name || webhookData.name || 'Cliente Hotmart';
+    const buyerPhone = getHotmartBuyerPhone(webhookData, buyerData);
     const transactionId = purchaseData?.transaction || purchaseData?.transaction_id || 
                          webhookData.transaction || `TXN_${integration.integrationId}_${Date.now()}`;
     const amount = purchaseData?.price?.value || purchaseData?.amount || webhookData.price || 0;
@@ -537,6 +539,7 @@ export async function POST(
       console.log(`🔄 Atualizando usuário existente: ${email}`);
 
       treatedAsAddon = isAddonPurchase && user.plan !== integrationData.plan;
+      const phonePayload = buyerPhone && !user.phone ? { phone: buyerPhone } : {};
 
       if (treatedAsAddon) {
         console.log(`➕ Ativando complemento ${integrationData.plan} para ${email}`);
@@ -546,7 +549,8 @@ export async function POST(
           data: {
             status: 'ACTIVE',
             hotmartCustomerId: transactionId,
-            origin: 'HOTMART'
+            origin: 'HOTMART',
+            ...phonePayload
           }
         });
       } else {
@@ -560,7 +564,8 @@ export async function POST(
             status: 'ACTIVE',
             hotmartCustomerId: transactionId,
             expirationDate: nextExpiration,
-            origin: 'HOTMART'
+            origin: 'HOTMART',
+            ...phonePayload
           }
         });
       }
@@ -586,6 +591,7 @@ export async function POST(
           email: email,
           firstName: firstName,
           lastName: lastName,
+          phone: buyerPhone ?? null,
           plan: integrationData.plan,
           status: 'ACTIVE',
           hotmartCustomerId: transactionId,

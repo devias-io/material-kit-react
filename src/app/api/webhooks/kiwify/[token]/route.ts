@@ -8,6 +8,7 @@ import { hashPassword } from '@/lib/auth/password'; // ✅ ADICIONADO
 import { getKiwifyTokenMapping } from '@/server/integration-secrets';
 import { activateEntitlement, deactivateEntitlement, getActiveEntitlementCodes, isAddonPlan } from '@/lib/entitlements';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
+import { getKiwifyBuyerPhone } from '@/lib/phone';
 
 const KIWIFY_TOKEN_MAPPING = getKiwifyTokenMapping();
 
@@ -372,6 +373,7 @@ export async function POST(
     
     const buyerEmail = customerData?.email || orderData?.email || webhookData.email;
     const buyerName = customerData?.name || customerData?.full_name || orderData?.customer_name || 'Cliente Kiwify';
+    const buyerPhone = getKiwifyBuyerPhone(webhookData);
     const transactionId = orderData?.order_id || orderData?.id || webhookData.order_id || `KW_${Date.now()}`;
     const amountCandidates = [
       orderData?.total_value,
@@ -553,6 +555,7 @@ export async function POST(
       console.log(`🔄 Atualizando usuário existente: ${email}`);
 
       treatedAsAddon = isAddonPurchase && user.plan !== integrationData.plan;
+      const phonePayload = buyerPhone && !user.phone ? { phone: buyerPhone } : {};
 
       if (treatedAsAddon) {
         console.log(`➕ Ativando complemento ${integrationData.plan} para ${email} via Kiwify`);
@@ -562,7 +565,8 @@ export async function POST(
           data: {
             status: 'ACTIVE',
             hotmartCustomerId: transactionId,
-            origin: 'KIWIFY'
+            origin: 'KIWIFY',
+            ...phonePayload
           }
         });
       } else {
@@ -576,7 +580,8 @@ export async function POST(
             status: 'ACTIVE',
             hotmartCustomerId: transactionId,
             expirationDate: nextExpiration,
-            origin: 'KIWIFY'
+            origin: 'KIWIFY',
+            ...phonePayload
           }
         });
       }
@@ -603,6 +608,7 @@ export async function POST(
           email: email,
           firstName: firstName,
           lastName: lastName,
+          phone: buyerPhone ?? null,
           plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
           status: 'ACTIVE',
           hotmartCustomerId: transactionId,
