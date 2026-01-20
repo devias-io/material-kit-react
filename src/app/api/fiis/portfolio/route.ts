@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { type UserFiis, type ViesOverride } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { DEFAULT_FIIS_PORTFOLIO } from '@/data/carteiras-default';
+import { auth } from '@/lib/auth';
+import { CacheService } from '@/lib/cache-service';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 export const runtime = 'nodejs';
 
 interface FiiPortfolioAsset {
@@ -93,60 +94,73 @@ function calculateMetrics(ativos: FiiPortfolioAsset[]) {
 }
 
 export async function GET() {
-  let assets: FiiPortfolioAsset[] | null = null;
-  let source: 'database' | 'static-fallback' = 'database';
-  let ultimaAtualizacao: string | null = null;
-  let fetchError: string | null = null;
+  const session = await auth();
+  const userId = session?.user?.id ?? 'anonymous';
 
-  try {
-    const databaseAssets = await prisma.userFiis.findMany({
-      orderBy: { editadoEm: 'asc' },
-    });
+  const cacheKey = CacheService.getCacheKey('fii-portfolio', userId);
 
-    if (databaseAssets.length > 0) {
-      assets = mapDatabaseAssets(databaseAssets);
-      const mostRecentUpdate = databaseAssets.reduce((acc, current) => {
-        const updatedAt = current.updatedAt instanceof Date
-          ? current.updatedAt.getTime()
-          : new Date(current.updatedAt as unknown as string).getTime();
-        return Math.max(acc, updatedAt || 0);
-      }, 0);
-      ultimaAtualizacao = mostRecentUpdate ? new Date(mostRecentUpdate).toISOString() : null;
+  const { data, metadata } = await CacheService.withCache(
+    cacheKey,
+    async () => {
+      let assets: FiiPortfolioAsset[] | null = null;
+      let source: 'database' | 'static-fallback' = 'database';
+      let ultimaAtualizacao: string | null = null;
+      let fetchError: string | null = null;
+
+      try {
+        const databaseAssets = await prisma.userFiis.findMany({
+          orderBy: { editadoEm: 'asc' },
+        });
+
+        if (databaseAssets.length > 0) {
+          assets = mapDatabaseAssets(databaseAssets);
+          const mostRecentUpdate = databaseAssets.reduce((acc, current) => {
+            const updatedAt = current.updatedAt instanceof Date
+              ? current.updatedAt.getTime()
+              : new Date(current.updatedAt as unknown as string).getTime();
+            return Math.max(acc, updatedAt || 0);
+          }, 0);
+          ultimaAtualizacao = mostRecentUpdate ? new Date(mostRecentUpdate).toISOString() : null;
+        }
+      } catch (error) {
+        fetchError = error instanceof Error ? error.message : 'Erro desconhecido ao consultar FIIs';
+        console.error('❌ Erro ao buscar FIIs no banco de dados:', error);
+      }
+
+      if (!assets || assets.length === 0) {
+        assets = FALLBACK_ASSETS;
+        source = 'static-fallback';
+      }
+
+      const metrics = calculateMetrics(assets);
+
+      return {
+        success: true,
+        source,
+        generatedAt: new Date().toISOString(),
+        portfolio: {
+          ...metrics,
+          totalSetores: metrics.distribuicaoSetorial.length,
+          ultimaAtualizacao,
+        },
+        assets,
+        metadata: {
+          fallbackUtilizado: source !== 'database',
+          fetchError,
+        },
+      };
+    },
+    {
+      ttlSeconds: 300,
+      tags: ['fii-portfolio', userId],
     }
-  } catch (error) {
-    fetchError = error instanceof Error ? error.message : 'Erro desconhecido ao consultar FIIs';
-    console.error('❌ Erro ao buscar FIIs no banco de dados:', error);
-  }
+  );
 
-  if (!assets || assets.length === 0) {
-    assets = FALLBACK_ASSETS;
-    source = 'static-fallback';
-  }
-
-  const metrics = calculateMetrics(assets);
-
-  const body = {
-    success: true,
-    source,
-    generatedAt: new Date().toISOString(),
-    portfolio: {
-      ...metrics,
-      totalSetores: metrics.distribuicaoSetorial.length,
-      ultimaAtualizacao,
-    },
-    assets,
-    metadata: {
-      fallbackUtilizado: source !== 'database',
-      fetchError,
-    },
-  };
-
-  return NextResponse.json(body, {
+  return NextResponse.json(data, {
     status: 200,
     headers: {
-      'Cache-Control': 'no-store, max-age=0',
-      'CDN-Cache-Control': 'no-store',
-      'Vercel-CDN-Cache-Control': 'no-store',
+      'Cache-Control': 'public, max-age=300',
+      'X-Cache-Hit': String(metadata.cached),
     },
   });
 }

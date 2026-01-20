@@ -35,7 +35,7 @@ export async function GET(
         }),
       {
         ttlSeconds: 3600,
-        tags: [`proventos:${ticker.toUpperCase()}`],
+        tags: ['proventos', ticker.toUpperCase()],
       }
     );
 
