@@ -47,6 +47,8 @@ interface User {
   origin: 'MANUAL' | 'HOTMART' | 'KIWIFY' | 'EDUZZ';
 }
 
+const PAGE_SIZE = 50;
+
 export default function AdminUsersPage() {
   const { user } = useUser();
   const router = useRouter();
@@ -58,8 +60,8 @@ export default function AdminUsersPage() {
   const [planFilter, setPlanFilter] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
   const [originFilter, setOriginFilter] = React.useState('');
-  const [lastUpdatedAt, setLastUpdatedAt] = React.useState<Date | null>(null);
-  const refreshIntervalMs = 30000;
+  const [page, setPage] = React.useState(1);
+  const [totalUsers, setTotalUsers] = React.useState(0);
 
   // Verificar se é admin
   React.useEffect(() => {
@@ -76,7 +78,7 @@ export default function AdminUsersPage() {
     try {
       console.log('🔄 Iniciando carregamento de usuários...');
 
-      const response = await fetch(`/api/admin/users?page=${pageToLoad}&limit=${pageSize}`, {
+      const response = await fetch(`/api/admin/users?page=${pageToLoad}&limit=${PAGE_SIZE}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
