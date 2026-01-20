@@ -103,8 +103,8 @@ const buscarHistorico = async (
   // BRAPI mudou: apenas 'max' retorna dados históricos consistentemente
   // Buscamos todos os dados e filtramos no client-side pelo range solicitado
   const { range: rangeParam } = RANGE_CONFIG[range];
-  const historicoUrl = `${API_CONFIG.ENDPOINTS.BRAPI_HISTORICAL}/${ticker}?range=max&interval=1d&token=${API_CONFIG.BRAPI_TOKEN}`;
-  const dividendosUrl = `${API_CONFIG.ENDPOINTS.BRAPI_QUOTE}/${ticker}?fundamental=true&dividends=true&token=${API_CONFIG.BRAPI_TOKEN}`;
+  const historicoUrl = `/api/brapi/quote?tickers=${ticker}&range=max&interval=1d`;
+  const dividendosUrl = `/api/brapi/quote?tickers=${ticker}&fundamental=true&dividends=true`;
 
   const [historicoResp, dividendosResp] = await Promise.all([
     fetch(historicoUrl, {
@@ -241,7 +241,7 @@ const converterTaxaAnualParaMensal = (pontos: { date: number; value: number }[])
 
 const buscarSelic = async (range: RangeKey, signal?: AbortSignal): Promise<HistoricoPonto[]> => {
   const { dataInicial, dataFinal } = gerarDatasRange(range);
-  const url = `https://brapi.dev/api/v2/prime-rate?country=brazil&historical=true&start=${dataInicial}&end=${dataFinal}&token=${API_CONFIG.BRAPI_TOKEN}`;
+  const url = `/api/brapi/prime-rate?country=brazil&historical=true&start=${dataInicial}&end=${dataFinal}`;
 
   const response = await fetch(url, { signal, headers: API_CONFIG.DEFAULT_HEADERS });
   if (!response.ok) throw new Error(`SELIC: ${response.status}`);
@@ -259,7 +259,7 @@ const buscarSelic = async (range: RangeKey, signal?: AbortSignal): Promise<Histo
 
 const buscarIPCA = async (range: RangeKey, signal?: AbortSignal): Promise<HistoricoPonto[]> => {
   const { dataInicial, dataFinal } = gerarDatasRange(range);
-  const url = `https://brapi.dev/api/v2/inflation?country=brazil&historical=true&start=${dataInicial}&end=${dataFinal}&token=${API_CONFIG.BRAPI_TOKEN}`;
+  const url = `/api/brapi/inflation?country=brazil&historical=true&start=${dataInicial}&end=${dataFinal}`;
 
   const response = await fetch(url, { signal, headers: API_CONFIG.DEFAULT_HEADERS });
   if (!response.ok) throw new Error(`IPCA: ${response.status}`);
