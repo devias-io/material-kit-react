@@ -727,6 +727,11 @@ export default function AdminUsersPage() {
                       }
                     }).length}
                   </Typography>
+                  {lastUpdatedAt && (
+                    <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', mt: 1 }}>
+                      Atualizado em {lastUpdatedAt.toLocaleTimeString('pt-BR')}
+                    </Typography>
+                  )}
                 </Box>
               </Box>
             </CardContent>
@@ -1017,34 +1022,6 @@ export default function AdminUsersPage() {
           </Box>
         )}
 
-        {users.length < totalUsers && (
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            gap={1.5}
-            px={3}
-            pb={4}
-          >
-            <Typography variant="body2" sx={{ color: '#64748B' }}>
-              Mostrando {users.length} de {totalUsers} usuários
-            </Typography>
-            <Button
-              variant="outlined"
-              onClick={handleLoadMore}
-              disabled={loadingMore}
-              startIcon={loadingMore ? <CircularProgress size={18} /> : <span>⬇️</span>}
-              sx={{
-                borderRadius: 999,
-                textTransform: 'none',
-                fontWeight: 600,
-                px: 3
-              }}
-            >
-              {loadingMore ? 'Carregando...' : 'Mostrar mais usuários'}
-            </Button>
-          </Box>
-        )}
       </Card>
     </Box>
   );
