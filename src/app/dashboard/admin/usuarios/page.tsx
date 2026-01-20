@@ -143,6 +143,28 @@ export default function AdminUsersPage() {
       setTotalUsers(cachedData.totalUsers);
       setLastUpdatedAt(cachedData.lastUpdatedAt);
       setLoading(false);
+
+      const needsRefresh = (() => {
+        if (!cachedData.lastUpdatedAt) return true;
+        const cacheAgeMs = Date.now() - cachedData.lastUpdatedAt.getTime();
+        const maxCacheAgeMs = 15 * 60 * 1000; // 15 minutos
+        return cacheAgeMs > maxCacheAgeMs;
+      })();
+
+      if (needsRefresh) {
+        console.log('🔄 Cache expirado, verificando total de usuários...');
+        fetchUsersPage(1)
+          .then(firstPageData => {
+            const totalFromAPI = firstPageData.total || firstPageData.users.length;
+            if (totalFromAPI > cachedData.users.length) {
+              console.log(`🔄 Total no banco (${totalFromAPI}) maior que cache (${cachedData.users.length}). Atualizando...`);
+              loadAllUsers(true);
+            }
+          })
+          .catch(error => {
+            console.warn('⚠️ Falha ao validar cache com API:', error);
+          });
+      }
     } else {
       console.log('⚠️ Nenhum cache encontrado, carregando dados do banco...');
       // Só carrega do banco se não houver cache
