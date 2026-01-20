@@ -36,7 +36,7 @@ interface User {
   lastName: string;
   email: string;
   avatar?: string;
-  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'RENDA_TURBINADA_T2' | 'RENDA_TURBINADA_T3' | 'AMERICA' | 'ANALISTA' | 'ADMIN'; // ✅ ADICIONADO LITE_V2
+  plan: 'VIP' | 'LITE' | 'LITE_V2' | 'RENDA_PASSIVA' | 'FIIS' | 'RENDA_TURBINADA' | 'RENDA_TURBINADA_T2' | 'RENDA_TURBINADA_T3' | 'AMERICA' | 'ANALISTA' | 'ADMIN';
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING';
   hotmartCustomerId?: string;
   createdAt: string;
@@ -65,6 +65,7 @@ export default function AdminUsersPage() {
   const [totalUsers, setTotalUsers] = React.useState(0);
   const [lastUpdatedAt, setLastUpdatedAt] = React.useState<Date | null>(null);
 
+  // ✅ FUNÇÃO SIMPLIFICADA - Remove validações problemáticas
   const readUsersCache = () => {
     if (typeof window === 'undefined') return null;
 
@@ -73,26 +74,21 @@ export default function AdminUsersPage() {
       if (!cachedData) return null;
 
       const parsed = JSON.parse(cachedData);
-      if (!Array.isArray(parsed.users)) return null;
+      if (!Array.isArray(parsed.users) || parsed.users.length === 0) return null;
 
-      const payload = {
+      return {
         users: parsed.users as User[],
         page: Number(parsed.page) || 1,
         totalUsers: Number(parsed.totalUsers) || parsed.users.length,
         lastUpdatedAt: parsed.lastUpdatedAt ? new Date(parsed.lastUpdatedAt) : null
       };
-
-      if (payload.users.length < payload.totalUsers) {
-        window.sessionStorage.removeItem(USERS_CACHE_KEY);
-        return null;
-      }
-
-      return payload;
-    } catch {
+    } catch (err) {
+      console.error('Erro ao ler cache:', err);
       return null;
     }
   };
 
+  // ✅ FUNÇÃO SIMPLIFICADA - Sempre salva o cache
   const saveUsersCache = (payload: {
     users: User[];
     page: number;
@@ -101,10 +97,6 @@ export default function AdminUsersPage() {
   }) => {
     if (typeof window === 'undefined') return;
 
-    if (payload.users.length < payload.totalUsers) {
-      return;
-    }
-
     try {
       window.sessionStorage.setItem(USERS_CACHE_KEY, JSON.stringify({
         users: payload.users,
@@ -112,8 +104,9 @@ export default function AdminUsersPage() {
         totalUsers: payload.totalUsers,
         lastUpdatedAt: payload.lastUpdatedAt ? payload.lastUpdatedAt.toISOString() : null
       }));
-    } catch {
-      // Ignore storage errors (quota, privacy mode, etc.)
+      console.log('✅ Cache salvo com sucesso:', payload.users.length, 'usuários');
+    } catch (err) {
+      console.error('❌ Erro ao salvar cache:', err);
     }
   };
 
@@ -124,23 +117,29 @@ export default function AdminUsersPage() {
     }
   }, [user]);
 
+  // ✅ EFFECT INICIAL - Apenas carrega do cache, NUNCA busca do banco
   React.useEffect(() => {
+    console.log('🔵 Carregando dados iniciais...');
+    
     const cachedData = readUsersCache();
+    
     if (cachedData) {
+      console.log('✅ Cache encontrado:', cachedData.users.length, 'usuários');
       setUsers(cachedData.users);
       setPage(cachedData.page);
       setTotalUsers(cachedData.totalUsers);
       setLastUpdatedAt(cachedData.lastUpdatedAt);
       setLoading(false);
-      return;
+    } else {
+      console.log('⚠️ Nenhum cache encontrado, carregando dados do banco...');
+      // Só carrega do banco se não houver cache
+      loadAllUsers(true);
     }
-
-    loadAllUsers(true);
-  }, []);
+  }, []); // ✅ Executar apenas uma vez ao montar
 
   const fetchUsersPage = async (pageToLoad: number) => {
     try {
-      console.log('🔄 Iniciando carregamento de usuários...');
+      console.log('🔄 Buscando página', pageToLoad, 'do banco de dados...');
 
       const response = await fetch(`/api/admin/users?page=${pageToLoad}&limit=${PAGE_SIZE}`, {
         method: 'GET',
@@ -151,10 +150,6 @@ export default function AdminUsersPage() {
         }
       });
       
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
-      
-      // Verificar se a resposta é realmente JSON
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         const textResponse = await response.text();
@@ -169,11 +164,7 @@ export default function AdminUsersPage() {
       }
       
       const data = await response.json();
-      console.log('✅ Dados recebidos:', {
-        success: data.success,
-        usersCount: data.users?.length || 0,
-        total: data.total
-      });
+      console.log('✅ Página', pageToLoad, 'carregada:', data.users?.length || 0, 'usuários');
       
       return {
         users: data.users || [],
@@ -182,7 +173,6 @@ export default function AdminUsersPage() {
     } catch (error: any) {
       console.error('❌ Erro ao carregar usuários:', error);
       
-      // Mensagens de erro mais específicas
       let errorMessage = 'Erro ao carregar usuários';
       
       if (error.message.includes('Failed to fetch')) {
@@ -199,24 +189,14 @@ export default function AdminUsersPage() {
     }
   };
 
+  // ✅ FUNÇÃO PARA ATUALIZAR DADOS - Só é chamada quando clicar no botão
   const loadAllUsers = async (forceRefresh = false) => {
+    console.log('🔄 loadAllUsers chamado, forceRefresh:', forceRefresh);
     setLoading(true);
     setError(null);
     setLoadingMore(false);
 
     try {
-      if (!forceRefresh) {
-        const cachedData = readUsersCache();
-        if (cachedData) {
-          setUsers(cachedData.users);
-          setPage(cachedData.page);
-          setTotalUsers(cachedData.totalUsers);
-          setLastUpdatedAt(cachedData.lastUpdatedAt);
-          setLoading(false);
-          return;
-        }
-      }
-
       const firstPageData = await fetchUsersPage(1);
       const initialUsers = firstPageData.users;
       const total = firstPageData.total || initialUsers.length;
@@ -227,6 +207,8 @@ export default function AdminUsersPage() {
       setTotalUsers(total);
       setLastUpdatedAt(refreshedAt);
       setLoading(false);
+      
+      // ✅ Salva imediatamente após carregar a primeira página
       saveUsersCache({
         users: initialUsers,
         page: 1,
@@ -234,10 +216,13 @@ export default function AdminUsersPage() {
         lastUpdatedAt: refreshedAt
       });
 
+      // Se já carregou todos, não precisa carregar mais
       if (initialUsers.length >= total) {
+        console.log('✅ Todos os usuários já foram carregados');
         return;
       }
 
+      // Carrega as páginas restantes em background
       loadRemainingUsers(2, total, initialUsers, refreshedAt);
     } catch (error: any) {
       setError(error.message || 'Erro ao carregar usuários');
@@ -269,14 +254,19 @@ export default function AdminUsersPage() {
         setPage(currentPage);
         const updatedTotal = pageData.total || total || aggregatedUsers.length;
         setTotalUsers(updatedTotal);
+        
+        // ✅ Salva o cache a cada página carregada
         saveUsersCache({
           users: aggregatedUsers,
           page: currentPage,
           totalUsers: updatedTotal,
           lastUpdatedAt: effectiveRefreshedAt
         });
+        
         currentPage += 1;
       }
+      
+      console.log('✅ Carregamento completo:', aggregatedUsers.length, 'usuários');
     } catch (error: any) {
       setError(error.message || 'Erro ao carregar usuários');
     } finally {
@@ -352,12 +342,11 @@ export default function AdminUsersPage() {
     }
   };
 
-  // ✅ FUNÇÃO ATUALIZADA COM LITE_V2
   const getPlanInfo = (plan: string) => {
     const planMap = {
       'VIP': { label: 'Close Friends VIP', color: '#7C3AED', emoji: '👑' },
       'LITE': { label: 'Close Friends LITE', color: '#2563EB', emoji: '⭐' },
-      'LITE_V2': { label: 'Close Friends LITE 2.0', color: '#1d4ed8', emoji: '⭐' }, // ✅ ADICIONADO
+      'LITE_V2': { label: 'Close Friends LITE 2.0', color: '#1d4ed8', emoji: '⭐' },
       'RENDA_PASSIVA': { label: 'Projeto Renda Passiva', color: '#059669', emoji: '💰' },
       'FIIS': { label: 'Projeto FIIs', color: '#D97706', emoji: '🏢' },
       'RENDA_TURBINADA': { label: 'CF Renda Turbinada', color: '#F97316', emoji: '⚡' },
@@ -467,7 +456,6 @@ export default function AdminUsersPage() {
     URL.revokeObjectURL(url);
   };
 
-  // ✅ STATS ATUALIZADAS INCLUINDO LITE_V2
   const planStats = React.useMemo(() => {
     const stats = {
       total: users.length,
@@ -475,7 +463,7 @@ export default function AdminUsersPage() {
       byPlan: {
         VIP: users.filter(u => u.plan === 'VIP').length,
         LITE: users.filter(u => u.plan === 'LITE').length,
-        LITE_V2: users.filter(u => u.plan === 'LITE_V2').length, // ✅ ADICIONADO
+        LITE_V2: users.filter(u => u.plan === 'LITE_V2').length,
         FIIS: users.filter(u => u.plan === 'FIIS').length,
         RENDA_PASSIVA: users.filter(u => u.plan === 'RENDA_PASSIVA').length,
         RENDA_TURBINADA: users.filter(u => u.plan === 'RENDA_TURBINADA').length,
@@ -489,33 +477,13 @@ export default function AdminUsersPage() {
     return stats;
   }, [users]);
 
-  // Debug info para desenvolvimento
-  const debugInfo = React.useMemo(() => {
-    const userEmail = localStorage.getItem('user-email');
-
-    return {
-      userEmail,
-      currentUser: user,
-      usersCount: users.length,
-      planStats: planStats.byPlan,
-      apiUrl: '/api/admin/users'
-    };
-  }, [user, users.length, planStats]);
-
   if (loading) {
     return (
       <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="400px" sx={{ backgroundColor: '#F8FAFC' }}>
         <CircularProgress size={40} sx={{ color: '#3B82F6', mb: 2 }} />
-        <Typography sx={{ color: '#64748B' }}>🔄 Carregando usuários...</Typography>
-        
-        {/* Debug info em desenvolvimento */}
-        {process.env.NODE_ENV === 'development' && (
-          <Box mt={3} p={2} sx={{ backgroundColor: '#FFF3CD', borderRadius: 2, maxWidth: 500 }}>
-            <Typography variant="caption" sx={{ color: '#856404' }}>
-              Debug: {JSON.stringify(debugInfo, null, 2)}
-            </Typography>
-          </Box>
-        )}
+        <Typography sx={{ color: '#64748B' }}>
+          {users.length > 0 ? '🔄 Atualizando dados...' : '🔄 Carregando usuários...'}
+        </Typography>
       </Box>
     );
   }
@@ -531,25 +499,6 @@ export default function AdminUsersPage() {
           Gerencie usuários, planos e integrações com Hotmart/Kiwify
         </Typography>
       </Box>
-
-      {/* Debug info em desenvolvimento */}
-      {process.env.NODE_ENV === 'development' && (
-        <Alert 
-          severity="info" 
-          sx={{ 
-            mb: 3, 
-            backgroundColor: '#EBF8FF', 
-            border: '1px solid #BEE3F8',
-            color: '#2A69AC'
-          }}
-        >
-          <Typography variant="caption">
-            Debug Info: API: {debugInfo.apiUrl} | Token: {debugInfo.hasToken ? '✅' : '❌'} | Email: {debugInfo.userEmail || 'N/A'} | Users: {debugInfo.usersCount}
-            <br />
-            Planos: VIP({planStats.byPlan.VIP}) LITE({planStats.byPlan.LITE}) LITE_V2({planStats.byPlan.LITE_V2}) FIIS({planStats.byPlan.FIIS}) RENDA_TURBINADA({planStats.byPlan.RENDA_TURBINADA}) RENDA_TURBINADA_T2({planStats.byPlan.RENDA_TURBINADA_T2}) RENDA_TURBINADA_T3({planStats.byPlan.RENDA_TURBINADA_T3})
-          </Typography>
-        </Alert>
-      )}
 
       {error && (
         <Alert 
@@ -570,22 +519,24 @@ export default function AdminUsersPage() {
           <Typography variant="body2" sx={{ fontWeight: 500 }}>
             {error}
           </Typography>
-          
-          {/* Sugestões de solução */}
-          <Box mt={2}>
-            <Typography variant="caption" sx={{ display: 'block', opacity: 0.8 }}>
-              Possíveis soluções:
-            </Typography>
-            <Typography variant="caption" sx={{ display: 'block', opacity: 0.7 }}>
-              • Verifique se a API `/api/admin/users` está funcionando
-            </Typography>
-            <Typography variant="caption" sx={{ display: 'block', opacity: 0.7 }}>
-              • Confirme se você está logado como administrador
-            </Typography>
-            <Typography variant="caption" sx={{ display: 'block', opacity: 0.7 }}>
-              • Verifique a conexão com o banco de dados
-            </Typography>
-          </Box>
+        </Alert>
+      )}
+
+      {/* ✅ Indicador de dados em cache */}
+      {lastUpdatedAt && !loading && (
+        <Alert 
+          severity="info" 
+          sx={{ 
+            mb: 3, 
+            backgroundColor: '#EFF6FF', 
+            border: '1px solid #BFDBFE',
+            color: '#1E40AF'
+          }}
+        >
+          <Typography variant="body2">
+            📊 Dados carregados do cache | Última atualização: {lastUpdatedAt.toLocaleString('pt-BR')}
+            {loadingMore && ' | Carregando mais usuários em segundo plano...'}
+          </Typography>
         </Alert>
       )}
 
@@ -709,9 +660,10 @@ export default function AdminUsersPage() {
           justifyContent={{ xs: 'flex-start', lg: 'flex-end' }}
           width={{ xs: '100%', lg: 'auto' }}
         >
+          {/* ✅ Botão Atualizar com indicador de quando foi atualizado */}
           <Button
             variant="outlined"
-            disabled={loading}
+            disabled={loading || loadingMore}
             onClick={() => loadAllUsers(true)}
             sx={{
               bgcolor: '#FFFFFF',
@@ -729,7 +681,7 @@ export default function AdminUsersPage() {
               width: { xs: '100%', sm: 'auto' }
             }}
           >
-            🔄 Atualizar dados
+            {loading ? '🔄 Atualizando...' : '🔄 Atualizar dados'}
           </Button>
 
           <Button
@@ -1025,52 +977,12 @@ export default function AdminUsersPage() {
                             fontSize: '0.75rem'
                           }}
                         />
-                        {/* ✅ BADGE ESPECIAL PARA LITE_V2 */}
                         {user.plan === 'LITE_V2' && (
                           <Chip
                             label="NOVO"
                             size="small"
                             sx={{
                               backgroundColor: '#1d4ed8',
-                              color: 'white',
-                              fontWeight: '700',
-                              fontSize: '10px',
-                              height: '18px'
-                            }}
-                          />
-                        )}
-                        {user.plan === 'RENDA_TURBINADA' && (
-                          <Chip
-                            label="CF Renda Turbinada"
-                            size="small"
-                            sx={{
-                              backgroundColor: '#F97316',
-                              color: 'white',
-                              fontWeight: '700',
-                              fontSize: '10px',
-                              height: '18px'
-                            }}
-                          />
-                        )}
-                        {user.plan === 'RENDA_TURBINADA_T2' && (
-                          <Chip
-                            label="CF Renda Turbinada - Turma 2"
-                            size="small"
-                            sx={{
-                              backgroundColor: '#FB923C',
-                              color: 'white',
-                              fontWeight: '700',
-                              fontSize: '10px',
-                              height: '18px'
-                            }}
-                          />
-                        )}
-                        {user.plan === 'RENDA_TURBINADA_T3' && (
-                          <Chip
-                            label="CF Renda Turbinada - Turma 3"
-                            size="small"
-                            sx={{
-                              backgroundColor: '#FDBA74',
                               color: 'white',
                               fontWeight: '700',
                               fontSize: '10px',
