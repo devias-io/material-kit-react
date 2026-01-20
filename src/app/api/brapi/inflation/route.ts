@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CacheService } from '@/lib/cache-service';
 import { BRAPI_CONFIG } from '@/lib/brapi-config';
+import { buildCacheHeaders } from '@/server/cache-headers';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 5;
 
 const INFLATION_TTL_SECONDS = 3600;
+const CACHE_HEADERS = buildCacheHeaders({ ttl: INFLATION_TTL_SECONDS, swr: INFLATION_TTL_SECONDS * 2 });
 
 export async function GET(request: NextRequest) {
   try {
@@ -47,7 +49,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data, {
       status: 200,
       headers: {
-        'Cache-Control': `public, max-age=${INFLATION_TTL_SECONDS}`,
+        ...CACHE_HEADERS,
         'X-Cache-Hit': String(metadata.cached)
       }
     });
