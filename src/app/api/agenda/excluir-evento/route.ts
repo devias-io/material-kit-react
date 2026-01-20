@@ -4,7 +4,8 @@ export async function DELETE(request: Request) {
     
     // Buscar todos eventos ordenados para encontrar o correto pelo índice
     const eventos = await prisma.eventoCorporativo.findMany({
-      orderBy: { data_evento: 'asc' }
+      take: 1000,
+      orderBy: { createdAt: 'desc' }
     });
     
     if (eventoIndex < 0 || eventoIndex >= eventos.length) {

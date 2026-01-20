@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
       orderBy: [
         { dataPublicacao: 'desc' },
         { createdAt: 'desc' }
-      ]
+      ],
+      take: 100
     });
     
     console.log(`✅ Encontradas ${analises.length} análises`);

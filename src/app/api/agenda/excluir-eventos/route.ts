@@ -15,7 +15,8 @@ export async function DELETE(request: Request) {
     
     // Buscar eventos ordenados
     const eventos = await prisma.eventoCorporativo.findMany({
-      orderBy: { data_evento: 'asc' }
+      take: 1000,
+      orderBy: { createdAt: 'desc' }
     });
     
     // Obter IDs dos eventos a serem excluídos
@@ -42,4 +43,3 @@ export async function DELETE(request: Request) {
     );
   }
 }
-

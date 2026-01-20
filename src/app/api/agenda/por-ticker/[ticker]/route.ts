@@ -20,7 +20,8 @@ export async function GET(
       where: { 
         ticker: ticker.toUpperCase() 
       },
-      orderBy: { data_evento: 'asc' }
+      take: 100,
+      orderBy: { data_evento: 'desc' }
     });
     
     return NextResponse.json({
