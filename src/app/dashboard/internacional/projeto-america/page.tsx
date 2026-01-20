@@ -78,9 +78,8 @@ function useIndicesInternacionaisRealTime() {
       console.log('🔍 BUSCANDO ÍNDICES INTERNACIONAIS - ESTRATÉGIA UNIFICADA...');
       console.log('📱 Device Info:', { isMobile });
 
-      const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
       const indices = ['^GSPC', '^IXIC']; // S&P 500 e NASDAQ
-      const indicesUrl = `https://brapi.dev/api/quote/${indices.join(',')}?token=${BRAPI_TOKEN}`;
+      const indicesUrl = `/api/brapi/quote?tickers=${indices.join(',')}`;
       
       let dadosIndicesObtidos = false;
       let dadosIndices = null;
@@ -296,14 +295,13 @@ function calcularViesAutomatico(
 
 // 🚀 FUNÇÃO OTIMIZADA PARA BUSCAR COTAÇÕES - ESTRATÉGIA MOBILE/DESKTOP
 async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Promise<Map<string, any>> {
-  const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
   const cotacoesMap = new Map();
   
   console.log('🚀 [OTIMIZADO] Buscando', tickers.length, 'cotações EM PARALELO...');
   
   // ✅ STRATEGY 1: Tentar batch request primeiro (1 requisição para todos)
   try {
-    const batchUrl = `https://brapi.dev/api/quote/${tickers.join(',')}?token=${BRAPI_TOKEN}`;
+    const batchUrl = `/api/brapi/quote?tickers=${tickers.join(',')}`;
     const response = await Promise.race([
       fetch(batchUrl),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Batch timeout')), 5000))
@@ -340,7 +338,7 @@ async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Pr
   const promises = tickers.map(async (ticker) => {
     try {
       const response = await Promise.race([
-        fetch(`https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}`, {
+        fetch(`/api/brapi/quote?tickers=${ticker}`, {
           headers: { 'Accept': 'application/json' }
         }),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Individual timeout')), 4000))
@@ -454,8 +452,6 @@ async function buscarDYsComEstrategia(
   cotacoesMap: Map<string, any>
 ): Promise<Map<string, string>> {
   const dyMap = new Map<string, string>();
-  const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
-
   console.log('📈 [DY] Buscando DY para', tickers.length, 'tickers...');
 
   const tickersBrasileiros = tickers.filter(t =>
@@ -465,7 +461,7 @@ async function buscarDYsComEstrategia(
   if (tickersBrasileiros.length > 0) {
     console.log('🇧🇷 Buscando DY para ações brasileiras via BRAPI:', tickersBrasileiros);
     try {
-      const batchUrl = `https://brapi.dev/api/quote/${tickersBrasileiros.join(',')}?token=${BRAPI_TOKEN}&dividends=true`;
+      const batchUrl = `/api/brapi/quote?tickers=${tickersBrasileiros.join(',')}&dividends=true`;
       const response = await Promise.race([
         fetch(batchUrl),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('BRAPI timeout')), 6000))
