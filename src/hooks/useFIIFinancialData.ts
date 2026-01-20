@@ -125,9 +125,27 @@ export function useIFIXRealTime() {
   const [ifixData, setIfixData] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const controllerRef = React.useRef<AbortController | null>(null);
+  const inFlightRef = React.useRef<boolean>(false);
 
   const fetchIFIXData = React.useCallback(async () => {
     try {
+      // Não iniciar nova request se já tem uma em andamento
+      if (inFlightRef.current) {
+        return;
+      }
+
+      // Marcar como in-flight
+      inFlightRef.current = true;
+
+      // Cancelar request anterior se existir
+      if (controllerRef.current) {
+        controllerRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      controllerRef.current = controller;
+
       setLoading(true);
       setError(null);
 
@@ -140,7 +158,8 @@ export function useIFIXRealTime() {
         headers: {
           'Accept': 'application/json',
           'User-Agent': 'IFIX-Real-Time-App'
-        }
+        },
+        signal: controller.signal
       });
 
       if (response.ok) {
@@ -178,6 +197,7 @@ export function useIFIXRealTime() {
       // 🔄 FALLBACK
       setIfixData(createRealtimeIfixFallbackPayload('FALLBACK'));
     } finally {
+      inFlightRef.current = false;
       setLoading(false);
     }
   }, []);
@@ -188,7 +208,11 @@ export function useIFIXRealTime() {
     // 🔄 ATUALIZAR A CADA 15 MINUTOS (IFIX muda menos frequentemente)
     const interval = setInterval(fetchIFIXData, 15 * 60 * 1000);
     
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      controllerRef.current?.abort();
+      inFlightRef.current = false;
+    };
   }, [fetchIFIXData]);
 
   return { 
