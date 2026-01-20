@@ -56,6 +56,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = React.useState<User[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadingMore, setLoadingMore] = React.useState(false);
+  const [loadingProgress, setLoadingProgress] = React.useState({ current: 0, total: 0 });
   const [error, setError] = React.useState<string | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [planFilter, setPlanFilter] = React.useState('');
@@ -71,19 +72,31 @@ export default function AdminUsersPage() {
 
     try {
       const cachedData = window.sessionStorage.getItem(USERS_CACHE_KEY);
-      if (!cachedData) return null;
+      if (!cachedData) {
+        console.log('📦 Nenhum cache encontrado');
+        return null;
+      }
 
       const parsed = JSON.parse(cachedData);
-      if (!Array.isArray(parsed.users) || parsed.users.length === 0) return null;
+      if (!Array.isArray(parsed.users) || parsed.users.length === 0) {
+        console.log('⚠️ Cache inválido ou vazio');
+        return null;
+      }
 
-      return {
+      const payload = {
         users: parsed.users as User[],
         page: Number(parsed.page) || 1,
         totalUsers: Number(parsed.totalUsers) || parsed.users.length,
         lastUpdatedAt: parsed.lastUpdatedAt ? new Date(parsed.lastUpdatedAt) : null
       };
+
+      console.log(`✅ Cache carregado: ${payload.users.length} usuários`);
+      console.log(`   - Total registrado: ${payload.totalUsers}`);
+      console.log(`   - Última atualização: ${payload.lastUpdatedAt?.toLocaleString('pt-BR')}`);
+
+      return payload;
     } catch (err) {
-      console.error('Erro ao ler cache:', err);
+      console.error('❌ Erro ao ler cache:', err);
       return null;
     }
   };
@@ -189,79 +202,107 @@ export default function AdminUsersPage() {
     }
   };
 
-  // ✅ FUNÇÃO PARA ATUALIZAR DADOS - Carrega TODOS os dados antes de salvar
+  // ✅ FUNÇÃO PARA ATUALIZAR DADOS - Carrega TODOS os dados até não ter mais
   const loadAllUsers = async (forceRefresh = false) => {
-    console.log('🔄 Iniciando carregamento completo de usuários...');
+    console.log('🔄 Iniciando carregamento COMPLETO de usuários...');
     setLoading(true);
     setError(null);
     setLoadingMore(false);
+    setLoadingProgress({ current: 0, total: 0 });
 
     try {
-      // 1️⃣ Carrega primeira página para saber o total
+      // 1️⃣ Carrega primeira página
       const firstPageData = await fetchUsersPage(1);
       let allUsers = firstPageData.users;
-      const total = firstPageData.total || allUsers.length;
+      const totalFromAPI = firstPageData.total || allUsers.length;
       
-      console.log(`📊 Total de usuários: ${total}, Carregados: ${allUsers.length}`);
+      setLoadingProgress({ current: allUsers.length, total: totalFromAPI });
+      
+      console.log(`📊 API reporta ${totalFromAPI} usuários totais`);
+      console.log(`📊 Primeira página: ${allUsers.length} usuários`);
 
-      // 2️⃣ Se já tem todos, salva e retorna
-      if (allUsers.length >= total) {
-        console.log('✅ Todos os usuários carregados em uma página');
-        const refreshedAt = new Date();
-        
-        setUsers(allUsers);
-        setPage(1);
-        setTotalUsers(total);
-        setLastUpdatedAt(refreshedAt);
-        setLoading(false);
-        
-        saveUsersCache({
-          users: allUsers,
-          page: 1,
-          totalUsers: total,
-          lastUpdatedAt: refreshedAt
-        });
-        return;
-      }
-
-      // 3️⃣ Carrega TODAS as páginas restantes ANTES de exibir
+      // 2️⃣ Continua carregando ATÉ receber página vazia (ignora o total da API)
       let currentPage = 2;
-      while (allUsers.length < total) {
-        console.log(`🔄 Carregando página ${currentPage}...`);
-        const pageData = await fetchUsersPage(currentPage);
-        
-        if (pageData.users.length === 0) {
-          console.log('⚠️ Página vazia, finalizando carregamento');
-          break;
-        }
+      let consecutiveEmptyPages = 0;
+      const maxEmptyPages = 3; // Para de tentar após 3 páginas vazias consecutivas
 
-        allUsers = [...allUsers, ...pageData.users];
-        console.log(`📊 Progresso: ${allUsers.length}/${total} usuários`);
-        currentPage++;
+      while (consecutiveEmptyPages < maxEmptyPages) {
+        console.log(`🔄 Carregando página ${currentPage}... (Total atual: ${allUsers.length})`);
+        
+        try {
+          const pageData = await fetchUsersPage(currentPage);
+          
+          if (!pageData.users || pageData.users.length === 0) {
+            consecutiveEmptyPages++;
+            console.log(`⚠️ Página ${currentPage} vazia (${consecutiveEmptyPages}/${maxEmptyPages})`);
+            
+            // Se já tem mais usuários que o total da API reportou, continue tentando
+            if (allUsers.length >= totalFromAPI) {
+              console.log(`ℹ️ Já temos ${allUsers.length} usuários (API disse ${totalFromAPI}), mas verificando mais páginas...`);
+            }
+            
+            currentPage++;
+            continue;
+          }
+
+          // Reset contador de páginas vazias
+          consecutiveEmptyPages = 0;
+          
+          // Adiciona os usuários
+          const newUsers = pageData.users;
+          allUsers = [...allUsers, ...newUsers];
+          
+          // ✅ Atualiza progresso em tempo real
+          setLoadingProgress({ 
+            current: allUsers.length, 
+            total: Math.max(totalFromAPI, allUsers.length) 
+          });
+          
+          console.log(`✅ Página ${currentPage}: +${newUsers.length} usuários (Total: ${allUsers.length})`);
+          
+          currentPage++;
+          
+          // Pequeno delay para não sobrecarregar a API
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+        } catch (error) {
+          console.error(`❌ Erro ao carregar página ${currentPage}:`, error);
+          consecutiveEmptyPages++;
+          currentPage++;
+        }
       }
 
-      // 4️⃣ Agora que tem TODOS os dados, salva tudo de uma vez
+      // 3️⃣ Agora que tem TODOS os dados, salva tudo de uma vez
       const refreshedAt = new Date();
-      console.log(`✅ Carregamento completo! Total: ${allUsers.length} usuários`);
+      const finalTotal = allUsers.length;
+      
+      console.log(`✅ CARREGAMENTO COMPLETO!`);
+      console.log(`   - Total carregado: ${finalTotal} usuários`);
+      console.log(`   - Total da API: ${totalFromAPI} usuários`);
+      console.log(`   - Páginas carregadas: ${currentPage - 1}`);
       
       setUsers(allUsers);
       setPage(currentPage - 1);
-      setTotalUsers(allUsers.length);
+      setTotalUsers(finalTotal);
       setLastUpdatedAt(refreshedAt);
       setLoading(false);
+      setLoadingProgress({ current: 0, total: 0 });
       
       // ✅ Salva no cache SOMENTE quando tem TODOS os dados
       saveUsersCache({
         users: allUsers,
         page: currentPage - 1,
-        totalUsers: allUsers.length,
+        totalUsers: finalTotal,
         lastUpdatedAt: refreshedAt
       });
+
+      console.log(`💾 Cache salvo com ${finalTotal} usuários`);
 
     } catch (error: any) {
       console.error('❌ Erro ao carregar usuários:', error);
       setError(error.message || 'Erro ao carregar usuários');
       setLoading(false);
+      setLoadingProgress({ current: 0, total: 0 });
     }
   };
 
@@ -441,16 +482,45 @@ export default function AdminUsersPage() {
   }, [users]);
 
   if (loading) {
+    const progressPercentage = loadingProgress.total > 0 
+      ? Math.round((loadingProgress.current / loadingProgress.total) * 100)
+      : 0;
+
     return (
-      <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="400px" sx={{ backgroundColor: '#F8FAFC' }}>
-        <CircularProgress size={40} sx={{ color: '#3B82F6', mb: 2 }} />
-        <Typography sx={{ color: '#64748B', fontWeight: 500, mb: 1 }}>
-          {users.length > 0 
-            ? `🔄 Carregando todos os usuários... (${users.length} carregados)` 
-            : '🔄 Carregando usuários...'}
+      <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="400px" sx={{ backgroundColor: '#F8FAFC', p: 4 }}>
+        <CircularProgress size={60} sx={{ color: '#3B82F6', mb: 3 }} />
+        
+        <Typography sx={{ color: '#1E293B', fontWeight: 600, fontSize: '1.1rem', mb: 1 }}>
+          🔄 Carregando todos os usuários...
         </Typography>
-        <Typography sx={{ color: '#94A3B8', fontSize: '0.875rem' }}>
-          Aguarde, carregando todos os dados antes de salvar...
+        
+        {loadingProgress.current > 0 && (
+          <>
+            <Typography sx={{ color: '#3B82F6', fontWeight: 700, fontSize: '1.5rem', mb: 1 }}>
+              {loadingProgress.current} {loadingProgress.total > 0 && `/ ~${loadingProgress.total}`}
+            </Typography>
+            
+            {progressPercentage > 0 && (
+              <Box sx={{ width: '300px', bgcolor: '#E2E8F0', borderRadius: 2, height: 8, mb: 2, overflow: 'hidden' }}>
+                <Box 
+                  sx={{ 
+                    width: `${Math.min(progressPercentage, 100)}%`, 
+                    bgcolor: '#3B82F6', 
+                    height: '100%',
+                    transition: 'width 0.3s ease'
+                  }} 
+                />
+              </Box>
+            )}
+          </>
+        )}
+        
+        <Typography sx={{ color: '#64748B', fontSize: '0.9rem', textAlign: 'center', maxWidth: '400px' }}>
+          Aguarde enquanto carregamos todos os dados do banco. Isso pode levar alguns minutos...
+        </Typography>
+        
+        <Typography sx={{ color: '#94A3B8', fontSize: '0.8rem', mt: 2, textAlign: 'center' }}>
+          💡 Os dados serão salvos em cache e carregarão instantaneamente nas próximas vezes
         </Typography>
       </Box>
     );
@@ -502,7 +572,24 @@ export default function AdminUsersPage() {
           }}
         >
           <Typography variant="body2">
-            📊 Dados carregados do cache | Última atualização: {lastUpdatedAt.toLocaleString('pt-BR')}
+            📊 Exibindo {users.length} usuários do cache | Última atualização: {lastUpdatedAt.toLocaleString('pt-BR')}
+          </Typography>
+        </Alert>
+      )}
+
+      {/* ⚠️ Alerta quando não há cache */}
+      {!lastUpdatedAt && !loading && users.length === 0 && (
+        <Alert 
+          severity="warning" 
+          sx={{ 
+            mb: 3, 
+            backgroundColor: '#FEF3C7', 
+            border: '1px solid #FCD34D',
+            color: '#92400E'
+          }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            ⚠️ Nenhum dado em cache. Clique em "Atualizar dados" para carregar os usuários do banco.
           </Typography>
         </Alert>
       )}
@@ -630,7 +717,7 @@ export default function AdminUsersPage() {
           {/* ✅ Botão Atualizar com indicador de quando foi atualizado */}
           <Button
             variant="outlined"
-            disabled={loading || loadingMore}
+            disabled={loading}
             onClick={() => loadAllUsers(true)}
             sx={{
               bgcolor: '#FFFFFF',
