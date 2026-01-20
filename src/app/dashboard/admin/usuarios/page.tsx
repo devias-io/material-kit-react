@@ -62,6 +62,7 @@ export default function AdminUsersPage() {
   const [originFilter, setOriginFilter] = React.useState('');
   const [page, setPage] = React.useState(1);
   const [totalUsers, setTotalUsers] = React.useState(0);
+  const [lastUpdatedAt, setLastUpdatedAt] = React.useState<Date | null>(null);
 
   // Verificar se é admin
   React.useEffect(() => {
@@ -159,6 +160,7 @@ export default function AdminUsersPage() {
       setUsers(aggregatedUsers);
       setPage(Math.max(currentPage - 1, 1));
       setTotalUsers(total || aggregatedUsers.length);
+      setLastUpdatedAt(new Date());
     } catch (error: any) {
       setError(error.message || 'Erro ao carregar usuários');
     } finally {
