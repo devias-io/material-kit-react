@@ -7,6 +7,7 @@ import {
   DEFAULT_FII_MARKET_DATA_FALLBACK,
 } from '@/utils/ifixConstants';
 import { debugError, debugLog } from '@/utils/logger';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 // 🔥 TIPOS PARA DADOS FINANCEIROS DOS FIIs
 export interface FIIMarketData {
@@ -46,6 +47,7 @@ export function useFIIFinancialData() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = React.useState<string | null>(null);
+  const isVisible = usePageVisibility();
 
   const fetchFIIData = React.useCallback(async () => {
     try {
@@ -98,13 +100,16 @@ export function useFIIFinancialData() {
   }, []);
 
   React.useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     fetchFIIData();
 
     // 🔄 ATUALIZAR A CADA 10 MINUTOS
     const interval = setInterval(fetchFIIData, 10 * 60 * 1000);
     
     return () => clearInterval(interval);
-  }, [fetchFIIData]);
+  }, [fetchFIIData, isVisible]);
 
   // 🔄 MÉTODO PARA FORÇAR ATUALIZAÇÃO
   const refetch = React.useCallback(() => {
@@ -127,6 +132,7 @@ export function useIFIXRealTime() {
   const [error, setError] = React.useState<string | null>(null);
   const controllerRef = React.useRef<AbortController | null>(null);
   const inFlightRef = React.useRef<boolean>(false);
+  const isVisible = usePageVisibility();
 
   const fetchIFIXData = React.useCallback(async () => {
     try {
@@ -203,6 +209,9 @@ export function useIFIXRealTime() {
   }, []);
 
   React.useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     fetchIFIXData();
     
     // 🔄 ATUALIZAR A CADA 15 MINUTOS (IFIX muda menos frequentemente)
@@ -213,7 +222,7 @@ export function useIFIXRealTime() {
       controllerRef.current?.abort();
       inFlightRef.current = false;
     };
-  }, [fetchIFIXData]);
+  }, [fetchIFIXData, isVisible]);
 
   return { 
     ifixData, 

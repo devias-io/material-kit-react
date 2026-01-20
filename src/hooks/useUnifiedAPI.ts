@@ -9,6 +9,7 @@
 
 'use client';
 import * as React from 'react';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 // 🔥 INTERFACES (mantidas iguais)
 interface CacheItem {
@@ -200,6 +201,7 @@ export function useIbovespaUnificado(): ApiHookReturn<IbovespaData> {
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
   const isMobile = useDeviceDetection();
+  const isVisible = usePageVisibility();
 
   const buscarIbovespa = React.useCallback(async (): Promise<void> => {
     try {
@@ -292,6 +294,9 @@ export function useIbovespaUnificado(): ApiHookReturn<IbovespaData> {
   }, [isMobile]);
 
   React.useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     const timer = setTimeout(buscarIbovespa, 2000); // 2s delay
     const interval = setInterval(buscarIbovespa, 10 * 60 * 1000); // 10min
     
@@ -299,7 +304,7 @@ export function useIbovespaUnificado(): ApiHookReturn<IbovespaData> {
       clearTimeout(timer);
       clearInterval(interval);
     };
-  }, [buscarIbovespa]);
+  }, [buscarIbovespa, isVisible]);
 
   return { data: ibovespaData, loading, error, refetch: buscarIbovespa };
 }
@@ -310,6 +315,7 @@ export function useIfixUnificado(): ApiHookReturn<SmllData> {
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
   const isMobile = useDeviceDetection();
+  const isVisible = usePageVisibility();
 
   const buscarIfix = React.useCallback(async (): Promise<void> => {
     try {
@@ -405,6 +411,9 @@ export function useIfixUnificado(): ApiHookReturn<SmllData> {
   }, [isMobile]);
 
   React.useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     const timer = setTimeout(buscarIfix, 3000); // 3s delay
     const interval = setInterval(buscarIfix, 15 * 60 * 1000); // 15min
     
@@ -412,7 +421,7 @@ export function useIfixUnificado(): ApiHookReturn<SmllData> {
       clearTimeout(timer);
       clearInterval(interval);
     };
-  }, [buscarIfix]);
+  }, [buscarIfix, isVisible]);
 
   return { data: ifixData, loading, error, refetch: buscarIfix };
 }
@@ -423,6 +432,7 @@ export function useSmllUnificado(): ApiHookReturn<SmllData> {
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
   const isMobile = useDeviceDetection();
+  const isVisible = usePageVisibility();
 
   const buscarSmll = React.useCallback(async (): Promise<void> => {
     try {
@@ -489,6 +499,9 @@ export function useSmllUnificado(): ApiHookReturn<SmllData> {
   }, [isMobile]);
 
   React.useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     const timer = setTimeout(buscarSmll, 4000); // 4s delay
     const interval = setInterval(buscarSmll, 12 * 60 * 1000); // 12min
     
@@ -496,7 +509,7 @@ export function useSmllUnificado(): ApiHookReturn<SmllData> {
       clearTimeout(timer);
       clearInterval(interval);
     };
-  }, [buscarSmll]);
+  }, [buscarSmll, isVisible]);
 
   return { data: smllData, loading, error, refetch: buscarSmll };
 }

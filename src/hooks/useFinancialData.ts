@@ -3,6 +3,7 @@
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 export interface MarketData {
   ibovespa: { value: string; trend: 'up' | 'down'; diff: number };
@@ -56,12 +57,13 @@ interface UseFinancialDataReturn {
 }
 
 export function useFinancialData(): UseFinancialDataReturn {
+  const isVisible = usePageVisibility();
   const query = useQuery<FinancialMarketDataResponse>({
     queryKey: QUERY_KEY,
     queryFn: fetchMarketData,
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
+    refetchInterval: isVisible ? 5 * 60 * 1000 : false,
     placeholderData: (previousData) => previousData
   });
 
