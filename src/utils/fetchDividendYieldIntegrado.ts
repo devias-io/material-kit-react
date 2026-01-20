@@ -149,8 +149,7 @@ export async function fetchDividendYieldIntegrado(
     };
   }
 
-  const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
-  const quoteUrl = `https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`;
+  const quoteUrl = `/api/brapi/quote?tickers=${ticker}&dividends=true`;
   let dyObtido = false;
   let dyValue = 0;
   let fonte = 'BRAPI-Estratégia';

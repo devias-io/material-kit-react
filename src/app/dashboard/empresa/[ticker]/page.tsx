@@ -64,7 +64,6 @@ const PictureAsPdfIconCustom = () => <span>📄</span>;
 // ========================================
 // CONSTANTES E CONFIGURAÇÕES
 // ========================================
-const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
 // ========================================
 // INTERFACES E TIPOS
 // ========================================
@@ -1570,7 +1569,7 @@ function useDadosFII(ticker: string, dadosFinanceiros?: DadosFinanceiros) {
             logMobile(`⏱️ Timeout API FII`);
           }, 1500); // 1.5s apenas
 
-          const url = `https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`;
+          const url = `/api/brapi/quote?tickers=${ticker}&dividends=true`;
           
           const response = await fetch(url, {
             method: 'GET',
@@ -1769,7 +1768,7 @@ function useDadosFinanceiros(ticker: string) {
             logMobile(`⏱️ Timeout de API (${isMobile() ? '2s' : '8s'})`);
           }, isMobile() ? 2000 : 8000);
 
-          const quoteUrl = `https://brapi.dev/api/quote/${ticker}?token=${BRAPI_TOKEN}&dividends=true`;
+          const quoteUrl = `/api/brapi/quote?tickers=${ticker}&dividends=true`;
           logMobile(`🌐 Tentando API: ${ticker}`);
           
           const response = await fetch(quoteUrl, {

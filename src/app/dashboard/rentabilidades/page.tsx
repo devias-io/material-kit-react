@@ -49,8 +49,6 @@ export default function RentabilidadesPage() {
       if (tickers.length > 0) {
         try {
           console.log('🌐 Chamando API BRAPI individualmente...');
-          const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
-          
           const novasCotacoes = {};
           
           // 🚀 BUSCAR EM PARALELO COM PROMISE.ALL (MAIS RÁPIDO)
@@ -61,7 +59,7 @@ export default function RentabilidadesPage() {
               
               console.log('🔍 Buscando:', ticker);
               
-              const apiUrl = 'https://brapi.dev/api/quote/' + ticker + '?token=' + BRAPI_TOKEN;
+              const apiUrl = '/api/brapi/quote?tickers=' + ticker;
               const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
@@ -569,7 +567,6 @@ const calcularProventosAtivo = useCallback(async (ticker, dataEntrada) => {
             
             if (tickers.length > 0) {
               try {
-                const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
                 const novasCotacoes = {};
                 
                 // 🔥 BUSCAR CADA TICKER INDIVIDUALMENTE
@@ -577,7 +574,7 @@ const calcularProventosAtivo = useCallback(async (ticker, dataEntrada) => {
                   try {
                     console.log('🔍 Atualizando:', ticker);
                     
-                    const apiUrl = 'https://brapi.dev/api/quote/' + ticker + '?token=' + BRAPI_TOKEN;
+                    const apiUrl = '/api/brapi/quote?tickers=' + ticker;
                     const response = await fetch(apiUrl, {
                       method: 'GET',
                       headers: {

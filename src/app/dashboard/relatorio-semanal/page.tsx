@@ -781,7 +781,7 @@ const fetchCompanyLogo = async (ticker: string): Promise<string | null> => {
     }
 
     const response = await fetch(
-      `https://brapi.dev/api/quote/${ticker}?token=jJrMYVy9MATGEicx3GxBp8&fundamental=false&dividends=false`
+      `/api/brapi/quote?tickers=${ticker}&fundamental=false&dividends=false`
     );
     
     if (!response.ok) {

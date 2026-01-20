@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ViesOverride } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { CacheService } from '@/lib/cache-service';
 
 export const maxDuration = 5;
 
@@ -372,32 +373,49 @@ export async function GET(
 
     debugLog(`✅ Plano ${user.plan} tem acesso à carteira ${params.carteira}`);
 
-    // 4. ⚡ BUSCAR DADOS MESTRES COM CACHE
-    const dadosMestres = await obterDadosMestresComCache(params.carteira);
-    debugLog(`📊 Dados mestres encontrados: ${dadosMestres.length} itens`);
+    const cacheKey = CacheService.getCacheKey('user-assets', user.id, params.carteira);
 
-    // 5. 🔒 APLICAR FILTROS RIGOROSOS
-    const dadosFiltrados = aplicarFiltrosRigorososPorPlano(
-      dadosMestres, 
-      user.plan, 
-      params.carteira,
-      user.email
+    const { data, metadata } = await CacheService.withCache(
+      cacheKey,
+      async () => {
+        // 4. ⚡ BUSCAR DADOS MESTRES COM CACHE
+        const dadosMestres = await obterDadosMestresComCache(params.carteira);
+        debugLog(`📊 Dados mestres encontrados: ${dadosMestres.length} itens`);
+
+        // 5. 🔒 APLICAR FILTROS RIGOROSOS
+        const dadosFiltrados = aplicarFiltrosRigorososPorPlano(
+          dadosMestres,
+          user.plan,
+          params.carteira,
+          user.email
+        );
+
+        debugLog(`🔒 Após filtro do plano ${user.plan}: ${dadosFiltrados.length} itens`);
+
+        // 6. Preparar resposta otimizada (sem requestTime dinâmico)
+        return dadosFiltrados.map(ativo => ({
+          ...ativo,
+          createdAt: ativo.createdAt?.toISOString(),
+          updatedAt: ativo.updatedAt?.toISOString(),
+          editadoEm: ativo.editadoEm?.toISOString(),
+          // Metadados de performance e segurança
+          isFiltered: true,
+          userPlan: user.plan,
+          accessLevel: getAccessLevel(user.plan, params.carteira),
+          cached: true,
+          requestTime: 0
+        }));
+      },
+      {
+        ttlSeconds: 300,
+        tags: ['user-assets', user.id, params.carteira],
+      }
     );
 
-    debugLog(`🔒 Após filtro do plano ${user.plan}: ${dadosFiltrados.length} itens`);
-    auditData.totalItensRetornados = dadosFiltrados.length;
+    auditData.totalItensRetornados = data.length;
 
-    // 6. Preparar resposta otimizada
-    const ativosSerializados = dadosFiltrados.map(ativo => ({
+    const ativosSerializados = data.map(ativo => ({
       ...ativo,
-      createdAt: ativo.createdAt?.toISOString(),
-      updatedAt: ativo.updatedAt?.toISOString(), 
-      editadoEm: ativo.editadoEm?.toISOString(),
-      // Metadados de performance e segurança
-      isFiltered: true,
-      userPlan: user.plan,
-      accessLevel: getAccessLevel(user.plan, params.carteira),
-      cached: true,
       requestTime: Date.now() - inicioRequest
     }));
     
@@ -406,8 +424,8 @@ export async function GET(
     
     // 8. Headers de performance
     const response = NextResponse.json(ativosSerializados);
-    response.headers.set('X-Cache-Status', 'INTEGRATED');
-    response.headers.set('X-Items-Count', dadosFiltrados.length.toString());
+    response.headers.set('X-Cache-Status', metadata.cached ? 'HIT' : 'MISS');
+    response.headers.set('X-Items-Count', data.length.toString());
     response.headers.set('X-Access-Level', getAccessLevel(user.plan, params.carteira));
     response.headers.set('X-Request-Time', (Date.now() - inicioRequest).toString());
     
@@ -568,6 +586,7 @@ export async function POST(
     const chaveCache = `dados_mestres_${params.carteira}`;
     cacheDadosMestres.delete(chaveCache);
     console.log(`🔄 Cache limpo para ${params.carteira} após criação`);
+    await CacheService.invalidateTags(['user-assets', user.id, params.carteira]);
     
     // 8. Registrar auditoria de sucesso
     auditData.totalItensRetornados = 1;
@@ -658,6 +677,7 @@ export async function PUT(request: NextRequest, { params }: { params: { carteira
       // Limpar cache após reordenação
       const chaveCache = `dados_mestres_${carteira}`;
       cacheDadosMestres.delete(chaveCache);
+      await CacheService.invalidateTags(['user-assets', user.id, carteira]);
       
       console.log(`✅ Reordenação concluída para ${carteira}`);
       return NextResponse.json({ success: true, message: 'Reordenação realizada com sucesso' });
@@ -744,6 +764,7 @@ export async function PUT(request: NextRequest, { params }: { params: { carteira
       // Limpar cache após edição
       const chaveCache = `dados_mestres_${carteira}`;
       cacheDadosMestres.delete(chaveCache);
+      await CacheService.invalidateTags(['user-assets', user.id, carteira]);
       
       console.log('✅ Ativo atualizado com sucesso:', ativoAtualizado.id);
       
@@ -835,6 +856,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { carte
     // Limpar cache após remoção
     const chaveCache = `dados_mestres_${carteira}`;
     cacheDadosMestres.delete(chaveCache);
+    await CacheService.invalidateTags(['user-assets', user.id, carteira]);
     
     console.log('✅ Ativo removido com sucesso:', ativoRemovido.id);
     
