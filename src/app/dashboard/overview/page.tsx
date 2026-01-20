@@ -9,6 +9,7 @@ import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/u
 import { useProventosPorAtivo } from '@/hooks/useProventosPorAtivo';
 import { useAuthAccess } from '@/hooks/use-auth-access';
 import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
@@ -57,6 +58,7 @@ function useSmllRealTime() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const isMobile = useDeviceDetection();
+  const isVisible = usePageVisibility();
 
   const buscarSmllReal = React.useCallback(async () => {
     try {
@@ -267,10 +269,13 @@ function useSmllRealTime() {
   }, [isMobile]);
 
   React.useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     buscarSmllReal();
     const interval = setInterval(buscarSmllReal, 10 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [buscarSmllReal]);
+  }, [buscarSmllReal, isVisible]);
 
   return { smllData, loading, error, refetch: buscarSmllReal };
 }
@@ -281,6 +286,7 @@ function useIbovespaRealTime() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const isMobile = useDeviceDetection();
+  const isVisible = usePageVisibility();
 
   const buscarIbovespaReal = React.useCallback(async () => {
     try {
@@ -471,10 +477,13 @@ function useIbovespaRealTime() {
   }, [isMobile]);
 
   React.useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     buscarIbovespaReal();
     const interval = setInterval(buscarIbovespaReal, 10 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [buscarIbovespaReal]);
+  }, [buscarIbovespaReal, isVisible]);
 
   return { ibovespaData, loading, error, refetch: buscarIbovespaReal };
 }
@@ -830,6 +839,7 @@ function useSmallCapsIntegradas() {
   const [error, setError] = React.useState<string | null>(null);
 
   const isMobile = useDeviceDetection();
+  const isVisible = usePageVisibility();
   const [proventosMap, setProventosMap] = React.useState<Map<string, number>>(new Map());
   const smallCapsData = dados.smallCaps || [];
 
@@ -1114,12 +1124,15 @@ function useSmallCapsIntegradas() {
 
   // ⏱️ Atualização periódica para manter dados próximos do real (usa cache do backend para evitar excesso de chamadas)
   React.useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     const intervalId = setInterval(() => {
       refetch();
     }, REFRESH_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
-  }, [refetch]);
+  }, [refetch, isVisible]);
 
   return {
     ativosAtualizados,

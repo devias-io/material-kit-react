@@ -7,6 +7,7 @@ import { useDataStore } from '@/hooks/useDataStore';
 import { aplicarViesOverride, getViesBadgePalette } from '@/utils/vies';
 import type { ViesOverride } from '@/utils/vies';
 import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -61,6 +62,7 @@ function useIndicesInternacionaisRealTime() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const isMobile = useDeviceDetection();
+  const isVisible = usePageVisibility();
 
   const buscarIndicesReal = React.useCallback(async () => {
     try {
@@ -267,10 +269,13 @@ function useIndicesInternacionaisRealTime() {
   }, [isMobile]);
 
   React.useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     buscarIndicesReal();
     const interval = setInterval(buscarIndicesReal, 10 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [buscarIndicesReal]);
+  }, [buscarIndicesReal, isVisible]);
 
   return { indicesData, loading, error, refetch: buscarIndicesReal };
 }

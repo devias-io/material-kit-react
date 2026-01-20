@@ -9,6 +9,7 @@ import { useDataStore } from '@/hooks/useDataStore';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 import { useProventosPorAtivo } from '@/hooks/useProventosPorAtivo';
 import { buildQuotesUrl, getQuoteResults } from '@/utils/brapiProxy';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 type PercentualParticipacao = {
   bruto: unknown;
@@ -41,6 +42,7 @@ function useIfixRealTime() {
   const [ifixData, setIfixData] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const isVisible = usePageVisibility();
 
   const buscarIfixReal = React.useCallback(async () => {
     try {
@@ -166,10 +168,13 @@ function useIfixRealTime() {
   }, []);
 
   React.useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     buscarIfixReal();
     const interval = setInterval(buscarIfixReal, 10 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [buscarIfixReal]);
+  }, [buscarIfixReal, isVisible]);
 
   return { ifixData, loading, error, refetch: buscarIfixReal };
 }

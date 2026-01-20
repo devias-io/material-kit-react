@@ -7,6 +7,7 @@ import { useDataStore } from '@/hooks/useDataStore';
 import { buildQuotesUrl } from '@/utils/brapiProxy';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -51,6 +52,7 @@ function useSmllRealTime() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const isMobile = useDeviceDetection();
+  const isVisible = usePageVisibility();
 
   const buscarSmllReal = React.useCallback(async () => {
     try {
@@ -261,10 +263,13 @@ function useSmllRealTime() {
   }, [isMobile]);
 
   React.useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     buscarSmllReal();
     const interval = setInterval(buscarSmllReal, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [buscarSmllReal]);
+  }, [buscarSmllReal, isVisible]);
 
   return { smllData, loading, error, refetch: buscarSmllReal };
 }
@@ -275,6 +280,7 @@ function useIbovespaRealTime() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const isMobile = useDeviceDetection();
+  const isVisible = usePageVisibility();
 
   const buscarIbovespaReal = React.useCallback(async () => {
     try {
@@ -465,10 +471,13 @@ function useIbovespaRealTime() {
   }, [isMobile]);
 
   React.useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     buscarIbovespaReal();
     const interval = setInterval(buscarIbovespaReal, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [buscarIbovespaReal]);
+  }, [buscarIbovespaReal, isVisible]);
 
   return { ibovespaData, loading, error, refetch: buscarIbovespaReal };
 }
