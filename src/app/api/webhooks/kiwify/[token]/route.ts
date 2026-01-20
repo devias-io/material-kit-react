@@ -250,8 +250,8 @@ function detectarPlanoKiwify(webhookData: any): { plan: string; productName: str
       orderData?.transaction_amount,
       orderData?.gross_amount,
       orderData?.charge_amount,
-      orderData?.Commissions?.charge_amount,
       orderData?.Commissions?.product_base_price,
+      orderData?.Commissions?.charge_amount,
     ];
 
     const valor = selectBestKiwifyAmount(valorCandidates);
