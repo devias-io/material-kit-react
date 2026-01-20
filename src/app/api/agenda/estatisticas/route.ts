@@ -5,8 +5,10 @@ export async function GET() {
   try {
     const totalEventos = await prisma.eventoCorporativo.count();
     
+    const limit = 500;
     const eventos = await prisma.eventoCorporativo.findMany({
-      orderBy: { data_evento: 'asc' }
+      take: limit,
+      orderBy: { data_evento: 'desc' }
     });
     
     const tickersUnicos = await prisma.eventoCorporativo.groupBy({
@@ -23,6 +25,7 @@ export async function GET() {
       totalEventos,
       totalTickers: tickersUnicos.length,
       dataUltimoUpload: ultimoUpload?.createdAt || null,
+      limit,
       eventos
     });
     

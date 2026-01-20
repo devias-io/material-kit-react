@@ -19,19 +19,18 @@ export function useHGBrasilFII(ticker: string) {
 
       console.log(`🏢 Buscando FII ${ticker}...`);
 
-      // MÉTODO 1: Usar proxy CORS para HG Brasil (dados mais completos)
+      // MÉTODO 1: API interna com cache (HG Brasil)
       try {
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.hgbrasil.com/finance/stock_price?key=a666e15c&symbol=${ticker}`)}`;
-        console.log(`📡 Tentando HG Brasil via proxy para ${ticker}...`);
-        
-        const proxyResponse = await fetch(proxyUrl);
-        
-        if (proxyResponse.ok) {
-          const proxyData = await proxyResponse.json();
-          const hgData = JSON.parse(proxyData.contents);
-          
-          if (hgData.results && hgData.results[ticker]) {
-            const result = hgData.results[ticker];
+        const apiUrl = `/api/market/hgbrasil?symbol=${encodeURIComponent(ticker)}`;
+        console.log(`📡 Tentando HG Brasil via API interna para ${ticker}...`);
+
+        const apiResponse = await fetch(apiUrl);
+
+        if (apiResponse.ok) {
+          const apiData = await apiResponse.json();
+          const result = apiData?.result;
+
+          if (result) {
             console.log(`📊 Dados HG Brasil para ${ticker}:`, result);
             
             const dadosHG = {
@@ -73,17 +72,17 @@ export function useHGBrasilFII(ticker: string) {
               volume: result.volume,
               
               ultimaAtualizacao: result.updated_at || new Date().toISOString(),
-              fonte: 'hg-brasil-proxy'
+              fonte: 'hg-brasil-cache'
             };
 
             setDadosFII(dadosHG);
-            console.log(`✅ FII ${ticker} carregado via HG Brasil (proxy)`);
+            console.log(`✅ FII ${ticker} carregado via HG Brasil (API interna)`);
             console.log(`💰 Market Cap processado: R$ ${(dadosHG.valorMercado / 1000000000).toFixed(2)} bilhões`);
             return;
           }
         }
-      } catch (proxyError) {
-        console.log('Proxy HG Brasil falhou, tentando BRAPI...');
+      } catch (apiError) {
+        console.log('HG Brasil via API interna falhou, tentando BRAPI...');
       }
 
       // MÉTODO 2: Usar BRAPI como fallback

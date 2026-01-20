@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Buscar todos os templates com título incluído
+    const totalTemplatesCount = await prisma.responseTemplate.count();
     const allTemplates = await prisma.responseTemplate.findMany({
       select: {
         id: true,
@@ -28,7 +29,9 @@ export async function GET(request: NextRequest) {
         isActive: true,
         usageCount: true,
         createdAt: true
-      }
+      },
+      take: 100,
+      orderBy: { usageCount: 'desc' }
     });
 
     // Calcular estatísticas básicas
@@ -127,6 +130,8 @@ export async function GET(request: NextRequest) {
     const stats = {
       overview: {
         totalTemplates,
+        totalTemplatesAvailable: totalTemplatesCount,
+        limit: 100,
         activeTemplates,
         inactiveTemplates: totalTemplates - activeTemplates,
         totalUsage,

@@ -1,6 +1,8 @@
-const BRAPI_TOKEN = process.env.BRAPI_TOKEN?.trim();
+import { CacheService } from '@/lib/redis';
 
+const BRAPI_TOKEN = process.env.BRAPI_TOKEN?.trim();
 const DEFAULT_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const CACHE_TAG = 'market-snapshot';
 
 export type QuoteRequestInput =
   | string
@@ -41,14 +43,6 @@ export interface MarketSnapshot {
     missing: string[];
   };
 }
-
-type CacheEntry = {
-  timestamp: number;
-  ttl: number;
-  data: MarketSnapshot;
-};
-
-const cache = new Map<string, CacheEntry>();
 
 const SPECIAL_SYMBOLS: Record<string, { brapiSymbol?: string; yahooSymbol?: string; key?: string }> = {
   IBOV: { brapiSymbol: '^BVSP', yahooSymbol: '^BVSP', key: 'IBOV' },
@@ -375,52 +369,45 @@ export async function getMarketSnapshot(
   const cacheTtlSeconds = Math.max(30, Math.floor(cacheTtlMs / 1000));
 
   const requests = inputs.map((input) => buildRequest(input));
-  const cacheKey = buildCacheKey(requests, includeDividends);
+  const cacheKey = CacheService.getCacheKey('market-snapshot', buildCacheKey(requests, includeDividends));
 
-  if (!options.forceRefresh) {
-    const cached = cache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < cached.ttl) {
-      return {
-        ...cached.data,
-        fromCache: true,
-        cachedAt: cached.timestamp,
-        cacheTtlMs: cached.ttl
+  const { data, metadata } = await CacheService.withCache(
+    cacheKey,
+    async () => {
+      const [brapiMap, yahooMap] = await Promise.all([
+        fetchFromBrapi(requests, includeDividends, cacheTtlSeconds),
+        fetchFromYahoo(requests, cacheTtlSeconds)
+      ]);
+
+      const combined = buildCombinedQuotes(requests, brapiMap, yahooMap);
+
+      const requestedKeys = [...new Set(requests.map((request) => request.key))];
+      const missing = requestedKeys.filter((key) => !combined[key]);
+
+      const snapshot: MarketSnapshot = {
+        quotes: combined,
+        fromCache: false,
+        cachedAt: Date.now(),
+        cacheTtlMs,
+        metadata: {
+          requested: requestedKeys,
+          brapiSymbols: Object.keys(brapiMap),
+          yahooSymbols: Object.keys(yahooMap),
+          missing
+        }
       };
-    }
-  }
 
-  const [brapiMap, yahooMap] = await Promise.all([
-    fetchFromBrapi(requests, includeDividends, cacheTtlSeconds),
-    fetchFromYahoo(requests, cacheTtlSeconds)
-  ]);
+      return snapshot;
+    },
+    { ttlSeconds: cacheTtlSeconds, tags: [CACHE_TAG], forceRefresh: options.forceRefresh }
+  );
 
-  const combined = buildCombinedQuotes(requests, brapiMap, yahooMap);
-
-  const requestedKeys = [...new Set(requests.map((request) => request.key))];
-  const missing = requestedKeys.filter((key) => !combined[key]);
-
-  const snapshot: MarketSnapshot = {
-    quotes: combined,
-    fromCache: false,
-    cachedAt: Date.now(),
-    cacheTtlMs,
-    metadata: {
-      requested: requestedKeys,
-      brapiSymbols: Object.keys(brapiMap),
-      yahooSymbols: Object.keys(yahooMap),
-      missing
-    }
+  return {
+    ...data,
+    fromCache: metadata.cached
   };
-
-  cache.set(cacheKey, {
-    timestamp: snapshot.cachedAt,
-    ttl: cacheTtlMs,
-    data: snapshot
-  });
-
-  return snapshot;
 }
 
 export function clearMarketSnapshotCache(): void {
-  cache.clear();
+  void CacheService.invalidateTags([CACHE_TAG]);
 }
