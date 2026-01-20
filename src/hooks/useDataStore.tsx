@@ -954,19 +954,23 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
 
   const buscarCotacaoUSD = useCallback(async () => {
     try {
-      const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      
+      const response = await fetch('/api/market/exchange-rate', {
+        headers: {
+          Accept: 'application/json'
+        }
+      });
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
-      if (!data.rates || !data.rates.BRL) {
+
+      if (typeof data.usdToBrl !== 'number') {
         throw new Error('Taxa BRL não encontrada');
       }
-      
-      const cotacao = parseFloat(data.rates.BRL);
+
+      const cotacao = data.usdToBrl;
       setCotacaoUSD(cotacao);
       return cotacao;
     } catch (error) {
