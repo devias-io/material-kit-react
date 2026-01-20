@@ -48,6 +48,7 @@ interface User {
 }
 
 const PAGE_SIZE = 50;
+const USERS_CACHE_KEY = 'adminUsersCache';
 
 export default function AdminUsersPage() {
   const { user } = useUser();
@@ -62,6 +63,48 @@ export default function AdminUsersPage() {
   const [originFilter, setOriginFilter] = React.useState('');
   const [page, setPage] = React.useState(1);
   const [totalUsers, setTotalUsers] = React.useState(0);
+  const [lastUpdatedAt, setLastUpdatedAt] = React.useState<Date | null>(null);
+
+  const readUsersCache = () => {
+    if (typeof window === 'undefined') return null;
+
+    try {
+      const cachedData = window.sessionStorage.getItem(USERS_CACHE_KEY);
+      if (!cachedData) return null;
+
+      const parsed = JSON.parse(cachedData);
+      if (!Array.isArray(parsed.users)) return null;
+
+      return {
+        users: parsed.users as User[],
+        page: Number(parsed.page) || 1,
+        totalUsers: Number(parsed.totalUsers) || parsed.users.length,
+        lastUpdatedAt: parsed.lastUpdatedAt ? new Date(parsed.lastUpdatedAt) : null
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const saveUsersCache = (payload: {
+    users: User[];
+    page: number;
+    totalUsers: number;
+    lastUpdatedAt: Date | null;
+  }) => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      window.sessionStorage.setItem(USERS_CACHE_KEY, JSON.stringify({
+        users: payload.users,
+        page: payload.page,
+        totalUsers: payload.totalUsers,
+        lastUpdatedAt: payload.lastUpdatedAt ? payload.lastUpdatedAt.toISOString() : null
+      }));
+    } catch {
+      // Ignore storage errors (quota, privacy mode, etc.)
+    }
+  };
 
   // Verificar se é admin
   React.useEffect(() => {
@@ -71,7 +114,17 @@ export default function AdminUsersPage() {
   }, [user]);
 
   React.useEffect(() => {
-    loadAllUsers();
+    const cachedData = readUsersCache();
+    if (cachedData) {
+      setUsers(cachedData.users);
+      setPage(cachedData.page);
+      setTotalUsers(cachedData.totalUsers);
+      setLastUpdatedAt(cachedData.lastUpdatedAt);
+      setLoading(false);
+      return;
+    }
+
+    loadAllUsers(true);
   }, []);
 
   const fetchUsersPage = async (pageToLoad: number) => {
@@ -135,34 +188,87 @@ export default function AdminUsersPage() {
     }
   };
 
-  const loadAllUsers = async () => {
+  const loadAllUsers = async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     setLoadingMore(false);
 
     try {
-      let currentPage = 1;
-      let total = 0;
-      let aggregatedUsers: User[] = [];
+      if (!forceRefresh) {
+        const cachedData = readUsersCache();
+        if (cachedData) {
+          setUsers(cachedData.users);
+          setPage(cachedData.page);
+          setTotalUsers(cachedData.totalUsers);
+          setLastUpdatedAt(cachedData.lastUpdatedAt);
+          setLoading(false);
+          return;
+        }
+      }
 
-      do {
+      const firstPageData = await fetchUsersPage(1);
+      const initialUsers = firstPageData.users;
+      const total = firstPageData.total || initialUsers.length;
+      const refreshedAt = new Date();
+
+      setUsers(initialUsers);
+      setPage(1);
+      setTotalUsers(total);
+      setLastUpdatedAt(refreshedAt);
+      setLoading(false);
+      saveUsersCache({
+        users: initialUsers,
+        page: 1,
+        totalUsers: total,
+        lastUpdatedAt: refreshedAt
+      });
+
+      if (initialUsers.length >= total) {
+        return;
+      }
+
+      loadRemainingUsers(2, total, initialUsers, refreshedAt);
+    } catch (error: any) {
+      setError(error.message || 'Erro ao carregar usuários');
+      setLoading(false);
+    }
+  };
+
+  const loadRemainingUsers = async (
+    startPage: number,
+    total: number,
+    currentUsers: User[],
+    refreshedAt: Date
+  ) => {
+    setLoadingMore(true);
+
+    try {
+      let currentPage = startPage;
+      let aggregatedUsers = [...currentUsers];
+
+      while (total === 0 || aggregatedUsers.length < total) {
         const pageData = await fetchUsersPage(currentPage);
-        total = pageData.total || total;
         if (pageData.users.length === 0) {
           break;
         }
 
         aggregatedUsers = [...aggregatedUsers, ...pageData.users];
+        setUsers(aggregatedUsers);
+        setPage(currentPage);
+        const updatedTotal = pageData.total || total || aggregatedUsers.length;
+        setTotalUsers(updatedTotal);
+        saveUsersCache({
+          users: aggregatedUsers,
+          page: currentPage,
+          totalUsers: updatedTotal,
+          lastUpdatedAt: refreshedAt
+        });
         currentPage += 1;
-      } while (total === 0 || aggregatedUsers.length < total);
-
-      setUsers(aggregatedUsers);
-      setPage(Math.max(currentPage - 1, 1));
-      setTotalUsers(total || aggregatedUsers.length);
+      }
     } catch (error: any) {
       setError(error.message || 'Erro ao carregar usuários');
     } finally {
-      setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -177,9 +283,20 @@ export default function AdminUsersPage() {
 
     try {
       const pageData = await fetchUsersPage(page + 1);
-      setUsers(prev => [...prev, ...pageData.users]);
+      const updatedUsers = [...users, ...pageData.users];
+      const updatedTotal = pageData.total || totalUsers;
+      const refreshedAt = new Date();
+
+      setUsers(updatedUsers);
       setPage(page + 1);
-      setTotalUsers(pageData.total || totalUsers);
+      setTotalUsers(updatedTotal);
+      setLastUpdatedAt(refreshedAt);
+      saveUsersCache({
+        users: updatedUsers,
+        page: page + 1,
+        totalUsers: updatedTotal,
+        lastUpdatedAt: refreshedAt
+      });
     } catch (error: any) {
       setError(error.message || 'Erro ao carregar usuários');
     } finally {
@@ -204,7 +321,18 @@ export default function AdminUsersPage() {
         throw new Error(errorData.error || 'Erro ao excluir usuário');
       }
 
-      setUsers(prev => prev.filter(u => u.id !== userId));
+      const updatedUsers = users.filter(u => u.id !== userId);
+      const refreshedAt = new Date();
+
+      setUsers(updatedUsers);
+      setTotalUsers(Math.max(totalUsers - 1, updatedUsers.length));
+      setLastUpdatedAt(refreshedAt);
+      saveUsersCache({
+        users: updatedUsers,
+        page,
+        totalUsers: Math.max(totalUsers - 1, updatedUsers.length),
+        lastUpdatedAt: refreshedAt
+      });
       alert('✅ Usuário excluído com sucesso!');
     } catch (error: any) {
       console.error('Erro ao excluir:', error);
@@ -422,7 +550,7 @@ export default function AdminUsersPage() {
             borderRadius: 2
           }} 
           action={
-            <Button color="inherit" size="small" onClick={loadAllUsers} disabled={loading}>
+            <Button color="inherit" size="small" onClick={() => loadAllUsers(true)} disabled={loading}>
               Tentar Novamente
             </Button>
           }
@@ -569,6 +697,29 @@ export default function AdminUsersPage() {
           justifyContent={{ xs: 'flex-start', lg: 'flex-end' }}
           width={{ xs: '100%', lg: 'auto' }}
         >
+          <Button
+            variant="outlined"
+            disabled={loading}
+            onClick={() => loadAllUsers(true)}
+            sx={{
+              bgcolor: '#FFFFFF',
+              color: '#2563EB',
+              borderColor: '#93C5FD',
+              fontWeight: '600',
+              '&:hover': { bgcolor: '#EFF6FF', borderColor: '#60A5FA' },
+              '&:disabled': { color: '#94A3B8', borderColor: '#E2E8F0' },
+              borderRadius: 2,
+              px: 3,
+              py: 1.5,
+              textTransform: 'none',
+              fontSize: '0.95rem',
+              boxShadow: 'none',
+              width: { xs: '100%', sm: 'auto' }
+            }}
+          >
+            🔄 Atualizar dados
+          </Button>
+
           <Button
             variant="outlined"
             disabled={loading}
