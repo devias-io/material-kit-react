@@ -77,7 +77,13 @@ export async function GET(request: NextRequest) {
 
     const questions = await prisma.question.findMany({
       where: whereClause,
-      include: {
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        status: true,
+        createdAt: true,
+        readByAdmin: true,
         user: {
           select: {
             id: true,
@@ -88,7 +94,10 @@ export async function GET(request: NextRequest) {
           }
         },
         answers: {
-          include: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
             admin: {
               select: {
                 id: true,
@@ -98,7 +107,10 @@ export async function GET(request: NextRequest) {
               }
             },
             comments: {
-              include: {
+              select: {
+                id: true,
+                content: true,
+                createdAt: true,
                 author: {
                   select: {
                     id: true,
@@ -118,7 +130,10 @@ export async function GET(request: NextRequest) {
           }
         },
         comments: {
-          include: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
             author: {
               select: {
                 id: true,
