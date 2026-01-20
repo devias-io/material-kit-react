@@ -67,17 +67,20 @@ export async function GET(request: NextRequest) {
     
     // Estratégia: tentar diferentes abordagens até uma funcionar
     let users;
+    let page = 1;
+    let limit = 50;
+    let totalUsers = 0;
     const hotmartDataMap = new Map();
     const kiwifyDataMap = new Map();
     const eduzzDataMap = new Map();
     const purchasesMap = new Map();
     
     try {
-      const page = Math.max(1, Number(searchParams.get('page') ?? 1));
+      page = Math.max(1, Number(searchParams.get('page') ?? 1));
       const rawLimit = Number(searchParams.get('limit') ?? 50);
-      const limit = Math.min(100, Math.max(10, Number.isFinite(rawLimit) ? rawLimit : 50));
+      limit = Math.min(100, Math.max(10, Number.isFinite(rawLimit) ? rawLimit : 50));
       const offset = (page - 1) * limit;
-      const totalUsers = await prisma.user.count();
+      totalUsers = await prisma.user.count();
 
       // 1. Primeiro, buscar usuários básicos
       console.log('📊 Buscando usuários...');
