@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDataStore } from '@/hooks/useDataStore';
 import { aplicarViesOverride } from '@/utils/vies';
 
@@ -125,7 +125,7 @@ function calcularDY12Meses(ticker: string, precoAtual: number): string {
 }
 
 // 🚀 FUNÇÃO PARA FETCH COM HEADERS MOBILE-FRIENDLY
-async function fetchWithMobileHeaders(url: string, isMobile: boolean) {
+async function fetchWithMobileHeaders(url: string, isMobile: boolean, signal?: AbortSignal) {
   const headers: HeadersInit = {
     'Accept': 'application/json',
     'Cache-Control': 'no-cache'
@@ -147,7 +147,7 @@ async function fetchWithMobileHeaders(url: string, isMobile: boolean) {
     const response = await fetch(url, {
       method: 'GET',
       headers,
-      signal: controller.signal,
+      signal: signal ?? controller.signal,
       mode: 'cors', // Explicitamente definir CORS
       credentials: 'omit' // Não enviar credentials para evitar problemas CORS
     });
@@ -167,11 +167,21 @@ export function useFiisCotacoesBrapi() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<Date | null>(null);
+  const controllerRef = useRef<AbortController | null>(null);
 
   // 📊 OBTER DADOS DA CARTEIRA FIIS DO DATASTORE
   const fiisData = dados.fiis || [];
 
   const fetchCotacoes = useCallback(async () => {
+    // Cancelar request anterior se existir
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+
+    // Criar novo controller
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
     try {
       setLoading(true);
       setErro(null);
@@ -221,7 +231,7 @@ export function useFiisCotacoesBrapi() {
           console.log(`📱 Lote mobile ${Math.floor(i/LOTE_SIZE_MOBILE) + 1}: ${lote.join(', ')}`);
 
           try {
-            const response = await fetchWithMobileHeaders(apiUrl, true);
+            const response = await fetchWithMobileHeaders(apiUrl, true, controller.signal);
 
             if (response.ok) {
               const apiData = await response.json();
@@ -281,7 +291,7 @@ export function useFiisCotacoesBrapi() {
           console.log(`🖥️ Lote desktop ${Math.floor(i/LOTE_SIZE) + 1}: ${lote.join(', ')}`);
 
           try {
-            const response = await fetchWithMobileHeaders(apiUrl, false);
+            const response = await fetchWithMobileHeaders(apiUrl, false, controller.signal);
 
             if (response.ok) {
               const apiData = await response.json();
@@ -473,14 +483,18 @@ export function useFiisCotacoesBrapi() {
   useEffect(() => {
     console.log('🔄 EFFECT DISPARADO - DADOS DO DATASTORE MUDARAM');
     console.log('📊 FIIs data length:', dados.fiis?.length || 0);
-    
-    if (fiisData.length > 0) {
-      fetchCotacoes();
-    } else {
-      setLoading(false);
-      setFiis([]);
-    }
-  }, [dados.fiis?.length]);
+
+    const timeout = setTimeout(() => {
+      if (fiisData.length > 0) {
+        fetchCotacoes();
+      } else {
+        setLoading(false);
+        setFiis([]);
+      }
+    }, 300); // debounce de 300ms
+
+    return () => clearTimeout(timeout);
+  }, [dados.fiis?.length, fetchCotacoes]);
 
   // ATUALIZAR COTAÇÕES A CADA 15 MINUTOS
   useEffect(() => {
@@ -496,7 +510,10 @@ export function useFiisCotacoesBrapi() {
       }
     }, 15 * 60 * 1000); // 15 minutos
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      controllerRef.current?.abort(); // Cancelar ao desmontar
+    };
   }, [fetchCotacoes, fiisData.length]);
 
   return { 

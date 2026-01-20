@@ -4,7 +4,7 @@ import { logApiMetric } from '@/lib/metrics';
 
 // 🛡️ CONFIGURAÇÃO PARA VERCEL - EVITA ERRO DE STATIC GENERATION
 export const dynamic = 'force-dynamic';
-export const revalidate = 60; // ✅ REDUZIDO: 1 minuto para dados mais frescos
+export const revalidate = 300; // ✅ REDUZIDO: 5 minutos para dados mais frescos
 export const fetchCache = 'default-cache';
 export const runtime = 'nodejs';
 export const maxDuration = 5;
@@ -12,11 +12,11 @@ export const maxDuration = 5;
 // ✅ HEADERS OTIMIZADOS PARA DADOS FINANCEIROS
 // - Sem stale-while-revalidate (evita servir dados vencidos)
 // - must-revalidate força checagem após expiração
-// - 60 segundos = equilíbrio entre frescor e performance
+// - 300 segundos = equilíbrio entre frescor e performance
 const CACHE_HEADERS = {
-  'Cache-Control': 'public, s-maxage=60, must-revalidate',
-  'CDN-Cache-Control': 'public, s-maxage=60, must-revalidate',
-  'Vercel-CDN-Cache-Control': 'public, s-maxage=60, must-revalidate',
+  'Cache-Control': 'public, s-maxage=300, must-revalidate',
+  'CDN-Cache-Control': 'public, s-maxage=300, must-revalidate',
+  'Vercel-CDN-Cache-Control': 'public, s-maxage=300, must-revalidate',
 } as const;
 
 export async function GET(request: NextRequest) {
@@ -44,9 +44,9 @@ export async function GET(request: NextRequest) {
       }
     });
     
-    // ✅ TTL REDUZIDO: 60 segundos (alinhado com revalidate e cache headers)
+    // ✅ TTL REDUZIDO: 300 segundos (alinhado com revalidate e cache headers)
     const { data, metadata } = await BrapiService.fetchQuotes(symbolsArray, {
-      cacheTtlMs: 60 * 1000, // 1 minuto
+      cacheTtlMs: 300 * 1000, // 5 minutos
       queryParams,
     });
     
