@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
+import { getHotmartBuyerPhone } from '@/lib/phone';
 
 // Função para gerar senha segura
 function generateSecurePassword(): string {
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
     
     const buyerEmail = buyerData?.email || webhookData.email || null;
     const buyerName = buyerData?.name || buyerData?.full_name || webhookData.name || 'Cliente Hotmart';
+    const buyerPhone = getHotmartBuyerPhone(webhookData, buyerData);
     
     const transactionId = purchaseData?.transaction || purchaseData?.transaction_id || 
                          webhookData.transaction || `TXN_${Date.now()}`;
@@ -131,6 +133,8 @@ export async function POST(request: NextRequest) {
     if (user) {
       // ATUALIZAR usuário existente
       console.log(`🔄 Atualizando usuário existente: ${email}`);
+
+      const phonePayload = buyerPhone && !user.phone ? { phone: buyerPhone } : {};
       
       user = await prisma.user.update({
         where: { email },
@@ -139,6 +143,7 @@ export async function POST(request: NextRequest) {
           status: 'ACTIVE',
           hotmartCustomerId: transactionId,
           expirationDate: calculateExpirationDate(plan),
+          ...phonePayload,
           // Manter senha existente se houver
           ...(user.password ? {} : { 
             password: generateSecurePassword(),
@@ -163,6 +168,7 @@ export async function POST(request: NextRequest) {
           email: email,
           firstName: firstName,
           lastName: lastName,
+          phone: buyerPhone ?? null,
           plan: plan,
           status: 'ACTIVE',
           hotmartCustomerId: transactionId,

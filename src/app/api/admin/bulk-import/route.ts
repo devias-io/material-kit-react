@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
+import { getHotmartBuyerPhone } from '@/lib/phone';
 
 interface ImportUser {
   firstName: string;
@@ -386,6 +387,7 @@ export async function PUT(request: NextRequest) {
 
     const { product, buyer, purchase } = data;
     const buyerEmail = buyer?.email?.toLowerCase()?.trim();
+    const buyerPhone = getHotmartBuyerPhone(webhookData, buyer);
     
     if (!buyerEmail) {
       return NextResponse.json({ error: 'Email obrigatório' }, { status: 400 });
@@ -411,6 +413,7 @@ export async function PUT(request: NextRequest) {
     if (user) {
       // ATUALIZAR usuário existente (importado anteriormente)
       console.log(`🔄 CLIENTE EXISTENTE: ${buyerEmail} - Atualizando assinatura`);
+      const phonePayload = buyerPhone && !user.phone ? { phone: buyerPhone } : {};
       
       user = await prisma.user.update({
         where: { email: buyerEmail },
@@ -419,6 +422,7 @@ export async function PUT(request: NextRequest) {
           status: 'ACTIVE',
           hotmartCustomerId: purchase?.transaction,
           expirationDate: calculateExpirationDate(plan),
+          ...phonePayload,
           // PRESERVAR dados existentes
           ...(user.password ? {} : { 
             password: generateSecurePassword(),
@@ -441,6 +445,7 @@ export async function PUT(request: NextRequest) {
           email: buyerEmail,
           firstName: nameParts[0] || 'Cliente',
           lastName: nameParts.slice(1).join(' ') || 'Hotmart',
+          phone: buyerPhone ?? null,
           plan: plan,
           status: 'ACTIVE',
           hotmartCustomerId: purchase?.transaction,

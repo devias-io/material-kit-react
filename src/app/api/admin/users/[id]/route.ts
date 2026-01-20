@@ -95,7 +95,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       plan: user.plan,
       status: user.status,
       hotmartCustomerId: user.hotmartCustomerId || undefined,
-      phone: (user as any)?.phone || hotmartData?.phone || kiwifyData?.phone || eduzzData?.phone,
+      phone: user.phone || hotmartData?.phone || kiwifyData?.phone || eduzzData?.phone,
       hotmartPhone: hotmartData?.phone,
       kiwifyPhone: kiwifyData?.phone,
       eduzzPhone: eduzzData?.phone,

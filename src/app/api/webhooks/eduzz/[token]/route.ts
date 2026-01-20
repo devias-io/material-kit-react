@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { getEduzzTokenMapping } from '@/server/integration-secrets';
 import { activateEntitlement, deactivateEntitlement, getActiveEntitlementCodes, isAddonPlan } from '@/lib/entitlements';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
+import { extractPhone, normalizeBrazilPhone } from '@/lib/phone';
 
 const EDUZZ_TOKEN_MAPPING = getEduzzTokenMapping();
 
@@ -172,6 +173,7 @@ export async function POST(
     
     const buyerEmail = customerData?.email || saleData?.email || webhookData.email;
     const buyerName = customerData?.name || customerData?.nome || saleData?.customer_name || 'Cliente Eduzz';
+    const buyerPhone = normalizeBrazilPhone(extractPhone(customerData, saleData, webhookData));
     const transactionId = saleData?.transaction_id || saleData?.id_transacao || saleData?.id || webhookData.transaction_id || `ED_${Date.now()}`;
     const amount = saleData?.value || saleData?.valor || saleData?.amount || 0;
 
@@ -329,6 +331,7 @@ export async function POST(
       console.log(`🔄 Atualizando usuário existente: ${email}`);
 
       treatedAsAddon = isAddonPurchase && user.plan !== integrationData.plan;
+      const phonePayload = buyerPhone && !user.phone ? { phone: buyerPhone } : {};
 
       if (treatedAsAddon) {
         console.log(`➕ Ativando complemento ${integrationData.plan} para ${email} via Eduzz`);
@@ -338,7 +341,8 @@ export async function POST(
           data: {
             status: 'ACTIVE',
             hotmartCustomerId: transactionId,
-            origin: 'EDUZZ'
+            origin: 'EDUZZ',
+            ...phonePayload
           }
         });
       } else {
@@ -352,7 +356,8 @@ export async function POST(
             status: 'ACTIVE',
             hotmartCustomerId: transactionId,
             expirationDate: nextExpiration,
-            origin: 'EDUZZ'
+            origin: 'EDUZZ',
+            ...phonePayload
           }
         });
       }
@@ -377,6 +382,7 @@ export async function POST(
           email: email,
           firstName: firstName,
           lastName: lastName,
+          phone: buyerPhone ?? null,
           plan: integrationData.plan, // 🔥 PLANO DETECTADO AUTOMATICAMENTE
           status: 'ACTIVE',
           hotmartCustomerId: transactionId,
