@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createStaticIfixFallbackPayload } from '@/utils/ifixConstants';
 import { debugError, debugLog } from '@/utils/logger';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 interface IfixData {
   valor: number;
@@ -17,6 +18,7 @@ export function useIfixRealTime() {
   const [ifixData, setIfixData] = useState<IfixData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isVisible = usePageVisibility();
 
   const buscarIfixReal = useCallback(async () => {
     try {
@@ -172,13 +174,16 @@ export function useIfixRealTime() {
   }, []);
 
   useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     buscarIfixReal();
 
     // 🔄 ATUALIZAR A CADA 5 MINUTOS (IGUAL AO IBOVESPA)
     const interval = setInterval(buscarIfixReal, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [buscarIfixReal]);
+  }, [buscarIfixReal, isVisible]);
 
   return { ifixData, loading, error, refetch: buscarIfixReal };
 }

@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDataStore } from '@/hooks/useDataStore';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 import { aplicarViesOverride } from '@/utils/vies';
 
 export interface FII {
@@ -167,6 +168,7 @@ export function useFiisCotacoesBrapi() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<Date | null>(null);
+  const isVisible = usePageVisibility();
   const controllerRef = useRef<AbortController | null>(null);
 
   // 📊 OBTER DADOS DA CARTEIRA FIIS DO DATASTORE
@@ -498,6 +500,9 @@ export function useFiisCotacoesBrapi() {
 
   // ATUALIZAR COTAÇÕES A CADA 15 MINUTOS
   useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     const interval = setInterval(() => {
       const agora = new Date();
       const hora = agora.getHours();
@@ -514,7 +519,7 @@ export function useFiisCotacoesBrapi() {
       clearInterval(interval);
       controllerRef.current?.abort(); // Cancelar ao desmontar
     };
-  }, [fetchCotacoes, fiisData.length]);
+  }, [fetchCotacoes, fiisData.length, isVisible]);
 
   return { 
     fiis, 

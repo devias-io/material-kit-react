@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUser } from '@/hooks/use-user';
 import { useAuthAccess } from '@/hooks/use-auth-access';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 import { DEFAULT_CARTEIRAS_DATA } from '@/data/carteiras-default';
 import {
   ALL_CARTEIRA_KEYS,
@@ -334,6 +335,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   
   // 🔥 REFS PARA CONTROLE
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isVisible = usePageVisibility();
   const isLoadingRef = useRef(false);
 
   // 🔥 FUNÇÕES LOCALSTORAGE QUE ESTAVAM FALTANDO
@@ -1208,7 +1210,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
 
   // 🔥 SETUP INICIAL CONTROLADO
   useEffect(() => {
-    if (!isInitialized || typeof window === 'undefined') return;
+    if (!isInitialized || typeof window === 'undefined' || !isVisible) return;
     
     buscarCotacaoUSD();
     
@@ -1226,7 +1228,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
         clearInterval(intervalRef.current);
       }
     };
-  }, [isInitialized, buscarCotacaoUSD]);
+  }, [isInitialized, buscarCotacaoUSD, isVisible]);
 
   // 🔥 ADICIONAR debugReordenacao ANTES DO useEffect
   const debugReordenacao = useCallback((carteira: string) => {

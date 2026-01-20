@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 import { StockQuote } from '@/types/financial';
 
 interface PortfolioStock {
@@ -30,6 +31,7 @@ export function useStockPortfolio(): UseStockPortfolioReturn {
   const [portfolio, setPortfolio] = useState<PortfolioStock[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isVisible = usePageVisibility();
 
   // SUAS AÇÕES DA CARTEIRA COM DADOS DE ENTRADA
   const portfolioBase: Omit<PortfolioStock, 'precoAtual' | 'performance'>[] = [
@@ -188,13 +190,16 @@ export function useStockPortfolio(): UseStockPortfolioReturn {
   };
 
   useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     fetchPortfolioData();
 
     // ATUALIZAR A CADA 10 MINUTOS
     const interval = setInterval(fetchPortfolioData, 10 * 60 * 1000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [isVisible]);
 
   return {
     portfolio,
