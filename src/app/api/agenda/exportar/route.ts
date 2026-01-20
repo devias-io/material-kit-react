@@ -8,14 +8,20 @@ import { prisma } from '@/lib/prisma';
 
 // ✅ Inicializar o Prisma
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const rawLimit = Number.parseInt(searchParams.get('limit') || '1000', 10);
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 1000;
+
     const eventos = await prisma.eventoCorporativo.findMany({
+      take: limit,
       orderBy: [
         { ticker: 'asc' },
-        { data_evento: 'asc' }
+        { data_evento: 'desc' }
       ]
     });
+    const total = await prisma.eventoCorporativo.count();
     
     // Gerar CSV
     const header = 'ticker,tipo_evento,titulo,data_evento,descricao,status,prioridade,url_externo,observacoes\n';
@@ -39,7 +45,9 @@ export async function GET() {
     return new Response(csvData, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="agenda_corporativa_${new Date().toISOString().split('T')[0]}.csv"`
+        'Content-Disposition': `attachment; filename="agenda_corporativa_${new Date().toISOString().split('T')[0]}.csv"`,
+        'X-Total-Count': total.toString(),
+        'X-Limit': limit.toString()
       }
     });
     

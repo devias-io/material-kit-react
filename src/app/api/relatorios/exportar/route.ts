@@ -4,13 +4,18 @@ import { prisma } from '@/lib/prisma';
 // 📥 GET - Exportar todos os relatórios em formato JSON
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const rawLimit = Number.parseInt(searchParams.get('limit') || '1000', 10);
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 1000;
+
     // Buscar todos os relatórios
     const relatorios = await prisma.relatorio.findMany({
+      take: limit,
       orderBy: [
-        { ticker: 'asc' },
-        { dataReferencia: 'desc' }
+        { createdAt: 'desc' }
       ]
     });
+    const total = await prisma.relatorio.count();
 
     if (relatorios.length === 0) {
       return NextResponse.json(
@@ -46,7 +51,8 @@ export async function GET(request: NextRequest) {
       metadata: {
         versao: '2.0',
         dataExportacao: new Date().toISOString(),
-        totalRelatorios: relatorios.length,
+        totalRelatorios: total,
+        limit,
         totalTickers: new Set(relatorios.map(r => r.ticker)).size,
         tipoBackup: 'completo',
         origem: 'API/Prisma',
