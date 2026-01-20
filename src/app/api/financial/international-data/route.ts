@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CacheService } from '@/lib/cache-service';
+import { buildCacheHeaders } from '@/server/cache-headers';
 
 // 🛡️ CONFIGURAÇÃO PARA VERCEL - EVITA ERRO DE STATIC GENERATION
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,7 @@ export const maxDuration = 5;
 // 🔑 SUA CHAVE DA API BRAPI
 const BRAPI_TOKEN = 'jJrMYVy9MATGEicx3GxBp8';
 const isDev = process.env.NODE_ENV !== 'production';
+const CACHE_HEADERS = buildCacheHeaders({ ttl: 300, swr: 600 });
 
 // 🔧 FUNÇÕES AUXILIARES
 function getTrendDirection(change: number): 'up' | 'down' {
@@ -247,9 +249,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data, {
       status: 200,
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
-        'CDN-Cache-Control': 'no-store',
-        'Vercel-CDN-Cache-Control': 'no-store',
+        ...CACHE_HEADERS,
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization'

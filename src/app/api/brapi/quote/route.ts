@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CacheService } from '@/lib/cache-service';
 import { BRAPI_CONFIG } from '@/lib/brapi-config';
+import { buildCacheHeaders } from '@/server/cache-headers';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 5;
 
 const QUOTE_TTL_SECONDS = 300;
+const CACHE_HEADERS = buildCacheHeaders({ ttl: QUOTE_TTL_SECONDS, swr: QUOTE_TTL_SECONDS * 2 });
 
 function parseTickers(searchParams: URLSearchParams): string[] {
   const tickersParam = searchParams.get('tickers') ?? searchParams.get('symbols') ?? '';
@@ -71,7 +73,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data, {
       status: 200,
       headers: {
-        'Cache-Control': `public, max-age=${QUOTE_TTL_SECONDS}`,
+        ...CACHE_HEADERS,
         'X-Cache-Hit': String(metadata.cached)
       }
     });
