@@ -4,7 +4,6 @@
 import * as React from 'react';
 import { debugLog, debugWarn, debugError } from '@/utils/logger';
 import { DEFAULT_IFIX_CURRENT, IFIX_HISTORICAL_VALUES, createStaticIfixFallbackPayload } from '@/utils/ifixConstants';
-import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 import { useProventosPorAtivo } from '@/hooks/useProventosPorAtivo';
@@ -14,6 +13,22 @@ import { usePageVisibility } from '@/hooks/usePageVisibility';
 type PercentualParticipacao = {
   bruto: unknown;
   numerico: number | null;
+};
+
+// 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
+const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
+const globalCache = new Map<string, { data: any; timestamp: number }>();
+
+const getCachedData = (key: string) => {
+  const cached = globalCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  return null;
+};
+
+const setCachedData = (key: string, data: any) => {
+  globalCache.set(key, { data, timestamp: Date.now() });
 };
 
 // 🔥 DETECÇÃO DE DISPOSITIVO SIMPLIFICADA E OTIMIZADA
@@ -36,6 +51,214 @@ const useDeviceDetection = () => {
 
   return isMobile;
 };
+
+// 🚀 HOOK IBOVESPA SINCRONIZADO - ESTRATÉGIA UNIFICADA (IGUAL AO CÓDIGO 1)
+function useIbovespaRealTime() {
+  const [ibovespaData, setIbovespaData] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const isMobile = useDeviceDetection();
+  const isVisible = usePageVisibility();
+
+  const buscarIbovespaReal = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // ✅ VERIFICAR CACHE GLOBAL PRIMEIRO
+      const cacheKey = 'ibovespa_unified';
+      const cached = getCachedData(cacheKey);
+      if (cached) {
+        console.log('📋 IBOV: Usando cache global');
+        setIbovespaData(cached);
+        setLoading(false);
+        return;
+      }
+
+      console.log('🔍 BUSCANDO IBOVESPA - ESTRATÉGIA UNIFICADA...');
+      console.log('📱 Device Info:', { isMobile });
+
+      const ibovUrl = buildQuotesUrl('^BVSP');
+      
+      let dadosIbovObtidos = false;
+      let dadosIbovespa = null;
+
+      // 🎯 ESTRATÉGIA 1: DESKTOP STYLE (PRIORIDADE MÁXIMA - MESMO PARA MOBILE)
+      console.log('🎯 IBOV: Tentativa 1 - Estratégia Desktop (Unificada)');
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
+        const response = await fetch(ibovUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Cache-Control': 'no-cache'
+          },
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('🎯📊 IBOV Resposta (Estratégia Unificada):', data);
+
+          if (data.results?.[0]?.regularMarketPrice > 0) {
+            const ibovData = data.results[0];
+            
+            dadosIbovespa = {
+              valor: ibovData.regularMarketPrice,
+              valorFormatado: Math.round(ibovData.regularMarketPrice).toLocaleString('pt-BR'),
+              variacao: ibovData.regularMarketChange || 0,
+              variacaoPercent: ibovData.regularMarketChangePercent || 0,
+              trend: (ibovData.regularMarketChangePercent || 0) >= 0 ? 'up' : 'down',
+              timestamp: new Date().toISOString(),
+              fonte: 'BRAPI_UNIFIED_STRATEGY'
+            };
+
+            console.log('🎯✅ IBOV obtido (Estratégia Unificada):', dadosIbovespa);
+            dadosIbovObtidos = true;
+          }
+        }
+      } catch (error) {
+        console.log('🎯❌ IBOV (Estratégia Unificada):', error instanceof Error ? error.message : 'Erro desconhecido');
+      }
+
+      // 🔄 FALLBACK APENAS PARA MOBILE SE PRIMEIRA ESTRATÉGIA FALHOU
+      if (!dadosIbovObtidos && isMobile) {
+        console.log('📱 IBOV: Usando fallback mobile (múltiplas tentativas)');
+        
+        // Delay antes do fallback
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // ESTRATÉGIA 2: Sem User-Agent
+        if (!dadosIbovObtidos) {
+          try {
+            console.log('📱🔄 IBOV: Fallback 1 - Sem User-Agent');
+            
+            const response = await fetch(ibovUrl, {
+              method: 'GET',
+              headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data.results?.[0]?.regularMarketPrice > 0) {
+                const ibovData = data.results[0];
+                
+                dadosIbovespa = {
+                  valor: ibovData.regularMarketPrice,
+                  valorFormatado: Math.round(ibovData.regularMarketPrice).toLocaleString('pt-BR'),
+                  variacao: ibovData.regularMarketChange || 0,
+                  variacaoPercent: ibovData.regularMarketChangePercent || 0,
+                  trend: (ibovData.regularMarketChangePercent || 0) >= 0 ? 'up' : 'down',
+                  timestamp: new Date().toISOString(),
+                  fonte: 'BRAPI_MOBILE_FALLBACK_1'
+                };
+
+                console.log('📱✅ IBOV obtido (Fallback 1):', dadosIbovespa);
+                dadosIbovObtidos = true;
+              }
+            }
+          } catch (error) {
+            console.log('📱❌ IBOV (Fallback 1):', error instanceof Error ? error.message : 'Erro desconhecido');
+          }
+        }
+
+        // ESTRATÉGIA 3: URL simplificada
+        if (!dadosIbovObtidos) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          try {
+            console.log('📱🔄 IBOV: Fallback 2 - URL simplificada');
+            
+            const response = await fetch(buildQuotesUrl('^BVSP', { range: '1d' }), {
+              method: 'GET',
+              mode: 'cors'
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data.results?.[0]?.regularMarketPrice > 0) {
+                const ibovData = data.results[0];
+                
+                dadosIbovespa = {
+                  valor: ibovData.regularMarketPrice,
+                  valorFormatado: Math.round(ibovData.regularMarketPrice).toLocaleString('pt-BR'),
+                  variacao: ibovData.regularMarketChange || 0,
+                  variacaoPercent: ibovData.regularMarketChangePercent || 0,
+                  trend: (ibovData.regularMarketChangePercent || 0) >= 0 ? 'up' : 'down',
+                  timestamp: new Date().toISOString(),
+                  fonte: 'BRAPI_MOBILE_FALLBACK_2'
+                };
+
+                console.log('📱✅ IBOV obtido (Fallback 2):', dadosIbovespa);
+                dadosIbovObtidos = true;
+              }
+            }
+          } catch (error) {
+            console.log('📱❌ IBOV (Fallback 2):', error instanceof Error ? error.message : 'Erro desconhecido');
+          }
+        }
+      }
+
+      // ✅ SE OBTEVE DADOS, USAR E CACHEAR
+      if (dadosIbovObtidos && dadosIbovespa) {
+        setCachedData(cacheKey, dadosIbovespa);
+        setIbovespaData(dadosIbovespa);
+        return;
+      }
+
+      // 🔄 FALLBACK FINAL UNIFICADO
+      console.log('🔄 IBOV: Usando fallback unificado...');
+      const fallbackData = {
+        valor: 134500,
+        valorFormatado: '134.500',
+        variacao: -588.25,
+        variacaoPercent: -0.43,
+        trend: 'down',
+        timestamp: new Date().toISOString(),
+        fonte: 'FALLBACK_UNIFIED'
+      };
+      
+      console.log('⚠️ IBOV FALLBACK UNIFICADO:', fallbackData);
+      setCachedData(cacheKey, fallbackData);
+      setIbovespaData(fallbackData);
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      console.error('❌ Erro geral ao buscar Ibovespa:', err);
+      setError(errorMessage);
+      
+      // FALLBACK DE EMERGÊNCIA
+      const fallbackData = {
+        valor: 134500,
+        valorFormatado: '134.500',
+        variacao: -588.25,
+        variacaoPercent: -0.43,
+        trend: 'down',
+        timestamp: new Date().toISOString(),
+        fonte: 'EMERGENCIA_UNIFIED'
+      };
+      setIbovespaData(fallbackData);
+    } finally {
+      setLoading(false);
+    }
+  }, [isMobile]);
+
+  React.useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
+    buscarIbovespaReal();
+    const interval = setInterval(buscarIbovespaReal, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [buscarIbovespaReal, isVisible]);
+
+  return { ibovespaData, loading, error, refetch: buscarIbovespaReal };
+}
 
 // 🚀 HOOK IFIX CORRIGIDO - USANDO IFIX.SA (DADOS REAIS)
 function useIfixRealTime() {
@@ -961,9 +1184,8 @@ export default function FiisPage() {
   } = useFiisIntegradas();
   
   const { ifixData } = useIfixRealTime(); // ✅ Dados reais do IFIX.SA
-  const { marketData, isFetching: marketDataRefreshing } = useFinancialData();
-  const ibovespaData = marketData?.ibovespa ?? null;
-  const ibovespaAtualizando = Boolean(marketData) && marketDataRefreshing;
+  const { ibovespaData, loading: ibovespaLoading } = useIbovespaRealTime();
+  const ibovespaAtualizando = ibovespaLoading;
   
   // ✅ PASSAR ifixData para useIfixPeriodo (evita busca duplicada)
   const { ifixPeriodo } = useIfixPeriodo(ativosAtualizados, ifixData);
