@@ -57,6 +57,8 @@ export default function AdminUsersPage() {
   const [planFilter, setPlanFilter] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
   const [originFilter, setOriginFilter] = React.useState('');
+  const [lastUpdatedAt, setLastUpdatedAt] = React.useState<Date | null>(null);
+  const refreshIntervalMs = 30000;
 
   // Verificar se é admin
   React.useEffect(() => {
@@ -66,12 +68,18 @@ export default function AdminUsersPage() {
   }, [user]);
 
   React.useEffect(() => {
-    loadUsers();
+    loadUsers(true);
+    const interval = window.setInterval(() => {
+      loadUsers(false);
+    }, refreshIntervalMs);
+    return () => window.clearInterval(interval);
   }, []);
 
-  const loadUsers = async () => {
+  const loadUsers = async (reset = false) => {
     try {
-      setLoading(true);
+      if (reset) {
+        setLoading(true);
+      }
       setError(null);
       
       console.log('🔄 Iniciando carregamento de usuários...');
@@ -109,7 +117,9 @@ export default function AdminUsersPage() {
         total: data.total
       });
       
-      setUsers(data.users || []);
+      const nextUsers = data.users || [];
+      setUsers(nextUsers);
+      setLastUpdatedAt(new Date());
       setError(null);
     } catch (error: any) {
       console.error('❌ Erro ao carregar usuários:', error);
@@ -129,7 +139,9 @@ export default function AdminUsersPage() {
       
       setError(errorMessage);
     } finally {
-      setLoading(false);
+      if (reset) {
+        setLoading(false);
+      }
     }
   };
 
@@ -677,6 +689,11 @@ export default function AdminUsersPage() {
                       }
                     }).length}
                   </Typography>
+                  {lastUpdatedAt && (
+                    <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', mt: 1 }}>
+                      Atualizado em {lastUpdatedAt.toLocaleTimeString('pt-BR')}
+                    </Typography>
+                  )}
                 </Box>
               </Box>
             </CardContent>
@@ -966,6 +983,7 @@ export default function AdminUsersPage() {
             </Typography>
           </Box>
         )}
+
       </Card>
     </Box>
   );
