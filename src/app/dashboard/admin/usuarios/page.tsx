@@ -52,11 +52,15 @@ export default function AdminUsersPage() {
   const router = useRouter();
   const [users, setUsers] = React.useState<User[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [loadingMore, setLoadingMore] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [planFilter, setPlanFilter] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
   const [originFilter, setOriginFilter] = React.useState('');
+  const [page, setPage] = React.useState(1);
+  const [totalUsers, setTotalUsers] = React.useState(0);
+  const pageSize = 50;
 
   // Verificar se é admin
   React.useEffect(() => {
@@ -66,17 +70,22 @@ export default function AdminUsersPage() {
   }, [user]);
 
   React.useEffect(() => {
-    loadUsers();
+    loadUsers(1, true);
   }, []);
 
-  const loadUsers = async () => {
+  const loadUsers = async (pageToLoad: number, reset = false) => {
     try {
-      setLoading(true);
-      setError(null);
+      if (reset) {
+        setLoading(true);
+        setError(null);
+        setLoadingMore(false);
+      } else {
+        setLoadingMore(true);
+      }
       
       console.log('🔄 Iniciando carregamento de usuários...');
 
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch(`/api/admin/users?page=${pageToLoad}&limit=${pageSize}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -109,7 +118,10 @@ export default function AdminUsersPage() {
         total: data.total
       });
       
-      setUsers(data.users || []);
+      const nextUsers = data.users || [];
+      setUsers(prev => (reset ? nextUsers : [...prev, ...nextUsers]));
+      setPage(pageToLoad);
+      setTotalUsers(data.total || nextUsers.length);
       setError(null);
     } catch (error: any) {
       console.error('❌ Erro ao carregar usuários:', error);
@@ -129,12 +141,21 @@ export default function AdminUsersPage() {
       
       setError(errorMessage);
     } finally {
-      setLoading(false);
+      if (reset) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
     }
   };
 
   const handleEditUser = (userId: string) => {
     router.push(`/dashboard/admin/usuarios/${userId}`);
+  };
+
+  const handleLoadMore = () => {
+    if (loadingMore) return;
+    loadUsers(page + 1, false);
   };
 
   const handleDeleteUser = async (userId: string, userName: string) => {
@@ -964,6 +985,35 @@ export default function AdminUsersPage() {
             <Typography sx={{ color: '#64748B' }}>
               {searchTerm ? 'Nenhum usuário encontrado' : 'Nenhum usuário cadastrado'}
             </Typography>
+          </Box>
+        )}
+
+        {users.length < totalUsers && (
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            gap={1.5}
+            px={3}
+            pb={4}
+          >
+            <Typography variant="body2" sx={{ color: '#64748B' }}>
+              Mostrando {users.length} de {totalUsers} usuários
+            </Typography>
+            <Button
+              variant="outlined"
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              startIcon={loadingMore ? <CircularProgress size={18} /> : <span>⬇️</span>}
+              sx={{
+                borderRadius: 999,
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 3
+              }}
+            >
+              {loadingMore ? 'Carregando...' : 'Mostrar mais usuários'}
+            </Button>
           </Box>
         )}
       </Card>
