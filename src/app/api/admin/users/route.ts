@@ -76,11 +76,14 @@ export async function GET(request: NextRequest) {
     const purchasesMap = new Map();
     
     try {
-      page = Math.max(1, Number(searchParams.get('page') ?? 1));
-      const rawLimit = Number(searchParams.get('limit') ?? 50);
-      limit = Math.min(100, Math.max(10, Number.isFinite(rawLimit) ? rawLimit : 50));
-      const offset = (page - 1) * limit;
       totalUsers = await prisma.user.count();
+      const limitParam = searchParams.get('limit');
+      page = Math.max(1, Number(searchParams.get('page') ?? 1));
+      const rawLimit = limitParam ? Number(limitParam) : undefined;
+      limit = limitParam
+        ? Math.min(100, Math.max(10, Number.isFinite(rawLimit) ? rawLimit : 50))
+        : Math.max(1, totalUsers);
+      const offset = (page - 1) * limit;
 
       // 1. Primeiro, buscar usuários básicos
       console.log('📊 Buscando usuários...');
