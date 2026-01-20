@@ -75,12 +75,19 @@ export default function AdminUsersPage() {
       const parsed = JSON.parse(cachedData);
       if (!Array.isArray(parsed.users)) return null;
 
-      return {
+      const payload = {
         users: parsed.users as User[],
         page: Number(parsed.page) || 1,
         totalUsers: Number(parsed.totalUsers) || parsed.users.length,
         lastUpdatedAt: parsed.lastUpdatedAt ? new Date(parsed.lastUpdatedAt) : null
       };
+
+      if (payload.users.length < payload.totalUsers) {
+        window.sessionStorage.removeItem(USERS_CACHE_KEY);
+        return null;
+      }
+
+      return payload;
     } catch {
       return null;
     }
@@ -93,6 +100,10 @@ export default function AdminUsersPage() {
     lastUpdatedAt: Date | null;
   }) => {
     if (typeof window === 'undefined') return;
+
+    if (payload.users.length < payload.totalUsers) {
+      return;
+    }
 
     try {
       window.sessionStorage.setItem(USERS_CACHE_KEY, JSON.stringify({
@@ -238,11 +249,12 @@ export default function AdminUsersPage() {
     startPage: number,
     total: number,
     currentUsers: User[],
-    refreshedAt: Date
+    refreshedAt: Date | null
   ) => {
     setLoadingMore(true);
 
     try {
+      const effectiveRefreshedAt = refreshedAt ?? new Date();
       let currentPage = startPage;
       let aggregatedUsers = [...currentUsers];
 
@@ -261,7 +273,7 @@ export default function AdminUsersPage() {
           users: aggregatedUsers,
           page: currentPage,
           totalUsers: updatedTotal,
-          lastUpdatedAt: refreshedAt
+          lastUpdatedAt: effectiveRefreshedAt
         });
         currentPage += 1;
       }
