@@ -62,6 +62,7 @@ export default function AdminUsersPage() {
   const [originFilter, setOriginFilter] = React.useState('');
   const [page, setPage] = React.useState(1);
   const [totalUsers, setTotalUsers] = React.useState(0);
+  const [lastUpdatedAt, setLastUpdatedAt] = React.useState<Date | null>(null);
 
   // Verificar se é admin
   React.useEffect(() => {
@@ -141,28 +142,50 @@ export default function AdminUsersPage() {
     setLoadingMore(false);
 
     try {
-      let currentPage = 1;
-      let total = 0;
-      let aggregatedUsers: User[] = [];
+      const firstPageData = await fetchUsersPage(1);
+      const initialUsers = firstPageData.users;
+      const total = firstPageData.total || initialUsers.length;
 
-      do {
+      setUsers(initialUsers);
+      setPage(1);
+      setTotalUsers(total);
+      setLastUpdatedAt(new Date());
+      setLoading(false);
+
+      if (initialUsers.length >= total) {
+        return;
+      }
+
+      loadRemainingUsers(2, total, initialUsers);
+    } catch (error: any) {
+      setError(error.message || 'Erro ao carregar usuários');
+      setLoading(false);
+    }
+  };
+
+  const loadRemainingUsers = async (startPage: number, total: number, currentUsers: User[]) => {
+    setLoadingMore(true);
+
+    try {
+      let currentPage = startPage;
+      let aggregatedUsers = [...currentUsers];
+
+      while (total === 0 || aggregatedUsers.length < total) {
         const pageData = await fetchUsersPage(currentPage);
-        total = pageData.total || total;
         if (pageData.users.length === 0) {
           break;
         }
 
         aggregatedUsers = [...aggregatedUsers, ...pageData.users];
+        setUsers(aggregatedUsers);
+        setPage(currentPage);
+        setTotalUsers(pageData.total || total || aggregatedUsers.length);
         currentPage += 1;
-      } while (total === 0 || aggregatedUsers.length < total);
-
-      setUsers(aggregatedUsers);
-      setPage(Math.max(currentPage - 1, 1));
-      setTotalUsers(total || aggregatedUsers.length);
+      }
     } catch (error: any) {
       setError(error.message || 'Erro ao carregar usuários');
     } finally {
-      setLoading(false);
+      setLoadingMore(false);
     }
   };
 
