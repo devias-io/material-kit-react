@@ -1186,6 +1186,10 @@ export default function FiisPage() {
   const { ifixData } = useIfixRealTime(); // ✅ Dados reais do IFIX.SA
   const { ibovespaData, loading: ibovespaLoading } = useIbovespaRealTime();
   const ibovespaAtualizando = ibovespaLoading;
+  const ibovespaDiff =
+    typeof ibovespaData?.variacaoPercent === 'number' ? ibovespaData.variacaoPercent : ibovespaData?.diff ?? null;
+  const ibovespaTrend = ibovespaData?.trend ?? (typeof ibovespaDiff === 'number' && ibovespaDiff >= 0 ? 'up' : 'down');
+  const ibovespaValue = ibovespaData?.valorFormatado ?? ibovespaData?.value ?? '134.500';
   
   // ✅ PASSAR ifixData para useIfixPeriodo (evita busca duplicada)
   const { ifixPeriodo } = useIfixPeriodo(ativosAtualizados, ifixData);
@@ -1284,9 +1288,10 @@ export default function FiisPage() {
     }).format(value);
   }, []);
 
-  const formatPercentage = React.useCallback((value: number) => {
-    const signal = value >= 0 ? '+' : '';
-    return signal + value.toFixed(2) + '%';
+  const formatPercentage = React.useCallback((value?: number | null) => {
+    const safeValue = typeof value === 'number' && Number.isFinite(value) ? value : 0;
+    const signal = safeValue >= 0 ? '+' : '';
+    return signal + safeValue.toFixed(2) + '%';
   }, []);
 
   const calcularPerformanceEncerrada = React.useCallback((ativo: any) => {
@@ -1481,15 +1486,15 @@ export default function FiisPage() {
             lineHeight: '1',
             marginBottom: '4px'
           }}>
-            {ibovespaData?.value || '134.500'}
+            {ibovespaValue}
           </div>
           <div style={{ 
             fontSize: isMobile ? '12px' : '14px',
             fontWeight: '600', 
-            color: ibovespaData?.trend === 'up' ? '#10b981' : '#ef4444',
+            color: ibovespaTrend === 'up' ? '#10b981' : '#ef4444',
             lineHeight: '1'
           }}>
-            {ibovespaData ? formatPercentage(ibovespaData.diff) : '+0.2%'}
+            {ibovespaData ? formatPercentage(ibovespaDiff) : '+0.2%'}
           </div>
         </div>
 

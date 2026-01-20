@@ -52,6 +52,7 @@ export default function AdminUsersPage() {
   const router = useRouter();
   const [users, setUsers] = React.useState<User[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [loadingMore, setLoadingMore] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [planFilter, setPlanFilter] = React.useState('');
@@ -84,7 +85,7 @@ export default function AdminUsersPage() {
       
       console.log('🔄 Iniciando carregamento de usuários...');
 
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch(`/api/admin/users?page=${pageToLoad}&limit=${pageSize}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -147,6 +148,11 @@ export default function AdminUsersPage() {
 
   const handleEditUser = (userId: string) => {
     router.push(`/dashboard/admin/usuarios/${userId}`);
+  };
+
+  const handleLoadMore = () => {
+    if (loadingMore) return;
+    loadUsers(page + 1, false);
   };
 
   const handleDeleteUser = async (userId: string, userName: string) => {
