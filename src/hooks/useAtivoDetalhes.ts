@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { extrairNumeroBrApi, calcularDyAPartirDoResultado } from '@/utils/dividendYield';
 import { isTickerFII } from '@/utils/tickers';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 // ========================================
 // INTERFACES E TIPOS
@@ -1878,6 +1879,7 @@ export function useCotacaoUSD() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<string>('');
+  const isVisible = usePageVisibility();
 
   const buscarCotacaoUSD = useCallback(async () => {
     try {
@@ -1899,156 +1901,35 @@ export function useCotacaoUSD() {
         }
       }
 
-      // MÉTODO 1: BRAPI (Recomendado - dados brasileiros)
       try {
-        console.log('📡 Tentando BRAPI para USD/BRL...');
-        
-        const brapiResponse = await fetch(`/api/financial/quotes?symbols=${encodeURIComponent('USDBRL=X')}`, {
-          method: 'GET',
+        const response = await fetch('/api/market/exchange-rate', {
           headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Portfolio-App/1.0'
+            Accept: 'application/json'
           }
         });
 
-        if (brapiResponse.ok) {
-          const brapiData = await brapiResponse.json();
-          
-          const usdQuote = brapiData.results?.[0] ?? brapiData.quotes?.[0];
-          if (usdQuote) {
-            const usdBrl = usdQuote.regularMarketPrice;
-            
-            if (usdBrl && usdBrl > 0) {
-              setCotacaoUSD(usdBrl);
-              setUltimaAtualizacao(new Date().toLocaleString('pt-BR'));
-              
-              // Salvar no cache
-              localStorage.setItem('cache_usd_brl', JSON.stringify({
-                cotacao: usdBrl,
-                timestamp: Date.now()
-              }));
-              
-              console.log(`✅ USD/BRL BRAPI: R$ ${usdBrl.toFixed(2)}`);
-              setLoading(false);
-              return;
-            }
-          }
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-      } catch (brapiError) {
-        console.log('⚠️ BRAPI falhou, tentando HG Brasil...');
-      }
 
-      // MÉTODO 2: HG Brasil (Backup)
-      try {
-        console.log('📡 Tentando HG Brasil para USD/BRL...');
-        
-        const hgUrl = `https://api.hgbrasil.com/finance?key=${HG_BRASIL_KEY}`;
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(hgUrl)}`;
+        const payload = await response.json();
+        const usdBrl = payload?.usdToBrl;
 
-        const hgResponse = await fetch(proxyUrl, {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        });
+        if (typeof usdBrl === 'number' && usdBrl > 0) {
+          setCotacaoUSD(usdBrl);
+          setUltimaAtualizacao(new Date().toLocaleString('pt-BR'));
 
-        if (hgResponse.ok) {
-          const proxyData = await hgResponse.json();
-          const hgData = JSON.parse(proxyData.contents);
-          
-          if (hgData.results && hgData.results.currencies && hgData.results.currencies.USD) {
-            const usdBrl = hgData.results.currencies.USD.buy;
-            
-            if (usdBrl && usdBrl > 0) {
-              setCotacaoUSD(usdBrl);
-              setUltimaAtualizacao(new Date().toLocaleString('pt-BR'));
-              
-              // Salvar no cache
-              localStorage.setItem('cache_usd_brl', JSON.stringify({
-                cotacao: usdBrl,
-                timestamp: Date.now()
-              }));
-              
-              console.log(`✅ USD/BRL HG Brasil: R$ ${usdBrl.toFixed(2)}`);
-              setLoading(false);
-              return;
-            }
-          }
+          localStorage.setItem('cache_usd_brl', JSON.stringify({
+            cotacao: usdBrl,
+            timestamp: Date.now()
+          }));
+
+          console.log(`✅ USD/BRL API interna: R$ ${usdBrl.toFixed(2)}`);
+          setLoading(false);
+          return;
         }
-      } catch (hgError) {
-        console.log('⚠️ HG Brasil falhou, tentando AwesomeAPI...');
-      }
-
-      // MÉTODO 3: AwesomeAPI (Backup brasileiro)
-      try {
-        console.log('📡 Tentando AwesomeAPI para USD/BRL...');
-        
-        const awesomeResponse = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL', {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        });
-
-        if (awesomeResponse.ok) {
-          const awesomeData = await awesomeResponse.json();
-          
-          if (awesomeData.USDBRL && awesomeData.USDBRL.bid) {
-            const usdBrl = parseFloat(awesomeData.USDBRL.bid);
-            
-            if (usdBrl && usdBrl > 0) {
-              setCotacaoUSD(usdBrl);
-              setUltimaAtualizacao(new Date().toLocaleString('pt-BR'));
-              
-              // Salvar no cache
-              localStorage.setItem('cache_usd_brl', JSON.stringify({
-                cotacao: usdBrl,
-                timestamp: Date.now()
-              }));
-              
-              console.log(`✅ USD/BRL AwesomeAPI: R$ ${usdBrl.toFixed(2)}`);
-              setLoading(false);
-              return;
-            }
-          }
-        }
-      } catch (awesomeError) {
-        console.log('⚠️ AwesomeAPI falhou, usando valor estimado...');
-      }
-
-      // MÉTODO 4: Yahoo Finance (Internacional)
-      try {
-        console.log('📡 Tentando Yahoo Finance para USD/BRL...');
-        
-        const yahooUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/USDBRL=X';
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
-
-        const yahooResponse = await fetch(proxyUrl, {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        });
-
-        if (yahooResponse.ok) {
-          const proxyData = await yahooResponse.json();
-          const yahooData = JSON.parse(proxyData.contents);
-          
-          if (yahooData?.chart?.result?.[0]?.meta?.regularMarketPrice) {
-            const usdBrl = yahooData.chart.result[0].meta.regularMarketPrice;
-            
-            if (usdBrl && usdBrl > 0) {
-              setCotacaoUSD(usdBrl);
-              setUltimaAtualizacao(new Date().toLocaleString('pt-BR'));
-              
-              // Salvar no cache
-              localStorage.setItem('cache_usd_brl', JSON.stringify({
-                cotacao: usdBrl,
-                timestamp: Date.now()
-              }));
-              
-              console.log(`✅ USD/BRL Yahoo Finance: R$ ${usdBrl.toFixed(2)}`);
-              setLoading(false);
-              return;
-            }
-          }
-        }
-      } catch (yahooError) {
-        console.log('⚠️ Yahoo Finance falhou...');
+      } catch (apiError) {
+        console.log('⚠️ API interna falhou, usando valor estimado...');
       }
 
       // FALLBACK: Valor estimado (última opção)
@@ -2073,13 +1954,16 @@ export function useCotacaoUSD() {
   }, []);
 
   useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     buscarCotacaoUSD();
     
     // Atualizar a cada 15 minutos
     const interval = setInterval(buscarCotacaoUSD, 15 * 60 * 1000);
     
     return () => clearInterval(interval);
-  }, [buscarCotacaoUSD]);
+  }, [buscarCotacaoUSD, isVisible]);
 
   return { 
     cotacaoUSD, 
