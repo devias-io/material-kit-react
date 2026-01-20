@@ -27,18 +27,15 @@ export function useIfixRealTime() {
 
       debugLog('🔍 BUSCANDO IFIX REAL - MÚLTIPLAS FONTES...');
 
-      // 🎯 TENTATIVA 1: YAHOO FINANCE (MAIS CONFIÁVEL)
+      // 🎯 TENTATIVA 1: YAHOO FINANCE (via API interna cacheada)
       try {
-        debugLog('📊 Tentativa 1: Yahoo Finance IFIX.SA...');
-        
-        // Yahoo Finance usa endpoints não-oficiais, mas funcionais
-        const yahooUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/IFIX.SA';
-        
-        const yahooResponse = await fetch(yahooUrl, {
+        debugLog('📊 Tentativa 1: Yahoo Finance IFIX.SA (API interna)...');
+
+        const yahooResponse = await fetch('/api/market/yahoo/ifix', {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'IFIX-Real-Time-App'
           }
         });
 
