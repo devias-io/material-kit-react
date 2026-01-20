@@ -5,10 +5,20 @@ import { prisma } from '@/lib/prisma';
 export async function GET(req: NextRequest) {
   try {
     console.log('🔍 API Admin chamada...');
-    
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(1, Number(searchParams.get('page') ?? 1));
+    const rawLimit = Number(searchParams.get('limit') ?? 50);
+    const limit = Math.min(100, Math.max(20, Number.isFinite(rawLimit) ? rawLimit : 50));
+
     // Buscar todos os cadastros sem verificação (TEMPORÁRIO)
     const cadastros = await prisma.instagramCadastro.findMany({
-      include: {
+      select: {
+        id: true,
+        instagram: true,
+        previousInstagram: true,
+        isUpdated: true,
+        createdAt: true,
+        updatedAt: true,
         user: {
           select: {
             id: true,
@@ -21,17 +31,23 @@ export async function GET(req: NextRequest) {
           }
         }
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit
     });
+    const total = await prisma.instagramCadastro.count();
 
     console.log('✅ Cadastros encontrados:', cadastros.length);
 
     return NextResponse.json({
       success: true,
       data: cadastros,
-      total: cadastros.length
+      total,
+      pagination: {
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
     });
 
   } catch (error) {

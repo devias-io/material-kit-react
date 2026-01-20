@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
   console.log('🚀 GET /api/admin/users - COM INTEGRAÇÃO HOTMART');
   
   try {
+    const { searchParams } = new URL(request.url);
     const headers = {
       'Content-Type': 'application/json',
       'Cache-Control': 'no-cache, no-store, must-revalidate'
@@ -72,17 +73,51 @@ export async function GET(request: NextRequest) {
     const purchasesMap = new Map();
     
     try {
+      const page = Math.max(1, Number(searchParams.get('page') ?? 1));
+      const rawLimit = Number(searchParams.get('limit') ?? 50);
+      const limit = Math.min(100, Math.max(10, Number.isFinite(rawLimit) ? rawLimit : 50));
+      const offset = (page - 1) * limit;
+      const totalUsers = await prisma.user.count();
+
       // 1. Primeiro, buscar usuários básicos
       console.log('📊 Buscando usuários...');
       users = await prisma.user.findMany({
-        orderBy: { createdAt: 'desc' }
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          avatar: true,
+          plan: true,
+          status: true,
+          origin: true,
+          createdAt: true,
+          lastLogin: true,
+          hotmartCustomerId: true
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit
       });
       console.log(`✅ Encontrados ${users.length} usuários`);
       
       // 2. Tentar buscar dados do Hotmart separadamente
       console.log('🔄 Buscando dados do Hotmart...');
       try {
-        const hotmartData = await prisma.hotmartData.findMany();
+        const hotmartData = await prisma.hotmartData.findMany({
+          select: {
+            userId: true,
+            phone: true,
+            status: true,
+            productId: true,
+            productName: true,
+            purchaseDate: true,
+            expirationDate: true
+          },
+          where: {
+            userId: { in: users.map(user => user.id) }
+          }
+        });
         console.log(`✅ Encontrados ${hotmartData.length} registros Hotmart`);
         
         // Criar mapa para associar dados do Hotmart aos usuários
@@ -96,7 +131,12 @@ export async function GET(request: NextRequest) {
 
       // 2b. Buscar dados da Kiwify
       try {
-        const kiwifyData = await (prisma as any).kiwifyData?.findMany?.();
+        const kiwifyData = await (prisma as any).kiwifyData?.findMany?.({
+          select: { userId: true, phone: true },
+          where: {
+            userId: { in: users.map(user => user.id) }
+          }
+        });
         if (Array.isArray(kiwifyData)) {
           console.log(`✅ Encontrados ${kiwifyData.length} registros Kiwify`);
           kiwifyData.forEach((data: any) => {
@@ -111,7 +151,12 @@ export async function GET(request: NextRequest) {
 
       // 2c. Buscar dados da Eduzz
       try {
-        const eduzzData = await (prisma as any).eduzzData?.findMany?.();
+        const eduzzData = await (prisma as any).eduzzData?.findMany?.({
+          select: { userId: true, phone: true },
+          where: {
+            userId: { in: users.map(user => user.id) }
+          }
+        });
         if (Array.isArray(eduzzData)) {
           console.log(`✅ Encontrados ${eduzzData.length} registros Eduzz`);
           eduzzData.forEach((data: any) => {
@@ -127,7 +172,12 @@ export async function GET(request: NextRequest) {
       // 3. Tentar buscar purchases separadamente
       console.log('🔄 Buscando purchases...');
       try {
-        const purchases = await prisma.purchase.findMany();
+        const purchases = await prisma.purchase.findMany({
+          select: { userId: true, status: true, amount: true },
+          where: {
+            userId: { in: users.map(user => user.id) }
+          }
+        });
         console.log(`✅ Encontradas ${purchases.length} purchases`);
         
         // Agrupar purchases por usuário
@@ -232,7 +282,7 @@ export async function GET(request: NextRequest) {
     
     // Estatísticas com dados do Hotmart
     const stats = {
-      totalUsers: users.length,
+      totalUsers,
       activeUsers: users.filter(u => u.status === 'ACTIVE').length,
       expiredUsers: formattedUsers.filter(u => {
         if (!u.expirationDate) return false;
@@ -244,7 +294,12 @@ export async function GET(request: NextRequest) {
     const response = {
       success: true,
       users: formattedUsers,
-      total: users.length,
+      total: totalUsers,
+      pagination: {
+        page,
+        limit,
+        totalPages: Math.ceil(totalUsers / limit)
+      },
       timestamp: new Date().toISOString(),
       admin: {
         id: admin.id,
