@@ -183,7 +183,11 @@ export async function GET(_request: NextRequest) {
       topUsers: topUsersDetails
     };
 
-    return NextResponse.json(stats);
+    return NextResponse.json(stats, {
+      headers: {
+        'Cache-Control': 'private, max-age=60, stale-while-revalidate=300'
+      }
+    });
 
   } catch (error) {
     console.error('Error fetching question stats:', error);
