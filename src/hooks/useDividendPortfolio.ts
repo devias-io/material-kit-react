@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { StockQuote } from '@/types/financial';
+import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 interface DividendStock {
   id: string;
@@ -30,6 +31,7 @@ export function useDividendPortfolio(): UseDividendPortfolioReturn {
   const [portfolio, setPortfolio] = useState<DividendStock[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isVisible = usePageVisibility();
 
   // SUAS AÇÕES DE DIVIDENDOS COM DADOS DE ENTRADA
   const dividendPortfolioBase: Omit<DividendStock, 'precoAtual' | 'performance'>[] = [
@@ -276,13 +278,16 @@ export function useDividendPortfolio(): UseDividendPortfolioReturn {
   };
 
   useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
     fetchDividendPortfolioData();
 
     // ATUALIZAR A CADA 10 MINUTOS
     const interval = setInterval(fetchDividendPortfolioData, 10 * 60 * 1000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [isVisible]);
 
   return {
     portfolio,
