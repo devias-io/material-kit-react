@@ -58,9 +58,8 @@ export default function AdminUsersPage() {
   const [planFilter, setPlanFilter] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
   const [originFilter, setOriginFilter] = React.useState('');
-  const [page, setPage] = React.useState(1);
-  const [totalUsers, setTotalUsers] = React.useState(0);
-  const pageSize = 50;
+  const [lastUpdatedAt, setLastUpdatedAt] = React.useState<Date | null>(null);
+  const refreshIntervalMs = 30000;
 
   // Verificar se é admin
   React.useEffect(() => {
@@ -70,18 +69,19 @@ export default function AdminUsersPage() {
   }, [user]);
 
   React.useEffect(() => {
-    loadUsers(1, true);
+    loadUsers(true);
+    const interval = window.setInterval(() => {
+      loadUsers(false);
+    }, refreshIntervalMs);
+    return () => window.clearInterval(interval);
   }, []);
 
-  const loadUsers = async (pageToLoad: number, reset = false) => {
+  const loadUsers = async (reset = false) => {
     try {
       if (reset) {
         setLoading(true);
-        setError(null);
-        setLoadingMore(false);
-      } else {
-        setLoadingMore(true);
       }
+      setError(null);
       
       console.log('🔄 Iniciando carregamento de usuários...');
 
@@ -119,9 +119,8 @@ export default function AdminUsersPage() {
       });
       
       const nextUsers = data.users || [];
-      setUsers(prev => (reset ? nextUsers : [...prev, ...nextUsers]));
-      setPage(pageToLoad);
-      setTotalUsers(data.total || nextUsers.length);
+      setUsers(nextUsers);
+      setLastUpdatedAt(new Date());
       setError(null);
     } catch (error: any) {
       console.error('❌ Erro ao carregar usuários:', error);
@@ -143,8 +142,6 @@ export default function AdminUsersPage() {
     } finally {
       if (reset) {
         setLoading(false);
-      } else {
-        setLoadingMore(false);
       }
     }
   };
@@ -698,6 +695,11 @@ export default function AdminUsersPage() {
                       }
                     }).length}
                   </Typography>
+                  {lastUpdatedAt && (
+                    <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', mt: 1 }}>
+                      Atualizado em {lastUpdatedAt.toLocaleTimeString('pt-BR')}
+                    </Typography>
+                  )}
                 </Box>
               </Box>
             </CardContent>
@@ -988,34 +990,6 @@ export default function AdminUsersPage() {
           </Box>
         )}
 
-        {users.length < totalUsers && (
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            gap={1.5}
-            px={3}
-            pb={4}
-          >
-            <Typography variant="body2" sx={{ color: '#64748B' }}>
-              Mostrando {users.length} de {totalUsers} usuários
-            </Typography>
-            <Button
-              variant="outlined"
-              onClick={handleLoadMore}
-              disabled={loadingMore}
-              startIcon={loadingMore ? <CircularProgress size={18} /> : <span>⬇️</span>}
-              sx={{
-                borderRadius: 999,
-                textTransform: 'none',
-                fontWeight: 600,
-                px: 3
-              }}
-            >
-              {loadingMore ? 'Carregando...' : 'Mostrar mais usuários'}
-            </Button>
-          </Box>
-        )}
       </Card>
     </Box>
   );
