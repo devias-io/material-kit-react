@@ -69,20 +69,11 @@ export default function AdminUsersPage() {
   }, [user]);
 
   React.useEffect(() => {
-    loadUsers(true);
-    const interval = window.setInterval(() => {
-      loadUsers(false);
-    }, refreshIntervalMs);
-    return () => window.clearInterval(interval);
+    loadAllUsers();
   }, []);
 
-  const loadUsers = async (reset = false) => {
+  const fetchUsersPage = async (pageToLoad: number) => {
     try {
-      if (reset) {
-        setLoading(true);
-      }
-      setError(null);
-      
       console.log('🔄 Iniciando carregamento de usuários...');
 
       const response = await fetch(`/api/admin/users?page=${pageToLoad}&limit=${pageSize}`, {
@@ -118,10 +109,10 @@ export default function AdminUsersPage() {
         total: data.total
       });
       
-      const nextUsers = data.users || [];
-      setUsers(nextUsers);
-      setLastUpdatedAt(new Date());
-      setError(null);
+      return {
+        users: data.users || [],
+        total: data.total || 0
+      };
     } catch (error: any) {
       console.error('❌ Erro ao carregar usuários:', error);
       
@@ -138,11 +129,38 @@ export default function AdminUsersPage() {
         errorMessage = error.message;
       }
       
-      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const loadAllUsers = async () => {
+    setLoading(true);
+    setError(null);
+    setLoadingMore(false);
+
+    try {
+      let currentPage = 1;
+      let total = 0;
+      let aggregatedUsers: User[] = [];
+
+      do {
+        const pageData = await fetchUsersPage(currentPage);
+        total = pageData.total || total;
+        if (pageData.users.length === 0) {
+          break;
+        }
+
+        aggregatedUsers = [...aggregatedUsers, ...pageData.users];
+        currentPage += 1;
+      } while (total === 0 || aggregatedUsers.length < total);
+
+      setUsers(aggregatedUsers);
+      setPage(Math.max(currentPage - 1, 1));
+      setTotalUsers(total || aggregatedUsers.length);
+    } catch (error: any) {
+      setError(error.message || 'Erro ao carregar usuários');
     } finally {
-      if (reset) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
@@ -150,9 +168,21 @@ export default function AdminUsersPage() {
     router.push(`/dashboard/admin/usuarios/${userId}`);
   };
 
-  const handleLoadMore = () => {
+  const handleLoadMore = async () => {
     if (loadingMore) return;
-    loadUsers(page + 1, false);
+    setLoadingMore(true);
+    setError(null);
+
+    try {
+      const pageData = await fetchUsersPage(page + 1);
+      setUsers(prev => [...prev, ...pageData.users]);
+      setPage(page + 1);
+      setTotalUsers(pageData.total || totalUsers);
+    } catch (error: any) {
+      setError(error.message || 'Erro ao carregar usuários');
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
   const handleDeleteUser = async (userId: string, userName: string) => {
@@ -390,7 +420,7 @@ export default function AdminUsersPage() {
             borderRadius: 2
           }} 
           action={
-            <Button color="inherit" size="small" onClick={loadUsers} disabled={loading}>
+            <Button color="inherit" size="small" onClick={loadAllUsers} disabled={loading}>
               Tentar Novamente
             </Button>
           }
