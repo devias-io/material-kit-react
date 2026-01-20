@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { BRAPI_CONFIG, BrapiQuoteResponse, DadosTrimestre } from '@/lib/brapi-config';
 
 const CLIENT_CACHE = new Map<string, { data: BrapiQuoteResponse; timestamp: number }>();
+const inFlightRequests = new Map<string, Promise<any>>();
 
 function buildCacheKey(symbols: string[], params: Record<string, string>) {
   const normalizedSymbols = symbols.map((symbol) => symbol.trim().toUpperCase()).join(',');
@@ -48,13 +49,33 @@ export const useBrapi = () => {
     try {
       console.log('🌐 Request BRAPI via API interna:', searchParams.toString());
 
-      const response = await fetch(`/api/financial/quotes?${searchParams.toString()}`);
+      // Criar chave única para dedupe
+      const requestKey = `quotes-${searchParams.toString()}`;
 
-      if (!response.ok) {
-        throw new Error(`Erro BRAPI ${response.status}: ${response.statusText}`);
+      // Se já tem request em andamento, retornar a mesma promise
+      if (inFlightRequests.has(requestKey)) {
+        return inFlightRequests.get(requestKey)!;
       }
 
-      const data = await response.json();
+      // Criar nova promise
+      const fetchPromise = fetch(`/api/financial/quotes?${searchParams.toString()}`)
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error(`Erro BRAPI ${response.status}: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          return data;
+        })
+        .finally(() => {
+          // Remover do map quando completar
+          inFlightRequests.delete(requestKey);
+        });
+
+      // Guardar promise in-flight
+      inFlightRequests.set(requestKey, fetchPromise);
+
+      const data = await fetchPromise;
       const payload: BrapiQuoteResponse = {
         results: data?.quotes || [],
         requestedAt: new Date().toISOString(),
