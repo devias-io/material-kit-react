@@ -7,6 +7,9 @@ export type MigrationSimulation = {
   toPlan: string;
   totalPaid: number;
   installmentsTotal: number | null;
+  platform: string | null;
+  productExternalId: string | null;
+  productName: string | null;
   monthsRemaining: number;
   credit: number;
   vipPrice: number;
@@ -56,19 +59,6 @@ export function isPlanEligibleForVipMigration(plan: string): boolean {
   return getAllowedMigrationPlans().has(plan);
 }
 
-export function getMigrationCheckoutUrl(origin?: string | null): string | null {
-  const normalizedOrigin = origin?.toUpperCase() ?? '';
-
-  const urlByOrigin: Record<string, string | undefined> = {
-    HOTMART: process.env.MIGRATION_CHECKOUT_HOTMART_URL,
-    KIWIFY: process.env.MIGRATION_CHECKOUT_KIWIFY_URL,
-    EDUZZ: process.env.MIGRATION_CHECKOUT_EDUZZ_URL,
-    MANUAL: process.env.MIGRATION_CHECKOUT_DEFAULT_URL,
-  };
-
-  return urlByOrigin[normalizedOrigin] || process.env.MIGRATION_CHECKOUT_DEFAULT_URL || null;
-}
-
 function roundCurrency(value: number): number {
   return Math.round(value * 100) / 100;
 }
@@ -90,7 +80,10 @@ export function buildMigrationSimulation({
   now = new Date(),
 }: {
   user: Pick<User, 'plan' | 'expirationDate' | 'origin'>;
-  purchase: Pick<Purchase, 'amount' | 'totalPaid' | 'installmentsTotal' | 'createdAt'>;
+  purchase: Pick<
+    Purchase,
+    'amount' | 'totalPaid' | 'installmentsTotal' | 'createdAt' | 'platform' | 'productExternalId' | 'productName'
+  >;
   targetPlan?: string;
   now?: Date;
 }): MigrationSimulation {
@@ -117,6 +110,9 @@ export function buildMigrationSimulation({
     toPlan: targetPlan,
     totalPaid,
     installmentsTotal: purchase.installmentsTotal ?? null,
+    platform: purchase.platform ?? user.origin ?? null,
+    productExternalId: purchase.productExternalId ?? null,
+    productName: purchase.productName ?? null,
     monthsRemaining,
     credit,
     vipPrice,

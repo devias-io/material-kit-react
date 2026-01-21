@@ -8,6 +8,9 @@ type MigrationSimulation = {
   toPlan: string;
   totalPaid: number;
   installmentsTotal: number | null;
+  platform: string | null;
+  productExternalId: string | null;
+  productName: string | null;
   monthsRemaining: number;
   credit: number;
   vipPrice: number;
@@ -133,6 +136,11 @@ export function AccountMigration(): React.JSX.Element {
                   <strong>Última compra:</strong>{' '}
                   {new Date(simulation.purchaseDate).toLocaleDateString('pt-BR')}
                 </Typography>
+                {simulation.productName && (
+                  <Typography variant="body2" sx={{ color: '#475569' }}>
+                    <strong>Produto comprado:</strong> {simulation.productName}
+                  </Typography>
+                )}
                 {simulation.expirationDate && (
                   <Typography variant="body2" sx={{ color: '#475569' }}>
                     <strong>Vencimento atual:</strong>{' '}

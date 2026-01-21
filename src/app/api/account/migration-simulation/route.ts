@@ -39,6 +39,9 @@ export async function GET(request: NextRequest) {
         amount: true,
         totalPaid: true,
         installmentsTotal: true,
+        platform: true,
+        productExternalId: true,
+        productName: true,
         createdAt: true,
       },
     });

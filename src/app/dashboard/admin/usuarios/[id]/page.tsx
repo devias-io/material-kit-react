@@ -84,6 +84,9 @@ interface MigrationSimulation {
   toPlan: string;
   totalPaid: number;
   installmentsTotal: number | null;
+  platform: string | null;
+  productExternalId: string | null;
+  productName: string | null;
   monthsRemaining: number;
   credit: number;
   vipPrice: number;
@@ -1210,6 +1213,11 @@ export default function EditUserPage() {
                 <strong>Última compra:</strong>{' '}
                 {new Date(migrationSimulation.purchaseDate).toLocaleDateString('pt-BR')}
               </Typography>
+              {migrationSimulation.productName && (
+                <Typography sx={{ color: '#475569' }}>
+                  <strong>Produto comprado:</strong> {migrationSimulation.productName}
+                </Typography>
+              )}
               {migrationSimulation.expirationDate && (
                 <Typography sx={{ color: '#475569' }}>
                   <strong>Vencimento atual:</strong>{' '}

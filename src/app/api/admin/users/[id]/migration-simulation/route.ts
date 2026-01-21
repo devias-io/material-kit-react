@@ -55,6 +55,9 @@ export async function GET(
         amount: true,
         totalPaid: true,
         installmentsTotal: true,
+        platform: true,
+        productExternalId: true,
+        productName: true,
         createdAt: true,
       },
     });

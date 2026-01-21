@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import { buildMigrationSimulation, getMigrationCheckoutUrl } from '@/lib/migration';
+import { buildMigrationSimulation } from '@/lib/migration';
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,6 +39,9 @@ export async function POST(request: NextRequest) {
         amount: true,
         totalPaid: true,
         installmentsTotal: true,
+        platform: true,
+        productExternalId: true,
+        productName: true,
         createdAt: true,
       },
     });
@@ -53,15 +56,32 @@ export async function POST(request: NextRequest) {
       targetPlan,
     });
 
-    const paymentUrl = getMigrationCheckoutUrl(user.origin);
-    if (!paymentUrl) {
+    const platform = purchase.platform ?? user.origin ?? 'MANUAL';
+    const normalizedName = purchase.productName?.trim();
+
+    const orFilters = [];
+    if (purchase.productExternalId) {
+      orFilters.push({ externalId: purchase.productExternalId });
+    }
+    if (normalizedName) {
+      orFilters.push({ name: { equals: normalizedName, mode: 'insensitive' } });
+    }
+
+    const migrationProduct = await prisma.migrationProduct.findFirst({
+      where: {
+        platform,
+        ...(orFilters.length ? { OR: orFilters } : {}),
+      },
+    });
+
+    if (!migrationProduct?.migrationCheckoutUrl) {
       return NextResponse.json(
-        { error: 'Link de pagamento não configurado para a sua plataforma.' },
+        { error: 'Link de migração não configurado para o seu produto.' },
         { status: 400 }
       );
     }
 
-    return NextResponse.json({ paymentUrl, simulation });
+    return NextResponse.json({ paymentUrl: migrationProduct.migrationCheckoutUrl, simulation });
   } catch (error) {
     console.error('❌ Erro ao gerar link de migração (account):', error);
     return NextResponse.json(
