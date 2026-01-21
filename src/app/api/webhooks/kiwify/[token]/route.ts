@@ -9,6 +9,7 @@ import { getKiwifyTokenMapping } from '@/server/integration-secrets';
 import { activateEntitlement, deactivateEntitlement, getActiveEntitlementCodes, isAddonPlan } from '@/lib/entitlements';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
 import { getKiwifyBuyerPhone } from '@/lib/phone';
+import { normalizePaymentMethod, normalizeInstallments } from '@/lib/payment-normalization';
 
 const KIWIFY_TOKEN_MAPPING = getKiwifyTokenMapping();
 
@@ -394,11 +395,19 @@ export async function POST(
     const amount = selectBestKiwifyAmount(amountCandidates);
     const normalizedAmount = amount ?? 0;
 
+    // 💳 Extrair dados de pagamento
+    const paymentMethod = orderData?.payment_method || webhookData.payment_method || null;
+    const installments = normalizeInstallments(
+      orderData?.installments || webhookData.installments || 1
+    );
+
     console.log('🔍 Dados extraídos do Kiwify:', {
       event, buyerEmail, buyerName, transactionId, amount: normalizedAmount,
       plan: integrationData.plan, // ✅ CORRIGIDO
       integrationName: integrationData.name, // ✅ CORRIGIDO
-      token: token
+      token: token,
+      paymentMethod,
+      installments
     });
 
     // Processar diferentes tipos de eventos Kiwify
@@ -469,7 +478,10 @@ export async function POST(
               amount: -normalizedAmount,
               productName: `${integrationData.name} - REEMBOLSO`,
               hotmartTransactionId: transactionId,
-              status: 'REFUNDED'
+              status: 'REFUNDED',
+              paymentMethod: normalizePaymentMethod(paymentMethod),
+              installments: installments,
+              platform: 'KIWIFY'
             }
           });
           console.log(`💸 Reembolso Kiwify registrado: -${normalizedAmount} - ${integrationData.name}`);
@@ -661,6 +673,9 @@ export async function POST(
               amount: normalizedAmount,
               productName: integrationData.name,
               status: 'COMPLETED',
+              paymentMethod: normalizePaymentMethod(paymentMethod),
+              installments: installments,
+              platform: 'KIWIFY'
             },
           });
 
@@ -679,9 +694,12 @@ export async function POST(
             productName: integrationData.name, // 🔥 NOME DETECTADO
             hotmartTransactionId: transactionId,
             status: 'COMPLETED',
+            paymentMethod: normalizePaymentMethod(paymentMethod),
+            installments: installments,
+            platform: 'KIWIFY'
           },
         });
-        console.log(`💰 Compra Kiwify registrada: ${normalizedAmount} - ${integrationData.name}`);
+        console.log(`💰 Compra Kiwify registrada: ${normalizedAmount} - ${integrationData.name} (${normalizePaymentMethod(paymentMethod)}, ${installments}x)`);
       }
 
       const correctedPurchases = await fixUnrealisticPurchaseAmounts(prisma, user.id);

@@ -6,6 +6,7 @@ import { getEduzzTokenMapping } from '@/server/integration-secrets';
 import { activateEntitlement, deactivateEntitlement, getActiveEntitlementCodes, isAddonPlan } from '@/lib/entitlements';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
 import { hashPassword } from '@/lib/auth/password';
+import { normalizePaymentMethod, normalizeInstallments } from '@/lib/payment-normalization';
 
 const EDUZZ_TOKEN_MAPPING = getEduzzTokenMapping();
 
@@ -197,17 +198,26 @@ export async function POST(
     const amount = webhookData.trans_value || 0;
     const productName = webhookData.product_name || '';
 
+    // 💳 Extrair dados de pagamento
+    const paymentData = webhookData.payment || {};
+    const paymentMethod = paymentData?.method || null;
+    const installments = normalizeInstallments(
+      paymentData?.totalOfInstallments || 1
+    );
+
     console.log('🔍 Dados extraídos do Eduzz:', {
-      event, 
-      buyerEmail, 
-      buyerName, 
+      event,
+      buyerEmail,
+      buyerName,
       buyerPhone,
-      transactionId, 
+      transactionId,
       amount,
       productName,
       plan: integrationData.plan,
       integrationName: integrationData.name,
-      token: token
+      token: token,
+      paymentMethod,
+      installments
     });
 
     // ✅ CORRETO - Processar eventos de REEMBOLSO/CANCELAMENTO (nomes oficiais Eduzz)
@@ -277,7 +287,10 @@ export async function POST(
               amount: -(amount || 0),
               productName: `${integrationData.name} - REEMBOLSO`,
               hotmartTransactionId: transactionId,
-              status: 'REFUNDED'
+              status: 'REFUNDED',
+              paymentMethod: normalizePaymentMethod(paymentMethod),
+              installments: installments,
+              platform: 'EDUZZ'
             }
           });
           console.log(`💸 Reembolso Eduzz registrado: -${amount} - ${integrationData.name}`);
@@ -448,10 +461,13 @@ export async function POST(
           amount: amount || 0,
           productName: integrationData.name,
           hotmartTransactionId: transactionId,
-          status: 'COMPLETED'
+          status: 'COMPLETED',
+          paymentMethod: normalizePaymentMethod(paymentMethod),
+          installments: installments,
+          platform: 'EDUZZ'
         }
       });
-      console.log(`💰 Compra Eduzz registrada: ${amount} - ${integrationData.name}`);
+      console.log(`💰 Compra Eduzz registrada: ${amount} - ${integrationData.name} (${normalizePaymentMethod(paymentMethod)}, ${installments}x)`);
     } catch (purchaseError) {
       console.error('⚠️ Erro ao registrar compra Eduzz:', purchaseError);
     }

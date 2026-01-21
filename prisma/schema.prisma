@@ -82,9 +82,33 @@ model Purchase {
   productName          String?
   status               String   @default("COMPLETED")
   hotmartTransactionId String?
+  paymentMethod        String?
+  installments         Int      @default(1)
+  platform             String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   user                 User     @relation(fields: [userId], references: [id])
+}
+
+model PlanMigration {
+  id                String   @id @default(cuid())
+  userId            String
+  planOriginal      String
+  planNovo          String
+  valorOriginal     Float
+  valorNovo         Float
+  mesesRestantes    Int
+  valorDesconto     Float
+  valorFinal        Float
+  status            String   @default("PENDING")
+  observacoes       String?
+  processadoPor     String
+  dataCriacao       DateTime @default(now())
+  dataProcessamento DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("plan_migrations")
 }
 
 model PasswordResetToken {

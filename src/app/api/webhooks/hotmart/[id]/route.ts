@@ -8,6 +8,7 @@ import { activateEntitlement, deactivateEntitlement, getActiveEntitlementCodes, 
 import { enviarEmailCredenciais } from '@/lib/auth/email'; // ✅ ADICIONAR ENVIO DE EMAIL
 import { isLifetimePlan } from '@/lib/lifetime-plans';
 import { getHotmartBuyerPhone } from '@/lib/phone';
+import { normalizePaymentMethod, normalizeInstallments } from '@/lib/payment-normalization';
 
 // ✅ TOKEN ÚNICO DA HOTMART CONFIGURADO
 const TOKEN_MAPPING: Record<string, { name: string; plan: string; integrationId: string }> = {
@@ -375,15 +376,24 @@ export async function POST(
     const buyerEmail = buyerData?.email || webhookData.email;
     const buyerName = buyerData?.name || buyerData?.full_name || webhookData.name || 'Cliente Hotmart';
     const buyerPhone = getHotmartBuyerPhone(webhookData, buyerData);
-    const transactionId = purchaseData?.transaction || purchaseData?.transaction_id || 
+    const transactionId = purchaseData?.transaction || purchaseData?.transaction_id ||
                          webhookData.transaction || `TXN_${integration.integrationId}_${Date.now()}`;
     const amount = purchaseData?.price?.value || purchaseData?.amount || webhookData.price || 0;
+
+    // 💳 Extrair dados de pagamento
+    const paymentData = purchaseData?.payment || webhookData.data?.payment || webhookData.payment || {};
+    const paymentMethod = paymentData?.type || paymentData?.method || null;
+    const installments = normalizeInstallments(
+      paymentData?.installments_number || paymentData?.installments || 1
+    );
 
     console.log('🔍 Dados extraídos da Hotmart:', {
       event, buyerEmail, buyerName, transactionId, amount,
       plan: integrationData.plan,
       integrationName: integrationData.name,
-      token: token
+      token: token,
+      paymentMethod,
+      installments
     });
 
     if (event === 'PURCHASE_REFUNDED' || event === 'PURCHASE_CANCELLED' || event === 'PURCHASE_CHARGEBACK') {
@@ -451,7 +461,10 @@ export async function POST(
               amount: -(amount || 0),
               productName: `${integrationData.name} - REEMBOLSO`,
               hotmartTransactionId: transactionId,
-              status: 'REFUNDED'
+              status: 'REFUNDED',
+              paymentMethod: normalizePaymentMethod(paymentMethod),
+              installments: installments,
+              platform: 'HOTMART'
             }
           });
           console.log(`💸 Reembolso Hotmart registrado: -${amount} - ${integrationData.name}`);
@@ -668,10 +681,13 @@ export async function POST(
           amount: amount || 0,
           productName: integrationData.name,
           hotmartTransactionId: transactionId,
-          status: 'COMPLETED'
+          status: 'COMPLETED',
+          paymentMethod: normalizePaymentMethod(paymentMethod),
+          installments: installments,
+          platform: 'HOTMART'
         }
       });
-      console.log(`💰 Compra Hotmart registrada: ${amount} - ${integrationData.name}`);
+      console.log(`💰 Compra Hotmart registrada: ${amount} - ${integrationData.name} (${normalizePaymentMethod(paymentMethod)}, ${installments}x)`);
     } catch (purchaseError) {
       console.error('⚠️ Erro ao registrar compra Hotmart:', purchaseError);
     }
