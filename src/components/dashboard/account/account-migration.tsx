@@ -8,10 +8,13 @@ type MigrationSimulation = {
   toPlan: string;
   totalPaid: number;
   installmentsTotal: number | null;
+  installmentsPaid: number | null;
   platform: string | null;
   productExternalId: string | null;
   productName: string | null;
   monthsRemaining: number;
+  monthsUsed: number;
+  monthlyValue: number;
   credit: number;
   vipPrice: number;
   finalPrice: number;
@@ -148,6 +151,9 @@ export function AccountMigration(): React.JSX.Element {
                   </Typography>
                 )}
                 <Typography variant="body2" sx={{ color: '#475569' }}>
+                  <strong>Meses utilizados:</strong> {simulation.monthsUsed}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#475569' }}>
                   <strong>Meses restantes:</strong> {simulation.monthsRemaining}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#475569' }}>
@@ -155,9 +161,17 @@ export function AccountMigration(): React.JSX.Element {
                 </Typography>
                 {simulation.installmentsTotal && (
                   <Typography variant="body2" sx={{ color: '#475569' }}>
-                    <strong>Parcelas escolhidas:</strong> {simulation.installmentsTotal}x
+                    <strong>Parcelas contratadas:</strong> {simulation.installmentsTotal}x
                   </Typography>
                 )}
+                {simulation.installmentsPaid !== null && (
+                  <Typography variant="body2" sx={{ color: '#475569' }}>
+                    <strong>Parcelas pagas:</strong> {simulation.installmentsPaid}x
+                  </Typography>
+                )}
+                <Typography variant="body2" sx={{ color: '#475569' }}>
+                  <strong>Valor mensal:</strong> {formatCurrency(simulation.monthlyValue)}
+                  </Typography>
               </Stack>
 
               <Divider />
@@ -168,6 +182,11 @@ export function AccountMigration(): React.JSX.Element {
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#1E293B' }}>
                   <strong>Crédito abatido:</strong> {formatCurrency(simulation.credit)}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#1E293B' }}>
+                  <strong>Detalhe do abatimento:</strong>{' '}
+                  {simulation.monthsRemaining}x {formatCurrency(simulation.monthlyValue)} ={' '}
+                  {formatCurrency(simulation.credit)}
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#1E293B' }}>
                   <strong>Total a pagar:</strong> {formatCurrency(simulation.finalPrice)}

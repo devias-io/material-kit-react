@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const platform = searchParams.get('platform')?.toUpperCase();
 
     const products = await prisma.migrationProduct.findMany({
-      where: platform ? { platform } : undefined,
+      where: platform ? { platform: { equals: platform, mode: 'insensitive' } } : undefined,
       orderBy: { name: 'asc' },
     });
 
@@ -38,4 +38,84 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const admin = await verifyAdmin();
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const name = typeof body?.name === 'string' ? body.name.trim() : '';
+    const platform = typeof body?.platform === 'string' ? body.platform.trim().toLowerCase() : '';
+    const migrationCheckoutUrl =
+      typeof body?.migrationCheckoutUrl === 'string' && body.migrationCheckoutUrl.trim().length > 0
+        ? body.migrationCheckoutUrl.trim()
+        : null;
+    const isActive = typeof body?.isActive === 'boolean' ? body.isActive : true;
+    const priceTiers = normalizePriceTiers(body?.priceTiers);
+
+    if (!name) {
+      return NextResponse.json({ error: 'Nome do produto é obrigatório.' }, { status: 400 });
+    }
+    if (!platform) {
+      return NextResponse.json({ error: 'Plataforma é obrigatória.' }, { status: 400 });
+    }
+
+    const product = await prisma.migrationProduct.create({
+      data: {
+        name,
+        platform,
+        externalId: `manual-${Date.now()}`,
+        migrationCheckoutUrl,
+        priceTiers,
+        isActive,
+      },
+    });
+
+    return NextResponse.json({ product }, { status: 201 });
+  } catch (error) {
+    console.error('❌ Erro ao criar produto de migração:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Erro interno ao criar produto' },
+      { status: 400 }
+    );
+  }
+}
+
+type PriceTierInput = {
+  min: number;
+  max: number;
+  price?: number | null;
+  checkoutUrl: string;
+};
+
+function normalizePriceTiers(input: unknown): PriceTierInput[] | null {
+  if (!Array.isArray(input)) {
+    return null;
+  }
+
+  const tiers = input
+    .map((tier) => {
+      const min = Number(tier?.min);
+      const max = Number(tier?.max);
+      const price = tier?.price === null || tier?.price === undefined ? null : Number(tier?.price);
+      const checkoutUrl = typeof tier?.checkoutUrl === 'string' ? tier.checkoutUrl.trim() : '';
+
+      if (!Number.isFinite(min) || !Number.isFinite(max) || !checkoutUrl) {
+        return null;
+      }
+
+      return {
+        min,
+        max,
+        price: Number.isFinite(price ?? NaN) ? price : null,
+        checkoutUrl,
+      } as PriceTierInput;
+    })
+    .filter(Boolean) as PriceTierInput[];
+
+  return tiers.length > 0 ? tiers : null;
 }
