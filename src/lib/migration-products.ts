@@ -1,4 +1,5 @@
 import 'server-only';
+import { prisma } from '@/lib/prisma';
 
 export type MigrationProductPayload = {
   platform: string;
@@ -72,11 +73,9 @@ function mapProductItem(platform: string, item: any): MigrationProductPayload | 
       item?.identifier
   );
   const name = normalizeName(item?.name ?? item?.product_name ?? item?.title ?? item?.display_name);
-
   if (!externalId || !name) {
     return null;
   }
-
   return {
     platform,
     externalId,
@@ -84,34 +83,44 @@ function mapProductItem(platform: string, item: any): MigrationProductPayload | 
   };
 }
 
+// ✅ FUNÇÃO MODIFICADA - Busca produtos da tabela Purchase
 export async function fetchPlatformProducts(platform: string): Promise<MigrationProductPayload[]> {
-  const config = getPlatformSyncConfig(platform);
-  if (!config?.endpoint) {
-    throw new Error(`Endpoint de sincronização não configurado para ${platform}.`);
+  console.log(`[SYNC] Buscando produtos da tabela Purchase para: ${platform}`);
+  
+  try {
+    // Buscar produtos únicos da tabela Purchase
+    const purchases = await prisma.purchase.findMany({
+      where: {
+        platform: platform.toLowerCase(),
+        productName: { not: null }
+      },
+      select: {
+        productName: true,
+        platform: true
+      },
+      distinct: ['productName']
+    });
+
+    console.log(`[SYNC] Produtos encontrados na Purchase para ${platform}:`, purchases.length);
+
+    // Mapear para o formato esperado
+    const products: MigrationProductPayload[] = purchases
+      .filter(p => p.productName)
+      .map((purchase, index) => ({
+        platform: platform.toUpperCase(),
+        externalId: `${platform.toLowerCase()}-${index + 1}`, // ID fictício mas único
+        name: purchase.productName!
+      }));
+
+    if (products.length === 0) {
+      console.log(`[SYNC] ⚠️ Nenhum produto encontrado na tabela Purchase para ${platform}`);
+      return []; // Retorna array vazio ao invés de lançar erro
+    }
+
+    console.log(`[SYNC] ✅ ${products.length} produtos mapeados para ${platform}`);
+    return products;
+  } catch (error) {
+    console.error(`[SYNC] ❌ Erro ao buscar produtos da Purchase para ${platform}:`, error);
+    throw new Error(`Erro ao buscar produtos para ${platform}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
   }
-  if (!config.token) {
-    throw new Error(`Token da plataforma ${platform} não configurado.`);
-  }
-
-  const headers = new Headers();
-  headers.set('Authorization', `Bearer ${config.token}`);
-
-  const response = await fetch(config.endpoint, { headers });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Falha ao sincronizar ${platform}: ${response.status} ${text}`);
-  }
-
-  const payload = await response.json();
-  const list = extractListFromResponse(payload);
-
-  const mapped = list
-    .map((item) => mapProductItem(platform, item))
-    .filter((item): item is MigrationProductPayload => Boolean(item));
-
-  if (mapped.length === 0) {
-    throw new Error(`Nenhum produto encontrado para ${platform}.`);
-  }
-
-  return mapped;
 }
