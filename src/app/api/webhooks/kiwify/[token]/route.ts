@@ -79,6 +79,35 @@ function selectBestKiwifyAmount(values: unknown[]): number | undefined {
   return undefined;
 }
 
+function normalizeInstallments(value: unknown): number | null {
+  const parsed = typeof value === 'string' ? Number(value) : (value as number);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+  return Math.floor(parsed);
+}
+
+function extractKiwifyProductExternalId(orderData: any, webhookData: any): string | null {
+  const candidates: unknown[] = [
+    orderData?.product_id,
+    orderData?.product?.id,
+    orderData?.product?.product_id,
+    orderData?.product?.uuid,
+    orderData?.plan?.id,
+    orderData?.offer_id,
+    webhookData?.product_id,
+    webhookData?.product?.id,
+    webhookData?.Product?.id,
+  ];
+
+  const firstValid = candidates.find((value) => {
+    if (typeof value === 'number') return Number.isFinite(value);
+    return typeof value === 'string' && value.trim().length > 0;
+  });
+
+  return firstValid ? String(firstValid) : null;
+}
+
 async function fixUnrealisticPurchaseAmounts(
   prismaClient: PrismaClient,
   userId: string
@@ -393,6 +422,10 @@ export async function POST(
 
     const amount = selectBestKiwifyAmount(amountCandidates);
     const normalizedAmount = amount ?? 0;
+    const installmentsTotal = normalizeInstallments(
+      orderData?.installments || orderData?.installments_number || webhookData?.installments
+    );
+    const productExternalId = extractKiwifyProductExternalId(orderData, webhookData);
 
     console.log('🔍 Dados extraídos do Kiwify:', {
       event, buyerEmail, buyerName, transactionId, amount: normalizedAmount,
@@ -467,6 +500,10 @@ export async function POST(
             data: {
               userId: user.id,
               amount: -normalizedAmount,
+              totalPaid: -normalizedAmount,
+              installmentsTotal,
+              platform: 'KIWIFY',
+              productExternalId,
               productName: `${integrationData.name} - REEMBOLSO`,
               hotmartTransactionId: transactionId,
               status: 'REFUNDED'
@@ -659,6 +696,10 @@ export async function POST(
             data: {
               userId: user.id,
               amount: normalizedAmount,
+              totalPaid: normalizedAmount,
+              installmentsTotal,
+              platform: 'KIWIFY',
+              productExternalId,
               productName: integrationData.name,
               status: 'COMPLETED',
             },
@@ -676,6 +717,10 @@ export async function POST(
           data: {
             userId: user.id,
             amount: normalizedAmount,
+            totalPaid: normalizedAmount,
+            installmentsTotal,
+            platform: 'KIWIFY',
+            productExternalId,
             productName: integrationData.name, // 🔥 NOME DETECTADO
             hotmartTransactionId: transactionId,
             status: 'COMPLETED',

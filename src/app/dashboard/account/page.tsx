@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { AccountDetailsForm } from '@/components/dashboard/account/account-details-form';
 import { AccountInfo } from '@/components/dashboard/account/account-info';
+import { AccountMigration } from '@/components/dashboard/account/account-migration';
 import { AccountSecurity } from '@/components/dashboard/account/account-security';
 import { AccountSubscription } from '@/components/dashboard/account/account-subscription';
 import { useUser } from '@/hooks/use-user';
@@ -45,6 +46,7 @@ export default function Page(): React.JSX.Element {
             <AccountDetailsForm />
             <AccountSecurity />
             <AccountSubscription />
+            <AccountMigration />
           </Stack>
         </Grid>
       </Grid>
