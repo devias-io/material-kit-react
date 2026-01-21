@@ -241,7 +241,15 @@ function detectarPlanoHotmart(webhookData: any): { plan: string; productName: st
     
     const purchaseData = webhookData.data?.purchase || webhookData.purchase || {};
     const priceData = purchaseData?.price || {};
-    const valor = priceData?.value || purchaseData?.amount || webhookData.price || 0;
+    const fullPriceData = purchaseData?.full_price || {};
+    const originalOfferPriceData = purchaseData?.original_offer_price || {};
+    const valor =
+      fullPriceData?.value ||
+      priceData?.value ||
+      originalOfferPriceData?.value ||
+      purchaseData?.amount ||
+      webhookData.price ||
+      0;
     console.log(`💰 Valor da compra Hotmart: R$ ${valor}`);
     
     if (valor > 0) {
@@ -377,7 +385,13 @@ export async function POST(
     const buyerPhone = getHotmartBuyerPhone(webhookData, buyerData);
     const transactionId = purchaseData?.transaction || purchaseData?.transaction_id || 
                          webhookData.transaction || `TXN_${integration.integrationId}_${Date.now()}`;
-    const amount = purchaseData?.price?.value || purchaseData?.amount || webhookData.price || 0;
+    const amount =
+      purchaseData?.full_price?.value ||
+      purchaseData?.price?.value ||
+      purchaseData?.original_offer_price?.value ||
+      purchaseData?.amount ||
+      webhookData.price ||
+      0;
     const productExternalId = normalizarIdHotmart(
       productData?.id ||
       productData?.product_id ||
