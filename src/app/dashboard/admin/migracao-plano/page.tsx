@@ -75,8 +75,16 @@ export default function MigracaoPlanoPage() {
 
   // Verificar se usuário é admin
   React.useEffect(() => {
-    if (user && !user.customPermissions?.includes('admin')) {
-      router.push('/dashboard');
+    if (user) {
+      try {
+        const permissions = JSON.parse(user.customPermissions || '[]');
+        if (!permissions.includes('admin')) {
+          router.push('/dashboard');
+        }
+      } catch (err) {
+        console.error('Erro ao verificar permissões:', err);
+        router.push('/dashboard');
+      }
     }
   }, [user, router]);
 
