@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { buildMigrationSimulation } from '@/lib/migration';
+import { selectMigrationCheckoutUrl } from '@/lib/migration-products';
 
 async function verifyAdmin() {
   try {
@@ -91,14 +92,19 @@ export async function POST(
       },
     });
 
-    if (!migrationProduct?.migrationCheckoutUrl) {
+    const paymentUrl =
+      migrationProduct && simulation
+        ? selectMigrationCheckoutUrl(migrationProduct, simulation.finalPrice)
+        : null;
+
+    if (!paymentUrl) {
       return NextResponse.json(
         { error: 'Link de migração não configurado para o produto deste usuário.' },
         { status: 400 }
       );
     }
 
-    return NextResponse.json({ paymentUrl: migrationProduct.migrationCheckoutUrl, simulation });
+    return NextResponse.json({ paymentUrl, simulation });
   } catch (error) {
     console.error('❌ Erro ao gerar link de migração (admin):', error);
     return NextResponse.json(

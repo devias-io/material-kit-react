@@ -39,6 +39,12 @@ type MigrationProduct = {
   name: string;
   migrationCheckoutUrl: string | null;
   isActive: boolean;
+  priceTiers?: Array<{
+    min: number;
+    max: number;
+    price?: number | null;
+    checkoutUrl: string;
+  }> | null;
 };
 
 const PLATFORM_LABELS: Record<string, string> = {
@@ -62,6 +68,12 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
     platform: 'hotmart',
     migrationCheckoutUrl: '',
     isActive: true,
+    priceTiers: [] as Array<{
+      min: string;
+      max: string;
+      price: string;
+      checkoutUrl: string;
+    }>,
   });
 
   React.useEffect(() => {
@@ -133,6 +145,7 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
       platform: 'hotmart',
       migrationCheckoutUrl: '',
       isActive: true,
+      priceTiers: [],
     });
     setModalOpen(true);
   };
@@ -144,6 +157,13 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
       platform: product.platform.toLowerCase(),
       migrationCheckoutUrl: product.migrationCheckoutUrl || '',
       isActive: product.isActive,
+      priceTiers:
+        product.priceTiers?.map((tier) => ({
+          min: String(tier.min ?? ''),
+          max: String(tier.max ?? ''),
+          price: tier.price !== null && tier.price !== undefined ? String(tier.price) : '',
+          checkoutUrl: tier.checkoutUrl ?? '',
+        })) || [],
     });
     setModalOpen(true);
   };
@@ -156,11 +176,25 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
   const handleSubmitProduct = async () => {
     try {
       setError(null);
+      const normalizedPriceTiers = formState.priceTiers
+        .map((tier) => ({
+          min: Number(tier.min),
+          max: Number(tier.max),
+          price: tier.price.trim() ? Number(tier.price) : null,
+          checkoutUrl: tier.checkoutUrl.trim(),
+        }))
+        .filter(
+          (tier) =>
+            Number.isFinite(tier.min) &&
+            Number.isFinite(tier.max) &&
+            tier.checkoutUrl.length > 0
+        );
       const payload = {
         name: formState.name.trim(),
         platform: formState.platform,
         migrationCheckoutUrl: formState.migrationCheckoutUrl.trim() || null,
         isActive: formState.isActive,
+        priceTiers: normalizedPriceTiers.length > 0 ? normalizedPriceTiers : null,
       };
       const response = await fetch(
         editingProduct
@@ -322,6 +356,7 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
                             }}
                           />
                         </TableCell>
+                        <TableCell sx={{ color: '#64748B' }}>{product.externalId}</TableCell>
                         <TableCell>
                           <Chip
                             label={product.isActive ? 'Ativo' : 'Inativo'}
@@ -435,6 +470,95 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
               }
               label={formState.isActive ? 'Status: Ativo' : 'Status: Inativo'}
             />
+            <Stack spacing={1}>
+              <Typography variant="subtitle2" sx={{ color: '#475569' }}>
+                Faixas de preço para migração
+              </Typography>
+              {formState.priceTiers.map((tier, index) => (
+                <Stack key={`${tier.checkoutUrl}-${index}`} direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  <TextField
+                    label="Mínimo"
+                    type="number"
+                    value={tier.min}
+                    onChange={(event) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        priceTiers: prev.priceTiers.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, min: event.target.value } : item
+                        ),
+                      }))
+                    }
+                  />
+                  <TextField
+                    label="Máximo"
+                    type="number"
+                    value={tier.max}
+                    onChange={(event) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        priceTiers: prev.priceTiers.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, max: event.target.value } : item
+                        ),
+                      }))
+                    }
+                  />
+                  <TextField
+                    label="Preço do link"
+                    type="number"
+                    value={tier.price}
+                    onChange={(event) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        priceTiers: prev.priceTiers.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, price: event.target.value } : item
+                        ),
+                      }))
+                    }
+                  />
+                  <TextField
+                    label="Link de checkout"
+                    value={tier.checkoutUrl}
+                    onChange={(event) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        priceTiers: prev.priceTiers.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, checkoutUrl: event.target.value } : item
+                        ),
+                      }))
+                    }
+                    fullWidth
+                  />
+                  <Button
+                    variant="text"
+                    color="error"
+                    onClick={() =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        priceTiers: prev.priceTiers.filter((_, itemIndex) => itemIndex !== index),
+                      }))
+                    }
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Remover
+                  </Button>
+                </Stack>
+              ))}
+              <Button
+                variant="outlined"
+                onClick={() =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    priceTiers: [
+                      ...prev.priceTiers,
+                      { min: '', max: '', price: '', checkoutUrl: '' },
+                    ],
+                  }))
+                }
+                sx={{ textTransform: 'none', alignSelf: 'flex-start' }}
+              >
+                Adicionar faixa de preço
+              </Button>
+            </Stack>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

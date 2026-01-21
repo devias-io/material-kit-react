@@ -34,18 +34,21 @@ export async function PATCH(
         ? body.migrationCheckoutUrl.trim() || null
         : undefined;
     const isActive = typeof body?.isActive === 'boolean' ? body.isActive : undefined;
+    const priceTiers = normalizePriceTiers(body?.priceTiers);
 
     const updateData: {
       name?: string;
       platform?: string;
       migrationCheckoutUrl?: string | null;
       isActive?: boolean;
+      priceTiers?: unknown;
     } = {};
 
     if (name) updateData.name = name;
     if (platform) updateData.platform = platform;
     if (migrationCheckoutUrl !== undefined) updateData.migrationCheckoutUrl = migrationCheckoutUrl;
     if (isActive !== undefined) updateData.isActive = isActive;
+    if (priceTiers !== undefined) updateData.priceTiers = priceTiers;
 
     const product = await prisma.migrationProduct.update({
       where: { id: params.id },
@@ -60,6 +63,45 @@ export async function PATCH(
       { status: 400 }
     );
   }
+}
+
+type PriceTierInput = {
+  min: number;
+  max: number;
+  price?: number | null;
+  checkoutUrl: string;
+};
+
+function normalizePriceTiers(input: unknown): PriceTierInput[] | null | undefined {
+  if (input === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(input)) {
+    return null;
+  }
+
+  const tiers = input
+    .map((tier) => {
+      const min = Number(tier?.min);
+      const max = Number(tier?.max);
+      const price = tier?.price === null || tier?.price === undefined ? null : Number(tier?.price);
+      const checkoutUrl = typeof tier?.checkoutUrl === 'string' ? tier.checkoutUrl.trim() : '';
+
+      if (!Number.isFinite(min) || !Number.isFinite(max) || !checkoutUrl) {
+        return null;
+      }
+
+      return {
+        min,
+        max,
+        price: Number.isFinite(price ?? NaN) ? price : null,
+        checkoutUrl,
+      } as PriceTierInput;
+    })
+    .filter(Boolean) as PriceTierInput[];
+
+  return tiers.length > 0 ? tiers : null;
 }
 
 export async function DELETE(

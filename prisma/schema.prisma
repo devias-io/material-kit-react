@@ -97,6 +97,7 @@ model MigrationProduct {
   externalId           String
   name                 String
   migrationCheckoutUrl String?
+  priceTiers           Json?
   isActive             Boolean  @default(true)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt

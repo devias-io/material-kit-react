@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
         ? body.migrationCheckoutUrl.trim()
         : null;
     const isActive = typeof body?.isActive === 'boolean' ? body.isActive : true;
+    const priceTiers = normalizePriceTiers(body?.priceTiers);
 
     if (!name) {
       return NextResponse.json({ error: 'Nome do produto é obrigatório.' }, { status: 400 });
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
         platform,
         externalId: `manual-${Date.now()}`,
         migrationCheckoutUrl,
+        priceTiers,
         isActive,
       },
     });
@@ -81,4 +83,39 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
+}
+
+type PriceTierInput = {
+  min: number;
+  max: number;
+  price?: number | null;
+  checkoutUrl: string;
+};
+
+function normalizePriceTiers(input: unknown): PriceTierInput[] | null {
+  if (!Array.isArray(input)) {
+    return null;
+  }
+
+  const tiers = input
+    .map((tier) => {
+      const min = Number(tier?.min);
+      const max = Number(tier?.max);
+      const price = tier?.price === null || tier?.price === undefined ? null : Number(tier?.price);
+      const checkoutUrl = typeof tier?.checkoutUrl === 'string' ? tier.checkoutUrl.trim() : '';
+
+      if (!Number.isFinite(min) || !Number.isFinite(max) || !checkoutUrl) {
+        return null;
+      }
+
+      return {
+        min,
+        max,
+        price: Number.isFinite(price ?? NaN) ? price : null,
+        checkoutUrl,
+      } as PriceTierInput;
+    })
+    .filter(Boolean) as PriceTierInput[];
+
+  return tiers.length > 0 ? tiers : null;
 }

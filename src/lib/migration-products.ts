@@ -7,6 +7,37 @@ export type MigrationProductPayload = {
   name: string;
 };
 
+type PriceTier = {
+  min: number;
+  max: number;
+  price?: number | null;
+  checkoutUrl: string;
+};
+
+type MigrationProductWithTiers = {
+  migrationCheckoutUrl: string | null;
+  priceTiers?: unknown;
+};
+
+export function selectMigrationCheckoutUrl(
+  product: MigrationProductWithTiers,
+  finalPrice: number
+): string | null {
+  const tiers = Array.isArray(product.priceTiers)
+    ? (product.priceTiers as PriceTier[])
+        .filter((tier) => Number.isFinite(tier?.min) && Number.isFinite(tier?.max) && tier?.checkoutUrl)
+        .sort((a, b) => a.min - b.min)
+    : [];
+
+  const matchedTier = tiers.find((tier) => finalPrice >= tier.min && finalPrice <= tier.max);
+
+  if (matchedTier?.checkoutUrl) {
+    return matchedTier.checkoutUrl;
+  }
+
+  return product.migrationCheckoutUrl ?? null;
+}
+
 type PlatformConfig = {
   platform: string;
   endpoint?: string;
