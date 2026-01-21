@@ -91,8 +91,8 @@ export async function fetchPlatformProducts(platform: string): Promise<Migration
     // Buscar produtos únicos da tabela Purchase
     const purchases = await prisma.purchase.findMany({
       where: {
-        platform: platform.toLowerCase(),
-        productName: { not: null }
+        platform: { equals: platform, mode: 'insensitive' },
+        productName: { not: null },
       },
       select: {
         productName: true,
