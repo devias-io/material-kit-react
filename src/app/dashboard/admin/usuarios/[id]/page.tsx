@@ -79,6 +79,23 @@ interface Purchase {
   status: string;
 }
 
+interface MigrationSimulation {
+  fromPlan: string;
+  toPlan: string;
+  totalPaid: number;
+  installmentsTotal: number | null;
+  platform: string | null;
+  productExternalId: string | null;
+  productName: string | null;
+  monthsRemaining: number;
+  credit: number;
+  vipPrice: number;
+  finalPrice: number;
+  notices: string[];
+  purchaseDate: string;
+  expirationDate: string | null;
+}
+
 export default function EditUserPage() {
   const { user: currentUser } = useUser();
   const router = useRouter();
@@ -92,6 +109,12 @@ export default function EditUserPage() {
   const [purchases, setPurchases] = React.useState<Purchase[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [resending, setResending] = React.useState(false);
+  const [migrationSimulation, setMigrationSimulation] = React.useState<MigrationSimulation | null>(null);
+  const [migrationLoading, setMigrationLoading] = React.useState(false);
+  const [migrationError, setMigrationError] = React.useState<string | null>(null);
+  const [migrationDialogOpen, setMigrationDialogOpen] = React.useState(false);
+  const [migrationLink, setMigrationLink] = React.useState<string | null>(null);
+  const [migrationLinkLoading, setMigrationLinkLoading] = React.useState(false);
   const previousExpirationDateRef = React.useRef<string | null>(null);
 
   // Lista de conteúdos disponíveis para liberação
@@ -306,6 +329,77 @@ export default function EditUserPage() {
     }
   };
 
+  const handleMigrationSimulation = async () => {
+    if (!user) return;
+
+    try {
+      setMigrationLoading(true);
+      setMigrationError(null);
+      setMigrationLink(null);
+
+      const response = await fetch(`/api/admin/users/${userId}/migration-simulation?target=VIP`, {
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'Erro ao simular migração.');
+      }
+
+      setMigrationSimulation(data.simulation);
+      setMigrationDialogOpen(true);
+    } catch (error) {
+      console.error('Erro ao simular migração:', error);
+      setMigrationError(error instanceof Error ? error.message : 'Erro ao simular migração.');
+    } finally {
+      setMigrationLoading(false);
+    }
+  };
+
+  const handleGenerateMigrationLink = async () => {
+    if (!user) return;
+
+    try {
+      setMigrationLinkLoading(true);
+      setMigrationError(null);
+
+      const response = await fetch(`/api/admin/users/${userId}/migration-link`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ target: 'VIP' })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'Erro ao gerar link de migração.');
+      }
+
+      setMigrationLink(data.paymentUrl || null);
+    } catch (error) {
+      console.error('Erro ao gerar link de migração:', error);
+      setMigrationError(error instanceof Error ? error.message : 'Erro ao gerar link de migração.');
+    } finally {
+      setMigrationLinkLoading(false);
+    }
+  };
+
+  const handleCopyMigrationLink = async () => {
+    if (!migrationLink) return;
+
+    try {
+      await navigator.clipboard.writeText(migrationLink);
+      alert('✅ Link copiado para a área de transferência!');
+    } catch (error) {
+      console.error('Erro ao copiar link:', error);
+      alert('❌ Não foi possível copiar o link');
+    }
+  };
+
   const handleLifetimeToggle = (checked: boolean) => {
     if (!user) return;
 
@@ -484,6 +578,7 @@ export default function EditUserPage() {
   const lifetimePlan = isLifetimePlan(user.plan);
   const isLifetimeAccess = lifetimePlan || user.expirationDate === null;
   const expired = !isLifetimeAccess && isExpired(user.expirationDate);
+  const isVipPlan = user.plan === 'VIP' || user.plan === 'ADMIN';
   const phoneValue = user.phone || user.hotmartPhone || user.kiwifyPhone || user.eduzzPhone || '';
 
   return (
@@ -986,6 +1081,55 @@ export default function EditUserPage() {
           </Card>
         </Grid>
 
+        {/* Migração para VIP */}
+        <Grid item xs={12}>
+          <Card sx={{ 
+            backgroundColor: '#FFFFFF', 
+            borderRadius: 3, 
+            border: '1px solid #E2E8F0',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" gutterBottom sx={{ color: '#1E293B', fontWeight: '600' }}>
+                📈 Migração para VIP
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#64748B', mb: 2 }}>
+                Simule o upgrade com base no valor total pago e gere o link de pagamento para o cliente.
+              </Typography>
+
+              {migrationError && (
+                <Alert severity="warning" sx={{ mb: 2, backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
+                  {migrationError}
+                </Alert>
+              )}
+
+              <Button
+                variant="contained"
+                onClick={handleMigrationSimulation}
+                disabled={migrationLoading || isVipPlan}
+                sx={{ 
+                  bgcolor: '#3B82F6', 
+                  color: '#FFFFFF', 
+                  fontWeight: '600',
+                  '&:hover': { bgcolor: '#2563EB' },
+                  '&:disabled': { bgcolor: '#94A3B8' },
+                  borderRadius: 2,
+                  px: 3,
+                  py: 1.2,
+                  textTransform: 'none'
+                }}
+              >
+                {migrationLoading ? 'Calculando...' : 'Simular migração para VIP'}
+              </Button>
+              {isVipPlan && (
+                <Typography variant="body2" sx={{ color: '#94A3B8', mt: 1 }}>
+                  Usuário já está no VIP ou possui acesso administrativo.
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
         {/* Histórico de Compras */}
         <Grid item xs={12}>
           <Card sx={{ 
@@ -1042,6 +1186,115 @@ export default function EditUserPage() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Dialog de Migração */}
+      <Dialog 
+        open={migrationDialogOpen} 
+        onClose={() => setMigrationDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            border: '1px solid #E2E8F0'
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: '#1E293B', fontWeight: '600' }}>
+          Simulação de Migração para VIP
+        </DialogTitle>
+        <DialogContent>
+          {migrationSimulation && (
+            <Box display="flex" flexDirection="column" gap={2}>
+              <Typography sx={{ color: '#475569' }}>
+                <strong>Plano atual:</strong> {migrationSimulation.fromPlan}
+              </Typography>
+              <Typography sx={{ color: '#475569' }}>
+                <strong>Última compra:</strong>{' '}
+                {new Date(migrationSimulation.purchaseDate).toLocaleDateString('pt-BR')}
+              </Typography>
+              {migrationSimulation.productName && (
+                <Typography sx={{ color: '#475569' }}>
+                  <strong>Produto comprado:</strong> {migrationSimulation.productName}
+                </Typography>
+              )}
+              {migrationSimulation.expirationDate && (
+                <Typography sx={{ color: '#475569' }}>
+                  <strong>Vencimento atual:</strong>{' '}
+                  {new Date(migrationSimulation.expirationDate).toLocaleDateString('pt-BR')}
+                </Typography>
+              )}
+              <Typography sx={{ color: '#475569' }}>
+                <strong>Meses restantes:</strong> {migrationSimulation.monthsRemaining}
+              </Typography>
+              <Typography sx={{ color: '#475569' }}>
+                <strong>Total pago:</strong> {formatCurrency(migrationSimulation.totalPaid)}
+              </Typography>
+              {migrationSimulation.installmentsTotal && (
+                <Typography sx={{ color: '#475569' }}>
+                  <strong>Parcelas:</strong> {migrationSimulation.installmentsTotal}x
+                </Typography>
+              )}
+              <Divider />
+              <Typography sx={{ color: '#1E293B' }}>
+                <strong>Valor do VIP:</strong> {formatCurrency(migrationSimulation.vipPrice)}
+              </Typography>
+              <Typography sx={{ color: '#1E293B' }}>
+                <strong>Crédito abatido:</strong> {formatCurrency(migrationSimulation.credit)}
+              </Typography>
+              <Typography sx={{ color: '#1E293B' }}>
+                <strong>Total a pagar:</strong> {formatCurrency(migrationSimulation.finalPrice)}
+              </Typography>
+              {migrationSimulation.notices.map((notice) => (
+                <Alert key={notice} severity="info" sx={{ backgroundColor: '#EFF6FF', border: '1px solid #BFDBFE' }}>
+                  {notice}
+                </Alert>
+              ))}
+              {migrationLink && (
+                <TextField
+                  fullWidth
+                  label="Link de pagamento"
+                  value={migrationLink}
+                  InputProps={{ readOnly: true }}
+                />
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 1 }}>
+          <Button 
+            onClick={() => setMigrationDialogOpen(false)}
+            sx={{ 
+              color: '#64748B',
+              '&:hover': { backgroundColor: '#F8FAFC' }
+            }}
+          >
+            Fechar
+          </Button>
+          {migrationLink && (
+            <Button
+              onClick={handleCopyMigrationLink}
+              sx={{
+                color: '#3B82F6',
+                '&:hover': { backgroundColor: '#EFF6FF' }
+              }}
+            >
+              Copiar link
+            </Button>
+          )}
+          <Button 
+            onClick={handleGenerateMigrationLink}
+            disabled={migrationLinkLoading}
+            sx={{
+              color: '#10B981',
+              '&:hover': { backgroundColor: '#ECFDF5' },
+              fontWeight: 600
+            }}
+          >
+            {migrationLinkLoading ? 'Gerando link...' : 'Gerar link de pagamento'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Dialog de Confirmação de Exclusão */}
       <Dialog 

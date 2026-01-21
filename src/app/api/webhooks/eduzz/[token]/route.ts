@@ -138,6 +138,32 @@ function normalizeBrazilPhone(phone: string | null | undefined): string | null {
   return `55${withoutCountry}`;
 }
 
+function normalizeInstallments(value: unknown): number | null {
+  const parsed = typeof value === 'string' ? Number(value) : (value as number);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+  return Math.floor(parsed);
+}
+
+function extractEduzzProductExternalId(webhookData: any): string | null {
+  const candidates: unknown[] = [
+    webhookData?.product_id,
+    webhookData?.product?.id,
+    webhookData?.product_cod,
+    webhookData?.prod_cod,
+    webhookData?.product_code,
+    webhookData?.prod_id,
+  ];
+
+  const firstValid = candidates.find((value) => {
+    if (typeof value === 'number') return Number.isFinite(value);
+    return typeof value === 'string' && value.trim().length > 0;
+  });
+
+  return firstValid ? String(firstValid) : null;
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { token: string } }
@@ -196,6 +222,13 @@ export async function POST(
     const transactionId = webhookData.trans_cod || `ED_${Date.now()}`;
     const amount = webhookData.trans_value || 0;
     const productName = webhookData.product_name || '';
+    const productExternalId = extractEduzzProductExternalId(webhookData);
+    const installmentsTotal = normalizeInstallments(
+      webhookData?.data?.contract?.payment?.totalOfInstallments
+        || webhookData?.data?.bankSlipInstallment?.totalInstallments
+        || webhookData?.contract?.payment?.totalOfInstallments
+        || webhookData?.bankSlipInstallment?.totalInstallments
+    );
 
     console.log('🔍 Dados extraídos do Eduzz:', {
       event, 
@@ -275,6 +308,10 @@ export async function POST(
             data: {
               userId: user.id,
               amount: -(amount || 0),
+              totalPaid: -(amount || 0),
+              installmentsTotal,
+              platform: 'EDUZZ',
+              productExternalId,
               productName: `${integrationData.name} - REEMBOLSO`,
               hotmartTransactionId: transactionId,
               status: 'REFUNDED'
@@ -446,6 +483,10 @@ export async function POST(
         data: {
           userId: user.id,
           amount: amount || 0,
+          totalPaid: amount || 0,
+          installmentsTotal,
+          platform: 'EDUZZ',
+          productExternalId,
           productName: integrationData.name,
           hotmartTransactionId: transactionId,
           status: 'COMPLETED'
