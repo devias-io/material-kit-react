@@ -79,6 +79,9 @@ model Purchase {
   id                   String   @id @default(cuid())
   userId               String
   amount               Float
+  totalPaid            Float?
+  installmentsTotal    Int?
+  platform             String?
   productName          String?
   status               String   @default("COMPLETED")
   hotmartTransactionId String?
