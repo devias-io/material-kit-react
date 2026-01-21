@@ -97,10 +97,10 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
         throw new Error(data?.error || 'Erro ao sincronizar produtos.');
       }
       const results = Array.isArray(data?.results) ? data.results : [];
-      const failures = results.filter((result: { error?: string }) => result.error);
+      const failures = results.filter((result: { success?: boolean }) => result.success === false);
       if (failures.length > 0) {
         const message = failures
-          .map((result: { platform: string; error?: string }) => `${result.platform}: ${result.error}`)
+          .map((result: { platform: string; errors?: string[] }) => `${result.platform}: ${result.errors?.join(', ')}`)
           .join(' | ');
         setError(`Falha ao sincronizar: ${message}`);
       } else {

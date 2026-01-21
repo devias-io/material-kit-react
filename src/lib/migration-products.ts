@@ -30,7 +30,7 @@ const PLATFORM_CONFIGS: PlatformConfig[] = [
   },
 ];
 
-function getPlatformConfig(platform: string): PlatformConfig | undefined {
+export function getPlatformSyncConfig(platform: string): PlatformConfig | undefined {
   return PLATFORM_CONFIGS.find((entry) => entry.platform === platform.toUpperCase());
 }
 
@@ -85,15 +85,16 @@ function mapProductItem(platform: string, item: any): MigrationProductPayload | 
 }
 
 export async function fetchPlatformProducts(platform: string): Promise<MigrationProductPayload[]> {
-  const config = getPlatformConfig(platform);
+  const config = getPlatformSyncConfig(platform);
   if (!config?.endpoint) {
     throw new Error(`Endpoint de sincronização não configurado para ${platform}.`);
   }
+  if (!config.token) {
+    throw new Error(`Token da plataforma ${platform} não configurado.`);
+  }
 
   const headers = new Headers();
-  if (config.token) {
-    headers.set('Authorization', `Bearer ${config.token}`);
-  }
+  headers.set('Authorization', `Bearer ${config.token}`);
 
   const response = await fetch(config.endpoint, { headers });
   if (!response.ok) {
