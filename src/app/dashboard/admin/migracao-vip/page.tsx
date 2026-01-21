@@ -66,7 +66,6 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
   const [formState, setFormState] = React.useState({
     name: '',
     platform: 'hotmart',
-    migrationCheckoutUrl: '',
     isActive: true,
     priceTiers: [] as Array<{
       min: string;
@@ -143,7 +142,6 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
     setFormState({
       name: '',
       platform: 'hotmart',
-      migrationCheckoutUrl: '',
       isActive: true,
       priceTiers: [],
     });
@@ -155,7 +153,6 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
     setFormState({
       name: product.name,
       platform: product.platform.toLowerCase(),
-      migrationCheckoutUrl: product.migrationCheckoutUrl || '',
       isActive: product.isActive,
       priceTiers:
         product.priceTiers?.map((tier) => ({
@@ -192,7 +189,6 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
       const payload = {
         name: formState.name.trim(),
         platform: formState.platform,
-        migrationCheckoutUrl: formState.migrationCheckoutUrl.trim() || null,
         isActive: formState.isActive,
         priceTiers: normalizedPriceTiers.length > 0 ? normalizedPriceTiers : null,
       };
@@ -326,7 +322,7 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
                       <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Status</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Elegível</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: '#475569' }}>ID externo</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Link de migração</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Links por faixa</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Ações</TableCell>
                     </TableRow>
                   </TableHead>
@@ -334,7 +330,8 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
                     {products.map((product) => {
                       const platformKey = product.platform.toUpperCase();
                       const isManual = product.externalId.startsWith('manual-');
-                      const isEligible = product.isActive && Boolean(product.migrationCheckoutUrl);
+                      const tierCount = product.priceTiers?.length ?? 0;
+                      const isEligible = product.isActive && tierCount > 0;
                       return (
                         <TableRow key={product.id} hover>
                         <TableCell>
@@ -357,6 +354,11 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
                           />
                         </TableCell>
                         <TableCell sx={{ color: '#64748B' }}>{product.externalId}</TableCell>
+                        <TableCell>
+                          <Typography sx={{ color: '#475569', wordBreak: 'break-all' }} variant="body2">
+                            {product.migrationCheckoutUrl || '—'}
+                          </Typography>
+                        </TableCell>
                         <TableCell>
                           <Chip
                             label={product.isActive ? 'Ativo' : 'Inativo'}
@@ -381,8 +383,8 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
                         </TableCell>
                         <TableCell sx={{ color: '#64748B' }}>{product.externalId}</TableCell>
                         <TableCell>
-                          <Typography sx={{ color: '#475569', wordBreak: 'break-all' }} variant="body2">
-                            {product.migrationCheckoutUrl || '—'}
+                          <Typography sx={{ color: '#475569' }} variant="body2">
+                            {tierCount > 0 ? `${tierCount} faixa(s)` : '—'}
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -450,15 +452,6 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
                 <MenuItem value="eduzz">Eduzz</MenuItem>
               </Select>
             </FormControl>
-            <TextField
-              label="Link de Checkout de Migração"
-              value={formState.migrationCheckoutUrl}
-              onChange={(event) =>
-                setFormState((prev) => ({ ...prev, migrationCheckoutUrl: event.target.value }))
-              }
-              fullWidth
-              placeholder="https://checkout..."
-            />
             <FormControlLabel
               control={
                 <Switch
