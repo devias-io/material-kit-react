@@ -84,10 +84,13 @@ interface MigrationSimulation {
   toPlan: string;
   totalPaid: number;
   installmentsTotal: number | null;
+  installmentsPaid: number | null;
   platform: string | null;
   productExternalId: string | null;
   productName: string | null;
   monthsRemaining: number;
+  monthsUsed: number;
+  monthlyValue: number;
   credit: number;
   vipPrice: number;
   finalPrice: number;
@@ -1225,6 +1228,9 @@ export default function EditUserPage() {
                 </Typography>
               )}
               <Typography sx={{ color: '#475569' }}>
+                <strong>Meses utilizados:</strong> {migrationSimulation.monthsUsed}
+              </Typography>
+              <Typography sx={{ color: '#475569' }}>
                 <strong>Meses restantes:</strong> {migrationSimulation.monthsRemaining}
               </Typography>
               <Typography sx={{ color: '#475569' }}>
@@ -1232,15 +1238,28 @@ export default function EditUserPage() {
               </Typography>
               {migrationSimulation.installmentsTotal && (
                 <Typography sx={{ color: '#475569' }}>
-                  <strong>Parcelas:</strong> {migrationSimulation.installmentsTotal}x
+                  <strong>Parcelas contratadas:</strong> {migrationSimulation.installmentsTotal}x
                 </Typography>
               )}
+              {migrationSimulation.installmentsPaid !== null && (
+                <Typography sx={{ color: '#475569' }}>
+                  <strong>Parcelas pagas:</strong> {migrationSimulation.installmentsPaid}x
+                </Typography>
+              )}
+              <Typography sx={{ color: '#475569' }}>
+                <strong>Valor mensal:</strong> {formatCurrency(migrationSimulation.monthlyValue)}
+                </Typography>
               <Divider />
               <Typography sx={{ color: '#1E293B' }}>
                 <strong>Valor do VIP:</strong> {formatCurrency(migrationSimulation.vipPrice)}
               </Typography>
               <Typography sx={{ color: '#1E293B' }}>
                 <strong>Crédito abatido:</strong> {formatCurrency(migrationSimulation.credit)}
+              </Typography>
+              <Typography sx={{ color: '#1E293B' }}>
+                <strong>Detalhe do abatimento:</strong>{' '}
+                {migrationSimulation.monthsRemaining}x {formatCurrency(migrationSimulation.monthlyValue)} ={' '}
+                {formatCurrency(migrationSimulation.credit)}
               </Typography>
               <Typography sx={{ color: '#1E293B' }}>
                 <strong>Total a pagar:</strong> {formatCurrency(migrationSimulation.finalPrice)}
