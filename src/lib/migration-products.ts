@@ -93,6 +93,13 @@ export async function fetchPlatformProducts(platform: string): Promise<Migration
       where: {
         platform: { equals: platform, mode: 'insensitive' },
         productName: { not: null },
+        NOT: { productName: { contains: 'VIP', mode: 'insensitive' } },
+        OR: [
+          { productName: { contains: 'LITE', mode: 'insensitive' } },
+          { productName: { contains: 'RENDA PASSIVA', mode: 'insensitive' } },
+          { productName: { contains: 'PROJETO AMERICA', mode: 'insensitive' } },
+          { productName: { contains: 'PROJETO AMÉRICA', mode: 'insensitive' } },
+        ],
       },
       select: {
         productName: true,
