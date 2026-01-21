@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import {
   PLATFORM_METADATA,
@@ -47,24 +48,52 @@ function normaliseIntegrations(
   origin: string,
   slug: PlatformSlug,
   integrations: readonly PublicPlatformIntegrationConfig[],
+  salesByProductName: Map<string, number>,
 ): IntegrationSummary[] {
   return integrations.map(integration => ({
     id: integration.id,
     productName: integration.productName,
     plan: integration.plan,
     status: integration.status,
-    totalSales: integration.totalSales,
+    totalSales: salesByProductName.get(integration.productName) ?? 0,
     webhookUrl: buildWebhookUrl(origin, slug, integration),
     ...('productId' in integration ? { productId: integration.productId } : {}),
   }));
 }
 
-function computePlatformPayload(origin: string, slug: PlatformSlug): PlatformPayload {
+function detectPlatformByProductName(productName?: string | null): PlatformSlug | null {
+  if (!productName) return null;
+  const normalized = productName.toLowerCase();
+
+  if (normalized.includes('hotmart')) return 'hotmart';
+  if (normalized.includes('kiwify')) return 'kiwify';
+  if (normalized.includes('eduzz')) return 'eduzz';
+
+  return null;
+}
+
+function detectPlatformByOrigin(origin?: string | null): PlatformSlug | null {
+  if (!origin) return null;
+  const normalized = origin.toLowerCase();
+
+  if (normalized.includes('hotmart')) return 'hotmart';
+  if (normalized.includes('kiwify')) return 'kiwify';
+  if (normalized.includes('eduzz')) return 'eduzz';
+
+  return null;
+}
+
+function computePlatformPayload(
+  origin: string,
+  slug: PlatformSlug,
+  salesByProductName: Map<string, number>,
+  salesByPlatform: Record<PlatformSlug, number>,
+): PlatformPayload {
   const meta = PLATFORM_METADATA[slug];
   const integrations = getPublicIntegrationsByPlatform(slug);
-  const summaries = normaliseIntegrations(origin, slug, integrations);
+  const summaries = normaliseIntegrations(origin, slug, integrations, salesByProductName);
   const activeIntegrations = integrations.filter(integration => integration.status === 'ACTIVE').length;
-  const totalSales = integrations.reduce((sum, integration) => sum + integration.totalSales, 0);
+  const totalSales = salesByPlatform[slug] ?? 0;
 
   return {
     slug,
@@ -80,6 +109,46 @@ function computePlatformPayload(origin: string, slug: PlatformSlug): PlatformPay
       totalSales,
     },
   };
+}
+
+async function getSalesAggregates() {
+  const purchases = await prisma.purchase.findMany({
+    where: {
+      status: 'COMPLETED',
+    },
+    select: {
+      productName: true,
+      user: {
+        select: {
+          origin: true,
+        },
+      },
+    },
+  });
+
+  const salesByProductName = new Map<string, number>();
+  const salesByPlatform: Record<PlatformSlug, number> = {
+    hotmart: 0,
+    kiwify: 0,
+    eduzz: 0,
+  };
+
+  for (const purchase of purchases) {
+    if (purchase.productName) {
+      const key = purchase.productName.trim();
+      salesByProductName.set(key, (salesByProductName.get(key) ?? 0) + 1);
+    }
+
+    const platformFromName = detectPlatformByProductName(purchase.productName);
+    const platformFromOrigin = detectPlatformByOrigin(purchase.user?.origin ?? null);
+    const platform = platformFromName ?? platformFromOrigin;
+
+    if (platform) {
+      salesByPlatform[platform] += 1;
+    }
+  }
+
+  return { salesByProductName, salesByPlatform };
 }
 
 async function verifyAuth() {
@@ -108,7 +177,10 @@ export async function GET(request: NextRequest) {
   }
 
   const origin = new URL(request.url).origin;
-  const platforms = PLATFORM_SLUGS.map(slug => computePlatformPayload(origin, slug));
+  const { salesByProductName, salesByPlatform } = await getSalesAggregates();
+  const platforms = PLATFORM_SLUGS.map(slug =>
+    computePlatformPayload(origin, slug, salesByProductName, salesByPlatform),
+  );
 
   const totals = platforms.reduce(
     (acc, platform) => {
