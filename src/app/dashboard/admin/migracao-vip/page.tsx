@@ -353,6 +353,12 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
                             }}
                           />
                         </TableCell>
+                        <TableCell sx={{ color: '#64748B' }}>{product.externalId}</TableCell>
+                        <TableCell>
+                          <Typography sx={{ color: '#475569', wordBreak: 'break-all' }} variant="body2">
+                            {product.migrationCheckoutUrl || '—'}
+                          </Typography>
+                        </TableCell>
                         <TableCell>
                           <Chip
                             label={product.isActive ? 'Ativo' : 'Inativo'}
