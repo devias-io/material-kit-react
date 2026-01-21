@@ -79,12 +79,29 @@ model Purchase {
   id                   String   @id @default(cuid())
   userId               String
   amount               Float
+  totalPaid            Float?
+  installmentsTotal    Int?
+  platform             String?
+  productExternalId    String?
   productName          String?
   status               String   @default("COMPLETED")
   hotmartTransactionId String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   user                 User     @relation(fields: [userId], references: [id])
+}
+
+model MigrationProduct {
+  id                   String   @id @default(cuid())
+  platform             String
+  externalId           String
+  name                 String
+  migrationCheckoutUrl String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([platform, externalId])
+  @@map("migration_products")
 }
 
 model PasswordResetToken {
