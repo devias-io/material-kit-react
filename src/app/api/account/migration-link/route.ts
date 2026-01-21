@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { buildMigrationSimulation } from '@/lib/migration';
+import { selectMigrationCheckoutUrl } from '@/lib/migration-products';
 
 export async function POST(request: NextRequest) {
   try {
@@ -69,19 +70,25 @@ export async function POST(request: NextRequest) {
 
     const migrationProduct = await prisma.migrationProduct.findFirst({
       where: {
-        platform,
+        platform: { equals: platform, mode: 'insensitive' },
+        isActive: true,
         ...(orFilters.length ? { OR: orFilters } : {}),
       },
     });
 
-    if (!migrationProduct?.migrationCheckoutUrl) {
+    const paymentUrl =
+      migrationProduct && simulation
+        ? selectMigrationCheckoutUrl(migrationProduct, simulation.finalPrice)
+        : null;
+
+    if (!paymentUrl) {
       return NextResponse.json(
         { error: 'Link de migração não configurado para o seu produto.' },
         { status: 400 }
       );
     }
 
-    return NextResponse.json({ paymentUrl: migrationProduct.migrationCheckoutUrl, simulation });
+    return NextResponse.json({ paymentUrl, simulation });
   } catch (error) {
     console.error('❌ Erro ao gerar link de migração (account):', error);
     return NextResponse.json(

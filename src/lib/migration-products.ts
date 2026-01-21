@@ -7,6 +7,33 @@ export type MigrationProductPayload = {
   name: string;
 };
 
+type PriceTier = {
+  min: number;
+  max: number;
+  price?: number | null;
+  checkoutUrl: string;
+};
+
+type MigrationProductWithTiers = {
+  migrationCheckoutUrl: string | null;
+  priceTiers?: unknown;
+};
+
+export function selectMigrationCheckoutUrl(
+  product: MigrationProductWithTiers,
+  finalPrice: number
+): string | null {
+  const tiers = Array.isArray(product.priceTiers)
+    ? (product.priceTiers as PriceTier[])
+        .filter((tier) => Number.isFinite(tier?.min) && Number.isFinite(tier?.max) && tier?.checkoutUrl)
+        .sort((a, b) => a.min - b.min)
+    : [];
+
+  const matchedTier = tiers.find((tier) => finalPrice >= tier.min && finalPrice <= tier.max);
+
+  return matchedTier?.checkoutUrl ?? null;
+}
+
 type PlatformConfig = {
   platform: string;
   endpoint?: string;
@@ -91,8 +118,15 @@ export async function fetchPlatformProducts(platform: string): Promise<Migration
     // Buscar produtos únicos da tabela Purchase
     const purchases = await prisma.purchase.findMany({
       where: {
-        platform: platform.toLowerCase(),
-        productName: { not: null }
+        platform: { equals: platform, mode: 'insensitive' },
+        productName: { not: null },
+        NOT: { productName: { contains: 'VIP', mode: 'insensitive' } },
+        OR: [
+          { productName: { contains: 'LITE', mode: 'insensitive' } },
+          { productName: { contains: 'RENDA PASSIVA', mode: 'insensitive' } },
+          { productName: { contains: 'PROJETO AMERICA', mode: 'insensitive' } },
+          { productName: { contains: 'PROJETO AMÉRICA', mode: 'insensitive' } },
+        ],
       },
       select: {
         productName: true,

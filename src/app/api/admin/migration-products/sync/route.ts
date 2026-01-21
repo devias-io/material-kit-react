@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import { fetchPlatformProducts, getPlatformSyncConfig } from '@/lib/migration-products';
+import { fetchPlatformProducts } from '@/lib/migration-products';
 
 async function verifyAdmin() {
   try {
@@ -46,14 +46,6 @@ export async function POST(request: NextRequest) {
       console.log('[SYNC] Iniciando sincronização para:', platformToSync);
 
       try {
-        const syncConfig = getPlatformSyncConfig(platformToSync);
-        if (!syncConfig?.endpoint) {
-          throw new Error(`Endpoint de sincronização não configurado para ${platformToSync}.`);
-        }
-        if (!syncConfig.token) {
-          throw new Error(`Token da plataforma ${platformToSync} não configurado.`);
-        }
-
         const products = await fetchPlatformProducts(platformToSync);
         console.log('[SYNC] Produtos encontrados:', products.length);
 

@@ -7,10 +7,13 @@ export type MigrationSimulation = {
   toPlan: string;
   totalPaid: number;
   installmentsTotal: number | null;
+  installmentsPaid: number | null;
   platform: string | null;
   productExternalId: string | null;
   productName: string | null;
   monthsRemaining: number;
+  monthsUsed: number;
+  monthlyValue: number;
   credit: number;
   vipPrice: number;
   finalPrice: number;
@@ -69,8 +72,9 @@ function calculateMonthsRemaining(expirationDate: Date, now: Date): number {
     return 0;
   }
 
-  const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  return Math.max(0, Math.ceil(daysRemaining / 30));
+  const daysRemaining = diffMs / (1000 * 60 * 60 * 24);
+  const averageDaysInMonth = 30.4375;
+  return Math.max(0, Math.ceil(daysRemaining / averageDaysInMonth));
 }
 
 export function buildMigrationSimulation({
@@ -100,20 +104,31 @@ export function buildMigrationSimulation({
   }
 
   const totalPaid = typeof purchase.totalPaid === 'number' ? purchase.totalPaid : purchase.amount;
-  const monthsRemaining = calculateMonthsRemaining(user.expirationDate, now);
-  const credit = roundCurrency((totalPaid / DEFAULT_PLAN_DURATION_MONTHS) * monthsRemaining);
+  const monthsRemaining = Math.min(
+    DEFAULT_PLAN_DURATION_MONTHS,
+    calculateMonthsRemaining(user.expirationDate, now)
+  );
+  const monthsUsed = Math.max(0, DEFAULT_PLAN_DURATION_MONTHS - monthsRemaining);
+  const monthlyValue = roundCurrency(totalPaid / DEFAULT_PLAN_DURATION_MONTHS);
+  const credit = roundCurrency(monthlyValue * monthsRemaining);
   const vipPrice = getVipMigrationPrice();
   const finalPrice = roundCurrency(Math.max(0, vipPrice - credit));
+  const installmentsPaid = purchase.installmentsTotal
+    ? Math.min(purchase.installmentsTotal, monthsUsed)
+    : null;
 
   return {
     fromPlan: user.plan,
     toPlan: targetPlan,
     totalPaid,
     installmentsTotal: purchase.installmentsTotal ?? null,
+    installmentsPaid,
     platform: purchase.platform ?? user.origin ?? null,
     productExternalId: purchase.productExternalId ?? null,
     productName: purchase.productName ?? null,
     monthsRemaining,
+    monthsUsed,
+    monthlyValue,
     credit,
     vipPrice,
     finalPrice,
