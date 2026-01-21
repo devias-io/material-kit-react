@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
             expirationDate: true,
             customPermissions: true,
             origin: true,
+            mustChangePassword: true,
           },
         });
 
