@@ -19,6 +19,31 @@ type MigrationProductWithTiers = {
   priceTiers?: unknown;
 };
 
+function slugifyProductName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+function hashString(value: string): string {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+function buildNameBasedExternalId(platform: string, name: string): string {
+  const slug = slugifyProductName(name);
+  const hash = hashString(name);
+  const safeSlug = slug.length > 0 ? slug : 'produto';
+  return `${platform.toLowerCase()}-${safeSlug}-${hash}`;
+}
+
 export function selectMigrationCheckoutUrl(
   product: MigrationProductWithTiers,
   finalPrice: number
@@ -130,21 +155,37 @@ export async function fetchPlatformProducts(platform: string): Promise<Migration
       },
       select: {
         productName: true,
+        productExternalId: true,
         platform: true
       },
-      distinct: ['productName']
+      distinct: ['productExternalId', 'productName']
     });
 
     console.log(`[SYNC] Produtos encontrados na Purchase para ${platform}:`, purchases.length);
 
     // Mapear para o formato esperado
-    const products: MigrationProductPayload[] = purchases
-      .filter(p => p.productName)
-      .map((purchase, index) => ({
-        platform: platform.toUpperCase(),
-        externalId: `${platform.toLowerCase()}-${index + 1}`, // ID fictício mas único
-        name: purchase.productName!
-      }));
+    const platformKey = platform.toUpperCase();
+    const productMap = new Map<string, MigrationProductPayload>();
+
+    purchases.forEach((purchase) => {
+      const name = normalizeName(purchase.productName);
+      if (!name) {
+        return;
+      }
+      const externalId =
+        normalizeExternalId(purchase.productExternalId) ?? buildNameBasedExternalId(platformKey, name);
+      const mapKey = `${platformKey}::${externalId}`;
+
+      if (!productMap.has(mapKey)) {
+        productMap.set(mapKey, {
+          platform: platformKey,
+          externalId,
+          name,
+        });
+      }
+    });
+
+    const products = Array.from(productMap.values());
 
     if (products.length === 0) {
       console.log(`[SYNC] ⚠️ Nenhum produto encontrado na tabela Purchase para ${platform}`);
