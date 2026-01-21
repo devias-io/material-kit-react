@@ -79,6 +79,14 @@ function selectBestKiwifyAmount(values: unknown[]): number | undefined {
   return undefined;
 }
 
+function normalizeInstallments(value: unknown): number | null {
+  const parsed = typeof value === 'string' ? Number(value) : (value as number);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+  return Math.floor(parsed);
+}
+
 async function fixUnrealisticPurchaseAmounts(
   prismaClient: PrismaClient,
   userId: string
@@ -393,6 +401,9 @@ export async function POST(
 
     const amount = selectBestKiwifyAmount(amountCandidates);
     const normalizedAmount = amount ?? 0;
+    const installmentsTotal = normalizeInstallments(
+      orderData?.installments || orderData?.installments_number || webhookData?.installments
+    );
 
     console.log('🔍 Dados extraídos do Kiwify:', {
       event, buyerEmail, buyerName, transactionId, amount: normalizedAmount,
@@ -467,6 +478,9 @@ export async function POST(
             data: {
               userId: user.id,
               amount: -normalizedAmount,
+              totalPaid: -normalizedAmount,
+              installmentsTotal,
+              platform: 'KIWIFY',
               productName: `${integrationData.name} - REEMBOLSO`,
               hotmartTransactionId: transactionId,
               status: 'REFUNDED'
@@ -659,6 +673,9 @@ export async function POST(
             data: {
               userId: user.id,
               amount: normalizedAmount,
+              totalPaid: normalizedAmount,
+              installmentsTotal,
+              platform: 'KIWIFY',
               productName: integrationData.name,
               status: 'COMPLETED',
             },
@@ -676,6 +693,9 @@ export async function POST(
           data: {
             userId: user.id,
             amount: normalizedAmount,
+            totalPaid: normalizedAmount,
+            installmentsTotal,
+            platform: 'KIWIFY',
             productName: integrationData.name, // 🔥 NOME DETECTADO
             hotmartTransactionId: transactionId,
             status: 'COMPLETED',
