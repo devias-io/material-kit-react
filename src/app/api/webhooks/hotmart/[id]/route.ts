@@ -378,6 +378,18 @@ export async function POST(
     const transactionId = purchaseData?.transaction || purchaseData?.transaction_id || 
                          webhookData.transaction || `TXN_${integration.integrationId}_${Date.now()}`;
     const amount = purchaseData?.price?.value || purchaseData?.amount || webhookData.price || 0;
+    const productExternalId = normalizarIdHotmart(
+      productData?.id ||
+      productData?.product_id ||
+      productData?.prod ||
+      webhookData.product_id ||
+      webhookData.prod ||
+      webhookData.id
+    );
+    const installmentsTotal = purchaseData?.payment?.installments_number
+      ?? webhookData?.data?.purchase?.payment?.installments_number
+      ?? webhookData?.purchase?.payment?.installments_number
+      ?? null;
 
     console.log('🔍 Dados extraídos da Hotmart:', {
       event, buyerEmail, buyerName, transactionId, amount,
@@ -449,6 +461,10 @@ export async function POST(
             data: {
               userId: user.id,
               amount: -(amount || 0),
+              totalPaid: -(amount || 0),
+              installmentsTotal: installmentsTotal ? Number(installmentsTotal) : null,
+              platform: 'HOTMART',
+              productExternalId,
               productName: `${integrationData.name} - REEMBOLSO`,
               hotmartTransactionId: transactionId,
               status: 'REFUNDED'
@@ -666,6 +682,10 @@ export async function POST(
         data: {
           userId: user.id,
           amount: amount || 0,
+          totalPaid: amount || 0,
+          installmentsTotal: installmentsTotal ? Number(installmentsTotal) : null,
+          platform: 'HOTMART',
+          productExternalId,
           productName: integrationData.name,
           hotmartTransactionId: transactionId,
           status: 'COMPLETED'
