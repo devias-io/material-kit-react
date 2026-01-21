@@ -4,10 +4,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isLifetimePlan } from '@/lib/lifetime-plans';
 import { getHotmartBuyerPhone } from '@/lib/phone';
+import { hashPassword } from '@/lib/auth/password';
 
 // Função para gerar senha segura
 function generateSecurePassword(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
   const symbols = '!@#$%&*';
   let password = '';
   
@@ -31,7 +32,10 @@ function calculateExpirationDate(plan: string): Date | null {
   const expirationMap: Record<string, number> = {
     'VIP': 365,
     'LITE': 365,
-    'AMERICA': 365
+    'LITE_V2': 365,
+    'AMERICA': 365,
+    'FIIS': 365,
+    'RENDA_PASSIVA': 365
   };
 
   const days = expirationMap[plan as keyof typeof expirationMap] ?? 365;
@@ -109,6 +113,7 @@ export async function POST(request: NextRequest) {
       'fb056612-bcc6-4217-9e6d-2a5d1110ac2f': 'VIP',
       'vip-plan': 'VIP',
       'lite-plan': 'LITE',
+      'lite-2-plan': 'LITE_V2',
       'renda-passiva': 'RENDA_PASSIVA',
       'fiis': 'FIIS',
       'america': 'AMERICA'
@@ -118,9 +123,6 @@ export async function POST(request: NextRequest) {
     const plan = PRODUCT_PLAN_MAPPING[productId] || 'VIP';
     console.log(`✅ Produto "${productId}" → Plano ${plan} ${PRODUCT_PLAN_MAPPING[productId] ? '(mapeado)' : '(padrão VIP)'}`);
     
-    // REMOVER validação de produto - aceitar todos
-    // Qualquer produto da Hotmart vai criar usuário VIP
-    
     // Conectar ao banco
     await prisma.$connect();
     
@@ -129,6 +131,9 @@ export async function POST(request: NextRequest) {
     let user = await prisma.user.findUnique({
       where: { email }
     });
+
+    let isNewUser = false;
+    let tempPassword = '';
     
     if (user) {
       // ATUALIZAR usuário existente
@@ -157,6 +162,10 @@ export async function POST(request: NextRequest) {
       
     } else {
       // CRIAR novo usuário
+      isNewUser = true;
+      tempPassword = generateSecurePassword();
+      const hashedPassword = await hashPassword(tempPassword);
+      
       console.log(`➕ Criando novo usuário: ${email}`);
       
       const nameParts = buyerName.split(' ');
@@ -173,7 +182,7 @@ export async function POST(request: NextRequest) {
           status: 'ACTIVE',
           hotmartCustomerId: transactionId,
           expirationDate: calculateExpirationDate(plan),
-          password: generateSecurePassword(),
+          password: hashedPassword,
           passwordCreatedAt: new Date(),
           mustChangePassword: true,
           customPermissions: '[]'
@@ -183,18 +192,88 @@ export async function POST(request: NextRequest) {
       console.log(`✅ Novo usuário criado: ${email} → ${plan}`);
     }
     
-    // Registrar compra
+    // ✅ REGISTRAR COMPRA COM PROTEÇÃO CONTRA DUPLICATAS
     try {
-      await prisma.purchase.create({
-        data: {
-          userId: user.id,
-          amount: amount || 0,
-          productName: productName,
-          hotmartTransactionId: transactionId,
-          status: 'COMPLETED'
+      let purchaseHandled = false;
+
+      // ✅ ESTRATÉGIA 1: Verificar por transactionId (duplicata exata)
+      if (transactionId) {
+        const existingPurchaseByTxn = await prisma.purchase.findFirst({
+          where: {
+            hotmartTransactionId: transactionId,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        });
+
+        if (existingPurchaseByTxn) {
+          // ✅ Mesma transação = atualizar
+          await prisma.purchase.update({
+            where: { id: existingPurchaseByTxn.id },
+            data: {
+              userId: user.id,
+              amount: amount || 0,
+              productName: productName,
+              status: 'COMPLETED',
+            },
+          });
+
+          console.log(`♻️ Compra Hotmart atualizada (mesma transação): ${amount} - ${productName} (TXN: ${transactionId})`);
+          purchaseHandled = true;
         }
-      });
-      console.log(`💰 Compra registrada: ${amount}`);
+      }
+
+      // ✅ ESTRATÉGIA 2: Verificar mesmo produto em período próximo (7 dias)
+      if (!purchaseHandled) {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        
+        const recentSameProduct = await prisma.purchase.findFirst({
+          where: {
+            userId: user.id,
+            productName: productName,
+            createdAt: {
+              gte: sevenDaysAgo // Últimos 7 dias
+            },
+            status: 'COMPLETED'
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        });
+
+        if (recentSameProduct) {
+          // ✅ Mesmo produto em menos de 7 dias = atualizar (duplicata)
+          await prisma.purchase.update({
+            where: { id: recentSameProduct.id },
+            data: {
+              amount: amount || 0,
+              hotmartTransactionId: transactionId,
+              status: 'COMPLETED',
+            },
+          });
+
+          console.log(`♻️ Compra Hotmart atualizada (mesmo produto em 7 dias): ${amount} - ${productName}`);
+          purchaseHandled = true;
+        }
+      }
+
+      // ✅ CRIAR NOVA COMPRA se:
+      // - Não existe transação duplicada E
+      // - Não existe mesmo produto nos últimos 7 dias
+      // Isso permite: renovações anuais, produtos diferentes, primeira compra
+      if (!purchaseHandled) {
+        await prisma.purchase.create({
+          data: {
+            userId: user.id,
+            amount: amount || 0,
+            productName: productName,
+            hotmartTransactionId: transactionId,
+            status: 'COMPLETED'
+          }
+        });
+        console.log(`💰 Nova compra Hotmart registrada: ${amount} - ${productName} (TXN: ${transactionId})`);
+      }
     } catch (purchaseError) {
       console.error('⚠️ Erro ao registrar compra (não crítico):', purchaseError);
     }
@@ -209,7 +288,8 @@ export async function POST(request: NextRequest) {
         email: user.email,
         plan: user.plan,
         status: user.status,
-        isNewUser: !user.password
+        isNewUser: isNewUser,
+        tempPassword: isNewUser ? tempPassword : undefined
       },
       transaction: {
         id: transactionId,
@@ -219,7 +299,7 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     };
     
-    console.log('🎉 Webhook processado com sucesso:', response);
+    console.log('🎉 Webhook Hotmart processado com sucesso:', response);
     
     return NextResponse.json(response);
     
@@ -251,6 +331,11 @@ export async function GET() {
     endpoints: {
       POST: 'Receber webhooks da Hotmart',
       GET: 'Status da API'
+    },
+    features: {
+      duplicateProtection: true,
+      passwordHashing: true,
+      lifetimePlans: true
     }
   });
 }
