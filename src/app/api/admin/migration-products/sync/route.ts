@@ -29,40 +29,48 @@ export async function POST(request: NextRequest) {
     const platform = body?.platform?.toUpperCase();
 
     const platformsToSync = platform ? [platform] : SUPPORTED_PLATFORMS;
-    const results = [];
+    const results: Array<{ platform: string; synced: number; error?: string }> = [];
 
     for (const platformToSync of platformsToSync) {
       if (!SUPPORTED_PLATFORMS.includes(platformToSync)) {
         continue;
       }
 
-      const products = await fetchPlatformProducts(platformToSync);
+      try {
+        const products = await fetchPlatformProducts(platformToSync);
 
-      const upserts = await Promise.all(
-        products.map((product) =>
-          prisma.migrationProduct.upsert({
-            where: {
-              platform_externalId: {
+        const upserts = await Promise.all(
+          products.map((product) =>
+            prisma.migrationProduct.upsert({
+              where: {
+                platform_externalId: {
+                  platform: product.platform,
+                  externalId: product.externalId,
+                },
+              },
+              update: {
+                name: product.name,
+              },
+              create: {
                 platform: product.platform,
                 externalId: product.externalId,
+                name: product.name,
               },
-            },
-            update: {
-              name: product.name,
-            },
-            create: {
-              platform: product.platform,
-              externalId: product.externalId,
-              name: product.name,
-            },
-          })
-        )
-      );
+            })
+          )
+        );
 
-      results.push({
-        platform: platformToSync,
-        synced: upserts.length,
-      });
+        results.push({
+          platform: platformToSync,
+          synced: upserts.length,
+        });
+      } catch (error) {
+        results.push({
+          platform: platformToSync,
+          synced: 0,
+          error: error instanceof Error ? error.message : 'Erro ao sincronizar produtos.',
+        });
+      }
     }
 
     return NextResponse.json({ results });

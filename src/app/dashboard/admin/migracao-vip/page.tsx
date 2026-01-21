@@ -43,6 +43,7 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
   const [loading, setLoading] = React.useState(true);
   const [syncing, setSyncing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [syncNotice, setSyncNotice] = React.useState<string | null>(null);
   const [editingLinks, setEditingLinks] = React.useState<Record<string, string>>({});
 
   React.useEffect(() => {
@@ -84,6 +85,7 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
     try {
       setSyncing(true);
       setError(null);
+      setSyncNotice(null);
       const response = await fetch('/api/admin/migration-products/sync', {
         method: 'POST',
         credentials: 'include',
@@ -93,6 +95,16 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data?.error || 'Erro ao sincronizar produtos.');
+      }
+      const results = Array.isArray(data?.results) ? data.results : [];
+      const failures = results.filter((result: { error?: string }) => result.error);
+      if (failures.length > 0) {
+        const message = failures
+          .map((result: { platform: string; error?: string }) => `${result.platform}: ${result.error}`)
+          .join(' | ');
+        setError(`Falha ao sincronizar: ${message}`);
+      } else {
+        setSyncNotice('✅ Produtos sincronizados com sucesso.');
       }
       await loadProducts();
     } catch (err) {
@@ -175,6 +187,11 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
             {error && (
               <Alert severity="warning" sx={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
                 {error}
+              </Alert>
+            )}
+            {syncNotice && (
+              <Alert severity="success" sx={{ backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0' }}>
+                {syncNotice}
               </Alert>
             )}
 
