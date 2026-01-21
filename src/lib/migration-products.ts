@@ -91,8 +91,15 @@ export async function fetchPlatformProducts(platform: string): Promise<Migration
     // Buscar produtos únicos da tabela Purchase
     const purchases = await prisma.purchase.findMany({
       where: {
-        platform: platform.toLowerCase(),
-        productName: { not: null }
+        platform: { equals: platform, mode: 'insensitive' },
+        productName: { not: null },
+        NOT: { productName: { contains: 'VIP', mode: 'insensitive' } },
+        OR: [
+          { productName: { contains: 'LITE', mode: 'insensitive' } },
+          { productName: { contains: 'RENDA PASSIVA', mode: 'insensitive' } },
+          { productName: { contains: 'PROJETO AMERICA', mode: 'insensitive' } },
+          { productName: { contains: 'PROJETO AMÉRICA', mode: 'insensitive' } },
+        ],
       },
       select: {
         productName: true,

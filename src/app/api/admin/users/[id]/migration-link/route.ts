@@ -85,7 +85,8 @@ export async function POST(
 
     const migrationProduct = await prisma.migrationProduct.findFirst({
       where: {
-        platform,
+        platform: { equals: platform, mode: 'insensitive' },
+        isActive: true,
         ...(orFilters.length ? { OR: orFilters } : {}),
       },
     });
