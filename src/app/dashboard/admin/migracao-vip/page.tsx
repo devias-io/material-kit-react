@@ -290,6 +290,7 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
                       <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Produto</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Origem</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Elegível</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: '#475569' }}>ID externo</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Link de migração</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Ações</TableCell>
@@ -299,6 +300,7 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
                     {products.map((product) => {
                       const platformKey = product.platform.toUpperCase();
                       const isManual = product.externalId.startsWith('manual-');
+                      const isEligible = product.isActive && Boolean(product.migrationCheckoutUrl);
                       return (
                         <TableRow key={product.id} hover>
                         <TableCell>
@@ -327,6 +329,17 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
                             sx={{
                               backgroundColor: product.isActive ? '#ECFDF5' : '#FEE2E2',
                               color: product.isActive ? '#047857' : '#B91C1C',
+                              fontWeight: 500,
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={isEligible ? 'Pronto' : 'Pendente'}
+                            size="small"
+                            sx={{
+                              backgroundColor: isEligible ? '#DCFCE7' : '#FFE4E6',
+                              color: isEligible ? '#166534' : '#BE123C',
                               fontWeight: 500,
                             }}
                           />
@@ -361,7 +374,7 @@ export default function MigrationVipConfigPage(): React.JSX.Element {
                     })}
                     {products.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} sx={{ textAlign: 'center', color: '#64748B' }}>
+                        <TableCell colSpan={8} sx={{ textAlign: 'center', color: '#64748B' }}>
                           Nenhum produto sincronizado ainda.
                         </TableCell>
                       </TableRow>
