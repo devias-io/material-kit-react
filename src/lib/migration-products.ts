@@ -1,5 +1,11 @@
 import 'server-only';
 
+import {
+  EDUZZ_PUBLIC_INTEGRATIONS,
+  HOTMART_INTEGRATIONS,
+  KIWIFY_PUBLIC_INTEGRATIONS,
+} from '@/data/integrations';
+
 export type MigrationProductPayload = {
   platform: string;
   externalId: string;
@@ -87,7 +93,7 @@ function mapProductItem(platform: string, item: any): MigrationProductPayload | 
 export async function fetchPlatformProducts(platform: string): Promise<MigrationProductPayload[]> {
   const config = getPlatformSyncConfig(platform);
   if (!config?.endpoint) {
-    throw new Error(`Endpoint de sincronização não configurado para ${platform}.`);
+    return getFallbackProducts(platform);
   }
   if (!config.token) {
     throw new Error(`Token da plataforma ${platform} não configurado.`);
@@ -110,8 +116,38 @@ export async function fetchPlatformProducts(platform: string): Promise<Migration
     .filter((item): item is MigrationProductPayload => Boolean(item));
 
   if (mapped.length === 0) {
-    throw new Error(`Nenhum produto encontrado para ${platform}.`);
+    return getFallbackProducts(platform);
   }
 
   return mapped;
+}
+
+function getFallbackProducts(platform: string): MigrationProductPayload[] {
+  const normalizedPlatform = platform.toUpperCase();
+
+  if (normalizedPlatform === 'HOTMART') {
+    return HOTMART_INTEGRATIONS.map((integration) => ({
+      platform: 'HOTMART',
+      externalId: integration.productId,
+      name: integration.productName,
+    }));
+  }
+
+  if (normalizedPlatform === 'KIWIFY') {
+    return KIWIFY_PUBLIC_INTEGRATIONS.map((integration) => ({
+      platform: 'KIWIFY',
+      externalId: integration.id,
+      name: integration.productName,
+    }));
+  }
+
+  if (normalizedPlatform === 'EDUZZ') {
+    return EDUZZ_PUBLIC_INTEGRATIONS.map((integration) => ({
+      platform: 'EDUZZ',
+      externalId: integration.id,
+      name: integration.productName,
+    }));
+  }
+
+  return [];
 }
