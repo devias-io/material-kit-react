@@ -48,6 +48,14 @@ const ADMIN_CARDS: AdminCard[] = [
     permission: 'admin-renovacoes'
   },
   {
+    title: 'Migração VIP',
+    description: 'Administre produtos e regras de migração para o plano VIP.',
+    icon: '🛡️',
+    href: '/dashboard/admin/migracao-vip',
+    status: 'active',
+    permission: 'admin-migracao-vip'
+  },
+  {
     title: 'Gestão de Empresas',
     description: 'Gerencie cadastro de empresas listadas na bolsa, setores e informações corporativas.',
     icon: '🏭',
@@ -77,7 +85,7 @@ const ADMIN_CARDS: AdminCard[] = [
     icon: '📣',
     href: '/dashboard/admin/notificacoes',
     status: 'active',
-    permission: 'admin'
+    permission: 'admin-notificacoes'
   },
   {
     title: 'Relatório Semanal',

@@ -238,6 +238,13 @@ export const navItems = [
         page: 'admin-renovacoes'
       },
       {
+        key: 'admin-migracao-vip',
+        title: 'Migração VIP',
+        href: paths.dashboard.adminMigracaoVip,
+        icon: 'shield-check',
+        page: 'admin-migracao-vip'
+      },
+      {
         key: 'admin-empresas',
         title: 'Gestão de Empresas',
         href: paths.dashboard.adminEmpresas,
@@ -273,6 +280,13 @@ export const navItems = [
         href: paths.dashboard.adminRelatorios,
         icon: 'chart-bar',
         page: 'admin-relatorios'
+      },
+      {
+        key: 'admin-notificacoes',
+        title: 'Notificações',
+        href: paths.dashboard.adminNotificacoes,
+        icon: 'newspaper',
+        page: 'admin-notificacoes'
       },
       // 🆕 NOVO ITEM: Admin do Relatório Semanal
       {
