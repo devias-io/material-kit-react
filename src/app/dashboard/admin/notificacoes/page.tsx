@@ -63,6 +63,8 @@ export default function AdminNotificationsBroadcastPage() {
   const [category, setCategory] = useState('general');
   const [actionUrl, setActionUrl] = useState('');
   const [campaignTag, setCampaignTag] = useState('');
+  const [sendEmail, setSendEmail] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('');
   const [previewMode, setPreviewMode] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>({ status: 'idle', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,6 +86,8 @@ export default function AdminNotificationsBroadcastPage() {
     setMessage('');
     setActionUrl('');
     setCampaignTag('');
+    setSendEmail(false);
+    setEmailSubject('');
     setPreviewMode(false);
   };
 
@@ -140,16 +144,18 @@ export default function AdminNotificationsBroadcastPage() {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify({
-          title: title.trim(),
-          message: message.trim(),
-          type,
-          category,
-          actionUrl: actionUrl.trim() || undefined,
-          targetPlans: selectedPlans,
-          metadata: {
-            scope: 'admin-dashboard-broadcast',
-            previewMode,
+          body: JSON.stringify({
+            title: title.trim(),
+            message: message.trim(),
+            type,
+            category,
+            actionUrl: actionUrl.trim() || undefined,
+            sendEmail,
+            emailSubject: sendEmail && emailSubject.trim() ? emailSubject.trim() : undefined,
+            targetPlans: selectedPlans,
+            metadata: {
+              scope: 'admin-dashboard-broadcast',
+              previewMode,
             ...(campaignTag.trim() ? { campaignTag: campaignTag.trim() } : {})
           }
         })
@@ -163,10 +169,13 @@ export default function AdminNotificationsBroadcastPage() {
       const data = await response.json();
       const totalRecipients = Array.isArray(data?.recipients) ? data.recipients.length : 0;
       const totalNotifications = typeof data?.notificationsCreated === 'number' ? data.notificationsCreated : totalRecipients;
+      const emailSummary = data?.email?.requested
+        ? ` E-mails: ${data.email.sent ?? 0} enviados${data.email.failed ? `, ${data.email.failed} falharam` : ''}.`
+        : '';
 
       setFeedback({
         status: 'success',
-        message: `Notificação enviada com sucesso para ${totalNotifications} usuário(s).`
+        message: `Notificação enviada com sucesso para ${totalNotifications} usuário(s).${emailSummary}`
       });
       resetForm();
     } catch (error: any) {
@@ -418,6 +427,17 @@ export default function AdminNotificationsBroadcastPage() {
       padding: '20px',
       marginTop: '12px',
       backgroundColor: '#f8fafc'
+    },
+    inlineBadge: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '6px',
+      padding: '4px 10px',
+      borderRadius: '9999px',
+      backgroundColor: '#e0e7ff',
+      color: '#3730a3',
+      fontSize: '0.8rem',
+      fontWeight: 600
     }
   } as const;
 
@@ -584,6 +604,38 @@ export default function AdminNotificationsBroadcastPage() {
                 Esse identificador ficará salvo nos metadados para facilitar auditoria e acompanhamento.
               </span>
             </div>
+
+            <div style={styles.checkboxRow}>
+              <input
+                id="send-email"
+                type="checkbox"
+                checked={sendEmail}
+                onChange={event => setSendEmail(event.target.checked)}
+                style={styles.checkboxInput}
+              />
+              <label htmlFor="send-email" style={{ ...styles.helper, fontWeight: 600, cursor: 'pointer' }}>
+                Enviar também por e-mail
+              </label>
+              <span style={styles.inlineBadge}>SMTP Vercel</span>
+            </div>
+
+            {sendEmail && (
+              <div style={styles.inputGroup}>
+                <label style={styles.label} htmlFor="notification-email-subject">
+                  Assunto do e-mail (opcional)
+                </label>
+                <input
+                  id="notification-email-subject"
+                  style={styles.input}
+                  value={emailSubject}
+                  onChange={event => setEmailSubject(event.target.value)}
+                  placeholder="Ex.: Atualização importante para sua assinatura"
+                />
+                <span style={styles.helper}>
+                  Se deixar em branco, o assunto será montado automaticamente a partir do título e do tipo.
+                </span>
+              </div>
+            )}
 
             <div style={styles.checkboxRow}>
               <input
