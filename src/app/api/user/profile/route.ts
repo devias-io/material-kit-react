@@ -37,7 +37,8 @@ export async function GET(request: NextRequest) {
 
     const cacheKey = `user:profile:${session.user.id}`;
 
-    return await withTimeout(CacheService.withCache({
+    // ✅ CORRIGIDO: Separar busca do cache e criação da Response
+    const userData = await withTimeout(CacheService.withCache({
       key: cacheKey,
       ttlSeconds: 60,
       tags: ['auth', `user:${session.user.id}`],
@@ -49,7 +50,6 @@ export async function GET(request: NextRequest) {
             firstName: true,
             lastName: true,
             email: true,
-            // role: true,  // ❌ REMOVIDO - campo não existe
             avatar: true,
             plan: true,
             status: true,
@@ -64,9 +64,13 @@ export async function GET(request: NextRequest) {
           throw new Error('User not found');
         }
 
-        return NextResponse.json(user);
+        return user; // ✅ Retornar apenas os dados
       },
     }), REQUEST_TIMEOUT_MS, 'Profile lookup timed out');
+
+    // ✅ Criar Response FORA do cache
+    return NextResponse.json(userData);
+
   } catch (error) {
     const isTimeout = error instanceof Error && error.message.toLowerCase().includes('timed out');
     const status = isTimeout ? 504 : error instanceof Error && error.message === 'User not found' ? 404 : 500;
@@ -96,8 +100,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const session = await withTimeout(auth(), REQUEST_TIMEOUT_MS, 'Authentication timed out');
-    const { firstName, lastName, avatar } = await withTimeout(request.json(), REQUEST_TIMEOUT_MS, 'Body parsing timed out');
-
+    
     if (!session?.user?.id) {
       return NextResponse.json({
         error: 'Usuário não autenticado'
@@ -105,6 +108,12 @@ export async function PUT(request: NextRequest) {
     }
 
     userId = session.user.id;
+
+    const { firstName, lastName, avatar } = await withTimeout(
+      request.json(), 
+      REQUEST_TIMEOUT_MS, 
+      'Body parsing timed out'
+    );
 
     if ((firstName && typeof firstName !== 'string') || (lastName && typeof lastName !== 'string')) {
       console.warn('[PUT /api/user/profile] Dados inválidos recebidos', { correlationId, userId });
@@ -124,7 +133,7 @@ export async function PUT(request: NextRequest) {
       }
     }), REQUEST_TIMEOUT_MS, 'Profile update timed out');
 
-    // ✅ Invalidar cache após atualização
+    // Invalidar cache após atualização
     await CacheService.invalidate(`user:profile:${session.user.id}`);
 
     return NextResponse.json({
@@ -137,6 +146,7 @@ export async function PUT(request: NextRequest) {
         avatar: updatedUser.avatar
       }
     });
+
   } catch (error) {
     const isTimeout = error instanceof Error && error.message.toLowerCase().includes('timed out');
 
@@ -155,5 +165,4 @@ export async function PUT(request: NextRequest) {
       error: 'Erro interno do servidor'
     }, { status: 500 });
   }
-  // ✅ REMOVIDO: prisma.$disconnect() - não usar com singleton
 }
