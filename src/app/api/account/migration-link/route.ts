@@ -51,10 +51,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nenhuma compra encontrada para gerar migração.' }, { status: 404 });
     }
 
+    console.log('🔍 [DEBUG] Purchase encontrada:', {
+      platform: purchase.platform,
+      productExternalId: purchase.productExternalId,
+      productName: purchase.productName,
+      amount: purchase.amount,
+    });
+
     const simulation = buildMigrationSimulation({
       user,
       purchase,
       targetPlan,
+    });
+
+    console.log('💰 [DEBUG] Simulação:', {
+      finalPrice: simulation?.finalPrice,
+      monthsUsed: simulation?.monthsUsed,
+      monthsRemaining: simulation?.monthsRemaining,
     });
 
     const platform = purchase.platform ?? user.origin ?? 'MANUAL';
@@ -68,6 +81,12 @@ export async function POST(request: NextRequest) {
       orFilters.push({ name: { equals: normalizedName, mode: 'insensitive' } });
     }
 
+    console.log('🔎 [DEBUG] Buscando produto com:', {
+      platform,
+      normalizedPlatform: platform.toUpperCase(),
+      orFilters,
+    });
+
     const migrationProduct = await prisma.migrationProduct.findFirst({
       where: {
         platform: { equals: platform, mode: 'insensitive' },
@@ -76,12 +95,28 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.log('📦 [DEBUG] Produto encontrado:', migrationProduct ? {
+      id: migrationProduct.id,
+      externalId: migrationProduct.externalId,
+      name: migrationProduct.name,
+      hasPriceTiers: !!migrationProduct.priceTiers,
+      priceTiers: migrationProduct.priceTiers,
+    } : 'NENHUM PRODUTO ENCONTRADO');
+
     const paymentUrl =
       migrationProduct && simulation
         ? selectMigrationCheckoutUrl(migrationProduct, simulation.finalPrice)
         : null;
 
+    console.log('🔗 [DEBUG] Link gerado:', paymentUrl ? 'SIM' : 'NÃO');
+
     if (!paymentUrl) {
+      console.error('❌ [DEBUG] Falha ao gerar link:', {
+        temProduto: !!migrationProduct,
+        temSimulacao: !!simulation,
+        finalPrice: simulation?.finalPrice,
+      });
+      
       return NextResponse.json(
         { error: 'Link de migração não configurado para o seu produto.' },
         { status: 400 }
