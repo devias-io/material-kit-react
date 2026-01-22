@@ -3508,7 +3508,7 @@ visibleModules.map(module => {
   const now = new Date();
       const releaseDate = new Date(module.releaseDate);
       const releaseIsValid = !Number.isNaN(releaseDate.getTime());
-      const isReleased = module.isReleased ?? (releaseIsValid && releaseDate <= now);
+      const isReleased = releaseIsValid && releaseDate <= now;
       const isHidden = Boolean(module.isHidden);
       const isCollapsed =
         isAdmin && !viewAsStudent && collapsedModules.has(module.id) && editingModuleId !== module.id;
