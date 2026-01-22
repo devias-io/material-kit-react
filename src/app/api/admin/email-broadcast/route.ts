@@ -3,16 +3,14 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { enviarEmailComunicado } from '@/lib/auth/email';
 
-export const maxDuration = 10;
+export const maxDuration = 60; // Aumentado
 
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-
     if (!session?.user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
-
     if (session.user.plan !== 'ADMIN') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
@@ -31,7 +29,6 @@ export async function POST(request: NextRequest) {
     }
 
     const plansInput: string[] = [];
-
     if (Array.isArray(targetPlans)) {
       plansInput.push(
         ...targetPlans
@@ -40,13 +37,11 @@ export async function POST(request: NextRequest) {
           .filter(Boolean)
       );
     }
-
     if (typeof targetPlan === 'string' && targetPlan.trim()) {
       plansInput.push(targetPlan.trim());
     }
 
     const uniquePlans = Array.from(new Set(plansInput));
-
     if (uniquePlans.length === 0) {
       return NextResponse.json({ error: 'targetPlans is required' }, { status: 400 });
     }
@@ -75,17 +70,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No recipients found for the provided criteria' }, { status: 404 });
     }
 
-    const emailResult = await enviarEmailComunicado({
-      recipients: validRecipients,
-      subject: subject.trim(),
-      body: message,
-      isHtml: Boolean(isHtml)
-    });
+    // Enviar em lotes de 50 para evitar timeout
+    const BATCH_SIZE = 50;
+    const allSent: string[] = [];
+    const allFailed: string[] = [];
+
+    for (let i = 0; i < validRecipients.length; i += BATCH_SIZE) {
+      const batch = validRecipients.slice(i, i + BATCH_SIZE);
+      
+      try {
+        const emailResult = await enviarEmailComunicado({
+          recipients: batch,
+          subject: subject.trim(),
+          body: message,
+          isHtml: Boolean(isHtml)
+        });
+        
+        allSent.push(...emailResult.sent);
+        allFailed.push(...emailResult.failed);
+      } catch (error) {
+        console.error(`Error sending batch ${i / BATCH_SIZE + 1}:`, error);
+        allFailed.push(...batch.map(r => r.email));
+      }
+    }
 
     return NextResponse.json({
-      message: `Email broadcast sent to ${emailResult.sent.length} recipient(s)`,
-      recipients: emailResult.sent,
-      failed: emailResult.failed
+      message: `Email broadcast sent to ${allSent.length} recipient(s)`,
+      recipients: allSent,
+      failed: allFailed,
+      total: validRecipients.length
     }, { status: 200 });
   } catch (error) {
     console.error('Error sending broadcast email:', error);
