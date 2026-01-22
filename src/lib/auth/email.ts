@@ -595,8 +595,8 @@ export async function enviarEmailCredenciais(
 }
 
 export async function enviarEmailResetSenha(
-  email: string, 
-  nome: string, 
+  email: string,
+  nome: string,
   token: string
 ): Promise<void> {
   const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password/${token}`;
@@ -722,44 +722,33 @@ export async function enviarEmailResetSenha(
   });
 }
 
-type NotificationRecipient = {
+type BroadcastRecipient = {
   email: string;
   name?: string | null;
 };
 
-type NotificationEmailPayload = {
-  recipients: NotificationRecipient[];
-  title: string;
-  message: string;
-  subject?: string;
-  actionUrl?: string;
-  category?: string;
-  type?: 'info' | 'success' | 'warning' | 'error';
+type BroadcastEmailPayload = {
+  recipients: BroadcastRecipient[];
+  subject: string;
+  body: string;
+  isHtml?: boolean;
 };
 
-const NOTIFICATION_TYPE_LABELS: Record<NonNullable<NotificationEmailPayload['type']>, string> = {
-  info: 'Informativo',
-  success: 'Sucesso',
-  warning: 'Aviso',
-  error: 'Alerta'
-};
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-const NOTIFICATION_TYPE_COLORS: Record<NonNullable<NotificationEmailPayload['type']>, string> = {
-  info: '#2563eb',
-  success: '#059669',
-  warning: '#d97706',
-  error: '#dc2626'
-};
-
-export async function enviarEmailNotificacao({
+export async function enviarEmailComunicado({
   recipients,
-  title,
-  message,
   subject,
-  actionUrl,
-  category,
-  type = 'info'
-}: NotificationEmailPayload): Promise<{
+  body,
+  isHtml = false
+}: BroadcastEmailPayload): Promise<{
   sent: string[];
   failed: Array<{ email: string; error: string }>;
 }> {
@@ -768,20 +757,19 @@ export async function enviarEmailNotificacao({
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://portal.fatosdabolsa.com.br';
-  const highlightColor = NOTIFICATION_TYPE_COLORS[type];
-  const typeLabel = NOTIFICATION_TYPE_LABELS[type];
-  const subjectLine = subject?.trim() || `${typeLabel} • ${title}`;
+  const subjectLine = subject.trim();
 
   const sendResults = await Promise.allSettled(
     recipients.map(recipient => {
       const recipientName = recipient.name?.trim() || 'assinante';
+      const safeBody = isHtml ? body : escapeHtml(body).replace(/\n/g, '<br/>');
       const htmlContent = `
         <!DOCTYPE html>
         <html>
           <head>
             <meta charset="UTF-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>${title}</title>
+            <title>${subjectLine}</title>
             <style>
               body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -798,7 +786,7 @@ export async function enviarEmailNotificacao({
                 box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
               }
               .header {
-                background: ${highlightColor};
+                background: #0f172a;
                 padding: 32px;
                 color: #fff;
               }
@@ -820,26 +808,6 @@ export async function enviarEmailNotificacao({
                 line-height: 1.6;
                 color: #334155;
               }
-              .badge {
-                display: inline-block;
-                padding: 6px 12px;
-                border-radius: 9999px;
-                background: ${highlightColor}22;
-                color: ${highlightColor};
-                font-weight: 600;
-                font-size: 12px;
-                margin-bottom: 16px;
-              }
-              .button {
-                display: inline-block;
-                padding: 12px 20px;
-                border-radius: 10px;
-                text-decoration: none;
-                background: ${highlightColor};
-                color: #fff !important;
-                font-weight: 600;
-                margin-top: 16px;
-              }
               .footer {
                 padding: 24px 32px;
                 background: #f1f5f9;
@@ -852,18 +820,12 @@ export async function enviarEmailNotificacao({
           <body>
             <div class="container">
               <div class="header">
-                <h1>${title}</h1>
-                <p>Fatos da Bolsa • Comunicação para assinantes</p>
+                <h1>${subjectLine}</h1>
+                <p>Fatos da Bolsa • E-mail para assinantes</p>
               </div>
               <div class="content">
-                <div class="badge">${typeLabel}${category ? ` • ${category}` : ''}</div>
                 <p>Olá, ${recipientName}!</p>
-                <p>${message.replace(/\n/g, '<br/>')}</p>
-                ${
-                  actionUrl
-                    ? `<a class="button" href="${actionUrl}">Acessar mais detalhes</a>`
-                    : ''
-                }
+                <p>${safeBody}</p>
               </div>
               <div class="footer">
                 Você recebeu este email porque faz parte da comunidade Fatos da Bolsa.<br/>

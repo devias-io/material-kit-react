@@ -68,6 +68,12 @@ export default function AdminNotificationsBroadcastPage() {
   const [previewMode, setPreviewMode] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>({ status: 'idle', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailPlans, setEmailPlans] = useState<PlanValue[]>([]);
+  const [emailBroadcastSubject, setEmailBroadcastSubject] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [emailIsHtml, setEmailIsHtml] = useState(false);
+  const [emailFeedback, setEmailFeedback] = useState<FeedbackState>({ status: 'idle', message: '' });
+  const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
 
   const isAllSelected = selectedPlans.length === PLAN_OPTIONS.length;
 
@@ -96,6 +102,22 @@ export default function AdminNotificationsBroadcastPage() {
       setSelectedPlans([]);
     } else {
       setSelectedPlans(PLAN_OPTIONS.map(option => option.value));
+    }
+  };
+
+  const emailAllSelected = emailPlans.length === PLAN_OPTIONS.length;
+
+  const toggleEmailPlan = (plan: PlanValue) => {
+    setEmailPlans(prev =>
+      prev.includes(plan) ? prev.filter(item => item !== plan) : [...prev, plan]
+    );
+  };
+
+  const handleEmailSelectAll = () => {
+    if (emailAllSelected) {
+      setEmailPlans([]);
+    } else {
+      setEmailPlans(PLAN_OPTIONS.map(option => option.value));
     }
   };
 
@@ -164,6 +186,69 @@ export default function AdminNotificationsBroadcastPage() {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const resetEmailForm = () => {
+    setEmailPlans([]);
+    setEmailBroadcastSubject('');
+    setEmailMessage('');
+    setEmailIsHtml(false);
+  };
+
+  const handleEmailSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (emailPlans.length === 0) {
+      setEmailFeedback({ status: 'error', message: 'Selecione pelo menos um plano para enviar o e-mail.' });
+      return;
+    }
+
+    if (!emailBroadcastSubject.trim() || !emailMessage.trim()) {
+      setEmailFeedback({ status: 'error', message: 'Assunto e mensagem do e-mail são obrigatórios.' });
+      return;
+    }
+
+    setIsEmailSubmitting(true);
+    setEmailFeedback({ status: 'idle', message: '' });
+
+    try {
+      const response = await fetch('/api/admin/email-broadcast', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          subject: emailBroadcastSubject.trim(),
+          message: emailMessage,
+          isHtml: emailIsHtml,
+          targetPlans: emailPlans
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Não foi possível enviar o e-mail.');
+      }
+
+      const data = await response.json();
+      const sentCount = Array.isArray(data?.recipients) ? data.recipients.length : 0;
+      const failedCount = Array.isArray(data?.failed) ? data.failed.length : 0;
+
+      setEmailFeedback({
+        status: 'success',
+        message: `E-mail enviado para ${sentCount} usuário(s).${failedCount ? ` ${failedCount} falharam.` : ''}`
+      });
+      resetEmailForm();
+    } catch (error: any) {
+      console.error('Erro ao enviar e-mail:', error);
+      setEmailFeedback({
+        status: 'error',
+        message: error?.message || 'Erro inesperado ao tentar enviar o e-mail.'
+      });
+    } finally {
+      setIsEmailSubmitting(false);
     }
   };
 
@@ -360,9 +445,9 @@ export default function AdminNotificationsBroadcastPage() {
     <div style={styles.page}>
       <div style={styles.wrapper}>
         <header style={styles.header}>
-          <h1 style={styles.title}>📣 Envio de Notificações</h1>
+          <h1 style={styles.title}>📣 Central de Comunicação</h1>
           <p style={styles.subtitle}>
-            Envie comunicados personalizados para grupos de usuários com base no plano contratado.
+            Envie notificações no app e e-mails separados para grupos de usuários com base no plano contratado.
           </p>
         </header>
 
@@ -614,6 +699,117 @@ export default function AdminNotificationsBroadcastPage() {
                 }}
               >
                 {feedback.message}
+              </div>
+            )}
+          </form>
+        </section>
+
+        <section style={styles.card}>
+          <div style={styles.sectionTitle}>
+            <h2 style={styles.sectionTitleText}>3. Envio de e-mails</h2>
+            <button type="button" style={styles.selectAllButton} onClick={handleEmailSelectAll}>
+              {emailAllSelected ? 'Limpar seleção' : 'Selecionar todos'}
+            </button>
+          </div>
+
+          <p style={styles.helper}>
+            Crie um e-mail separado das notificações. Defina assunto e corpo do email que será enviado.
+          </p>
+
+          <div style={{ ...styles.planGrid, marginTop: '16px' }}>
+            {PLAN_OPTIONS.map(option => {
+              const isSelected = emailPlans.includes(option.value);
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => toggleEmailPlan(option.value)}
+                  style={{
+                    ...styles.planCard,
+                    ...(isSelected ? styles.planCardSelected : {})
+                  }}
+                >
+                  <div style={styles.planBadge}>
+                    <span role="img" aria-hidden="true">
+                      {option.emoji}
+                    </span>
+                    <span style={{ color: option.color }}>{option.label}</span>
+                  </div>
+                  <p style={styles.planDescription}>{option.description}</p>
+                  <div style={styles.checkboxRow}>
+                    <input type="checkbox" readOnly checked={isSelected} style={styles.checkboxInput} />
+                    <span style={{ color: isSelected ? '#2563eb' : '#94a3b8', fontWeight: 600 }}>
+                      {isSelected ? 'Selecionado' : 'Selecionar plano'}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <form style={{ ...styles.formGrid, marginTop: '24px' }} onSubmit={handleEmailSubmit}>
+            <div style={styles.inputGroup}>
+              <label style={styles.label} htmlFor="email-subject">
+                Assunto do e-mail
+              </label>
+              <input
+                id="email-subject"
+                style={styles.input}
+                value={emailBroadcastSubject}
+                onChange={event => setEmailBroadcastSubject(event.target.value)}
+                placeholder="Ex.: Atualização importante para sua assinatura"
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label} htmlFor="email-message">
+                Corpo do e-mail
+              </label>
+              <textarea
+                id="email-message"
+                style={styles.textarea}
+                value={emailMessage}
+                onChange={event => setEmailMessage(event.target.value)}
+                placeholder="Escreva aqui a mensagem completa do e-mail."
+              />
+              <span style={styles.helper}>
+                Se quiser usar HTML, marque a opção abaixo. Caso contrário, as quebras de linha serão preservadas.
+              </span>
+            </div>
+
+            <div style={styles.checkboxRow}>
+              <input
+                id="email-is-html"
+                type="checkbox"
+                checked={emailIsHtml}
+                onChange={event => setEmailIsHtml(event.target.checked)}
+                style={styles.checkboxInput}
+              />
+              <label htmlFor="email-is-html" style={{ ...styles.helper, fontWeight: 600, cursor: 'pointer' }}>
+                Conteúdo em HTML
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              style={{
+                ...styles.submitButton,
+                ...(isEmailSubmitting ? styles.submitButtonDisabled : {}),
+                transform: isEmailSubmitting ? 'scale(1)' : 'scale(1)'
+              }}
+              disabled={isEmailSubmitting}
+            >
+              {isEmailSubmitting ? 'Enviando...' : 'Enviar e-mail para os planos selecionados'}
+            </button>
+
+            {emailFeedback.status !== 'idle' && (
+              <div
+                style={{
+                  ...styles.feedback,
+                  ...(emailFeedback.status === 'success' ? styles.feedbackSuccess : styles.feedbackError)
+                }}
+              >
+                {emailFeedback.message}
               </div>
             )}
           </form>
