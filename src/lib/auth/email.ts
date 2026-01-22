@@ -763,76 +763,146 @@ export async function enviarEmailComunicado({
     recipients.map(recipient => {
       const recipientName = recipient.name?.trim() || 'assinante';
       const safeBody = isHtml ? body : escapeHtml(body).replace(/\n/g, '<br/>');
+      
       const htmlContent = `
         <!DOCTYPE html>
         <html>
-          <head>
-            <meta charset="UTF-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>${subjectLine}</title>
-            <style>
-              body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                background-color: #f8fafc;
-                margin: 0;
-                padding: 32px 16px;
-              }
-              .container {
-                max-width: 640px;
-                margin: 0 auto;
-                background: #ffffff;
-                border-radius: 16px;
-                overflow: hidden;
-                box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
-              }
-              .header {
-                background: #0f172a;
-                padding: 32px;
-                color: #fff;
-              }
-              .header h1 {
-                margin: 0;
-                font-size: 24px;
-              }
-              .header p {
-                margin: 8px 0 0;
-                font-size: 14px;
-                opacity: 0.9;
-              }
-              .content {
-                padding: 32px;
-                color: #0f172a;
-              }
-              .content p {
-                margin: 0 0 16px;
-                line-height: 1.6;
-                color: #334155;
-              }
-              .footer {
-                padding: 24px 32px;
-                background: #f1f5f9;
-                color: #64748b;
-                font-size: 12px;
-                text-align: center;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>${subjectLine}</h1>
-                <p>Fatos da Bolsa • E-mail para assinantes</p>
-              </div>
-              <div class="content">
-                <p>Olá, ${recipientName}!</p>
-                <p>${safeBody}</p>
-              </div>
-              <div class="footer">
-                Você recebeu este email porque faz parte da comunidade Fatos da Bolsa.<br/>
-                ${appUrl}
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${escapeHtml(subjectLine)}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+              margin: 0; 
+              padding: 40px 20px;
+              line-height: 1.6;
+            }
+            .container { 
+              max-width: 600px; 
+              margin: 0 auto; 
+              background: white; 
+              border-radius: 20px; 
+              overflow: hidden;
+              box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            }
+            .header { 
+              background: #010101;
+              padding: 40px 30px;
+              text-align: center;
+              color: white;
+              margin: 0;
+              border: none;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 28px;
+              font-weight: 700;
+              text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            }
+            .header p {
+              margin: 10px 0 0 0;
+              font-size: 16px;
+              opacity: 0.9;
+            }
+            .logo {
+              width: 120px;
+              height: 120px;
+              margin: 0 auto 20px auto;
+              display: block;
+              border-radius: 50%;
+            }
+            .content {
+              padding: 40px 30px;
+            }
+            .greeting {
+              color: #2d3748;
+              font-size: 18px;
+              margin-bottom: 20px;
+              font-weight: 600;
+            }
+            .message-body {
+              color: #4a5568;
+              font-size: 16px;
+              line-height: 1.8;
+              margin: 20px 0;
+            }
+            .message-body p {
+              margin: 15px 0;
+            }
+            .message-box {
+              background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+              padding: 25px;
+              border-radius: 12px;
+              margin: 20px 0;
+              border-left: 4px solid #4bf700;
+            }
+            .footer { 
+              background: #010101;
+              color: white;
+              padding: 30px;
+              text-align: center;
+            }
+            .footer h4 {
+              color: white;
+              margin: 0 0 15px 0;
+              font-size: 18px;
+              font-weight: 600;
+            }
+            .footer p {
+              margin: 8px 0;
+              opacity: 0.8;
+              font-size: 14px;
+            }
+            
+            @media only screen and (max-width: 600px) {
+              body { padding: 20px 10px; }
+              .container { margin: 0; border-radius: 10px; }
+              .content, .header, .footer { padding: 20px; }
+              .header h1 { font-size: 22px; }
+              .logo { width: 100px; height: 100px; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <!-- Header -->
+            <div class="header">
+              <img src="${appUrl}/assets/avatar-36.png" alt="Fatos da Bolsa Logo" class="logo" />
+              <h1>${escapeHtml(subjectLine)}</h1>
+              <p>Fatos da Bolsa • E-mail para assinantes</p>
+            </div>
+            
+            <!-- Content -->
+            <div class="content">
+              <div class="greeting">Olá, ${escapeHtml(recipientName)}!</div>
+              
+              <div class="message-box">
+                <div class="message-body">
+                  ${safeBody}
+                </div>
               </div>
             </div>
-          </body>
+            
+            <!-- Footer -->
+            <div class="footer">
+              <h4>🤝 Conte conosco para o que precisar!</h4>
+              <p><strong>Atenciosamente,</strong></p>
+              <p><strong>Equipe Fatos da Bolsa</strong></p>
+              <p style="margin-top: 20px; font-size: 12px; opacity: 0.7;">
+                © 2025 Fatos da Bolsa - Todos os direitos reservados<br>
+                Você recebeu este email porque faz parte da comunidade Fatos da Bolsa.<br>
+                ${appUrl}
+              </p>
+            </div>
+          </div>
+        </body>
         </html>
       `;
 
