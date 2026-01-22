@@ -424,7 +424,7 @@ export function AccountMigration(): React.JSX.Element {
                   <Box
                     sx={{
                       p: 4,
-                      bgcolor: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                      background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
                       borderRadius: 3,
                       boxShadow: '0 8px 24px rgba(59, 130, 246, 0.4)',
                       textAlign: 'center',
