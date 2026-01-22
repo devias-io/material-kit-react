@@ -63,6 +63,7 @@ export default function NovoUsuarioPage() {
       { id: 'admin-empresas', label: 'Gestão de Empresas' },
       { id: 'admin-proventos', label: 'Central de Proventos' },
       { id: 'admin-relatorios', label: 'Gestão de Relatórios' },
+      { id: 'admin-notificacoes', label: 'Notificações' },
       { id: 'admin-relatorio-semanal', label: 'Relatório Semanal' },
       { id: 'admin-analises-trimesestrais', label: 'Análises Trimestrais' },
       { id: 'admin-analise-tecnica', label: 'Análises Técnicas' },

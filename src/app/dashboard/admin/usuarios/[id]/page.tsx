@@ -157,6 +157,7 @@ export default function EditUserPage() {
     { id: 'admin-empresas', label: 'Gestão de Empresas (Admin)', category: 'Administrativo' },
     { id: 'admin-proventos', label: 'Central de Proventos (Admin)', category: 'Administrativo' },
     { id: 'admin-relatorios', label: 'Gestão de Relatórios (Admin)', category: 'Administrativo' },
+    { id: 'admin-notificacoes', label: 'Notificações (Admin)', category: 'Administrativo' },
     { id: 'admin-relatorio-semanal', label: 'Relatório Semanal (Admin)', category: 'Administrativo' },
     { id: 'admin-analises-trimesestrais', label: 'Análises Trimestrais (Admin)', category: 'Administrativo' },
     { id: 'admin-analise-tecnica', label: 'Análises Técnicas (Admin)', category: 'Administrativo' },

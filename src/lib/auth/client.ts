@@ -90,7 +90,8 @@ const planPermissions = {
         'recursos-imposto', 'recursos-lives', 'recursos-milhas', 'recursos-planilhas', 'recursos-telegram',
         'recursos-reserva',
       'admin', 'admin-dashboard', 'admin-usuarios', 'admin-empresas', 'admin-proventos',
-      'admin-relatorios', 'admin-integracoes', 'admin-settings', 'admin-carteiras', 'admin-migracao-vip'
+      'admin-relatorios', 'admin-integracoes', 'admin-settings', 'admin-carteiras', 'admin-migracao-vip',
+      'admin-notificacoes'
     ],
     adminPermissions: {
       canManageUsers: true,

@@ -85,7 +85,7 @@ const ADMIN_CARDS: AdminCard[] = [
     icon: '📣',
     href: '/dashboard/admin/notificacoes',
     status: 'active',
-    permission: 'admin'
+    permission: 'admin-notificacoes'
   },
   {
     title: 'Relatório Semanal',

@@ -41,6 +41,7 @@ export const paths = {
     adminRelatorios: '/dashboard/central-relatorios',
     adminRelatorioSemanal: '/dashboard/admin/relatorio-semanal',
     adminMigracaoVip: '/dashboard/admin/migracao-vip',
+    adminNotificacoes: '/dashboard/admin/notificacoes',
     // 🆕 NOVO: Análises Trimestrais
     adminAnalisesTrimesestrais: '/dashboard/admin/analises-trimesestrais',
     // 🆕 NOVO: Análises Técnicas

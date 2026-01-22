@@ -281,6 +281,13 @@ export const navItems = [
         icon: 'chart-bar',
         page: 'admin-relatorios'
       },
+      {
+        key: 'admin-notificacoes',
+        title: 'Notificações',
+        href: paths.dashboard.adminNotificacoes,
+        icon: 'newspaper',
+        page: 'admin-notificacoes'
+      },
       // 🆕 NOVO ITEM: Admin do Relatório Semanal
       {
         key: 'admin-relatorio-semanal',
