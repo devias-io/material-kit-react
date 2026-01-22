@@ -19,6 +19,7 @@ import {
   Speed as SpeedIcon,
   EmojiEvents as TrophyIcon,
   Star as StarIcon,
+  ArrowDownward as ArrowDownIcon,
 } from '@mui/icons-material';
 
 type MigrationSimulation = {
@@ -168,7 +169,7 @@ export function AccountMigration(): React.JSX.Element {
                 label="PREMIUM"
                 size="small"
                 sx={{
-                  bgcolor: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                  bgcolor: '#F59E0B',
                   color: '#FFFFFF',
                   fontWeight: 700,
                   fontSize: '0.7rem',
@@ -183,7 +184,7 @@ export function AccountMigration(): React.JSX.Element {
           {/* Seção de Benefícios - SEMPRE VISÍVEL */}
           <Box
             sx={{
-              bgcolor: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+              bgcolor: '#EFF6FF',
               borderRadius: 2,
               p: 3,
               border: '2px solid #BFDBFE',
@@ -262,28 +263,6 @@ export function AccountMigration(): React.JSX.Element {
           {simulation && (
             <Stack spacing={3}>
               <Divider />
-
-              {/* Destaque da Economia */}
-              <Box
-                sx={{
-                  bgcolor: 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)',
-                  borderRadius: 2,
-                  p: 3,
-                  border: '2px solid #6EE7B7',
-                  textAlign: 'center',
-                }}
-              >
-                <Typography variant="body2" sx={{ color: '#065F46', fontWeight: 500, mb: 1 }}>
-                  💰 Você economiza com o aproveitamento
-                </Typography>
-                <Typography variant="h4" sx={{ color: '#047857', fontWeight: 700, mb: 0.5 }}>
-                  {formatCurrency(simulation.credit)}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#065F46' }}>
-                  {simulation.monthsRemaining} {simulation.monthsRemaining === 1 ? 'mês' : 'meses'} x{' '}
-                  {formatCurrency(simulation.monthlyValue)} = crédito aplicado
-                </Typography>
-              </Box>
 
               {/* Resumo do Plano Atual */}
               <Box>
@@ -382,64 +361,121 @@ export function AccountMigration(): React.JSX.Element {
 
               <Divider />
 
-              {/* Cálculo do Upgrade */}
+              {/* VALOR FINAL EM DESTAQUE - NOVO LAYOUT */}
               <Box>
-                <Typography variant="subtitle1" sx={{ color: '#1E293B', fontWeight: 600, mb: 2 }}>
-                  💳 Valor do upgrade
+                <Typography variant="subtitle1" sx={{ color: '#1E293B', fontWeight: 600, mb: 3 }}>
+                  💰 Investimento do upgrade
                 </Typography>
+
+                {/* Cálculo visual com setas */}
                 <Stack spacing={2}>
+                  {/* Valor do VIP */}
                   <Box
                     sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      p: 2,
+                      p: 2.5,
                       bgcolor: '#F8FAFC',
                       borderRadius: 2,
+                      border: '1px solid #E2E8F0',
                     }}
                   >
-                    <Typography variant="body1" sx={{ color: '#475569' }}>
-                      Valor do plano VIP
-                    </Typography>
-                    <Typography variant="body1" sx={{ color: '#1E293B', fontWeight: 600 }}>
-                      {formatCurrency(simulation.vipPrice)}
-                    </Typography>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography variant="body1" sx={{ color: '#475569', fontSize: '0.95rem' }}>
+                        Plano VIP anual
+                      </Typography>
+                      <Typography variant="h6" sx={{ color: '#1E293B', fontWeight: 600 }}>
+                        {formatCurrency(simulation.vipPrice)}
+                      </Typography>
+                    </Stack>
                   </Box>
 
+                  {/* Seta para baixo */}
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 0.5 }}>
+                    <ArrowDownIcon sx={{ color: '#10B981', fontSize: 32 }} />
+                  </Box>
+
+                  {/* Crédito aplicado - MENOR */}
                   <Box
                     sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
                       p: 2,
                       bgcolor: '#D1FAE5',
                       borderRadius: 2,
+                      border: '1px solid #6EE7B7',
                     }}
                   >
-                    <Typography variant="body1" sx={{ color: '#065F46', fontWeight: 500 }}>
-                      Crédito aplicado
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Box>
+                        <Typography variant="body2" sx={{ color: '#065F46', fontWeight: 500 }}>
+                          Desconto do seu tempo restante
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#047857' }}>
+                          {simulation.monthsRemaining} meses × {formatCurrency(simulation.monthlyValue)}
+                        </Typography>
+                      </Box>
+                      <Typography variant="body1" sx={{ color: '#047857', fontWeight: 600 }}>
+                        - {formatCurrency(simulation.credit)}
+                      </Typography>
+                    </Stack>
+                  </Box>
+
+                  {/* Linha divisória */}
+                  <Divider sx={{ my: 1 }} />
+
+                  {/* VALOR FINAL - GIGANTE E DESTACADO */}
+                  <Box
+                    sx={{
+                      p: 4,
+                      bgcolor: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                      borderRadius: 3,
+                      boxShadow: '0 8px 24px rgba(59, 130, 246, 0.4)',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: '#BFDBFE', 
+                        fontWeight: 500,
+                        mb: 1,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}
+                    >
+                      Você vai pagar
                     </Typography>
-                    <Typography variant="body1" sx={{ color: '#047857', fontWeight: 600 }}>
-                      - {formatCurrency(simulation.credit)}
+                    <Typography 
+                      variant="h3" 
+                      sx={{ 
+                        color: '#FFFFFF', 
+                        fontWeight: 800,
+                        fontSize: { xs: '2.5rem', sm: '3rem' },
+                        mb: 0.5
+                      }}
+                    >
+                      {formatCurrency(simulation.finalPrice)}
+                    </Typography>
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: '#DBEAFE',
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      À vista ou parcelado em até 12x
                     </Typography>
                   </Box>
 
+                  {/* Badge de economia */}
                   <Box
                     sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      p: 3,
-                      bgcolor: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                      p: 2,
+                      bgcolor: '#FEF3C7',
                       borderRadius: 2,
-                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                      border: '1px solid #FDE68A',
+                      textAlign: 'center',
                     }}
                   >
-                    <Typography variant="h6" sx={{ color: '#FFFFFF', fontWeight: 600 }}>
-                      Total a pagar
-                    </Typography>
-                    <Typography variant="h5" sx={{ color: '#FFFFFF', fontWeight: 700 }}>
-                      {formatCurrency(simulation.finalPrice)}
+                    <Typography variant="body2" sx={{ color: '#92400E' }}>
+                      🎉 Você economiza <strong>{formatCurrency(simulation.credit)}</strong> aproveitando seu tempo restante!
                     </Typography>
                   </Box>
                 </Stack>
