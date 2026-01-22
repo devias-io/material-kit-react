@@ -55,7 +55,6 @@ export default function AdminUsersPage() {
   const router = useRouter();
   const [users, setUsers] = React.useState<User[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [loadingMore, setLoadingMore] = React.useState(false);
   const [loadingProgress, setLoadingProgress] = React.useState({ current: 0, total: 0 });
   const [error, setError] = React.useState<string | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -224,96 +223,88 @@ export default function AdminUsersPage() {
     }
   };
 
+  const fetchAllUsers = async () => {
+    try {
+      console.log('🔄 Buscando todos os usuários do banco de dados...');
+
+      const response = await fetch('/api/admin/users', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'content-type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const textResponse = await response.text();
+        console.error('❌ Resposta não é JSON:', textResponse.substring(0, 500));
+        throw new Error(`Servidor retornou ${response.status}: Resposta não é JSON válido`);
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Erro na resposta:', errorData);
+        throw new Error(errorData.error || `Erro HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Todos os usuários carregados:', data.users?.length || 0);
+
+      return {
+        users: data.users || [],
+        total: data.total || 0
+      };
+    } catch (error: any) {
+      console.error('❌ Erro ao carregar usuários:', error);
+
+      let errorMessage = 'Erro ao carregar usuários';
+
+      if (error.message.includes('Failed to fetch')) {
+        errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      } else if (error.message.includes('not valid JSON')) {
+        errorMessage = 'Erro de comunicação com o servidor. A API pode estar indisponível.';
+      } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        errorMessage = 'Não autorizado. Faça login novamente.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      throw new Error(errorMessage);
+    }
+  };
+
   // ✅ FUNÇÃO PARA ATUALIZAR DADOS - Carrega TODOS os dados até não ter mais
   const loadAllUsers = async (forceRefresh = false) => {
     console.log('🔄 Iniciando carregamento COMPLETO de usuários...');
     setLoading(true);
     setError(null);
-    setLoadingMore(false);
     setLoadingProgress({ current: 0, total: 0 });
 
     try {
-      // 1️⃣ Carrega primeira página
-      const firstPageData = await fetchUsersPage(1);
-      let allUsers = firstPageData.users;
-      const totalFromAPI = firstPageData.total || allUsers.length;
-      
-      setLoadingProgress({ current: allUsers.length, total: totalFromAPI });
-      
-      console.log(`📊 API reporta ${totalFromAPI} usuários totais`);
-      console.log(`📊 Primeira página: ${allUsers.length} usuários`);
+      const allUsersData = await fetchAllUsers();
+      const allUsers = allUsersData.users;
+      const totalFromAPI = allUsersData.total || allUsers.length;
 
-      // 2️⃣ Continua carregando ATÉ receber página vazia (ignora o total da API)
-      let currentPage = 2;
-      let consecutiveEmptyPages = 0;
-      const maxEmptyPages = 3; // Para de tentar após 3 páginas vazias consecutivas
-
-      while (consecutiveEmptyPages < maxEmptyPages) {
-        console.log(`🔄 Carregando página ${currentPage}... (Total atual: ${allUsers.length})`);
-        
-        try {
-          const pageData = await fetchUsersPage(currentPage);
-          
-          if (!pageData.users || pageData.users.length === 0) {
-            consecutiveEmptyPages++;
-            console.log(`⚠️ Página ${currentPage} vazia (${consecutiveEmptyPages}/${maxEmptyPages})`);
-            
-            // Se já tem mais usuários que o total da API reportou, continue tentando
-            if (allUsers.length >= totalFromAPI) {
-              console.log(`ℹ️ Já temos ${allUsers.length} usuários (API disse ${totalFromAPI}), mas verificando mais páginas...`);
-            }
-            
-            currentPage++;
-            continue;
-          }
-
-          // Reset contador de páginas vazias
-          consecutiveEmptyPages = 0;
-          
-          // Adiciona os usuários
-          const newUsers = pageData.users;
-          allUsers = [...allUsers, ...newUsers];
-          
-          // ✅ Atualiza progresso em tempo real
-          setLoadingProgress({ 
-            current: allUsers.length, 
-            total: Math.max(totalFromAPI, allUsers.length) 
-          });
-          
-          console.log(`✅ Página ${currentPage}: +${newUsers.length} usuários (Total: ${allUsers.length})`);
-          
-          currentPage++;
-          
-          // Pequeno delay para não sobrecarregar a API
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-        } catch (error) {
-          console.error(`❌ Erro ao carregar página ${currentPage}:`, error);
-          consecutiveEmptyPages++;
-          currentPage++;
-        }
-      }
-
-      // 3️⃣ Agora que tem TODOS os dados, salva tudo de uma vez
       const refreshedAt = new Date();
       const finalTotal = allUsers.length;
-      
+
       console.log(`✅ CARREGAMENTO COMPLETO!`);
       console.log(`   - Total carregado: ${finalTotal} usuários`);
       console.log(`   - Total da API: ${totalFromAPI} usuários`);
-      console.log(`   - Páginas carregadas: ${currentPage - 1}`);
-      
+      console.log('   - Carregamento feito em uma única requisição');
+
       setUsers(allUsers);
-      setPage(currentPage - 1);
+      setPage(1);
       setTotalUsers(finalTotal);
       setLastUpdatedAt(refreshedAt);
       setLoading(false);
       setLoadingProgress({ current: 0, total: 0 });
-      
-      // ✅ Salva no cache SOMENTE quando tem TODOS os dados
+
       saveUsersCache({
         users: allUsers,
-        page: currentPage - 1,
+        page: 1,
         totalUsers: finalTotal,
         lastUpdatedAt: refreshedAt
       });
