@@ -244,10 +244,13 @@ const getStatusStyle = (status: 'Aberta' | 'Fechada' | 'Encerrada') => {
 
 export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   const router = useRouter();
-  const { loading: authLoading, hasAccessSync, planInfo } = useAuthAccess();
+  const { loading: authLoading, hasAccessSync, planInfo, user } = useAuthAccess();
   const hasCarteiraAccess = hasAccessSync('cf-renda-turbinada-carteira');
   const isMobile = useDeviceDetection();
   const isAdmin = planInfo?.isAdmin ?? false;
+  const releaseDateTurma3 = new Date('2026-01-30T00:00:00-03:00');
+  const isTurma3 = user?.plan === 'RENDA_TURBINADA_T3';
+  const isTurma3ReleaseBlocked = !isAdmin && isTurma3 && new Date() < releaseDateTurma3;
 
   const [operacoesPUT, setOperacoesPUT] = React.useState<CarteiraOperacao[]>(operacoesPUTFixas);
   const [operacoesCALL, setOperacoesCALL] = React.useState<CarteiraOperacao[]>(operacoesCALLFixas);
@@ -768,7 +771,25 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
     ];
   }, [operacoesProcessadas, operacoesPUT, operacoesCALL]);
 
-  if (!authLoading && !hasCarteiraAccess) {
+  if (!authLoading && (!hasCarteiraAccess || isTurma3ReleaseBlocked)) {
+    const titulo = isTurma3ReleaseBlocked ? 'Disponível em breve' : 'Acesso Restrito';
+    const descricao = isTurma3ReleaseBlocked
+      ? (
+        <>
+          Esta página será liberada para o plano Renda Turbinada 3 em <strong>30/01/2026</strong>.
+          <br />
+          Até lá, continue acompanhando os demais conteúdos disponíveis no seu plano.
+        </>
+      )
+      : (
+        <>
+          Esta página é exclusiva para assinantes do CF Renda Turbinada.
+          <br />
+          Solicite o upgrade com o nosso time de suporte para acompanhar as
+          operações recomendadas.
+        </>
+      );
+
     return (
       <div
         style={{
@@ -776,7 +797,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, #0f172a 0%, #052e16 100%)',
           padding: '20px'
         }}
       >
@@ -788,14 +809,14 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
             maxWidth: '480px',
             width: '100%',
             textAlign: 'center',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+            boxShadow: '0 20px 60px rgba(15, 23, 42, 0.35)'
           }}
         >
           <div
             style={{
               width: '80px',
               height: '80px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #16a34a 0%, #0f172a 100%)',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
@@ -813,7 +834,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               marginBottom: '16px'
             }}
           >
-            Acesso Restrito
+            {titulo}
           </h2>
           <p
             style={{
@@ -823,17 +844,14 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               marginBottom: '32px'
             }}
           >
-            Esta página é exclusiva para assinantes do CF Renda Turbinada.
-            <br />
-            Solicite o upgrade com o nosso time de suporte para acompanhar as
-            operações recomendadas.
+            {descricao}
           </p>
           <button
             onClick={() => router.push('/dashboard/cf-renda-turbinada')}
             style={{
               width: '100%',
               padding: '14px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #16a34a 0%, #0f172a 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
