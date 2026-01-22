@@ -244,10 +244,13 @@ const getStatusStyle = (status: 'Aberta' | 'Fechada' | 'Encerrada') => {
 
 export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
   const router = useRouter();
-  const { loading: authLoading, hasAccessSync, planInfo } = useAuthAccess();
+  const { loading: authLoading, hasAccessSync, planInfo, user } = useAuthAccess();
   const hasCarteiraAccess = hasAccessSync('cf-renda-turbinada-carteira');
   const isMobile = useDeviceDetection();
   const isAdmin = planInfo?.isAdmin ?? false;
+  const releaseDateTurma3 = new Date('2026-01-30T00:00:00-03:00');
+  const isTurma3 = user?.plan === 'RENDA_TURBINADA_T3';
+  const isTurma3ReleaseBlocked = !isAdmin && isTurma3 && new Date() < releaseDateTurma3;
 
   const [operacoesPUT, setOperacoesPUT] = React.useState<CarteiraOperacao[]>(operacoesPUTFixas);
   const [operacoesCALL, setOperacoesCALL] = React.useState<CarteiraOperacao[]>(operacoesCALLFixas);
@@ -768,7 +771,25 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
     ];
   }, [operacoesProcessadas, operacoesPUT, operacoesCALL]);
 
-  if (!authLoading && !hasCarteiraAccess) {
+  if (!authLoading && (!hasCarteiraAccess || isTurma3ReleaseBlocked)) {
+    const titulo = isTurma3ReleaseBlocked ? 'Disponível em breve' : 'Acesso Restrito';
+    const descricao = isTurma3ReleaseBlocked
+      ? (
+        <>
+          Esta página será liberada para o plano Renda Turbinada 3 em <strong>30/01/2026</strong>.
+          <br />
+          Até lá, continue acompanhando os demais conteúdos disponíveis no seu plano.
+        </>
+      )
+      : (
+        <>
+          Esta página é exclusiva para assinantes do CF Renda Turbinada.
+          <br />
+          Solicite o upgrade com o nosso time de suporte para acompanhar as
+          operações recomendadas.
+        </>
+      );
+
     return (
       <div
         style={{
@@ -813,7 +834,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               marginBottom: '16px'
             }}
           >
-            Acesso Restrito
+            {titulo}
           </h2>
           <p
             style={{
@@ -823,10 +844,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
               marginBottom: '32px'
             }}
           >
-            Esta página é exclusiva para assinantes do CF Renda Turbinada.
-            <br />
-            Solicite o upgrade com o nosso time de suporte para acompanhar as
-            operações recomendadas.
+            {descricao}
           </p>
           <button
             onClick={() => router.push('/dashboard/cf-renda-turbinada')}
