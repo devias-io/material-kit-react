@@ -21,11 +21,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      // Por segurança, não revelar se email existe ou não
       console.log('❌ Email não encontrado:', email);
       return NextResponse.json({ 
-        message: 'Se o email existir, você receberá instruções para redefinir a senha' 
-      });
+        error: 'Email não localizado em nosso banco de dados' 
+      }, { status: 404 });
     }
 
     console.log('✅ Usuário encontrado:', user.firstName, user.lastName);
