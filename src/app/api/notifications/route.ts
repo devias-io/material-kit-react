@@ -5,6 +5,7 @@ import { emitNotificationEvent } from '@/lib/notificationsEmitter';
 import { CacheService } from '@/lib/redis';
 import { logApiMetric } from '@/lib/metrics';
 import { consumeRateLimit, getClientRateLimitKey } from '@/lib/rateLimiter';
+import { enviarEmailNotificacao } from '@/lib/auth/email';
 
 export const maxDuration = 5;
 
@@ -157,7 +158,9 @@ export async function POST(request: NextRequest) {
       type = 'info',
       category = 'general',
       actionUrl,
-      metadata = {}
+      metadata = {},
+      sendEmail = false,
+      emailSubject
     } = body;
 
     if (!title || !message) {
@@ -261,10 +264,57 @@ export async function POST(request: NextRequest) {
 
     await CacheService.invalidateTags(Array.from(recipientIds).map(id => `notifications:${id}`));
 
+    let emailSummary:
+      | { requested: false }
+      | { requested: true; sent: number; failed: number } = { requested: false };
+
+    if (sendEmail) {
+      const recipients = await prisma.user.findMany({
+        where: {
+          id: {
+            in: Array.from(recipientIds)
+          }
+        },
+        select: {
+          email: true,
+          firstName: true,
+          lastName: true
+        }
+      });
+
+      const validRecipients = recipients
+        .filter(recipient => recipient.email && recipient.email.includes('@'))
+        .map(recipient => ({
+          email: recipient.email!.toLowerCase(),
+          name: [recipient.firstName, recipient.lastName].filter(Boolean).join(' ')
+        }));
+
+      if (validRecipients.length > 0) {
+        const emailResult = await enviarEmailNotificacao({
+          recipients: validRecipients,
+          title: title.trim(),
+          message: message.trim(),
+          subject: typeof emailSubject === 'string' ? emailSubject.trim() : undefined,
+          actionUrl: sanitizedActionUrl,
+          category,
+          type
+        });
+
+        emailSummary = {
+          requested: true,
+          sent: emailResult.sent.length,
+          failed: emailResult.failed.length
+        };
+      } else {
+        emailSummary = { requested: true, sent: 0, failed: 0 };
+      }
+    }
+
     return NextResponse.json({
       notificationsCreated: notifications.length,
       recipients: Array.from(recipientIds),
-      message: `Notification created for ${notifications.length} recipient(s)`
+      message: `Notification created for ${notifications.length} recipient(s)`,
+      email: emailSummary
     }, { status: 201 });
 
   } catch (error) {

@@ -721,3 +721,181 @@ export async function enviarEmailResetSenha(
     html: htmlContent,
   });
 }
+
+type NotificationRecipient = {
+  email: string;
+  name?: string | null;
+};
+
+type NotificationEmailPayload = {
+  recipients: NotificationRecipient[];
+  title: string;
+  message: string;
+  subject?: string;
+  actionUrl?: string;
+  category?: string;
+  type?: 'info' | 'success' | 'warning' | 'error';
+};
+
+const NOTIFICATION_TYPE_LABELS: Record<NonNullable<NotificationEmailPayload['type']>, string> = {
+  info: 'Informativo',
+  success: 'Sucesso',
+  warning: 'Aviso',
+  error: 'Alerta'
+};
+
+const NOTIFICATION_TYPE_COLORS: Record<NonNullable<NotificationEmailPayload['type']>, string> = {
+  info: '#2563eb',
+  success: '#059669',
+  warning: '#d97706',
+  error: '#dc2626'
+};
+
+export async function enviarEmailNotificacao({
+  recipients,
+  title,
+  message,
+  subject,
+  actionUrl,
+  category,
+  type = 'info'
+}: NotificationEmailPayload): Promise<{
+  sent: string[];
+  failed: Array<{ email: string; error: string }>;
+}> {
+  if (recipients.length === 0) {
+    return { sent: [], failed: [] };
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://portal.fatosdabolsa.com.br';
+  const highlightColor = NOTIFICATION_TYPE_COLORS[type];
+  const typeLabel = NOTIFICATION_TYPE_LABELS[type];
+  const subjectLine = subject?.trim() || `${typeLabel} • ${title}`;
+
+  const sendResults = await Promise.allSettled(
+    recipients.map(recipient => {
+      const recipientName = recipient.name?.trim() || 'assinante';
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>${title}</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                background-color: #f8fafc;
+                margin: 0;
+                padding: 32px 16px;
+              }
+              .container {
+                max-width: 640px;
+                margin: 0 auto;
+                background: #ffffff;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+              }
+              .header {
+                background: ${highlightColor};
+                padding: 32px;
+                color: #fff;
+              }
+              .header h1 {
+                margin: 0;
+                font-size: 24px;
+              }
+              .header p {
+                margin: 8px 0 0;
+                font-size: 14px;
+                opacity: 0.9;
+              }
+              .content {
+                padding: 32px;
+                color: #0f172a;
+              }
+              .content p {
+                margin: 0 0 16px;
+                line-height: 1.6;
+                color: #334155;
+              }
+              .badge {
+                display: inline-block;
+                padding: 6px 12px;
+                border-radius: 9999px;
+                background: ${highlightColor}22;
+                color: ${highlightColor};
+                font-weight: 600;
+                font-size: 12px;
+                margin-bottom: 16px;
+              }
+              .button {
+                display: inline-block;
+                padding: 12px 20px;
+                border-radius: 10px;
+                text-decoration: none;
+                background: ${highlightColor};
+                color: #fff !important;
+                font-weight: 600;
+                margin-top: 16px;
+              }
+              .footer {
+                padding: 24px 32px;
+                background: #f1f5f9;
+                color: #64748b;
+                font-size: 12px;
+                text-align: center;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>${title}</h1>
+                <p>Fatos da Bolsa • Comunicação para assinantes</p>
+              </div>
+              <div class="content">
+                <div class="badge">${typeLabel}${category ? ` • ${category}` : ''}</div>
+                <p>Olá, ${recipientName}!</p>
+                <p>${message.replace(/\n/g, '<br/>')}</p>
+                ${
+                  actionUrl
+                    ? `<a class="button" href="${actionUrl}">Acessar mais detalhes</a>`
+                    : ''
+                }
+              </div>
+              <div class="footer">
+                Você recebeu este email porque faz parte da comunidade Fatos da Bolsa.<br/>
+                ${appUrl}
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      return sendMailWithRetry({
+        to: recipient.email,
+        subject: subjectLine,
+        html: htmlContent
+      });
+    })
+  );
+
+  const sent: string[] = [];
+  const failed: Array<{ email: string; error: string }> = [];
+
+  sendResults.forEach((result, index) => {
+    const email = recipients[index]?.email;
+    if (!email) {
+      return;
+    }
+    if (result.status === 'fulfilled') {
+      sent.push(email);
+    } else {
+      failed.push({ email, error: String(result.reason) });
+    }
+  });
+
+  return { sent, failed };
+}
