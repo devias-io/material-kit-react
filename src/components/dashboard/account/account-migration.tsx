@@ -16,11 +16,11 @@ import {
 import {
   CheckCircle as CheckCircleIcon,
   TrendingUp as TrendingUpIcon,
-  Speed as SpeedIcon,
   EmojiEvents as TrophyIcon,
   Star as StarIcon,
   ArrowDownward as ArrowDownIcon,
 } from '@mui/icons-material';
+import { useUser } from '@/hooks/use-user';
 
 type MigrationSimulation = {
   fromPlan: string;
@@ -88,11 +88,24 @@ const VIP_BENEFITS = [
   },
 ];
 
+const RENDA_TURBINADA_PLANS = new Set([
+  'RENDA_TURBINADA',
+  'RENDA_TURBINADA_T2',
+  'RENDA_TURBINADA_T3',
+]);
+
 export function AccountMigration(): React.JSX.Element {
+  const { user } = useUser();
   const [simulation, setSimulation] = React.useState<MigrationSimulation | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [linkLoading, setLinkLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const activeEntitlements = Array.isArray(user?.activeEntitlements) ? user?.activeEntitlements : [];
+  const hasOnlyRendaTurbinada =
+    !!user?.plan &&
+    RENDA_TURBINADA_PLANS.has(user.plan) &&
+    (activeEntitlements.length === 0 ||
+      activeEntitlements.every((code) => RENDA_TURBINADA_PLANS.has(code)));
 
   const handleSimulate = async () => {
     try {
@@ -159,27 +172,49 @@ export function AccountMigration(): React.JSX.Element {
     >
       <CardContent sx={{ p: 3 }}>
         <Stack spacing={3}>
-          {/* Header com badge VIP */}
-          <Box>
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-              <Typography variant="h5" sx={{ color: '#1E293B', fontWeight: 700 }}>
-                👑 Upgrade para VIP
+          {hasOnlyRendaTurbinada ? (
+            <Box>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                <Typography variant="h5" sx={{ color: '#1E293B', fontWeight: 700 }}>
+                  ✨ Adesão aos novos planos
+                </Typography>
+                <Chip
+                  label="NOVO"
+                  size="small"
+                  sx={{
+                    bgcolor: '#10B981',
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: '0.7rem',
+                  }}
+                />
+              </Stack>
+              <Typography variant="body2" sx={{ color: '#64748B' }}>
+                Escolha o produto ideal para você e libere os novos conteúdos imediatamente.
               </Typography>
-              <Chip
-                label="PREMIUM"
-                size="small"
-                sx={{
-                  bgcolor: '#F59E0B',
-                  color: '#FFFFFF',
-                  fontWeight: 700,
-                  fontSize: '0.7rem',
-                }}
-              />
-            </Stack>
-            <Typography variant="body2" sx={{ color: '#64748B' }}>
-              Desbloqueie todos os recursos e eleve seus investimentos ao próximo nível
-            </Typography>
-          </Box>
+            </Box>
+          ) : (
+            <Box>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                <Typography variant="h5" sx={{ color: '#1E293B', fontWeight: 700 }}>
+                  👑 Upgrade para VIP
+                </Typography>
+                <Chip
+                  label="PREMIUM"
+                  size="small"
+                  sx={{
+                    bgcolor: '#F59E0B',
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: '0.7rem',
+                  }}
+                />
+              </Stack>
+              <Typography variant="body2" sx={{ color: '#64748B' }}>
+                Desbloqueie todos os recursos e eleve seus investimentos ao próximo nível
+              </Typography>
+            </Box>
+          )}
 
           {/* Seção de Benefícios - SEMPRE VISÍVEL */}
           <Box
@@ -239,28 +274,127 @@ export function AccountMigration(): React.JSX.Element {
             </Alert>
           )}
 
-          {!simulation && (
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleSimulate}
-              disabled={loading}
-              sx={{
-                bgcolor: '#3B82F6',
-                color: '#FFFFFF',
-                fontWeight: 600,
-                py: 1.5,
-                fontSize: '1rem',
-                '&:hover': { bgcolor: '#2563EB' },
-                textTransform: 'none',
-                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-              }}
-            >
-              {loading ? 'Calculando...' : '🚀 Ver condições especiais de upgrade'}
-            </Button>
+          {hasOnlyRendaTurbinada ? (
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Box
+                  sx={{
+                    p: 3,
+                    bgcolor: '#F8FAFC',
+                    borderRadius: 2,
+                    border: '1px solid #E2E8F0',
+                    height: '100%',
+                  }}
+                >
+                  <Stack spacing={2}>
+                    <Box>
+                      <Typography variant="h6" sx={{ color: '#1E293B', fontWeight: 700 }}>
+                        👑 Close Friends VIP
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#64748B' }}>
+                        Plano completo com acesso às estratégias avançadas.
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="h5" sx={{ color: '#1E293B', fontWeight: 800 }}>
+                        R$ 1.297,00
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#64748B' }}>
+                        ou em até 12x de R$ 129
+                      </Typography>
+                    </Box>
+                    <Button
+                      component="a"
+                      href="https://pay.hotmart.com/A97962224I?off=qdtdhb9k&bid=1763755662704"
+                      target="_blank"
+                      rel="noreferrer"
+                      variant="contained"
+                      size="large"
+                      sx={{
+                        bgcolor: '#10B981',
+                        color: '#FFFFFF',
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        '&:hover': { bgcolor: '#059669' },
+                      }}
+                    >
+                      Quero o VIP
+                    </Button>
+                  </Stack>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Box
+                  sx={{
+                    p: 3,
+                    bgcolor: '#F8FAFC',
+                    borderRadius: 2,
+                    border: '1px solid #E2E8F0',
+                    height: '100%',
+                  }}
+                >
+                  <Stack spacing={2}>
+                    <Box>
+                      <Typography variant="h6" sx={{ color: '#1E293B', fontWeight: 700 }}>
+                        ⭐ Close Friends LITE
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#64748B' }}>
+                        Acesso essencial com excelente custo-benefício.
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="h5" sx={{ color: '#1E293B', fontWeight: 800 }}>
+                        R$ 559,00
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#64748B' }}>
+                        ou em até 12x de R$ 59
+                      </Typography>
+                    </Box>
+                    <Button
+                      component="a"
+                      href="https://pay.hotmart.com/P97963425A?off=40tjqecd&bid=1763755718958"
+                      target="_blank"
+                      rel="noreferrer"
+                      variant="outlined"
+                      size="large"
+                      sx={{
+                        borderColor: '#CBD5E1',
+                        color: '#1E293B',
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        '&:hover': { borderColor: '#94A3B8', bgcolor: '#F1F5F9' },
+                      }}
+                    >
+                      Quero o LITE
+                    </Button>
+                  </Stack>
+                </Box>
+              </Grid>
+            </Grid>
+          ) : (
+            !simulation && (
+              <Button
+                variant="contained"
+                size="large"
+                onClick={handleSimulate}
+                disabled={loading}
+                sx={{
+                  bgcolor: '#3B82F6',
+                  color: '#FFFFFF',
+                  fontWeight: 600,
+                  py: 1.5,
+                  fontSize: '1rem',
+                  '&:hover': { bgcolor: '#2563EB' },
+                  textTransform: 'none',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                }}
+              >
+                {loading ? 'Calculando...' : '🚀 Ver condições especiais de upgrade'}
+              </Button>
+            )
           )}
 
-          {simulation && (
+          {simulation && !hasOnlyRendaTurbinada && (
             <Stack spacing={3}>
               <Divider />
 
