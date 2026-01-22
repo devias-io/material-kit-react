@@ -424,20 +424,21 @@ export function AccountMigration(): React.JSX.Element {
                   <Box
                     sx={{
                       p: 4,
-                      background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                      bgcolor: '#F8FAFC',
                       borderRadius: 3,
-                      boxShadow: '0 8px 24px rgba(59, 130, 246, 0.4)',
+                      border: '2px solid #3B82F6',
                       textAlign: 'center',
                     }}
                   >
                     <Typography 
                       variant="body2" 
                       sx={{ 
-                        color: '#BFDBFE', 
+                        color: '#64748B', 
                         fontWeight: 500,
                         mb: 1,
                         textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
+                        letterSpacing: '0.5px',
+                        fontSize: '0.75rem'
                       }}
                     >
                       Você vai pagar
@@ -445,7 +446,7 @@ export function AccountMigration(): React.JSX.Element {
                     <Typography 
                       variant="h3" 
                       sx={{ 
-                        color: '#FFFFFF', 
+                        color: '#1E293B', 
                         fontWeight: 800,
                         fontSize: { xs: '2.5rem', sm: '3rem' },
                         mb: 0.5
@@ -456,7 +457,7 @@ export function AccountMigration(): React.JSX.Element {
                     <Typography 
                       variant="caption" 
                       sx={{ 
-                        color: '#DBEAFE',
+                        color: '#64748B',
                         fontSize: '0.875rem'
                       }}
                     >
