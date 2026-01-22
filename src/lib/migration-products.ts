@@ -104,6 +104,19 @@ function normalizeName(value: unknown): string | null {
   return null;
 }
 
+// ✅ NOVA FUNÇÃO - Normaliza nome do produto removendo variações
+function normalizeProductName(name: string): string {
+  return name
+    .toUpperCase()
+    .replace(/\s*-\s*REEMBOLSO/gi, '')
+    .replace(/\s*\(RENOVAÇÃO\s*-?\s*\d*\)/gi, '')
+    .replace(/\s*-\s*PRODUTO\s+\d+/gi, '')
+    .replace(/^CLOSE FRIENDS LITE \d+\.\d+\s+HOTMART\s*-\s*/gi, '')
+    .replace(/^CLOSE FRIENDS LITE\s+HOTMART\s*-\s*/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function extractListFromResponse(payload: any): any[] {
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload?.data)) return payload.data;
@@ -135,12 +148,12 @@ function mapProductItem(platform: string, item: any): MigrationProductPayload | 
   };
 }
 
-// ✅ FUNÇÃO MODIFICADA - Busca produtos da tabela Purchase
+// ✅ FUNÇÃO CORRIGIDA - Busca produtos da tabela Purchase e agrupa corretamente
 export async function fetchPlatformProducts(platform: string): Promise<MigrationProductPayload[]> {
   console.log(`[SYNC] Buscando produtos da tabela Purchase para: ${platform}`);
   
   try {
-    // Buscar produtos únicos da tabela Purchase
+    // Buscar TODOS os produtos (sem distinct para não perder produtos com externalId NULL)
     const purchases = await prisma.purchase.findMany({
       where: {
         platform: { equals: platform, mode: 'insensitive' },
@@ -149,8 +162,11 @@ export async function fetchPlatformProducts(platform: string): Promise<Migration
         OR: [
           { productName: { contains: 'LITE', mode: 'insensitive' } },
           { productName: { contains: 'RENDA PASSIVA', mode: 'insensitive' } },
+          { productName: { contains: 'RENDA TURBINADA', mode: 'insensitive' } },
           { productName: { contains: 'PROJETO AMERICA', mode: 'insensitive' } },
           { productName: { contains: 'PROJETO AMÉRICA', mode: 'insensitive' } },
+          { productName: { contains: 'PROJETO TRUMP', mode: 'insensitive' } },
+          { productName: { contains: 'PROJETO FIIS', mode: 'insensitive' } },
         ],
       },
       select: {
@@ -158,30 +174,46 @@ export async function fetchPlatformProducts(platform: string): Promise<Migration
         productExternalId: true,
         platform: true
       },
-      distinct: ['productExternalId', 'productName']
+      // ❌ REMOVIDO: distinct - estava agrupando produtos NULL incorretamente
     });
 
-    console.log(`[SYNC] Produtos encontrados na Purchase para ${platform}:`, purchases.length);
+    console.log(`[SYNC] Total de compras encontradas para ${platform}:`, purchases.length);
 
     // Mapear para o formato esperado
     const platformKey = platform.toUpperCase();
     const productMap = new Map<string, MigrationProductPayload>();
 
     purchases.forEach((purchase) => {
-      const name = normalizeName(purchase.productName);
-      if (!name) {
-        return;
-      }
-      const externalId =
-        normalizeExternalId(purchase.productExternalId) ?? buildNameBasedExternalId(platformKey, name);
-      const mapKey = `${platformKey}::${externalId}`;
+      const rawName = normalizeName(purchase.productName);
+      if (!rawName) return;
 
-      if (!productMap.has(mapKey)) {
-        productMap.set(mapKey, {
-          platform: platformKey,
-          externalId,
-          name,
-        });
+      // Normalizar nome (remover RENOVAÇÃO, REEMBOLSO, etc)
+      const normalizedName = normalizeProductName(rawName);
+      const externalId = normalizeExternalId(purchase.productExternalId);
+      
+      if (!externalId) {
+        // Sem externalId: gerar baseado no nome normalizado (Kiwify/Eduzz)
+        const generatedId = buildNameBasedExternalId(platformKey, normalizedName);
+        const mapKey = `${platformKey}::${generatedId}`;
+        
+        if (!productMap.has(mapKey)) {
+          productMap.set(mapKey, {
+            platform: platformKey,
+            externalId: generatedId,
+            name: normalizedName,
+          });
+        }
+      } else {
+        // Com externalId: agrupar por ID (Hotmart)
+        const mapKey = `${platformKey}::${externalId}`;
+        
+        if (!productMap.has(mapKey)) {
+          productMap.set(mapKey, {
+            platform: platformKey,
+            externalId,
+            name: normalizedName,
+          });
+        }
       }
     });
 
@@ -189,10 +221,12 @@ export async function fetchPlatformProducts(platform: string): Promise<Migration
 
     if (products.length === 0) {
       console.log(`[SYNC] ⚠️ Nenhum produto encontrado na tabela Purchase para ${platform}`);
-      return []; // Retorna array vazio ao invés de lançar erro
+      return [];
     }
 
-    console.log(`[SYNC] ✅ ${products.length} produtos mapeados para ${platform}`);
+    console.log(`[SYNC] ✅ ${products.length} produtos únicos mapeados para ${platform}:`);
+    products.forEach(p => console.log(`  - ${p.externalId}: ${p.name}`));
+    
     return products;
   } catch (error) {
     console.error(`[SYNC] ❌ Erro ao buscar produtos da Purchase para ${platform}:`, error);
