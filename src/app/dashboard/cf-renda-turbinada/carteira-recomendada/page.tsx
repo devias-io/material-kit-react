@@ -797,7 +797,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, #0f172a 0%, #052e16 100%)',
           padding: '20px'
         }}
       >
@@ -809,14 +809,14 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
             maxWidth: '480px',
             width: '100%',
             textAlign: 'center',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+            boxShadow: '0 20px 60px rgba(15, 23, 42, 0.35)'
           }}
         >
           <div
             style={{
               width: '80px',
               height: '80px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #16a34a 0%, #0f172a 100%)',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
@@ -851,7 +851,7 @@ export default function CfRendaTurbinadaCarteiraPage(): React.JSX.Element {
             style={{
               width: '100%',
               padding: '14px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #16a34a 0%, #0f172a 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
