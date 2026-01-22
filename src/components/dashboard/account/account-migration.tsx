@@ -88,6 +88,16 @@ const VIP_BENEFITS = [
   },
 ];
 
+const LITE_BENEFITS = [
+  'Ações Small Caps',
+  'Ações de Dividendos',
+  'Fundos Imobiliários',
+  'Canal do telegram com atualizações sobre o mercado',
+  'Curso para imposto de renda',
+  'Suporte na área de membros',
+  'Acesso ao CF no Instagram',
+];
+
 const RENDA_TURBINADA_PLANS = new Set([
   'RENDA_TURBINADA',
   'RENDA_TURBINADA_T2',
@@ -280,17 +290,30 @@ export function AccountMigration(): React.JSX.Element {
                 <Box
                   sx={{
                     p: 3,
-                    bgcolor: '#F8FAFC',
+                    bgcolor: '#F0FDF4',
                     borderRadius: 2,
-                    border: '1px solid #E2E8F0',
+                    border: '2px solid #10B981',
                     height: '100%',
+                    boxShadow: '0 8px 18px rgba(16, 185, 129, 0.2)',
                   }}
                 >
                   <Stack spacing={2}>
                     <Box>
-                      <Typography variant="h6" sx={{ color: '#1E293B', fontWeight: 700 }}>
-                        👑 Close Friends VIP
-                      </Typography>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Typography variant="h6" sx={{ color: '#1E293B', fontWeight: 800 }}>
+                          👑 Close Friends VIP
+                        </Typography>
+                        <Chip
+                          label="MAIS COMPLETO"
+                          size="small"
+                          sx={{
+                            bgcolor: '#10B981',
+                            color: '#FFFFFF',
+                            fontWeight: 700,
+                            fontSize: '0.65rem',
+                          }}
+                        />
+                      </Stack>
                       <Typography variant="body2" sx={{ color: '#64748B' }}>
                         Plano completo com acesso às estratégias avançadas.
                       </Typography>
@@ -342,6 +365,18 @@ export function AccountMigration(): React.JSX.Element {
                         Acesso essencial com excelente custo-benefício.
                       </Typography>
                     </Box>
+                    <Stack spacing={1}>
+                      {LITE_BENEFITS.map((benefit) => (
+                        <Stack key={benefit} direction="row" spacing={1} alignItems="center">
+                          <Typography component="span" sx={{ color: '#10B981', fontWeight: 700 }}>
+                            ✓
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#475569' }}>
+                            {benefit}
+                          </Typography>
+                        </Stack>
+                      ))}
+                    </Stack>
                     <Box>
                       <Typography variant="h5" sx={{ color: '#1E293B', fontWeight: 800 }}>
                         R$ 559,00
