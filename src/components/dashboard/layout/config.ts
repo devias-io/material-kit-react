@@ -238,6 +238,13 @@ export const navItems = [
         page: 'admin-renovacoes'
       },
       {
+        key: 'admin-migracao-vip',
+        title: 'Migração VIP',
+        href: paths.dashboard.adminMigracaoVip,
+        icon: 'shield-check',
+        page: 'admin-migracao-vip'
+      },
+      {
         key: 'admin-empresas',
         title: 'Gestão de Empresas',
         href: paths.dashboard.adminEmpresas,

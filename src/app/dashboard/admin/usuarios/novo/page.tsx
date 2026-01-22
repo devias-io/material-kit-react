@@ -59,6 +59,7 @@ export default function NovoUsuarioPage() {
       { id: 'admin-instagram', label: 'Instagram Close Friends' },
       { id: 'admin-integracoes', label: 'Integrações' },
       { id: 'admin-renovacoes', label: 'Renovações' },
+      { id: 'admin-migracao-vip', label: 'Migração VIP' },
       { id: 'admin-empresas', label: 'Gestão de Empresas' },
       { id: 'admin-proventos', label: 'Central de Proventos' },
       { id: 'admin-relatorios', label: 'Gestão de Relatórios' },
