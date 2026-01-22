@@ -153,6 +153,7 @@ export default function EditUserPage() {
     { id: 'admin-instagram', label: 'Instagram Close Friends (Admin)', category: 'Administrativo' },
     { id: 'admin-integracoes', label: 'Integrações (Admin)', category: 'Administrativo' },
     { id: 'admin-renovacoes', label: 'Renovações (Admin)', category: 'Administrativo' },
+    { id: 'admin-migracao-vip', label: 'Migração VIP (Admin)', category: 'Administrativo' },
     { id: 'admin-empresas', label: 'Gestão de Empresas (Admin)', category: 'Administrativo' },
     { id: 'admin-proventos', label: 'Central de Proventos (Admin)', category: 'Administrativo' },
     { id: 'admin-relatorios', label: 'Gestão de Relatórios (Admin)', category: 'Administrativo' },

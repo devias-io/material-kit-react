@@ -14,6 +14,7 @@ interface PlanAccessGuardProps {
 const ROUTE_PERMISSIONS: Array<{ matcher: RegExp; permission: string }> = [
   { matcher: /^\/dashboard\/admin\/usuarios(\/|$)/, permission: 'admin-usuarios' },
   { matcher: /^\/dashboard\/admin\/renovacoes(\/|$)/, permission: 'admin-renovacoes' },
+  { matcher: /^\/dashboard\/admin\/migracao-vip(\/|$)/, permission: 'admin-migracao-vip' },
   { matcher: /^\/dashboard\/admin\/integracoes(\/|$)/, permission: 'admin-integracoes' },
   { matcher: /^\/dashboard\/admin\/relatorio-semanal(\/|$)/, permission: 'admin-relatorio-semanal' },
   { matcher: /^\/dashboard\/admin\/analises-trimesestrais(\/|$)/, permission: 'admin-analises-trimesestrais' },
