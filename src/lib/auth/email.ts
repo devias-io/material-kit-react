@@ -595,8 +595,8 @@ export async function enviarEmailCredenciais(
 }
 
 export async function enviarEmailResetSenha(
-  email: string, 
-  nome: string, 
+  email: string,
+  nome: string,
   token: string
 ): Promise<void> {
   const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password/${token}`;
@@ -720,4 +720,144 @@ export async function enviarEmailResetSenha(
     subject: '🔑 Redefinir sua senha - Fatos da Bolsa',
     html: htmlContent,
   });
+}
+
+type BroadcastRecipient = {
+  email: string;
+  name?: string | null;
+};
+
+type BroadcastEmailPayload = {
+  recipients: BroadcastRecipient[];
+  subject: string;
+  body: string;
+  isHtml?: boolean;
+};
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+export async function enviarEmailComunicado({
+  recipients,
+  subject,
+  body,
+  isHtml = false
+}: BroadcastEmailPayload): Promise<{
+  sent: string[];
+  failed: Array<{ email: string; error: string }>;
+}> {
+  if (recipients.length === 0) {
+    return { sent: [], failed: [] };
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://portal.fatosdabolsa.com.br';
+  const subjectLine = subject.trim();
+
+  const sendResults = await Promise.allSettled(
+    recipients.map(recipient => {
+      const recipientName = recipient.name?.trim() || 'assinante';
+      const safeBody = isHtml ? body : escapeHtml(body).replace(/\n/g, '<br/>');
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>${subjectLine}</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                background-color: #f8fafc;
+                margin: 0;
+                padding: 32px 16px;
+              }
+              .container {
+                max-width: 640px;
+                margin: 0 auto;
+                background: #ffffff;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+              }
+              .header {
+                background: #0f172a;
+                padding: 32px;
+                color: #fff;
+              }
+              .header h1 {
+                margin: 0;
+                font-size: 24px;
+              }
+              .header p {
+                margin: 8px 0 0;
+                font-size: 14px;
+                opacity: 0.9;
+              }
+              .content {
+                padding: 32px;
+                color: #0f172a;
+              }
+              .content p {
+                margin: 0 0 16px;
+                line-height: 1.6;
+                color: #334155;
+              }
+              .footer {
+                padding: 24px 32px;
+                background: #f1f5f9;
+                color: #64748b;
+                font-size: 12px;
+                text-align: center;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>${subjectLine}</h1>
+                <p>Fatos da Bolsa • E-mail para assinantes</p>
+              </div>
+              <div class="content">
+                <p>Olá, ${recipientName}!</p>
+                <p>${safeBody}</p>
+              </div>
+              <div class="footer">
+                Você recebeu este email porque faz parte da comunidade Fatos da Bolsa.<br/>
+                ${appUrl}
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      return sendMailWithRetry({
+        to: recipient.email,
+        subject: subjectLine,
+        html: htmlContent
+      });
+    })
+  );
+
+  const sent: string[] = [];
+  const failed: Array<{ email: string; error: string }> = [];
+
+  sendResults.forEach((result, index) => {
+    const email = recipients[index]?.email;
+    if (!email) {
+      return;
+    }
+    if (result.status === 'fulfilled') {
+      sent.push(email);
+    } else {
+      failed.push({ email, error: String(result.reason) });
+    }
+  });
+
+  return { sent, failed };
 }
