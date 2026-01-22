@@ -5,13 +5,13 @@ import { consumeRateLimit, getClientRateLimitKey } from '@/lib/rateLimiter';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
+export const maxDuration = 300; // ✅ Máximo do Vercel Pro
 
 export async function GET(request: NextRequest) {
-  // Rate limit mais relaxado - agora precisamos de menos reconexões
   const { allowed, retryAfterMs } = consumeRateLimit({
     key: `notifications:stream:${getClientRateLimitKey(request)}`,
-    limit: 5, // Reduzido de 10 para 5 - menos reconexões necessárias
-    windowMs: 10 * 60 * 1000 // 10 minutos
+    limit: 5,
+    windowMs: 10 * 60 * 1000
   });
 
   if (!allowed) {
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
   return createNotificationStreamResponse(request, {
     routeLabel: '/api/notifications/fluxo',
-    keepAliveMs: 20000, // Ping a cada 20s (otimizado)
-    connectionTimeoutMs: 0 // 0 = sem timeout forçado, deixa o Vercel gerenciar
+    keepAliveMs: 20000, // Ping a cada 20s
+    connectionTimeoutMs: 290000 // ✅ 4min50s - fecha ANTES do Vercel matar
   });
 }
