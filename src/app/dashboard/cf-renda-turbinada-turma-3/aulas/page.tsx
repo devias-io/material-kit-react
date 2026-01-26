@@ -5537,11 +5537,25 @@ visibleModules.map(module => {
       </div>
 
       <style jsx>{`
+        .lesson-rich-text :global(*) {
+          max-width: 100%;
+        }
+
         .lesson-rich-text :global(img),
         .lesson-rich-text :global(video),
         .lesson-rich-text :global(iframe) {
           max-width: 100%;
+          width: 100%;
           height: auto;
+          display: block;
+        }
+
+        .lesson-rich-text :global(iframe) {
+          aspect-ratio: 16 / 9;
+        }
+
+        .lesson-rich-text :global(figure) {
+          margin: 0;
         }
 
         .lesson-rich-text :global(table) {
