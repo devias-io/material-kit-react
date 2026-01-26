@@ -2750,7 +2750,15 @@ const handleUpdateModule = React.useCallback(
               )}
               {lesson.description && lesson.description.trim().length > 0 && (
                 <div
-                  style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}
+                  className="lesson-rich-text"
+                  style={{
+                    margin: 0,
+                    color: '#475569',
+                    fontSize: '14px',
+                    lineHeight: 1.6,
+                    overflowWrap: 'anywhere',
+                    wordBreak: 'break-word'
+                  }}
                   dangerouslySetInnerHTML={{ __html: lesson.description }}
                 />
               )}
@@ -2791,7 +2799,15 @@ const handleUpdateModule = React.useCallback(
                   }}
                 >
                   <div
-                    style={{ margin: 0, color: '#010101', fontSize: '14px', lineHeight: 1.6 }}
+                    className="lesson-rich-text"
+                    style={{
+                      margin: 0,
+                      color: '#010101',
+                      fontSize: '14px',
+                      lineHeight: 1.6,
+                      overflowWrap: 'anywhere',
+                      wordBreak: 'break-word'
+                    }}
                     dangerouslySetInnerHTML={{ __html: lesson.content }}
                   />
                 </div>
@@ -3170,7 +3186,8 @@ const handleUpdateModule = React.useCallback(
       style={{
         minHeight: '100vh',
         backgroundColor: '#f5f5f5',
-        padding: pagePadding
+        padding: pagePadding,
+        overflowX: 'hidden'
       }}
     >
       <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -5520,6 +5537,26 @@ visibleModules.map(module => {
       </div>
 
       <style jsx>{`
+        .lesson-rich-text :global(img),
+        .lesson-rich-text :global(video),
+        .lesson-rich-text :global(iframe) {
+          max-width: 100%;
+          height: auto;
+        }
+
+        .lesson-rich-text :global(table) {
+          display: block;
+          width: 100%;
+          max-width: 100%;
+          overflow-x: auto;
+        }
+
+        .lesson-rich-text :global(pre),
+        .lesson-rich-text :global(code) {
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+
         @media (max-width: 640px) {
           .live-card-header {
             flex-direction: column;
