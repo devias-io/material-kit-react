@@ -78,6 +78,8 @@ export async function GET(request: NextRequest) {
           ? tickers // Se BRAPI falhou, tenta todos no DB
           : tickers.filter(ticker => !dyMap.has(ticker)); // Se BRAPI ok, só os que faltam
 
+        const proventosPorTicker = new Map<string, number>();
+
         if (faltantes.length > 0) {
           const limite12Meses = new Date();
           limite12Meses.setFullYear(limite12Meses.getFullYear() - 1);
@@ -99,6 +101,12 @@ export async function GET(request: NextRequest) {
               const ticker = provento.ticker.toUpperCase();
               const atual = somaPorTicker.get(ticker) ?? 0;
               somaPorTicker.set(ticker, atual + (provento.valor ?? 0));
+            });
+
+            proventos.forEach(provento => {
+              const ticker = provento.ticker.toUpperCase();
+              const atual = proventosPorTicker.get(ticker) ?? 0;
+              proventosPorTicker.set(ticker, atual + (provento.valor ?? 0));
             });
 
             const quotePorTicker = new Map<string, any>();
@@ -132,6 +140,7 @@ export async function GET(request: NextRequest) {
         return {
           quotes,
           dy: Object.fromEntries(dyMap),
+          proventos: Object.fromEntries(proventosPorTicker),
           tickers,
           timestamp: new Date().toISOString(),
           warnings: brapiError ? [{ source: 'brapi', message: brapiError }] : undefined,
