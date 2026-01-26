@@ -298,7 +298,7 @@ function calcularViesAutomatico(
 async function buscarCotacoesEDY(
   tickers: string[],
   _isMobile: boolean
-): Promise<{ cotacoesMap: Map<string, any>; dyMap: Map<string, string> }> {
+): Promise<{ cotacoesMap: Map<string, any>; dyMap: Map<string, string>; proventosMap: Map<string, number> }> {
   const cotacoesMap = new Map<string, any>();
 
   console.log('🚀 [OTIMIZADO] Buscando', tickers.length, 'cotações + DY em batch...');
@@ -311,6 +311,7 @@ async function buscarCotacoesEDY(
 
   const data = await response.json();
   const dyMap = new Map<string, string>(Object.entries(data.dy ?? {}));
+  const proventosMap = new Map<string, number>(Object.entries(data.proventos ?? {}));
 
   if (Array.isArray(data.quotes)) {
     data.quotes.forEach((quote: any) => {
@@ -328,84 +329,7 @@ async function buscarCotacoesEDY(
   }
 
   console.log('✅ [PARALELO] Concluído:', cotacoesMap.size, 'de', tickers.length);
-  return { cotacoesMap, dyMap };
-}
-
-// ✅ NOVA FUNÇÃO: BUSCAR PROVENTOS PARA EXTERIOR STOCKS (TOTAL RETURN)
-async function buscarProventosExteriorStocks(ativosData: any[]): Promise<Map<string, number>> {
-  const novosProventos = new Map<string, number>();
-
-  console.log('💰 Iniciando busca de proventos EXTERIOR STOCKS para', ativosData.length, 'ativos');
-
-  const buscarProventoAtivo = async (ativo: any) => {
-    try {
-      const parseDataBR = (dataBr: string | undefined) => {
-        if (!dataBr || typeof dataBr !== 'string') return null;
-        const [dia, mes, ano] = dataBr.split('/');
-        if (!dia || !mes || !ano) return null;
-        const dataISO = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-        const parsed = new Date(`${dataISO}T00:00:00`);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
-      };
-
-      const dataEntradaDate = parseDataBR(ativo.dataEntrada);
-      const dataSaidaDate = parseDataBR(ativo.dataSaida);
-      const periodoProventos = dataSaidaDate
-        ? `${ativo.dataEntrada ?? 'data não informada'} até ${ativo.dataSaida}`
-        : `desde ${ativo.dataEntrada ?? 'data não informada'}`;
-
-      console.log(`💰 Buscando proventos EXT para ${ativo.ticker} (${periodoProventos})`);
-
-      const controller = new AbortController();
-      setTimeout(() => controller.abort(), 2000);
-
-      const response = await fetch(`/api/proventos/${ativo.ticker}`, {
-        signal: controller.signal,
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (response.ok) {
-        const proventosRaw = await response.json();
-
-        if (Array.isArray(proventosRaw)) {
-          const proventosFiltrados = proventosRaw.filter((p: any) => {
-            if (!p.dataObj) return false;
-            const dataProvento = new Date(p.dataObj);
-
-            if (Number.isNaN(dataProvento.getTime())) return false;
-            if (dataEntradaDate && dataProvento < dataEntradaDate) return false;
-            if (dataSaidaDate && dataProvento > dataSaidaDate) return false;
-
-            return true;
-          });
-          
-          const total = proventosFiltrados.reduce((sum: number, p: any) => sum + (p.valor || 0), 0);
-          console.log(`💰 ${ativo.ticker}: US$ ${total.toFixed(2)} (${proventosFiltrados.length} proventos)`);
-          return { ticker: ativo.ticker, valor: total };
-        }
-      } else {
-        console.log(`💰 ${ativo.ticker}: Erro HTTP ${response.status}`);
-      }
-    } catch (error) {
-      console.log(`💰 ${ativo.ticker}: Erro -`, error instanceof Error ? error.message : 'Erro desconhecido');
-    }
-    
-    return { ticker: ativo.ticker, valor: 0 };
-  };
-
-  // Buscar proventos em paralelo
-  const resultados = await Promise.allSettled(
-    ativosData.map(ativo => buscarProventoAtivo(ativo))
-  );
-
-  resultados.forEach((resultado) => {
-    if (resultado.status === 'fulfilled') {
-      novosProventos.set(resultado.value.ticker, resultado.value.valor);
-    }
-  });
-  
-  console.log('💰 Proventos EXTERIOR STOCKS finais:', Object.fromEntries(novosProventos));
-  return novosProventos;
+  return { cotacoesMap, dyMap, proventosMap };
 }
 
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL + TOTAL RETURN
@@ -423,7 +347,6 @@ function useExteriorStocksIntegradas() {
   // Loading states granulares
   const [loadingCotacoes, setLoadingCotacoes] = React.useState(true);
   const [loadingDY, setLoadingDY] = React.useState(false);
-  const [loadingProventos, setLoadingProventos] = React.useState(false); // ✅ NOVO
   const [error, setError] = React.useState<string | null>(null);
 
   const isMobile = useDeviceDetection();
@@ -449,35 +372,25 @@ function useExteriorStocksIntegradas() {
       setDyCompletos(new Map());
       setProventosCompletos(new Map());
 
-      // ⚡ PARALELIZAÇÃO TOTAL - AGORA COM PROVENTOS
-      console.log('⚡ EXECUTANDO TODAS AS ETAPAS EM PARALELO (COTAÇÕES + DY + PROVENTOS)...');
+      // ⚡ BUSCA CONSOLIDADA
+      console.log('⚡ EXECUTANDO BUSCA CONSOLIDADA (COTAÇÕES + DY + PROVENTOS)...');
 
       // Ativar todos os loadings
       setLoadingCotacoes(true);
       setLoadingDY(true);
-      setLoadingProventos(true);
-
       // Medir tempo
       const inicioTempo = performance.now();
 
-      // ✅ EXECUTAR TUDO EM PARALELO - AGORA COM PROVENTOS
-      const [cotacoesResult, proventosResult] = await Promise.allSettled([
-        buscarCotacoesEDY(tickers, isMobile),
-        buscarProventosExteriorStocks(exteriorStocksData) // ✅ NOVO
-      ]);
+      // ✅ EXECUTAR BUSCA CONSOLIDADA
+      const { cotacoesMap, dyMap, proventosMap } = await buscarCotacoesEDY(tickers, isMobile);
 
       const tempoTotal = performance.now() - inicioTempo;
       console.log(`🎉 TODAS AS ETAPAS CONCLUÍDAS EM ${tempoTotal.toFixed(0)}ms!`);
 
-      // Processar resultados
-      const cotacoesMap = cotacoesResult.status === 'fulfilled' ? cotacoesResult.value.cotacoesMap : new Map();
-      const dyMap = cotacoesResult.status === 'fulfilled' ? cotacoesResult.value.dyMap : new Map();
-      const proventosData = proventosResult.status === 'fulfilled' ? proventosResult.value : new Map(); // ✅ NOVO
-
       // Logs de debug
       console.log('📊 Cotações obtidas:', cotacoesMap.size, 'de', tickers.length);
       console.log('📈 DY obtidos:', dyMap.size, 'de', tickers.length);
-      console.log('💰 Proventos obtidos:', proventosData.size, 'de', exteriorStocksData.length); // ✅ NOVO
+      console.log('💰 Proventos obtidos:', proventosMap.size, 'de', exteriorStocksData.length); // ✅ NOVO
 
       tickers.forEach((ticker) => {
         if (!dyMap.has(ticker)) {
@@ -494,12 +407,11 @@ function useExteriorStocksIntegradas() {
       // Atualizar estados
       setCotacoesCompletas(cotacoesMap);
       setDyCompletos(dyMap);
-      setProventosCompletos(proventosData); // ✅ NOVO
+      setProventosCompletos(proventosMap); // ✅ NOVO
 
       // Desativar loadings
       setLoadingCotacoes(false);
       setLoadingDY(false);
-      setLoadingProventos(false); // ✅ NOVO
       
       // Marcar como pronto para processamento final
       setTodosOsDadosProntos(true);
@@ -673,7 +585,6 @@ function useExteriorStocksIntegradas() {
     setCotacoesAtualizadas,
     loading: loadingCotacoes || !todosOsDadosProntos, // ✅ Loading até TUDO estar pronto
     loadingDY,
-    loadingProventos, // ✅ NOVO
     error,
     refetch,
     isMobile,
@@ -690,7 +601,6 @@ export default function ExteriorStocksPage() {
     setCotacoesAtualizadas, 
     loading, 
     loadingDY,
-    loadingProventos, // ✅ NOVO
     isMobile,
     todosOsDadosProntos
   } = useExteriorStocksIntegradas();
