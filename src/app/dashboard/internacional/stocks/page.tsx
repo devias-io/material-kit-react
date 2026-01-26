@@ -5,7 +5,6 @@ import * as React from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
-import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
@@ -295,248 +294,41 @@ function calcularViesAutomatico(
   return aplicarViesOverride(override, viesAutomatico);
 }
 
-// 🚀 FUNÇÃO OTIMIZADA PARA BUSCAR COTAÇÕES - ESTRATÉGIA MOBILE/DESKTOP
-async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Promise<Map<string, any>> {
-  const cotacoesMap = new Map();
-  
-  console.log('🚀 [OTIMIZADO] Buscando', tickers.length, 'cotações EM PARALELO...');
-  
-  // ✅ STRATEGY 1: Tentar batch request primeiro (1 requisição para todos)
-  try {
-    const batchUrl = `/api/brapi/quote?tickers=${tickers.join(',')}`;
-    const response = await Promise.race([
-      fetch(batchUrl),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Batch timeout')), 5000))
-    ]);
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        console.log('✅ BATCH REQUEST SUCESSO:', data.results.length, 'cotações em 1 só request');
-        
-        data.results.forEach((quote: any) => {
-          if (quote.regularMarketPrice > 0) {
-            cotacoesMap.set(quote.symbol, {
-              precoAtual: quote.regularMarketPrice,
-              variacao: quote.regularMarketChange || 0,
-              variacaoPercent: quote.regularMarketChangePercent || 0,
-              volume: quote.regularMarketVolume || 0,
-              nome: quote.shortName || quote.longName || quote.symbol,
-              dadosCompletos: quote
-            });
-          }
-        });
-        
-        return cotacoesMap;
-      }
-    }
-  } catch (error) {
-    console.log('❌ Batch request falhou, usando paralelo individual');
-  }
-  
-  // ✅ STRATEGY 2: Requests paralelos individuais (SEM DELAYS!)
-  console.log('🚀 [PARALELO] Executando', tickers.length, 'requests simultâneos...');
-  
-  const promises = tickers.map(async (ticker) => {
-    try {
-      const response = await Promise.race([
-        fetch(`/api/brapi/quote?tickers=${ticker}`, {
-          headers: { 'Accept': 'application/json' }
-        }),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Individual timeout')), 4000))
-      ]);
-
-      if (response.ok) {
-        const data = await response.json();
-        const quote = data.results?.[0];
-        
-        if (quote?.regularMarketPrice > 0) {
-          cotacoesMap.set(ticker, {
-            precoAtual: quote.regularMarketPrice,
-            variacao: quote.regularMarketChange || 0,
-            variacaoPercent: quote.regularMarketChangePercent || 0,
-            volume: quote.regularMarketVolume || 0,
-            nome: quote.shortName || quote.longName || ticker,
-            dadosCompletos: quote
-          });
-        }
-      }
-    } catch (error) {
-      console.log(`❌ [${ticker}]:`, error instanceof Error ? error.message : 'Erro desconhecido');
-    }
-  });
-  
-  // 🚀 EXECUTAR TODAS EM PARALELO (ZERO DELAYS)
-  await Promise.allSettled(promises);
-  
-  console.log('✅ [PARALELO] Concluído:', cotacoesMap.size, 'de', tickers.length);
-  return cotacoesMap;
-}
-
-// 🔄 FUNÇÃO PARA DETERMINAR FREQUÊNCIA DE DIVIDENDOS
-function registrarDyNoMapa(result: any, ticker: string, dyMap: Map<string, string>): void {
-  const { valor, origem } = calcularDyAPartirDoResultado(result, ticker);
-
-  if (valor && valor > 0) {
-    const dyFormatado = formatarDy(valor);
-    dyMap.set(ticker, dyFormatado);
-    console.log(`✅ [DY] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
-  } else {
-    console.log(`❌ [DY] ${ticker}: Sem dividendos (${origem})`);
-  }
-}
-
-async function calcularDYDeProventos(
-  ticker: string,
-  precoAtual: number
-): Promise<{ valor: number | null; origem: string }> {
-  try {
-    const controller = new AbortController();
-    setTimeout(() => controller.abort(), 3000);
-
-    const response = await fetch(`/api/proventos/${ticker}`, {
-      signal: controller.signal,
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    if (!response.ok) {
-      return { valor: null, origem: 'proventos_api_error' };
-    }
-
-    const proventosRaw = await response.json();
-
-    if (!Array.isArray(proventosRaw) || proventosRaw.length === 0) {
-      return { valor: null, origem: 'proventos_no_data' };
-    }
-
-    const limite12Meses = new Date();
-    limite12Meses.setFullYear(limite12Meses.getFullYear() - 1);
-
-    const proventosUltimos12Meses = proventosRaw.filter((p: any) => {
-      if (!p.dataObj) return false;
-      const dataProvento = new Date(p.dataObj);
-      return dataProvento >= limite12Meses;
-    });
-
-    if (proventosUltimos12Meses.length === 0) {
-      return { valor: null, origem: 'proventos_no_recent' };
-    }
-
-    const somaProventos = proventosUltimos12Meses.reduce(
-      (sum: number, p: any) => sum + (p.valor || 0),
-      0
-    );
-
-    if (somaProventos <= 0 || precoAtual <= 0) {
-      return { valor: null, origem: 'proventos_invalid' };
-    }
-
-    const dy = somaProventos / precoAtual;
-
-    console.log(
-      `✅ [DY-PROVENTOS-STOCKS] ${ticker}: ${(dy * 100).toFixed(2)}% (${proventosUltimos12Meses.length} pagamentos)`
-    );
-
-    return {
-      valor: dy,
-      origem: `proventos_12m_${proventosUltimos12Meses.length}`
-    };
-  } catch (error) {
-    return { valor: null, origem: 'proventos_error' };
-  }
-}
-
-async function complementarDyComProventos(
+// 🚀 FUNÇÃO OTIMIZADA PARA BUSCAR COTAÇÕES + DY (SERVER-SIDE)
+async function buscarCotacoesEDY(
   tickers: string[],
-  cotacoesMap: Map<string, any>,
-  dyMap: Map<string, string>
-): Promise<void> {
-  const tickersSemDY = tickers.filter((ticker) => {
-    const dy = dyMap.get(ticker);
-    return !dy || dy === '0,00%';
-  });
+  _isMobile: boolean
+): Promise<{ cotacoesMap: Map<string, any>; dyMap: Map<string, string> }> {
+  const cotacoesMap = new Map<string, any>();
 
-  if (tickersSemDY.length === 0) {
-    return;
+  console.log('🚀 [OTIMIZADO] Buscando', tickers.length, 'cotações + DY em batch...');
+
+  const response = await fetch(`/api/market/quotes-dy?tickers=${tickers.join(',')}`);
+
+  if (!response.ok) {
+    throw new Error(`Quotes/DY HTTP ${response.status}`);
   }
 
-  console.log(
-    `💰 [PROVENTOS-STOCKS] Calculando DY via proventos para ${tickersSemDY.length} tickers...`
-  );
+  const data = await response.json();
+  const dyMap = new Map<string, string>(Object.entries(data.dy ?? {}));
 
-  const promises = tickersSemDY.map(async (ticker) => {
-    const cotacao = cotacoesMap.get(ticker);
-
-    if (!cotacao || !cotacao.precoAtual || cotacao.precoAtual <= 0) {
-      return;
-    }
-
-    const { valor, origem } = await calcularDYDeProventos(ticker, cotacao.precoAtual);
-
-    if (valor && valor > 0) {
-      dyMap.set(ticker, formatarDy(valor));
-      console.log(`✅ [PROVENTOS-STOCKS] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
-    }
-  });
-
-  await Promise.allSettled(promises);
-}
-
-// 🔄 FUNÇÃO PARA BUSCAR DY VIA API - VERSÃO FINAL CORRIGIDA
-async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
-  const dyMap = new Map<string, string>();
-  console.log('📈 [OTIMIZADO] Buscando DY para', tickers.length, 'tickers EM PARALELO...');
-  
-  // ✅ BATCH REQUEST PRIMEIRO
-  try {
-    const batchUrl = `/api/brapi/quote?tickers=${tickers.join(',')}&dividends=true`;
-    const response = await Promise.race([
-      fetch(batchUrl),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY batch timeout')), 6000))
-    ]);
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        console.log('✅ DY BATCH SUCCESS:', data.results.length, 'DYs em 1 só request');
-
-        data.results.forEach((result: any) => {
-          const ticker = result.symbol;
-          registrarDyNoMapa(result, ticker, dyMap);
+  if (Array.isArray(data.quotes)) {
+    data.quotes.forEach((quote: any) => {
+      if (quote?.regularMarketPrice > 0) {
+        cotacoesMap.set(quote.symbol, {
+          precoAtual: quote.regularMarketPrice,
+          variacao: quote.regularMarketChange || 0,
+          variacaoPercent: quote.regularMarketChangePercent || 0,
+          volume: quote.regularMarketVolume || 0,
+          nome: quote.shortName || quote.longName || quote.symbol,
+          dadosCompletos: quote
         });
-
-        return dyMap;
       }
-    }
-  } catch (error) {
-    console.log('❌ DY Batch falhou, usando paralelo individual');
+    });
   }
-  
-  // ✅ PARALELO INDIVIDUAL (mesma lógica)
-  const promises = tickers.map(async (ticker) => {
-    try {
-      const response = await Promise.race([
-        fetch(`/api/brapi/quote?tickers=${ticker}&dividends=true`, {
-          headers: { 'Accept': 'application/json' }
-        }),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY timeout')), 4000))
-      ]);
 
-      if (response.ok) {
-        const data = await response.json();
-        const result = data.results?.[0];
-        registrarDyNoMapa(result, ticker, dyMap);
-      }
-    } catch (error) {
-      console.log(`❌ [DY-${ticker}]:`, error instanceof Error ? error.message : 'Erro desconhecido');
-    }
-  });
-  
-  await Promise.allSettled(promises);
-  
-  console.log('✅ [DY-OTIMIZADO] Concluído:', dyMap.size, 'de', tickers.length);
-  console.log('📊 DY Final Map:', Object.fromEntries(dyMap));
-  return dyMap;
+  console.log('✅ [PARALELO] Concluído:', cotacoesMap.size, 'de', tickers.length);
+  return { cotacoesMap, dyMap };
 }
 
 // ✅ NOVA FUNÇÃO: BUSCAR PROVENTOS PARA EXTERIOR STOCKS (TOTAL RETURN)
@@ -669,9 +461,8 @@ function useExteriorStocksIntegradas() {
       const inicioTempo = performance.now();
 
       // ✅ EXECUTAR TUDO EM PARALELO - AGORA COM PROVENTOS
-      const [cotacoesResult, dyResult, proventosResult] = await Promise.allSettled([
-        buscarCotacoesParalelas(tickers, isMobile),
-        buscarDYsComEstrategia(tickers, isMobile),
+      const [cotacoesResult, proventosResult] = await Promise.allSettled([
+        buscarCotacoesEDY(tickers, isMobile),
         buscarProventosExteriorStocks(exteriorStocksData) // ✅ NOVO
       ]);
 
@@ -679,16 +470,14 @@ function useExteriorStocksIntegradas() {
       console.log(`🎉 TODAS AS ETAPAS CONCLUÍDAS EM ${tempoTotal.toFixed(0)}ms!`);
 
       // Processar resultados
-      const cotacoesMap = cotacoesResult.status === 'fulfilled' ? cotacoesResult.value : new Map();
-      const dyMap = dyResult.status === 'fulfilled' ? dyResult.value : new Map();
+      const cotacoesMap = cotacoesResult.status === 'fulfilled' ? cotacoesResult.value.cotacoesMap : new Map();
+      const dyMap = cotacoesResult.status === 'fulfilled' ? cotacoesResult.value.dyMap : new Map();
       const proventosData = proventosResult.status === 'fulfilled' ? proventosResult.value : new Map(); // ✅ NOVO
 
       // Logs de debug
       console.log('📊 Cotações obtidas:', cotacoesMap.size, 'de', tickers.length);
       console.log('📈 DY obtidos:', dyMap.size, 'de', tickers.length);
       console.log('💰 Proventos obtidos:', proventosData.size, 'de', exteriorStocksData.length); // ✅ NOVO
-
-      await complementarDyComProventos(tickers, cotacoesMap, dyMap);
 
       tickers.forEach((ticker) => {
         if (!dyMap.has(ticker)) {
