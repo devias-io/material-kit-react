@@ -1,12 +1,9 @@
-// SUBSTITUA APENAS: src/lib/brapi-service.ts
-// (Mantém toda a estrutura atual, só corrige a chave)
-
+// src/lib/brapi-service.ts
 import { CacheService, type WithCacheResult } from './redis';
 
 // TTL padrão reduzido para evitar defasagem excessiva e alinhar com o consumo na overview
 const DEFAULT_CACHE_TTL_MS = 2 * 60 * 1000;
 const QUOTE_CACHE_TAG = 'financial:quotes';
-
 const isDev = process.env.NODE_ENV !== 'production';
 
 export class BrapiService {
@@ -30,10 +27,11 @@ export class BrapiService {
       };
     }
 
+    // ✅ CORREÇÃO: Removido ponto-e-vírgula duplicado antes do .sort()
     const cleanSymbols = symbols
       .map(s => s.trim().toUpperCase())
-      .filter(s => s.length > 0);
-      .sort(); // ✅ ADICIONE ESTA LINHA!
+      .filter(s => s.length > 0)
+      .sort(); // ✅ ADICIONADO .sort()
 
     const symbolString = cleanSymbols.join(',');
 
@@ -45,10 +43,8 @@ export class BrapiService {
     });
 
     const querySignature = normalizedQuery.toString();
-
     const cacheTtlMs = options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
     const ttlSeconds = Math.max(60, Math.floor(cacheTtlMs / 1000));
-
     const cacheKey = CacheService.getCacheKey('brapi:quotes', symbolString, querySignature || '');
 
     try {
@@ -57,11 +53,10 @@ export class BrapiService {
         async () => {
           const urlParams = new URLSearchParams(normalizedQuery);
           urlParams.set('token', this.apiKey);
-
           const url = `${this.baseUrl}/quote/${symbolString}?${urlParams}`;
 
           if (isDev) {
-            console.log(`📡 Fetching quotes for ${symbolString} (masked key)`);
+            console.log(`📡 Fetching quotes for ${symbolString} (masked key)`); // ✅ CORRIGIDO: Template literal
           }
 
           const response = await fetch(url, {
@@ -82,19 +77,17 @@ export class BrapiService {
             } catch {
               errorData = { message: errorText };
             }
-
-            throw new Error(`Brapi API error: ${response.status} - ${errorData.message || response.statusText}`);
+            throw new Error(`Brapi API error: ${response.status} - ${errorData.message || response.statusText}`); // ✅ CORRIGIDO: Template literal
           }
 
           const data = await response.json();
           const results = data.results || [];
-
           return results;
         },
         { ttlSeconds, tags: [QUOTE_CACHE_TAG] }
       );
     } catch (error) {
-      console.error(`❌ Erro ao buscar cotações da Brapi:`, error);
+      console.error('❌ Erro ao buscar cotações da Brapi:', error); // ✅ CORRIGIDO: String normal
       throw error;
     }
   }
