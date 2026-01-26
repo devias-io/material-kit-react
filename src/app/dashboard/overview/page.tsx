@@ -2,11 +2,9 @@
 'use client';
 
 import * as React from 'react';
-import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
 import { buildQuotesUrl } from '@/utils/brapiProxy';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
-import { useProventosPorAtivo } from '@/hooks/useProventosPorAtivo';
 import { useAuthAccess } from '@/hooks/use-auth-access';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 
@@ -772,11 +770,6 @@ function useSmallCapsIntegradas() {
       console.log('📈 DY obtidos:', dyMap.size, 'de', tickers.length);
       console.log('💰 Proventos obtidos:', proventosMap.size, 'de', smallCapsData.length);
 
-      // Debug do DY
-      console.log('🔍 [PARALLEL-DEBUG] dyMap processado:');
-      console.log('🔍 [PARALLEL-DEBUG] dyMap.size:', dyMap.size);
-      console.log('🔍 [PARALLEL-DEBUG] dyMap conteúdo:', Object.fromEntries(dyMap));
-
       // Atualizar estados
       setCotacoesCompletas(cotacoesMap);
       setDyCompletos(dyMap);
@@ -823,14 +816,7 @@ function useSmallCapsIntegradas() {
     const ativosFinais = smallCapsData.map((ativo, index) => {
       const cotacao = cotacoesCompletas.get(ativo.ticker);
       
-      // 🔍 DEBUG DY ASSIGNMENT
       const dyAPI = dyCompletos.get(ativo.ticker) || '0,00%';
-      console.log(`🔍 [ASSIGN-DEBUG] ${ativo.ticker}:`);
-      console.log(`  - dyCompletos.size: ${dyCompletos.size}`);
-      console.log(`  - dyCompletos.has('${ativo.ticker}'): ${dyCompletos.has(ativo.ticker)}`);
-      console.log(`  - dyCompletos.get('${ativo.ticker}'): ${dyCompletos.get(ativo.ticker)}`);
-      console.log(`  - dyAPI final: ${dyAPI}`);
-      console.log(`  - loadingDY: ${loadingDY}`);
       
       const proventosAtivo = proventosCompletos.get(ativo.ticker) || 0;
     
