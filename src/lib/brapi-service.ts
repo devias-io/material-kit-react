@@ -33,6 +33,7 @@ export class BrapiService {
     const cleanSymbols = symbols
       .map(s => s.trim().toUpperCase())
       .filter(s => s.length > 0);
+      .sort(); // ✅ ADICIONE ESTA LINHA!
 
     const symbolString = cleanSymbols.join(',');
 
