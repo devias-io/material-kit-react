@@ -2,6 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUser } from '@/hooks/use-user';
 import { useAuthAccess } from '@/hooks/use-auth-access';
@@ -324,6 +325,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   const { user } = useUser();
   const { planInfo } = useAuthAccess();
   const queryClient = useQueryClient();
+  const pathname = usePathname();
 
   // 🔥 STATES SIMPLIFICADOS
   const [dados, setDados] = useState(() => createEmptyCarteirasData());
@@ -417,7 +419,11 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   const microCapsQuery = useQuery({
     queryKey: ['carteira', 'microCaps', user?.id],
     queryFn: () => api.getCarteira('microCaps'),
-    enabled: !!user?.id && isAuthenticated && isCarteiraPermitida('microCaps'),
+    enabled:
+      !!user?.id &&
+      isAuthenticated &&
+      isCarteiraPermitida('microCaps') &&
+      pathname?.includes('/customers'),
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -430,7 +436,8 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       !!user?.id &&
       isAuthenticated &&
       modoSincronizacao === 'hibrido' &&
-      isCarteiraPermitida('dividendos'),
+      isCarteiraPermitida('dividendos') &&
+      pathname?.includes('/integrations'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -452,11 +459,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
   const cfRendaTurbinadaQuery = useQuery({
     queryKey: ['carteira', 'cfRendaTurbinada', user?.id],
     queryFn: () => api.getCarteira('cfRendaTurbinada'),
-    enabled:
-      !!user?.id &&
-      isAuthenticated &&
-      modoSincronizacao === 'hibrido' &&
-      isCarteiraPermitida('cfRendaTurbinada'),
+    enabled: false,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -469,7 +472,8 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       !!user?.id &&
       isAuthenticated &&
       modoSincronizacao === 'hibrido' &&
-      isCarteiraPermitida('dividendosInternacional'),
+      isCarteiraPermitida('dividendosInternacional') &&
+      pathname?.includes('/internacional/dividendos'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -482,7 +486,8 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       !!user?.id &&
       isAuthenticated &&
       modoSincronizacao === 'hibrido' &&
-      isCarteiraPermitida('etfs'),
+      isCarteiraPermitida('etfs') &&
+      pathname?.includes('/internacional/etfs'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -495,7 +500,8 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       !!user?.id &&
       isAuthenticated &&
       modoSincronizacao === 'hibrido' &&
-      isCarteiraPermitida('projetoAmerica'),
+      isCarteiraPermitida('projetoAmerica') &&
+      pathname?.includes('/internacional/projeto-america'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -508,7 +514,8 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       !!user?.id &&
       isAuthenticated &&
       modoSincronizacao === 'hibrido' &&
-      isCarteiraPermitida('exteriorStocks'),
+      isCarteiraPermitida('exteriorStocks') &&
+      pathname?.includes('/internacional/stocks'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
