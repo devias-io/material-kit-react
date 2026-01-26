@@ -7,7 +7,7 @@ import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield'
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-export const maxDuration = 10; // ✅ MUDANÇA 1: Aumentado de 5 para 10
+export const maxDuration = 10;
 
 const CACHE_TTL_SECONDS = 300;
 const CACHE_HEADERS = buildCacheHeaders({ ttl: CACHE_TTL_SECONDS, swr: CACHE_TTL_SECONDS * 2 });
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const { data, metadata } = await CacheService.withCache(
       cacheKey,
       async () => {
-        // ✅ MUDANÇA 2: Tratamento de erro da BRAPI mais granular
+        // Tratamento de erro da BRAPI mais granular
         let quotes: any[] = [];
         let brapiError: string | null = null;
 
@@ -58,7 +58,6 @@ export async function GET(request: NextRequest) {
         } catch (error) {
           brapiError = error instanceof Error ? error.message : 'Erro ao buscar cotações';
           console.error('❌ Erro BRAPI:', brapiError);
-          // ✅ Continua processamento mesmo com erro (tenta buscar do DB)
         }
 
         const dyMap = new Map<string, string>();
@@ -73,74 +72,80 @@ export async function GET(request: NextRequest) {
           }
         });
 
-        // ✅ MUDANÇA 3: Tenta buscar DY do DB para TODOS os tickers se BRAPI falhou
-        const faltantes = brapiError 
-          ? tickers // Se BRAPI falhou, tenta todos no DB
-          : tickers.filter(ticker => !dyMap.has(ticker)); // Se BRAPI ok, só os que faltam
-
+        // ✅ BUSCAR PROVENTOS PARA TODOS OS TICKERS (não só faltantes)
         const proventosPorTicker = new Map<string, number>();
+        const limite12Meses = new Date();
+        limite12Meses.setFullYear(limite12Meses.getFullYear() - 1);
 
-        if (faltantes.length > 0) {
-          const limite12Meses = new Date();
-          limite12Meses.setFullYear(limite12Meses.getFullYear() - 1);
+        try {
+          console.log('💰 Buscando proventos para todos os tickers:', tickers.length);
+          
+          const proventos = await prisma.provento.findMany({
+            where: {
+              ticker: { in: tickers }, // ✅ TODOS os tickers
+              dataObj: { gte: limite12Meses },
+            },
+            select: {
+              ticker: true,
+              valor: true,
+            },
+          });
 
-          try {
-            const proventos = await prisma.provento.findMany({
-              where: {
-                ticker: { in: faltantes },
-                dataObj: { gte: limite12Meses },
-              },
-              select: {
-                ticker: true,
-                valor: true,
-              },
-            });
+          console.log('💰 Proventos encontrados no DB:', proventos.length);
 
-            const somaPorTicker = new Map<string, number>();
-            proventos.forEach(provento => {
-              const ticker = provento.ticker.toUpperCase();
-              const atual = somaPorTicker.get(ticker) ?? 0;
-              somaPorTicker.set(ticker, atual + (provento.valor ?? 0));
-            });
+          // Somar proventos por ticker
+          proventos.forEach(provento => {
+            const ticker = provento.ticker.toUpperCase();
+            const atual = proventosPorTicker.get(ticker) ?? 0;
+            proventosPorTicker.set(ticker, atual + (provento.valor ?? 0));
+          });
 
-            proventos.forEach(provento => {
-              const ticker = provento.ticker.toUpperCase();
-              const atual = proventosPorTicker.get(ticker) ?? 0;
-              proventosPorTicker.set(ticker, atual + (provento.valor ?? 0));
-            });
-
-            const quotePorTicker = new Map<string, any>();
-            quotes.forEach((quote: any) => {
-              const symbol = typeof quote?.symbol === 'string' ? quote.symbol.toUpperCase() : null;
-              if (symbol) {
-                quotePorTicker.set(symbol, quote);
-              }
-            });
-
-            faltantes.forEach(ticker => {
-              const soma = somaPorTicker.get(ticker) ?? 0;
-              if (soma <= 0) return;
-
-              const quote = quotePorTicker.get(ticker);
-              const precoAtual = quote?.regularMarketPrice ?? quote?.regularMarketPreviousClose ?? 0;
-              if (!precoAtual || precoAtual <= 0) return;
-
-              const dy = soma / precoAtual;
-              if (dy > 0) {
-                dyMap.set(ticker, formatarDy(dy));
-              }
-            });
-          } catch (dbError) {
-            console.error('❌ Erro ao buscar proventos no DB:', dbError);
-            // ✅ Continua mesmo se DB falhar
-          }
+          console.log('💰 Total de tickers com proventos:', proventosPorTicker.size);
+          console.log('💰 Amostra:', Object.fromEntries(Array.from(proventosPorTicker.entries()).slice(0, 5)));
+        } catch (dbError) {
+          console.error('❌ Erro ao buscar proventos no DB:', dbError);
         }
 
-        // ✅ MUDANÇA 4: Retorna warnings se houver erros parciais
+        // ✅ CALCULAR DY DOS FALTANTES usando proventos do DB
+        const faltantes = brapiError 
+          ? tickers 
+          : tickers.filter(ticker => !dyMap.has(ticker));
+
+        if (faltantes.length > 0) {
+          console.log('📊 Calculando DY para faltantes:', faltantes.length);
+
+          const quotePorTicker = new Map<string, any>();
+          quotes.forEach((quote: any) => {
+            const symbol = typeof quote?.symbol === 'string' ? quote.symbol.toUpperCase() : null;
+            if (symbol) {
+              quotePorTicker.set(symbol, quote);
+            }
+          });
+
+          faltantes.forEach(ticker => {
+            const proventos = proventosPorTicker.get(ticker) ?? 0;
+            if (proventos <= 0) return;
+
+            const quote = quotePorTicker.get(ticker);
+            const precoAtual = quote?.regularMarketPrice ?? quote?.regularMarketPreviousClose ?? 0;
+            if (!precoAtual || precoAtual <= 0) return;
+
+            const dy = proventos / precoAtual;
+            if (dy > 0) {
+              dyMap.set(ticker, formatarDy(dy));
+            }
+          });
+        }
+
+        console.log('✅ Processamento completo:');
+        console.log('  - Quotes:', quotes.length);
+        console.log('  - DY:', dyMap.size);
+        console.log('  - Proventos:', proventosPorTicker.size);
+
         return {
           quotes,
           dy: Object.fromEntries(dyMap),
-          proventos: Object.fromEntries(proventosPorTicker),
+          proventos: Object.fromEntries(proventosPorTicker), // ✅ Agora retorna todos
           tickers,
           timestamp: new Date().toISOString(),
           warnings: brapiError ? [{ source: 'brapi', message: brapiError }] : undefined,
@@ -160,7 +165,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    // ✅ MUDANÇA 5: Erro crítico retorna dados parciais quando possível
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
     console.error('❌ Erro crítico no endpoint quotes-dy:', error);
     
@@ -168,12 +172,13 @@ export async function GET(request: NextRequest) {
       { 
         quotes: [],
         dy: {},
+        proventos: {},
         tickers: [],
         timestamp: new Date().toISOString(),
         error: `Falha crítica ao buscar cotações: ${message}`,
       },
       { 
-        status: 200, // ✅ Status 200 para não quebrar UI
+        status: 200,
         headers: { 'Cache-Control': 'no-store' } 
       }
     );
