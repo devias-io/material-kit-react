@@ -2689,10 +2689,21 @@ const handleUpdateModule = React.useCallback(
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: '12px'
+                  gap: '12px',
+                  flexWrap: 'wrap'
                 }}
               >
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#010101' }}>{lesson.title}</h3>
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    color: '#010101',
+                    wordBreak: 'break-word'
+                  }}
+                >
+                  {lesson.title}
+                </h3>
                 <span
                   style={{
                     fontSize: '13px',
@@ -2739,7 +2750,15 @@ const handleUpdateModule = React.useCallback(
               )}
               {lesson.description && lesson.description.trim().length > 0 && (
                 <div
-                  style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}
+                  className="lesson-rich-text"
+                  style={{
+                    margin: 0,
+                    color: '#475569',
+                    fontSize: '14px',
+                    lineHeight: 1.6,
+                    overflowWrap: 'anywhere',
+                    wordBreak: 'break-word'
+                  }}
                   dangerouslySetInnerHTML={{ __html: lesson.description }}
                 />
               )}
@@ -2780,7 +2799,15 @@ const handleUpdateModule = React.useCallback(
                   }}
                 >
                   <div
-                    style={{ margin: 0, color: '#010101', fontSize: '14px', lineHeight: 1.6 }}
+                    className="lesson-rich-text"
+                    style={{
+                      margin: 0,
+                      color: '#010101',
+                      fontSize: '14px',
+                      lineHeight: 1.6,
+                      overflowWrap: 'anywhere',
+                      wordBreak: 'break-word'
+                    }}
                     dangerouslySetInnerHTML={{ __html: lesson.content }}
                   />
                 </div>
@@ -2817,7 +2844,8 @@ const handleUpdateModule = React.useCallback(
                           display: 'flex',
                           alignItems: 'center',
                           gap: '12px',
-                          justifyContent: 'space-between'
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap'
                         }}
                       >
                         <a
@@ -2829,7 +2857,9 @@ const handleUpdateModule = React.useCallback(
                             color: '#010101',
                             fontWeight: 600,
                             textDecoration: 'none',
-                            flex: 1
+                            flex: 1,
+                            minWidth: 0,
+                            wordBreak: 'break-word'
                           }}
                         >
                           {material.title}
@@ -2848,7 +2878,8 @@ const handleUpdateModule = React.useCallback(
                             fontSize: '12px',
                             textDecoration: 'none',
                             fontWeight: 600,
-                            whiteSpace: 'nowrap'
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0
                           }}
                         >
                           📥 Baixar
@@ -2864,7 +2895,8 @@ const handleUpdateModule = React.useCallback(
                               fontSize: '12px',
                               cursor: isMaterialUploading ? 'not-allowed' : 'pointer',
                               opacity: isMaterialUploading ? 0.6 : 1,
-                              whiteSpace: 'nowrap'
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0
                             }}
                             disabled={isMaterialUploading}
                           >
@@ -3154,7 +3186,8 @@ const handleUpdateModule = React.useCallback(
       style={{
         minHeight: '100vh',
         backgroundColor: '#f5f5f5',
-        padding: pagePadding
+        padding: pagePadding,
+        overflowX: 'hidden'
       }}
     >
       <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -5504,6 +5537,26 @@ visibleModules.map(module => {
       </div>
 
       <style jsx>{`
+        .lesson-rich-text :global(img),
+        .lesson-rich-text :global(video),
+        .lesson-rich-text :global(iframe) {
+          max-width: 100%;
+          height: auto;
+        }
+
+        .lesson-rich-text :global(table) {
+          display: block;
+          width: 100%;
+          max-width: 100%;
+          overflow-x: auto;
+        }
+
+        .lesson-rich-text :global(pre),
+        .lesson-rich-text :global(code) {
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+
         @media (max-width: 640px) {
           .live-card-header {
             flex-direction: column;
