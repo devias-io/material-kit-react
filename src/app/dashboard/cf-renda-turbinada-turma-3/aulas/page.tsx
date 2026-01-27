@@ -3559,7 +3559,8 @@ visibleModules.map(module => {
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
-        opacity: !isAdmin && !isReleased ? 0.7 : 1
+        opacity: !isAdmin && !isReleased ? 0.7 : 1,
+            overflow: 'visible'  // ← ADICIONAR ESTA LINHA
       }}
     >
       {editingModuleId === module.id ? (
@@ -3885,7 +3886,7 @@ visibleModules.map(module => {
           {/* MOSTRA AULAS APENAS SE LIBERADO OU SE FOR ADMIN */}
           {(isReleased || isAdmin) && !isCollapsed && (
             <>
-              <div style={{ display: 'grid', gap: '16px' }}>
+<div style={{ display: 'grid', gap: '16px', overflow: 'visible' }}>
                 {module.lessons.length === 0 ? (
                   <div
                     style={{
@@ -4301,7 +4302,7 @@ visibleModules.map(module => {
           </div>
         )}
 
-        <div style={{ display: 'grid', gap: '16px' }}>
+<div style={{ display: 'grid', gap: '16px', overflow: 'visible' }}>
           {isLoadingLives ? (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
               Carregando calendário...
