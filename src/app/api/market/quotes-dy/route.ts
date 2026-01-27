@@ -72,41 +72,65 @@ export async function GET(request: NextRequest) {
           }
         });
 
-        // ✅ BUSCAR PROVENTOS PARA TODOS OS TICKERS (não só faltantes)
-        const proventosPorTicker = new Map<string, number>();
-        const limite12Meses = new Date();
-        limite12Meses.setFullYear(limite12Meses.getFullYear() - 1);
+        // ✅ BUSCAR PROVENTOS PARA TODOS OS TICKERS (sem limite de data)
+        type Provento = {
+          valor: number;
+          data: Date;
+          tipo: string;
+        };
+        
+        const proventosPorTicker = new Map<string, Provento[]>();
 
         try {
-          console.log('💰 Buscando proventos para todos os tickers:', tickers.length);
+          console.log('💰 Buscando proventos históricos completos para:', tickers.length, 'tickers');
           
           const proventos = await prisma.provento.findMany({
             where: {
               ticker: { in: tickers }, // ✅ TODOS os tickers
-              dataObj: { gte: limite12Meses },
+              // ✅ REMOVIDO: limite de 12 meses - frontend fará o filtro pela data de entrada
             },
             select: {
               ticker: true,
               valor: true,
+              dataObj: true,
+              tipo: true,
+            },
+            orderBy: {
+              dataObj: 'desc',
             },
           });
 
-          console.log('💰 Proventos encontrados no DB:', proventos.length);
+          console.log('💰 Total de proventos encontrados no DB:', proventos.length);
 
-          // Somar proventos por ticker
+          // Agrupar proventos por ticker (com dados completos)
           proventos.forEach(provento => {
             const ticker = provento.ticker.toUpperCase();
-            const atual = proventosPorTicker.get(ticker) ?? 0;
-            proventosPorTicker.set(ticker, atual + (provento.valor ?? 0));
+            const atual = proventosPorTicker.get(ticker) ?? [];
+            proventosPorTicker.set(ticker, [
+              ...atual,
+              {
+                valor: provento.valor ?? 0,
+                data: provento.dataObj,
+                tipo: provento.tipo ?? 'DIVIDENDO',
+              }
+            ]);
           });
 
-          console.log('💰 Total de tickers com proventos:', proventosPorTicker.size);
-          console.log('💰 Amostra:', Object.fromEntries(Array.from(proventosPorTicker.entries()).slice(0, 5)));
+          console.log('💰 Tickers com proventos:', proventosPorTicker.size);
+          
+          // Log de amostra (primeiros 2 tickers)
+          const amostra = Array.from(proventosPorTicker.entries()).slice(0, 2);
+          amostra.forEach(([ticker, provs]) => {
+            console.log(`💰 ${ticker}: ${provs.length} proventos, total: R$ ${provs.reduce((sum, p) => sum + p.valor, 0).toFixed(2)}`);
+          });
         } catch (dbError) {
           console.error('❌ Erro ao buscar proventos no DB:', dbError);
         }
 
-        // ✅ CALCULAR DY DOS FALTANTES usando proventos do DB
+        // ✅ CALCULAR DY usando proventos dos últimos 12 meses
+        const limite12Meses = new Date();
+        limite12Meses.setFullYear(limite12Meses.getFullYear() - 1);
+
         const faltantes = brapiError 
           ? tickers 
           : tickers.filter(ticker => !dyMap.has(ticker));
@@ -123,14 +147,22 @@ export async function GET(request: NextRequest) {
           });
 
           faltantes.forEach(ticker => {
-            const proventos = proventosPorTicker.get(ticker) ?? 0;
-            if (proventos <= 0) return;
+            const todosProventos = proventosPorTicker.get(ticker) ?? [];
+            
+            // ✅ Para cálculo de DY, usar apenas últimos 12 meses
+            const proventosRecentes = todosProventos.filter(p => 
+              p.data >= limite12Meses
+            );
+            
+            const totalProventos = proventosRecentes.reduce((sum, p) => sum + p.valor, 0);
+            
+            if (totalProventos <= 0) return;
 
             const quote = quotePorTicker.get(ticker);
             const precoAtual = quote?.regularMarketPrice ?? quote?.regularMarketPreviousClose ?? 0;
             if (!precoAtual || precoAtual <= 0) return;
 
-            const dy = proventos / precoAtual;
+            const dy = totalProventos / precoAtual;
             if (dy > 0) {
               dyMap.set(ticker, formatarDy(dy));
             }
@@ -139,13 +171,13 @@ export async function GET(request: NextRequest) {
 
         console.log('✅ Processamento completo:');
         console.log('  - Quotes:', quotes.length);
-        console.log('  - DY:', dyMap.size);
-        console.log('  - Proventos:', proventosPorTicker.size);
+        console.log('  - DY calculados:', dyMap.size);
+        console.log('  - Tickers com histórico de proventos:', proventosPorTicker.size);
 
         return {
           quotes,
           dy: Object.fromEntries(dyMap),
-          proventos: Object.fromEntries(proventosPorTicker), // ✅ Agora retorna todos
+          proventos: Object.fromEntries(proventosPorTicker), // ✅ Retorna array com datas
           tickers,
           timestamp: new Date().toISOString(),
           warnings: brapiError ? [{ source: 'brapi', message: brapiError }] : undefined,
