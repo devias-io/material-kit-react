@@ -311,7 +311,13 @@ async function buscarCotacoesEDY(
 
   const data = await response.json();
   const dyMap = new Map<string, string>(Object.entries(data.dy ?? {}));
-  const proventosMap = new Map<string, number>(Object.entries(data.proventos ?? {}));
+  const proventosMap = new Map<string, number>();
+  Object.entries(data.proventos ?? {}).forEach(([ticker, valor]) => {
+    const valorNormalizado = typeof valor === 'string'
+      ? Number(valor.replace(',', '.'))
+      : Number(valor);
+    proventosMap.set(ticker, Number.isFinite(valorNormalizado) ? valorNormalizado : 0);
+  });
 
   if (Array.isArray(data.quotes)) {
     data.quotes.forEach((quote: any) => {
