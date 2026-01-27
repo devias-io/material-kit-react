@@ -2764,9 +2764,9 @@ const handleUpdateModule = React.useCallback(
               )}
               {enhancedEmbedSrc && (
                 <div
-                  style={{
-                    width: '100%',
-                    borderRadius: '12px',
+style={{
+  ...(compactVideoStyles ?? {}),
+  borderRadius: '12px',
                     overflow: 'hidden',
                     backgroundColor: '#010101'
                   }}
@@ -5306,9 +5306,9 @@ visibleModules.map(module => {
 
                       {canViewContent && enhancedEmbedSrc && (
                         <div
-                          style={{
-                            width: '100%',
-                            borderRadius: '12px',
+style={{
+  ...(compactVideoStyles ?? {}),
+  borderRadius: '12px',
                             overflow: 'hidden',
                             backgroundColor: '#010101'
                           }}
