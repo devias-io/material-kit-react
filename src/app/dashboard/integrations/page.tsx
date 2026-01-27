@@ -7,12 +7,18 @@ import { buildQuotesUrl } from '@/utils/brapiProxy';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 
+type ProventoAPI = {
+  valor: number;
+  data: Date | string;
+  tipo: string;
+};
+
 async function buscarCotacoesEDY(
   tickers: string[]
 ): Promise<{
   cotacoesMap: Map<string, any>;
   dyMap: Map<string, string>;
-  proventosMap: Map<string, number>;
+  proventosMap: Map<string, ProventoAPI[]>;
 }> {
   console.log('🚀 [INTEGRATIONS] Buscando', tickers.length, 'cotações + DY + proventos em batch...');
 
@@ -41,7 +47,14 @@ async function buscarCotacoesEDY(
   }
 
   const dyMap = new Map<string, string>(Object.entries(data.dy ?? {}));
-  const proventosMap = new Map<string, number>(Object.entries(data.proventos ?? {}));
+  const proventosMap = new Map<string, ProventoAPI[]>();
+  if (data.proventos && typeof data.proventos === 'object') {
+    Object.entries(data.proventos).forEach(([ticker, proventos]) => {
+      if (Array.isArray(proventos)) {
+        proventosMap.set(ticker, proventos as ProventoAPI[]);
+      }
+    });
+  }
 
   console.log(
     '✅ [INTEGRATIONS] Concluído:',
@@ -50,7 +63,7 @@ async function buscarCotacoesEDY(
     dyMap.size,
     'DYs,',
     proventosMap.size,
-    'proventos'
+    'proventos (histórico completo)'
   );
 
   return { cotacoesMap, dyMap, proventosMap };
@@ -705,6 +718,30 @@ function calcularViesAutomatico(
   return aplicarViesOverride(override, viesAutomatico);
 }
 
+function calcularProventosFiltrados(
+  proventosHistorico: ProventoAPI[],
+  dataEntrada: string
+): number {
+  if (!proventosHistorico || proventosHistorico.length === 0) return 0;
+  if (!dataEntrada) return 0;
+
+  const [dia, mes, ano] = dataEntrada.split('/');
+  const dataLimite = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+
+  const filtrados = proventosHistorico.filter(provento => {
+    const dataProvento = typeof provento.data === 'string' ? new Date(provento.data) : provento.data;
+    return dataProvento >= dataLimite;
+  });
+
+  const total = filtrados.reduce((sum, provento) => sum + provento.valor, 0);
+
+  console.log(
+    `💰 Proventos filtrados: ${filtrados.length} de ${proventosHistorico.length} (Total: R$ ${total.toFixed(2)})`
+  );
+
+  return total;
+}
+
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL (BASEADO NO CÓDIGO 1)
 function useDividendosIntegradas() {
   const { dados } = useDataStore();
@@ -714,7 +751,7 @@ function useDividendosIntegradas() {
   // Estados para garantir que TODOS os dados estejam prontos
   const [cotacoesCompletas, setCotacoesCompletas] = React.useState<Map<string, any>>(new Map());
   const [dyCompletos, setDyCompletos] = React.useState<Map<string, string>>(new Map());
-  const [proventosCompletos, setProventosCompletos] = React.useState<Map<string, number>>(new Map());
+  const [proventosCompletos, setProventosCompletos] = React.useState<Map<string, ProventoAPI[]>>(new Map());
   const [todosOsDadosProntos, setTodosOsDadosProntos] = React.useState(false);
   
   // Loading states granulares
@@ -824,7 +861,8 @@ function useDividendosIntegradas() {
       
       const dyAPI = dyCompletos.get(ativo.ticker) || '0,00%';
       
-      const proventosAtivo = proventosCompletos.get(ativo.ticker) || 0;
+      const proventosHistorico = proventosCompletos.get(ativo.ticker) || [];
+      const proventosAtivo = calcularProventosFiltrados(proventosHistorico, ativo.dataEntrada);
     
       if (cotacao && cotacao.precoAtual > 0) {
         // ✅ ATIVO COM COTAÇÃO REAL
@@ -836,7 +874,7 @@ function useDividendosIntegradas() {
         novasCotacoes[ativo.ticker] = precoAtualNum;
         
         console.log(`🏆 ${ativo.ticker}: DY final que será usado = ${dyAPI}`);
-        console.log(`🏆 ${ativo.ticker}: R$ ${ativo.precoEntrada.toFixed(2)} -> R$ ${precoAtualNum.toFixed(2)} | Ação ${performanceAcao.toFixed(2)}% + Proventos ${performanceProventos.toFixed(2)}% = TOTAL ${performanceTotal.toFixed(2)}%`);
+        console.log(`🏆 ${ativo.ticker}: R$ ${ativo.precoEntrada.toFixed(2)} -> R$ ${precoAtualNum.toFixed(2)} | Ação ${performanceAcao.toFixed(2)}% + Proventos ${performanceProventos.toFixed(2)}% (R$ ${proventosAtivo.toFixed(2)}) = TOTAL ${performanceTotal.toFixed(2)}%`);
         
         return {
           ...ativo,
@@ -864,7 +902,7 @@ function useDividendosIntegradas() {
         const performanceProventos = ativo.precoEntrada > 0 ? (proventosAtivo / ativo.precoEntrada) * 100 : 0;
         
         console.log(`🏆 ${ativo.ticker}: (sem cotação) DY final que será usado = ${dyAPI}`);
-        console.log(`🏆 ${ativo.ticker}: Sem cotação | R$ ${ativo.precoEntrada.toFixed(2)} + Proventos ${performanceProventos.toFixed(2)}% = TOTAL ${performanceProventos.toFixed(2)}%`);
+        console.log(`🏆 ${ativo.ticker}: Sem cotação | R$ ${ativo.precoEntrada.toFixed(2)} + Proventos ${performanceProventos.toFixed(2)}% (R$ ${proventosAtivo.toFixed(2)}) = TOTAL ${performanceProventos.toFixed(2)}%`);
         
         return {
           ...ativo,
@@ -1044,7 +1082,8 @@ export default function DividendosPage() {
     const performanceAcao = ((ativo.precoSaida - ativo.precoEntrada) / ativo.precoEntrada) * 100;
     
     // Performance dos proventos recebidos durante o período
-    const proventosAtivo = proventosCompletos.get(ativo.ticker) || 0;
+    const proventosHistorico = proventosCompletos.get(ativo.ticker) || [];
+    const proventosAtivo = calcularProventosFiltrados(proventosHistorico, ativo.dataEntrada);
     const performanceProventos = ativo.precoEntrada > 0 ? (proventosAtivo / ativo.precoEntrada) * 100 : 0;
     
     // Total Return = Performance da ação + Performance dos proventos
