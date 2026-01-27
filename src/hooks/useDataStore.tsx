@@ -422,8 +422,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     enabled:
       !!user?.id &&
       isAuthenticated &&
-      isCarteiraPermitida('microCaps') &&
-      pathname?.includes('/customers'),
+      isCarteiraPermitida('microCaps'),
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -436,8 +435,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       !!user?.id &&
       isAuthenticated &&
       modoSincronizacao === 'hibrido' &&
-      isCarteiraPermitida('dividendos') &&
-      pathname?.includes('/integrations'),
+      isCarteiraPermitida('dividendos'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -472,8 +470,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       !!user?.id &&
       isAuthenticated &&
       modoSincronizacao === 'hibrido' &&
-      isCarteiraPermitida('dividendosInternacional') &&
-      pathname?.includes('/internacional/dividendos'),
+      isCarteiraPermitida('dividendosInternacional'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -486,8 +483,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       !!user?.id &&
       isAuthenticated &&
       modoSincronizacao === 'hibrido' &&
-      isCarteiraPermitida('etfs') &&
-      pathname?.includes('/internacional/etfs'),
+      isCarteiraPermitida('etfs'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -500,8 +496,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       !!user?.id &&
       isAuthenticated &&
       modoSincronizacao === 'hibrido' &&
-      isCarteiraPermitida('projetoAmerica') &&
-      pathname?.includes('/internacional/projeto-america'),
+      isCarteiraPermitida('projetoAmerica'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
@@ -514,8 +509,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       !!user?.id &&
       isAuthenticated &&
       modoSincronizacao === 'hibrido' &&
-      isCarteiraPermitida('exteriorStocks') &&
-      pathname?.includes('/internacional/stocks'),
+      isCarteiraPermitida('exteriorStocks'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1
