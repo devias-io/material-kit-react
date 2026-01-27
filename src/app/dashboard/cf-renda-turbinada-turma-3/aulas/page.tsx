@@ -2537,7 +2537,8 @@ const handleUpdateModule = React.useCallback(
             backgroundColor: '#f8fafc',
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px'
+            gap: '12px',
+                overflow: 'visible'  // ← ADICIONAR ESTA LINHA
           }}
         >
           {isEditing ? (
@@ -2762,15 +2763,15 @@ const handleUpdateModule = React.useCallback(
                   dangerouslySetInnerHTML={{ __html: lesson.description }}
                 />
               )}
-              {enhancedEmbedSrc && (
-                <div
-style={{
-  ...(compactVideoStyles ?? {}),
-  borderRadius: '12px',
-                    overflow: 'hidden',
-                    backgroundColor: '#010101'
-                  }}
-                >
+{enhancedEmbedSrc && (
+  <div
+    style={{
+      ...(compactVideoStyles ?? {}),  // ← USAR compactVideoStyles
+      borderRadius: '12px',
+      overflow: 'hidden',
+      backgroundColor: '#010101'
+    }}
+  >
                   <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
                     <iframe
                       src={enhancedEmbedSrc}
@@ -5304,15 +5305,15 @@ visibleModules.map(module => {
                         </div>
                       )}
 
-                      {canViewContent && enhancedEmbedSrc && (
-                        <div
-style={{
-  ...(compactVideoStyles ?? {}),
-  borderRadius: '12px',
-                            overflow: 'hidden',
-                            backgroundColor: '#010101'
-                          }}
-                        >
+{canViewContent && enhancedEmbedSrc && (
+  <div
+    style={{
+      ...(compactVideoStyles ?? {}),  // ← USAR compactVideoStyles
+      borderRadius: '12px',
+      overflow: 'hidden',
+      backgroundColor: '#010101'
+    }}
+  >
                           <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
                             <iframe
                               src={enhancedEmbedSrc}
