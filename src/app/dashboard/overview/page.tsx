@@ -8,12 +8,18 @@ import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/u
 import { useAuthAccess } from '@/hooks/use-auth-access';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
 
+type ProventoAPI = {
+  valor: number;
+  data: Date | string;
+  tipo: string;
+};
+
 async function buscarCotacoesEDY(
   tickers: string[]
 ): Promise<{
   cotacoesMap: Map<string, any>;
   dyMap: Map<string, string>;
-  proventosMap: Map<string, number>;
+  proventosMap: Map<string, ProventoAPI[]>;
 }> {
   console.log('🚀 [OVERVIEW] Buscando', tickers.length, 'cotações + DY + proventos em batch...');
 
@@ -42,7 +48,14 @@ async function buscarCotacoesEDY(
   }
 
   const dyMap = new Map<string, string>(Object.entries(data.dy ?? {}));
-  const proventosMap = new Map<string, number>(Object.entries(data.proventos ?? {}));
+  const proventosMap = new Map<string, ProventoAPI[]>();
+  if (data.proventos && typeof data.proventos === 'object') {
+    Object.entries(data.proventos).forEach(([ticker, proventos]) => {
+      if (Array.isArray(proventos)) {
+        proventosMap.set(ticker, proventos as ProventoAPI[]);
+      }
+    });
+  }
 
   console.log(
     '✅ [OVERVIEW] Concluído:',
@@ -51,7 +64,7 @@ async function buscarCotacoesEDY(
     dyMap.size,
     'DYs,',
     proventosMap.size,
-    'proventos'
+    'proventos (histórico completo)'
   );
 
   return { cotacoesMap, dyMap, proventosMap };
@@ -709,6 +722,30 @@ function calcularViesAutomatico(
   return aplicarViesOverride(override, viesAutomatico);
 }
 
+function calcularProventosFiltrados(
+  proventosHistorico: ProventoAPI[],
+  dataEntrada: string
+): number {
+  if (!proventosHistorico || proventosHistorico.length === 0) return 0;
+  if (!dataEntrada) return 0;
+
+  const [dia, mes, ano] = dataEntrada.split('/');
+  const dataLimite = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+
+  const filtrados = proventosHistorico.filter(provento => {
+    const dataProvento = typeof provento.data === 'string' ? new Date(provento.data) : provento.data;
+    return dataProvento >= dataLimite;
+  });
+
+  const total = filtrados.reduce((sum, provento) => sum + provento.valor, 0);
+
+  console.log(
+    `💰 Proventos filtrados: ${filtrados.length} de ${proventosHistorico.length} (Total: R$ ${total.toFixed(2)})`
+  );
+
+  return total;
+}
+
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL
 function useSmallCapsIntegradas() {
   const { dados } = useDataStore();
@@ -718,7 +755,7 @@ function useSmallCapsIntegradas() {
   // Estados para garantir que TODOS os dados estejam prontos
   const [cotacoesCompletas, setCotacoesCompletas] = React.useState<Map<string, any>>(new Map());
   const [dyCompletos, setDyCompletos] = React.useState<Map<string, string>>(new Map());
-  const [proventosCompletos, setProventosCompletos] = React.useState<Map<string, number>>(new Map());
+  const [proventosCompletos, setProventosCompletos] = React.useState<Map<string, ProventoAPI[]>>(new Map());
   const [todosOsDadosProntos, setTodosOsDadosProntos] = React.useState(false);
   
   // Loading states granulares
@@ -818,7 +855,8 @@ function useSmallCapsIntegradas() {
       
       const dyAPI = dyCompletos.get(ativo.ticker) || '0,00%';
       
-      const proventosAtivo = proventosCompletos.get(ativo.ticker) || 0;
+      const proventosHistorico = proventosCompletos.get(ativo.ticker) || [];
+      const proventosAtivo = calcularProventosFiltrados(proventosHistorico, ativo.dataEntrada);
     
       if (cotacao && cotacao.precoAtual > 0) {
         // ✅ ATIVO COM COTAÇÃO REAL
@@ -1048,7 +1086,8 @@ const calcularPerformanceEncerrada = React.useCallback((ativo: any) => {
   const performanceAcao = ((ativo.precoSaida - ativo.precoEntrada) / ativo.precoEntrada) * 100;
   
   // Performance dos proventos recebidos durante o período
-  const proventosAtivo = proventosCompletos.get(ativo.ticker) || 0;
+  const proventosHistorico = proventosCompletos.get(ativo.ticker) || [];
+  const proventosAtivo = calcularProventosFiltrados(proventosHistorico, ativo.dataEntrada);
   const performanceProventos = ativo.precoEntrada > 0 ? (proventosAtivo / ativo.precoEntrada) * 100 : 0;
   
   // Total Return = Performance da ação + Performance dos proventos
