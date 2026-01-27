@@ -5307,7 +5307,6 @@ visibleModules.map(module => {
 {canViewContent && enhancedEmbedSrc && (
   <div
     style={{
-      ...(compactVideoStyles ?? {}),  // ← USAR compactVideoStyles
       borderRadius: '12px',
       overflow: 'hidden',
       backgroundColor: '#010101'
