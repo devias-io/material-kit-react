@@ -2671,6 +2671,7 @@ const handleUpdateModule = React.useCallback(
               )}
               {lesson.description && lesson.description.trim().length > 0 && (
                 <div
+                  className="lesson-rich-content"
                   style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}
                   dangerouslySetInnerHTML={{ __html: lesson.description }}
                 />
@@ -2712,6 +2713,7 @@ const handleUpdateModule = React.useCallback(
                   }}
                 >
                   <div
+                    className="lesson-rich-content"
                     style={{ margin: 0, color: '#010101', fontSize: '14px', lineHeight: 1.6 }}
                     dangerouslySetInnerHTML={{ __html: lesson.content }}
                   />
@@ -3085,13 +3087,32 @@ const handleUpdateModule = React.useCallback(
   );
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
-        padding: pagePadding
-      }}
-    >
+    <>
+      <style jsx global>{`
+        .lesson-rich-content iframe,
+        .lesson-rich-content embed,
+        .lesson-rich-content video {
+          max-width: 100%;
+        }
+
+        .lesson-rich-content iframe {
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          height: auto;
+        }
+
+        .lesson-rich-content img {
+          max-width: 100%;
+          height: auto;
+        }
+      `}</style>
+      <div
+        style={{
+          minHeight: '100vh',
+          backgroundColor: '#f5f5f5',
+          padding: pagePadding
+        }}
+      >
       <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <button
           type="button"
@@ -5139,6 +5160,7 @@ visibleModules.map(module => {
                           }}
                         >
                           <div
+                            className="lesson-rich-content"
                             style={{ margin: 0, color: '#0f172a', fontSize: '14px', lineHeight: 1.6 }}
                             dangerouslySetInnerHTML={{ __html: mentoria.content }}
                           />
@@ -5340,6 +5362,7 @@ visibleModules.map(module => {
           }
         }
       `}</style>
-    </div>
+      </div>
+    </>
   );
 }
