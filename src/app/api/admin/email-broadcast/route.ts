@@ -1,9 +1,10 @@
+// /app/api/admin/email-broadcast/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { enviarEmailComunicado } from '@/lib/auth/email';
 
-export const maxDuration = 60; // Aumentado
+export const maxDuration = 10; // ← MUDANÇA 1: Reduzir para 10s
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,13 +71,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No recipients found for the provided criteria' }, { status: 404 });
     }
 
-    // Enviar em lotes de 50 para evitar timeout
+    // ← MUDANÇA 2: Responder IMEDIATAMENTE (antes de processar)
+    const response = NextResponse.json({
+      message: `Email broadcast iniciado para ${validRecipients.length} destinatário(s)`,
+      total: validRecipients.length,
+      status: 'processing'
+    }, { status: 202 }); // 202 = Aceito, processando
+
+    // ← MUDANÇA 3: Processar em background (sem await!)
+    processarEmBackground(validRecipients, subject, message, isHtml);
+
+    return response; // Responde instantaneamente
+
+  } catch (error) {
+    console.error('Error sending broadcast email:', error);
+    return NextResponse.json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+    }, { status: 500 });
+  }
+}
+
+// ← ADICIONAR esta função no final do arquivo
+function processarEmBackground(
+  recipients: any[],
+  subject: string,
+  message: string,
+  isHtml: boolean
+) {
+  // Executar sem await - não bloqueia a resposta
+  (async () => {
     const BATCH_SIZE = 50;
     const allSent: string[] = [];
     const allFailed: string[] = [];
 
-    for (let i = 0; i < validRecipients.length; i += BATCH_SIZE) {
-      const batch = validRecipients.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+      const batch = recipients.slice(i, i + BATCH_SIZE);
       
       try {
         const emailResult = await enviarEmailComunicado({
@@ -88,23 +118,16 @@ export async function POST(request: NextRequest) {
         
         allSent.push(...emailResult.sent);
         allFailed.push(...emailResult.failed);
+        
+        console.log(`✅ Batch ${Math.floor(i / BATCH_SIZE) + 1} enviado: ${emailResult.sent.length} OK, ${emailResult.failed.length} falhas`);
       } catch (error) {
-        console.error(`Error sending batch ${i / BATCH_SIZE + 1}:`, error);
+        console.error(`❌ Erro no batch ${i / BATCH_SIZE + 1}:`, error);
         allFailed.push(...batch.map(r => r.email));
       }
     }
 
-    return NextResponse.json({
-      message: `Email broadcast sent to ${allSent.length} recipient(s)`,
-      recipients: allSent,
-      failed: allFailed,
-      total: validRecipients.length
-    }, { status: 200 });
-  } catch (error) {
-    console.error('Error sending broadcast email:', error);
-    return NextResponse.json({
-      error: 'Internal server error',
-      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
-    }, { status: 500 });
-  }
+    console.log(`🎉 Broadcast finalizado! ${allSent.length} enviados, ${allFailed.length} falhas`);
+  })().catch(error => {
+    console.error('❌ Erro no processamento em background:', error);
+  });
 }
