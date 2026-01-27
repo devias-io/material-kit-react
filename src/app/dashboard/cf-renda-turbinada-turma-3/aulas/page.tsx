@@ -3182,33 +3182,14 @@ const handleUpdateModule = React.useCallback(
   );
 
   return (
-    <>
-      <style jsx global>{`
-        .lesson-rich-content iframe,
-        .lesson-rich-content embed,
-        .lesson-rich-content video {
-          max-width: 100%;
-        }
-
-        .lesson-rich-content iframe {
-          width: 100%;
-          aspect-ratio: 16 / 9;
-          height: auto;
-        }
-
-        .lesson-rich-content img {
-          max-width: 100%;
-          height: auto;
-        }
-      `}</style>
-      <div
-        style={{
-          minHeight: '100vh',
-          backgroundColor: '#f5f5f5',
-          padding: pagePadding,
-          overflowX: 'hidden'
-        }}
-      >
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundColor: '#f5f5f5',
+        padding: pagePadding,
+        overflowX: 'hidden'
+      }}
+    >
       <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <button
           type="button"
@@ -5557,28 +5538,35 @@ visibleModules.map(module => {
       </div>
 
       <style jsx>{`
-        .lesson-rich-text :global(*) {
+        .lesson-rich-text :global(*),
+        .lesson-rich-content :global(*) {
           max-width: 100%;
         }
 
         .lesson-rich-text :global(img),
         .lesson-rich-text :global(video),
-        .lesson-rich-text :global(iframe) {
+        .lesson-rich-text :global(iframe),
+        .lesson-rich-content :global(img),
+        .lesson-rich-content :global(video),
+        .lesson-rich-content :global(iframe) {
           max-width: 100%;
           width: 100%;
           height: auto;
           display: block;
         }
 
-        .lesson-rich-text :global(iframe) {
+        .lesson-rich-text :global(iframe),
+        .lesson-rich-content :global(iframe) {
           aspect-ratio: 16 / 9;
         }
 
-        .lesson-rich-text :global(figure) {
+        .lesson-rich-text :global(figure),
+        .lesson-rich-content :global(figure) {
           margin: 0;
         }
 
-        .lesson-rich-text :global(table) {
+        .lesson-rich-text :global(table),
+        .lesson-rich-content :global(table) {
           display: block;
           width: 100%;
           max-width: 100%;
@@ -5586,7 +5574,9 @@ visibleModules.map(module => {
         }
 
         .lesson-rich-text :global(pre),
-        .lesson-rich-text :global(code) {
+        .lesson-rich-text :global(code),
+        .lesson-rich-content :global(pre),
+        .lesson-rich-content :global(code) {
           white-space: pre-wrap;
           word-break: break-word;
         }
@@ -5613,7 +5603,6 @@ visibleModules.map(module => {
           }
         }
       `}</style>
-      </div>
-    </>
+    </div>
   );
 }

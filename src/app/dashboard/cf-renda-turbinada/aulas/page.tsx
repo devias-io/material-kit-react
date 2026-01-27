@@ -3087,32 +3087,13 @@ const handleUpdateModule = React.useCallback(
   );
 
   return (
-    <>
-      <style jsx global>{`
-        .lesson-rich-content iframe,
-        .lesson-rich-content embed,
-        .lesson-rich-content video {
-          max-width: 100%;
-        }
-
-        .lesson-rich-content iframe {
-          width: 100%;
-          aspect-ratio: 16 / 9;
-          height: auto;
-        }
-
-        .lesson-rich-content img {
-          max-width: 100%;
-          height: auto;
-        }
-      `}</style>
-      <div
-        style={{
-          minHeight: '100vh',
-          backgroundColor: '#f5f5f5',
-          padding: pagePadding
-        }}
-      >
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundColor: '#f5f5f5',
+        padding: pagePadding
+      }}
+    >
       <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <button
           type="button"
@@ -5340,6 +5321,23 @@ visibleModules.map(module => {
       </div>
 
       <style jsx>{`
+        :global(.lesson-rich-content iframe),
+        :global(.lesson-rich-content embed),
+        :global(.lesson-rich-content video) {
+          max-width: 100%;
+        }
+
+        :global(.lesson-rich-content iframe) {
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          height: auto;
+        }
+
+        :global(.lesson-rich-content img) {
+          max-width: 100%;
+          height: auto;
+        }
+
         @media (max-width: 640px) {
           .live-card-header {
             flex-direction: column;
@@ -5362,7 +5360,6 @@ visibleModules.map(module => {
           }
         }
       `}</style>
-      </div>
-    </>
+    </div>
   );
 }
