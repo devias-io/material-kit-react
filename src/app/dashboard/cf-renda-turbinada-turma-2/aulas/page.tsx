@@ -2739,6 +2739,7 @@ const handleUpdateModule = React.useCallback(
               )}
               {lesson.description && lesson.description.trim().length > 0 && (
                 <div
+                  className="lesson-rich-content"
                   style={{ margin: 0, color: '#475569', fontSize: '14px', lineHeight: 1.6 }}
                   dangerouslySetInnerHTML={{ __html: lesson.description }}
                 />
@@ -2780,6 +2781,7 @@ const handleUpdateModule = React.useCallback(
                   }}
                 >
                   <div
+                    className="lesson-rich-content"
                     style={{ margin: 0, color: '#010101', fontSize: '14px', lineHeight: 1.6 }}
                     dangerouslySetInnerHTML={{ __html: lesson.content }}
                   />
@@ -5325,6 +5327,7 @@ visibleModules.map(module => {
                           }}
                         >
                           <div
+                            className="lesson-rich-content"
                             style={{ margin: 0, color: '#0f172a', fontSize: '14px', lineHeight: 1.6 }}
                             dangerouslySetInnerHTML={{ __html: mentoria.content }}
                           />
@@ -5504,6 +5507,23 @@ visibleModules.map(module => {
       </div>
 
       <style jsx>{`
+        :global(.lesson-rich-content iframe),
+        :global(.lesson-rich-content embed),
+        :global(.lesson-rich-content video) {
+          max-width: 100%;
+        }
+
+        :global(.lesson-rich-content iframe) {
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          height: auto;
+        }
+
+        :global(.lesson-rich-content img) {
+          max-width: 100%;
+          height: auto;
+        }
+
         @media (max-width: 640px) {
           .live-card-header {
             flex-direction: column;

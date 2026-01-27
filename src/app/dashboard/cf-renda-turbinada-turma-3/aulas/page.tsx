@@ -2751,7 +2751,7 @@ const handleUpdateModule = React.useCallback(
               )}
               {lesson.description && lesson.description.trim().length > 0 && (
                 <div
-                  className="lesson-rich-text"
+                  className="lesson-rich-content lesson-rich-text"
                   style={{
                     margin: 0,
                     color: '#475569',
@@ -2799,7 +2799,7 @@ const handleUpdateModule = React.useCallback(
                   }}
                 >
                   <div
-                    className="lesson-rich-text"
+                    className="lesson-rich-content lesson-rich-text"
                     style={{
                       margin: 0,
                       color: '#010101',
@@ -5358,6 +5358,7 @@ visibleModules.map(module => {
                           }}
                         >
                           <div
+                            className="lesson-rich-content"
                             style={{ margin: 0, color: '#0f172a', fontSize: '14px', lineHeight: 1.6 }}
                             dangerouslySetInnerHTML={{ __html: mentoria.content }}
                           />
@@ -5537,28 +5538,35 @@ visibleModules.map(module => {
       </div>
 
       <style jsx>{`
-        .lesson-rich-text :global(*) {
+        .lesson-rich-text :global(*),
+        .lesson-rich-content :global(*) {
           max-width: 100%;
         }
 
         .lesson-rich-text :global(img),
         .lesson-rich-text :global(video),
-        .lesson-rich-text :global(iframe) {
+        .lesson-rich-text :global(iframe),
+        .lesson-rich-content :global(img),
+        .lesson-rich-content :global(video),
+        .lesson-rich-content :global(iframe) {
           max-width: 100%;
           width: 100%;
           height: auto;
           display: block;
         }
 
-        .lesson-rich-text :global(iframe) {
+        .lesson-rich-text :global(iframe),
+        .lesson-rich-content :global(iframe) {
           aspect-ratio: 16 / 9;
         }
 
-        .lesson-rich-text :global(figure) {
+        .lesson-rich-text :global(figure),
+        .lesson-rich-content :global(figure) {
           margin: 0;
         }
 
-        .lesson-rich-text :global(table) {
+        .lesson-rich-text :global(table),
+        .lesson-rich-content :global(table) {
           display: block;
           width: 100%;
           max-width: 100%;
@@ -5566,7 +5574,9 @@ visibleModules.map(module => {
         }
 
         .lesson-rich-text :global(pre),
-        .lesson-rich-text :global(code) {
+        .lesson-rich-text :global(code),
+        .lesson-rich-content :global(pre),
+        .lesson-rich-content :global(code) {
           white-space: pre-wrap;
           word-break: break-word;
         }
