@@ -2,13 +2,59 @@
 'use client';
 
 import * as React from 'react';
-import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
 import { buildQuotesUrl } from '@/utils/brapiProxy';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
-import { calcularProventosAtivoAPI } from '@/hooks/useProventosAPI';
-import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
+
+async function buscarCotacoesEDY(
+  tickers: string[]
+): Promise<{
+  cotacoesMap: Map<string, any>;
+  dyMap: Map<string, string>;
+  proventosMap: Map<string, number>;
+}> {
+  console.log('🚀 [CUSTOMERS] Buscando', tickers.length, 'cotações + DY + proventos em batch...');
+
+  const response = await fetch(`/api/market/quotes-dy?tickers=${tickers.join(',')}`);
+
+  if (!response.ok) {
+    throw new Error(`Quotes/DY HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  const cotacoesMap = new Map<string, any>();
+  if (Array.isArray(data.quotes)) {
+    data.quotes.forEach((quote: any) => {
+      if (quote?.regularMarketPrice > 0) {
+        cotacoesMap.set(quote.symbol, {
+          precoAtual: quote.regularMarketPrice,
+          variacao: quote.regularMarketChange || 0,
+          variacaoPercent: quote.regularMarketChangePercent || 0,
+          volume: quote.regularMarketVolume || 0,
+          nome: quote.shortName || quote.longName || quote.symbol,
+          dadosCompletos: quote
+        });
+      }
+    });
+  }
+
+  const dyMap = new Map<string, string>(Object.entries(data.dy ?? {}));
+  const proventosMap = new Map<string, number>(Object.entries(data.proventos ?? {}));
+
+  console.log(
+    '✅ [CUSTOMERS] Concluído:',
+    cotacoesMap.size,
+    'cotações,',
+    dyMap.size,
+    'DYs,',
+    proventosMap.size,
+    'proventos'
+  );
+
+  return { cotacoesMap, dyMap, proventosMap };
+}
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -659,162 +705,6 @@ function calcularViesAutomatico(
   return aplicarViesOverride(override, viesAutomatico);
 }
 
-// 🚀 FUNÇÃO OTIMIZADA PARA BUSCAR COTAÇÕES - SEMPRE ESTRATÉGIA MOBILE
-async function buscarCotacoesParalelas(tickers: string[], isMobile: boolean): Promise<Map<string, any>> {
-  const cotacoesMap = new Map();
-  
-  console.log('🚀 [OTIMIZADO] Buscando', tickers.length, 'cotações EM PARALELO...');
-  
-  // ✅ STRATEGY 1: Tentar batch request primeiro (1 requisição para todos)
-  try {
-    const batchUrl = buildQuotesUrl(tickers);
-    const response = await Promise.race([
-      fetch(batchUrl),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Batch timeout')), 5000))
-    ]);
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        console.log('✅ BATCH REQUEST SUCESSO:', data.results.length, 'cotações em 1 só request');
-        
-        data.results.forEach((quote: any) => {
-          if (quote.regularMarketPrice > 0) {
-            cotacoesMap.set(quote.symbol, {
-              precoAtual: quote.regularMarketPrice,
-              variacao: quote.regularMarketChange || 0,
-              variacaoPercent: quote.regularMarketChangePercent || 0,
-              volume: quote.regularMarketVolume || 0,
-              nome: quote.shortName || quote.longName || quote.symbol,
-              dadosCompletos: quote
-            });
-          }
-        });
-        
-        return cotacoesMap;
-      }
-    }
-  } catch (error) {
-    console.log('❌ Batch request falhou, usando paralelo individual');
-  }
-  
-  // ✅ STRATEGY 2: Requests paralelos individuais (SEM DELAYS!)
-  console.log('🚀 [PARALELO] Executando', tickers.length, 'requests simultâneos...');
-  
-  const promises = tickers.map(async (ticker) => {
-    try {
-      const response = await Promise.race([
-        fetch(buildQuotesUrl(ticker), {
-          headers: { 'Accept': 'application/json' }
-        }),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Individual timeout')), 4000))
-      ]);
-
-      if (response.ok) {
-        const data = await response.json();
-        const quote = data.results?.[0];
-        
-        if (quote?.regularMarketPrice > 0) {
-          cotacoesMap.set(ticker, {
-            precoAtual: quote.regularMarketPrice,
-            variacao: quote.regularMarketChange || 0,
-            variacaoPercent: quote.regularMarketChangePercent || 0,
-            volume: quote.regularMarketVolume || 0,
-            nome: quote.shortName || quote.longName || ticker,
-            dadosCompletos: quote
-          });
-        }
-      }
-    } catch (error) {
-      console.log(`❌ [${ticker}]:`, error instanceof Error ? error.message : 'Erro desconhecido');
-    }
-  });
-  
-  // 🚀 EXECUTAR TODAS EM PARALELO (ZERO DELAYS)
-  await Promise.allSettled(promises);
-  
-  console.log('✅ [PARALELO] Concluído:', cotacoesMap.size, 'de', tickers.length);
-  return cotacoesMap;
-}
-
-function registrarDyNoMapa(result: any, ticker: string, dyMap: Map<string, string>): void {
-  const { valor, origem } = calcularDyAPartirDoResultado(result, ticker);
-
-  if (valor && valor > 0) {
-    const dyFormatado = formatarDy(valor);
-    dyMap.set(ticker, dyFormatado);
-    console.log(`✅ [DY] ${ticker}: ${(valor * 100).toFixed(2)}% (${origem})`);
-  } else {
-    dyMap.set(ticker, '0,00%');
-    console.log(`❌ [DY] ${ticker}: Sem dividendos (${origem})`);
-  }
-}
-
-// 🔄 FUNÇÃO PARA BUSCAR DY - VERSÃO CORRETA (IGUAL AO SEU CÓDIGO QUE FUNCIONAVA)
-async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Promise<Map<string, string>> {
-  const dyMap = new Map<string, string>();
-  
-  console.log('📈 [CORRETO] Buscando DY para', tickers.length, 'tickers EM PARALELO...');
-  
-  // ✅ BATCH REQUEST - IGUAL AO SEU CÓDIGO ANTERIOR QUE FUNCIONAVA
-  try {
-    const batchUrl = buildQuotesUrl(tickers, { dividends: true });
-    const response = await Promise.race([
-      fetch(batchUrl),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY batch timeout')), 6000))
-    ]);
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        console.log('✅ DY BATCH SUCCESS:', data.results.length, 'DYs em 1 só request');
-        
-        data.results.forEach((result: any) => {
-          const ticker = result.symbol;
-          registrarDyNoMapa(result, ticker, dyMap);
-        });
-        
-        return dyMap;
-      }
-    }
-  } catch (error) {
-    console.log('❌ DY Batch falhou, usando paralelo individual');
-  }
-  
-  // ✅ PARALELO INDIVIDUAL - IGUAL AO SEU CÓDIGO ANTERIOR
-  const promises = tickers.map(async (ticker) => {
-    try {
-      const response = await Promise.race([
-        fetch(buildQuotesUrl(ticker, { dividends: true }), {
-          headers: { 'Accept': 'application/json' }
-        }),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('DY timeout')), 4000))
-      ]);
-
-      if (response.ok) {
-        const data = await response.json();
-        const result = data.results?.[0];
-        registrarDyNoMapa(result, ticker, dyMap);
-      }
-    } catch (error) {
-      console.log(`❌ [DY-${ticker}]:`, error instanceof Error ? error.message : 'Erro desconhecido');
-    }
-  });
-  
-  await Promise.allSettled(promises);
-  
-  // Garantir que todos os tickers tenham DY
-  tickers.forEach(ticker => {
-    if (!dyMap.has(ticker)) {
-      dyMap.set(ticker, '0,00%');
-    }
-  });
-  
-  console.log('✅ [DY-CORRETO] Concluído:', dyMap.size, 'de', tickers.length);
-  console.log('📊 DY Final Map:', Object.fromEntries(dyMap));
-  return dyMap;
-}
-
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL
 function useMicroCapsIntegradas() {
   const { dados } = useDataStore();
@@ -834,88 +724,7 @@ function useMicroCapsIntegradas() {
   const [error, setError] = React.useState<string | null>(null);
 
   const isMobile = useDeviceDetection();
-  const [proventosMap, setProventosMap] = React.useState<Map<string, number>>(new Map());
   const microCapsData = dados.microCaps || [];
-
-  // ✅ FUNÇÃO CORRIGIDA PARA BUSCAR PROVENTOS COM FILTRO POR DATA DE SAÍDA
-  const buscarProventosAtivos = React.useCallback(async (ativosData: any[]) => {
-    setLoadingProventos(true);
-    const novosProventos = new Map<string, number>();
-    
-    console.log('💰 Iniciando busca de proventos para', ativosData.length, 'micro caps');
-    
-    const buscarProventoAtivo = async (ativo: any) => {
-      try {
-        const parseDataBR = (dataBr: string | undefined) => {
-          if (!dataBr || typeof dataBr !== 'string') return null;
-          const [dia, mes, ano] = dataBr.split('/');
-          if (!dia || !mes || !ano) return null;
-          const dataISO = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-          const parsed = new Date(`${dataISO}T00:00:00`);
-          return Number.isNaN(parsed.getTime()) ? null : parsed;
-        };
-
-        const dataEntradaDate = parseDataBR(ativo.dataEntrada);
-        const dataSaidaDate = parseDataBR(ativo.dataSaida);
-        const periodoProventos = dataSaidaDate
-          ? `${ativo.dataEntrada} até ${ativo.dataSaida}`
-          : `desde ${ativo.dataEntrada}`;
-
-        console.log(`💰 Buscando proventos para ${ativo.ticker} (${periodoProventos})`);
-        
-        const controller = new AbortController();
-        setTimeout(() => controller.abort(), 2000);
-        
-        const response = await fetch(`/api/proventos/${ativo.ticker}`, {
-          signal: controller.signal,
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (response.ok) {
-          const proventosRaw = await response.json();
-          
-          if (Array.isArray(proventosRaw)) {
-            const proventosFiltrados = proventosRaw.filter((p: any) => {
-              if (!p.dataObj) return false;
-              const dataProvento = new Date(p.dataObj);
-
-              if (Number.isNaN(dataProvento.getTime())) return false;
-              if (dataEntradaDate && dataProvento < dataEntradaDate) return false;
-              if (dataSaidaDate && dataProvento > dataSaidaDate) return false;
-
-              return true;
-            });
-            
-            const total = proventosFiltrados.reduce((sum: number, p: any) => sum + (p.valor || 0), 0);
-            console.log(`💰 ${ativo.ticker}: R$ ${total.toFixed(2)} (${proventosFiltrados.length} proventos)`);
-            return { ticker: ativo.ticker, valor: total };
-          }
-        } else {
-          console.log(`💰 ${ativo.ticker}: Erro HTTP ${response.status}`);
-        }
-      } catch (error) {
-        console.log(`💰 ${ativo.ticker}: Erro -`, error instanceof Error ? error.message : 'Erro desconhecido');
-      }
-      
-      return { ticker: ativo.ticker, valor: 0 };
-    };
-
-    // Buscar proventos em paralelo
-    const resultados = await Promise.allSettled(
-      ativosData.map(ativo => buscarProventoAtivo(ativo))
-    );
-
-    resultados.forEach((resultado) => {
-      if (resultado.status === 'fulfilled') {
-        novosProventos.set(resultado.value.ticker, resultado.value.valor);
-      }
-    });
-    
-    console.log('💰 Proventos finais:', Object.fromEntries(novosProventos));
-    setProventosMap(novosProventos);
-    setLoadingProventos(false);
-    return novosProventos;
-  }, []);
 
   // 🎯 FUNÇÃO PRINCIPAL REESCRITA - PARALELIZAÇÃO TOTAL (IGUAL AO CÓDIGO DOS FIIS)
   const buscarDadosCompletos = React.useCallback(async () => {
@@ -948,35 +757,36 @@ function useMicroCapsIntegradas() {
       // Medir tempo
       const inicioTempo = performance.now();
 
-      // EXECUTAR TUDO EM PARALELO
-      const [cotacoesResult, dyResult, proventosResult] = await Promise.allSettled([
-        buscarCotacoesParalelas(tickers, isMobile),
-        buscarDYsComEstrategia(tickers, isMobile),
-        buscarProventosAtivos(microCapsData)
+      // EXECUTAR BATCH ÚNICO PARA COTAÇÕES, DY E PROVENTOS
+      const [cotacoesResult] = await Promise.allSettled([
+        buscarCotacoesEDY(tickers)
       ]);
 
       const tempoTotal = performance.now() - inicioTempo;
       console.log(`🎉 TODAS AS ETAPAS CONCLUÍDAS EM ${tempoTotal.toFixed(0)}ms!`);
 
       // Processar resultados
-      const cotacoesMap = cotacoesResult.status === 'fulfilled' ? cotacoesResult.value : new Map();
-      const dyMap = dyResult.status === 'fulfilled' ? dyResult.value : new Map();
-      const proventosData = proventosResult.status === 'fulfilled' ? proventosResult.value : new Map();
+      const {
+        cotacoesMap,
+        dyMap,
+        proventosMap
+      } = cotacoesResult.status === 'fulfilled'
+        ? cotacoesResult.value
+        : {
+            cotacoesMap: new Map(),
+            dyMap: new Map(),
+            proventosMap: new Map()
+          };
 
       // Logs de debug
       console.log('📊 Cotações obtidas:', cotacoesMap.size, 'de', tickers.length);
       console.log('📈 DY obtidos:', dyMap.size, 'de', tickers.length);
-      console.log('💰 Proventos obtidos:', proventosData.size, 'de', microCapsData.length);
-
-      // Debug do DY
-      console.log('🔍 [PARALLEL-DEBUG] dyMap processado:');
-      console.log('🔍 [PARALLEL-DEBUG] dyMap.size:', dyMap.size);
-      console.log('🔍 [PARALLEL-DEBUG] dyMap conteúdo:', Object.fromEntries(dyMap));
+      console.log('💰 Proventos obtidos:', proventosMap.size, 'de', microCapsData.length);
 
       // Atualizar estados
       setCotacoesCompletas(cotacoesMap);
       setDyCompletos(dyMap);
-      setProventosCompletos(proventosData);
+      setProventosCompletos(proventosMap);
 
       // Desativar loadings
       setLoadingCotacoes(false);
@@ -992,21 +802,13 @@ function useMicroCapsIntegradas() {
       console.error('❌ Erro na busca otimizada:', err);
       setTodosOsDadosProntos(true);
     }
-  }, [microCapsData, isMobile, buscarProventosAtivos]);
+  }, [microCapsData]);
 
   // 🏆 USEEFFECT QUE SÓ EXECUTA QUANDO TODOS OS DADOS ESTÃO PRONTOS
   React.useEffect(() => {
     if (!todosOsDadosProntos || microCapsData.length === 0) return;
     
     console.log('🏆 PROCESSANDO TOTAL RETURN - TODOS OS DADOS PRONTOS!');
-    console.log('🔍 [DEPS-DEBUG] Verificando estados no momento da execução:');
-    console.log('🔍 [DEPS-DEBUG] todosOsDadosProntos:', todosOsDadosProntos);
-    console.log('🔍 [DEPS-DEBUG] microCapsData.length:', microCapsData.length);
-    console.log('🔍 [DEPS-DEBUG] cotacoesCompletas.size:', cotacoesCompletas.size);
-    console.log('🔍 [DEPS-DEBUG] dyCompletos.size:', dyCompletos.size);
-    console.log('🔍 [DEPS-DEBUG] proventosCompletos.size:', proventosCompletos.size);
-    console.log('🔍 [DEPS-DEBUG] dyCompletos conteúdo:', Object.fromEntries(dyCompletos));
-    
     console.log('📊 Dados disponíveis:', {
       cotacoes: cotacoesCompletas.size,
       dy: dyCompletos.size, 
@@ -1020,14 +822,7 @@ function useMicroCapsIntegradas() {
     const ativosFinais = microCapsData.map((ativo, index) => {
       const cotacao = cotacoesCompletas.get(ativo.ticker);
       
-      // 🔍 DEBUG DY ASSIGNMENT
       const dyAPI = dyCompletos.get(ativo.ticker) || '0,00%';
-      console.log(`🔍 [ASSIGN-DEBUG] ${ativo.ticker}:`);
-      console.log(`  - dyCompletos.size: ${dyCompletos.size}`);
-      console.log(`  - dyCompletos.has('${ativo.ticker}'): ${dyCompletos.has(ativo.ticker)}`);
-      console.log(`  - dyCompletos.get('${ativo.ticker}'): ${dyCompletos.get(ativo.ticker)}`);
-      console.log(`  - dyAPI final: ${dyAPI}`);
-      console.log(`  - loadingDY: ${loadingDY}`);
       
       const proventosAtivo = proventosCompletos.get(ativo.ticker) || 0;
     
@@ -1039,8 +834,6 @@ function useMicroCapsIntegradas() {
         const performanceTotal = performanceAcao + performanceProventos;
         
         novasCotacoes[ativo.ticker] = precoAtualNum;
-        
-        console.log(`🏆 ${ativo.ticker}: DY final que será usado = ${dyAPI}`);
         
         return {
           ...ativo,
@@ -1066,8 +859,6 @@ function useMicroCapsIntegradas() {
       } else {
         // ⚠️ ATIVO SEM COTAÇÃO REAL
         const performanceProventos = ativo.precoEntrada > 0 ? (proventosAtivo / ativo.precoEntrada) * 100 : 0;
-        
-        console.log(`🏆 ${ativo.ticker}: (sem cotação) DY final que será usado = ${dyAPI}`);
         
         return {
           ...ativo,
