@@ -25,7 +25,7 @@ const useDeviceDetection = () => {
 };
 
 export default function RentabilidadesPage() {
-  const { dados, CARTEIRAS_CONFIG, buscarCotacoes, loading } = useDataStore();
+  const { dados, CARTEIRAS_CONFIG, buscarCotacoes, loading } = useDataStore({ autoLoad: true });
   const [carteiraAtiva, setCarteiraAtiva] = useState('smallCaps');
   const [cotacoesAtualizadas, setCotacoesAtualizadas] = useState({});
   const isMobile = useDeviceDetection(); // ✅ ADICIONAR HOOK DE MOBILE

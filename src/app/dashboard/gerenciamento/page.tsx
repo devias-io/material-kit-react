@@ -149,7 +149,7 @@ export default function GerenciamentoPage() {
     atualizarViesOverride,
     obterEstatisticas,
     setDados
-  } = useDataStore();
+  } = useDataStore({ autoLoad: true });
   
   const [carteiraAtiva, setCarteiraAtiva] = useState('smallCaps');
   const [modoEdicao, setModoEdicao] = useState(null);
