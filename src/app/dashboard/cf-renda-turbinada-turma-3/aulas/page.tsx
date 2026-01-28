@@ -2751,14 +2751,12 @@ const handleUpdateModule = React.useCallback(
               )}
               {lesson.description && lesson.description.trim().length > 0 && (
                 <div
-                  className="lesson-rich-content lesson-rich-text"
+                  className="lesson-rich-content"
                   style={{
                     margin: 0,
                     color: '#475569',
                     fontSize: '14px',
-                    lineHeight: 1.6,
-                    overflowWrap: 'anywhere',
-                    wordBreak: 'break-word'
+                    lineHeight: 1.6
                   }}
                   dangerouslySetInnerHTML={{ __html: lesson.description }}
                 />
@@ -2799,14 +2797,12 @@ const handleUpdateModule = React.useCallback(
                   }}
                 >
                   <div
-                    className="lesson-rich-content lesson-rich-text"
+                    className="lesson-rich-content"
                     style={{
                       margin: 0,
                       color: '#010101',
                       fontSize: '14px',
-                      lineHeight: 1.6,
-                      overflowWrap: 'anywhere',
-                      wordBreak: 'break-word'
+                      lineHeight: 1.6
                     }}
                     dangerouslySetInnerHTML={{ __html: lesson.content }}
                   />
@@ -3186,8 +3182,7 @@ const handleUpdateModule = React.useCallback(
       style={{
         minHeight: '100vh',
         backgroundColor: '#f5f5f5',
-        padding: pagePadding,
-        overflowX: 'hidden'
+        padding: pagePadding
       }}
     >
       <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -5538,47 +5533,21 @@ visibleModules.map(module => {
       </div>
 
       <style jsx>{`
-        .lesson-rich-text :global(*),
-        .lesson-rich-content :global(*) {
+        :global(.lesson-rich-content iframe),
+        :global(.lesson-rich-content embed),
+        :global(.lesson-rich-content video) {
           max-width: 100%;
         }
 
-        .lesson-rich-text :global(img),
-        .lesson-rich-text :global(video),
-        .lesson-rich-text :global(iframe),
-        .lesson-rich-content :global(img),
-        .lesson-rich-content :global(video),
-        .lesson-rich-content :global(iframe) {
-          max-width: 100%;
+        :global(.lesson-rich-content iframe) {
           width: 100%;
-          height: auto;
-          display: block;
-        }
-
-        .lesson-rich-text :global(iframe),
-        .lesson-rich-content :global(iframe) {
           aspect-ratio: 16 / 9;
+          height: auto;
         }
 
-        .lesson-rich-text :global(figure),
-        .lesson-rich-content :global(figure) {
-          margin: 0;
-        }
-
-        .lesson-rich-text :global(table),
-        .lesson-rich-content :global(table) {
-          display: block;
-          width: 100%;
+        :global(.lesson-rich-content img) {
           max-width: 100%;
-          overflow-x: auto;
-        }
-
-        .lesson-rich-text :global(pre),
-        .lesson-rich-text :global(code),
-        .lesson-rich-content :global(pre),
-        .lesson-rich-content :global(code) {
-          white-space: pre-wrap;
-          word-break: break-word;
+          height: auto;
         }
 
         @media (max-width: 640px) {
