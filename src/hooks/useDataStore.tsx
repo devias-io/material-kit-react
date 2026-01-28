@@ -844,7 +844,9 @@ export const DataStoreProvider = ({
 
   const initializeData = useCallback(() => {
     if (!isInitialized) {
+      console.log('🚀 initializeData: Ativando modo híbrido...');
       setIsInitialized(true);
+      setModoSincronizacao('hibrido');
     }
   }, [isInitialized]);
 
