@@ -8,7 +8,7 @@ import type { Ativo, Cotacao } from '@/types/microCaps';
 
 // 🚀 HOOK PRINCIPAL PARA DADOS DE MICRO CAPS
 export function useMicroCapsData() {
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoLoad: true });
   const { isMobile, screenWidth } = useResponsive();
   const { fetchQuotes, fetchDividendYields } = useApiStrategy(isMobile);
   

@@ -23,8 +23,11 @@ import { UserPopover } from './user-popover';
 import { NotificationPopover } from '@/components/core/notification-popover';
 
 // Hook para buscar ativos
-function useAtivos() {
-  const { dados, CARTEIRAS_CONFIG, isInitialized } = useDataStore();
+function useAtivos(
+  dados: Record<string, any[]>,
+  CARTEIRAS_CONFIG: Record<string, { nome: string; icon: string; color: string; moeda: string }>,
+  isInitialized: boolean
+) {
   const [ativos, setAtivos] = React.useState([]);
 
   React.useEffect(() => {
@@ -95,7 +98,8 @@ export function MainNav(): React.JSX.Element {
     avatarRef.current = userAvatar;
   }, [userAvatar]);
   
-  const ativos = useAtivos();
+  const { dados, CARTEIRAS_CONFIG, isInitialized, initializeData } = useDataStore({ autoLoad: false });
+  const ativos = useAtivos(dados, CARTEIRAS_CONFIG, isInitialized);
   const { notifications, unreadCount } = useNotifications();
 
   // Atualiza avatar quando o usuário do contexto muda
@@ -116,6 +120,12 @@ export function MainNav(): React.JSX.Element {
       console.error('Erro ao carregar avatar:', error);
     }
   }, [user]);
+
+  React.useEffect(() => {
+    if (searchMode && !isInitialized) {
+      initializeData();
+    }
+  }, [initializeData, isInitialized, searchMode]);
 
   const handleAtivoSelect = (ativo) => {
     if (ativo) {

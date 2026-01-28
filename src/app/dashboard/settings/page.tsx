@@ -781,7 +781,7 @@ async function buscarDYsComEstrategia(tickers: string[], isMobile: boolean): Pro
 
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM LOADING STATES GRANULARES
 function useFiisIntegradas() {
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoLoad: true });
   const [ativosAtualizados, setAtivosAtualizados] = React.useState<any[]>([]);
   const [cotacoesAtualizadas, setCotacoesAtualizadas] = React.useState<any>({});
   
@@ -1171,7 +1171,7 @@ function useFiisIntegradas() {
 
 // 🎯 COMPONENTE PRINCIPAL OTIMIZADO
 export default function FiisPage() {
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoLoad: true });
   const {
     ativosAtualizados, 
     cotacoesAtualizadas, 

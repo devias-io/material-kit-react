@@ -574,7 +574,7 @@ async function buscarProventosInternacionais(ativosData: any[]): Promise<Map<str
 
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL + TOTAL RETURN
 function useDividendosInternacionaisIntegradas() {
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoLoad: true });
   const [ativosAtualizados, setAtivosAtualizados] = React.useState<any[]>([]);
   const [cotacoesAtualizadas, setCotacoesAtualizadas] = React.useState<any>({});
   
@@ -852,7 +852,7 @@ function useDividendosInternacionaisIntegradas() {
 
 // 🎯 COMPONENTE PRINCIPAL OTIMIZADO
 export default function DividendosInternacionaisPage() {
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoLoad: true });
   const { 
     ativosAtualizados, 
     cotacoesAtualizadas, 
