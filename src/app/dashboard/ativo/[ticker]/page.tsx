@@ -795,8 +795,8 @@ const getDescricaoEmpresa = (ticker, setor) => {
 };
 
 const CUSTOM_LOGO_URLS = {
-  XP: 'https://logo.clearbit.com/xpi.com.br',
-  UNH: 'https://logo.clearbit.com/unitedhealthgroup.com'
+  XP: 'https://upload.wikimedia.org/wikipedia/pt/0/0b/XP_Investimentos_logo.png',
+  UNH: 'https://s3-symbol-logo.tradingview.com/unitedhealth--600.png'
 };
 
 // ✅ COMPONENTE DE AVATAR OTIMIZADO
@@ -835,25 +835,8 @@ const CompanyAvatar = React.memo(({ symbol, companyName, size = 120 }) => {
         `https://ui-avatars.com/api/?name=${normalizedSymbol}&size=128&background=8b5cf6&color=ffffff&bold=true&format=png`
       ];
     } else {
-      const knownLogos = {
-        ...CUSTOM_LOGO_URLS,
-        'AAPL': 'https://logo.clearbit.com/apple.com',
-        'GOOGL': 'https://logo.clearbit.com/google.com',
-        'META': 'https://logo.clearbit.com/meta.com',
-        'NVDA': 'https://logo.clearbit.com/nvidia.com',
-        'AMZN': 'https://logo.clearbit.com/amazon.com',
-        'TSLA': 'https://logo.clearbit.com/tesla.com',
-        'MSFT': 'https://logo.clearbit.com/microsoft.com',
-        'COST': 'https://investidor10.com.br/storage/stocks/thumbnails/68b1ff2ada15e.jpg',
-        'HD': 'https://investidor10.com.br/storage/stocks/thumbnails/68cabec7da51c.jpg',
-        'AMAT': 'https://investidor10.com.br/storage/stocks/thumbnails/68c36de907ad7.jpg',
-        'NNN': 'https://investidor10.com.br/storage/stocks/images/bCjcRXtnrz9lNF5E.jpg',
-        'STX': 'https://static.stocktitan.net/company-logo/stx-sm.webp',
-        'PYPL': 'https://g.foolcdn.com/art/companylogos/square/pypl.png',
-        'PEP': 'https://einvestidor.estadao.com.br/wp-content/uploads/2023/02/pepsico-divulgacao_090220231004.jpg'
-      };
-
-      const primaryUrl = knownLogos[normalizedSymbol] || `https://logo.clearbit.com/${normalizedSymbol.toLowerCase()}.com`;
+      const primaryUrl = CUSTOM_LOGO_URLS[normalizedSymbol]
+        ?? `https://financialmodelingprep.com/image-stock/${normalizedSymbol}.png`;
 
       return [
         primaryUrl,
