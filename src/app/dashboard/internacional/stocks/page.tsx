@@ -340,7 +340,7 @@ async function buscarCotacoesEDY(
 
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL + TOTAL RETURN
 function useExteriorStocksIntegradas() {
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoInit: true });
   const [ativosAtualizados, setAtivosAtualizados] = React.useState<any[]>([]);
   const [cotacoesAtualizadas, setCotacoesAtualizadas] = React.useState<any>({});
   
@@ -600,7 +600,7 @@ function useExteriorStocksIntegradas() {
 
 // 🎯 COMPONENTE PRINCIPAL OTIMIZADO
 export default function ExteriorStocksPage() {
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoInit: true });
   const { 
     ativosAtualizados, 
     cotacoesAtualizadas, 
