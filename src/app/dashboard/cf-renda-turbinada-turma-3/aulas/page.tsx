@@ -5532,21 +5532,53 @@ visibleModules.map(module => {
       </div>
 
       <style jsx>{`
+        :global(.lesson-rich-content) {
+          width: 100%;
+          max-width: 100%;
+          min-width: 0;
+          overflow-x: auto;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+        }
+
+        :global(.lesson-rich-content *),
+        :global(.lesson-rich-content *::before),
+        :global(.lesson-rich-content *::after) {
+          box-sizing: border-box;
+          max-width: 100% !important;
+          min-width: 0 !important;
+        }
+
         :global(.lesson-rich-content iframe),
         :global(.lesson-rich-content embed),
         :global(.lesson-rich-content video) {
-          max-width: 100%;
+          max-width: 100% !important;
+          width: 100% !important;
+          display: block;
         }
 
         :global(.lesson-rich-content iframe) {
-          width: 100%;
           aspect-ratio: 16 / 9;
-          height: auto;
+          height: auto !important;
         }
 
         :global(.lesson-rich-content img) {
-          max-width: 100%;
-          height: auto;
+          max-width: 100% !important;
+          height: auto !important;
+          display: block;
+        }
+
+        :global(.lesson-rich-content table) {
+          display: block;
+          width: 100% !important;
+          max-width: 100% !important;
+          overflow-x: auto;
+        }
+
+        :global(.lesson-rich-content pre),
+        :global(.lesson-rich-content code) {
+          white-space: pre-wrap;
+          word-break: break-word;
         }
 
         @media (max-width: 640px) {
