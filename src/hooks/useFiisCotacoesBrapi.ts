@@ -163,7 +163,7 @@ async function fetchWithMobileHeaders(url: string, isMobile: boolean, signal?: A
 
 // 🚀 HOOK CORRIGIDO PARA MOBILE
 export function useFiisCotacoesBrapi() {
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoInit: true });
   const [fiis, setFiis] = useState<FII[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);

@@ -626,7 +626,7 @@ async function buscarProventosETFs(ativosData: any[]): Promise<Map<string, numbe
 
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL + TOTAL RETURN
 function useETFsInternacionaisIntegradas() {
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoInit: true });
   const [ativosAtualizados, setAtivosAtualizados] = React.useState<any[]>([]);
   const [cotacoesAtualizadas, setCotacoesAtualizadas] = React.useState<any>({});
   
@@ -902,7 +902,7 @@ function useETFsInternacionaisIntegradas() {
 
 // 🎯 COMPONENTE PRINCIPAL OTIMIZADO
 export default function ETFsInternacionaisPage() {
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoInit: true });
   const { 
     ativosAtualizados, 
     cotacoesAtualizadas, 
