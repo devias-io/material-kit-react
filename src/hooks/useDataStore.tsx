@@ -310,18 +310,32 @@ const api = {
 const DataStoreContext = createContext<any>(null);
 
 // 🎯 HOOK PRINCIPAL
-export const useDataStore = () => {
+export const useDataStore = (options: { autoInit?: boolean } = {}) => {
   const context = useContext(DataStoreContext);
-  
+
   if (!context) {
     throw new Error('useDataStore deve ser usado dentro do DataStoreProvider');
   }
-  
+
+  const { autoInit = true } = options;
+
+  useEffect(() => {
+    if (autoInit && !context.isInitialized) {
+      context.initializeData();
+    }
+  }, [autoInit, context]);
+
   return context;
 };
 
 // 🎯 PROVIDER SIMPLIFICADO - CORRIGIDO PARA FUNCIONAR
-export const DataStoreProvider = ({ children }: { children: React.ReactNode }) => {
+export const DataStoreProvider = ({
+  children,
+  autoLoad = false
+}: {
+  children: React.ReactNode;
+  autoLoad?: boolean;
+}) => {
   const { user } = useUser();
   const { planInfo } = useAuthAccess();
   const queryClient = useQueryClient();
@@ -406,11 +420,17 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     setDados(prevDados => normalizarDadosCarteiras(sanitizeCarteirasData(prevDados, allowedCarteiras)));
   }, [allowedCarteiras, user?.id]);
 
+  const shouldEnableQueries =
+    isInitialized &&
+    !!user?.id &&
+    isAuthenticated &&
+    modoSincronizacao === 'hibrido';
+
   // 🔥 REACT QUERIES SIMPLIFICADAS COM ENABLED CORRETO
   const smallCapsQuery = useQuery({
     queryKey: ['carteira', 'smallCaps', user?.id],
     queryFn: () => api.getCarteira('smallCaps'),
-    enabled: !!user?.id && isAuthenticated && isCarteiraPermitida('smallCaps'), // 🔥 REMOVIDO modoSincronizacao === 'hibrido'
+    enabled: shouldEnableQueries && isCarteiraPermitida('smallCaps'),
     staleTime: 2 * 60 * 1000, // 🔥 REDUZIDO PARA 2min
     refetchOnWindowFocus: false,
     retry: 1
@@ -420,8 +440,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     queryKey: ['carteira', 'microCaps', user?.id],
     queryFn: () => api.getCarteira('microCaps'),
     enabled:
-      !!user?.id &&
-      isAuthenticated &&
+      shouldEnableQueries &&
       isCarteiraPermitida('microCaps'),
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -432,9 +451,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     queryKey: ['carteira', 'dividendos', user?.id],
     queryFn: () => api.getCarteira('dividendos'),
     enabled:
-      !!user?.id &&
-      isAuthenticated &&
-      modoSincronizacao === 'hibrido' &&
+      shouldEnableQueries &&
       isCarteiraPermitida('dividendos'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -445,9 +462,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     queryKey: ['carteira', 'fiis', user?.id],
     queryFn: () => api.getCarteira('fiis'),
     enabled:
-      !!user?.id &&
-      isAuthenticated &&
-      modoSincronizacao === 'hibrido' &&
+      shouldEnableQueries &&
       isCarteiraPermitida('fiis'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -467,9 +482,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     queryKey: ['carteira', 'dividendosInternacional', user?.id],
     queryFn: () => api.getCarteira('dividendosInternacional'),
     enabled:
-      !!user?.id &&
-      isAuthenticated &&
-      modoSincronizacao === 'hibrido' &&
+      shouldEnableQueries &&
       isCarteiraPermitida('dividendosInternacional'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -480,9 +493,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     queryKey: ['carteira', 'etfs', user?.id],
     queryFn: () => api.getCarteira('etfs'),
     enabled:
-      !!user?.id &&
-      isAuthenticated &&
-      modoSincronizacao === 'hibrido' &&
+      shouldEnableQueries &&
       isCarteiraPermitida('etfs'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -493,9 +504,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     queryKey: ['carteira', 'projetoAmerica', user?.id],
     queryFn: () => api.getCarteira('projetoAmerica'),
     enabled:
-      !!user?.id &&
-      isAuthenticated &&
-      modoSincronizacao === 'hibrido' &&
+      shouldEnableQueries &&
       isCarteiraPermitida('projetoAmerica'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -506,9 +515,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     queryKey: ['carteira', 'exteriorStocks', user?.id],
     queryFn: () => api.getCarteira('exteriorStocks'),
     enabled:
-      !!user?.id &&
-      isAuthenticated &&
-      modoSincronizacao === 'hibrido' &&
+      shouldEnableQueries &&
       isCarteiraPermitida('exteriorStocks'),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -839,6 +846,12 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     }
   });
 
+  const initializeData = useCallback(() => {
+    if (!isInitialized) {
+      setIsInitialized(true);
+    }
+  }, [isInitialized]);
+
   // 🔥 INICIALIZAÇÃO SIMPLIFICADA
   useEffect(() => {
     if (isLoadingRef.current || typeof window === 'undefined') return;
@@ -857,9 +870,17 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       setDados(normalizarDadosCarteiras(dadosIniciais));
     }
     
-    setIsInitialized(true);
+    if (autoLoad) {
+      setIsInitialized(true);
+    }
     isLoadingRef.current = false;
-  }, [user?.id, isAuthenticated, lerDados]);
+  }, [user?.id, isAuthenticated, lerDados, autoLoad]);
+
+  useEffect(() => {
+    if (autoLoad && isAuthenticated && modoSincronizacao === 'hibrido') {
+      initializeData();
+    }
+  }, [autoLoad, initializeData, isAuthenticated, modoSincronizacao]);
 
   // 🔥 DADOS FINAIS SIMPLIFICADOS
   const dadosFinais = useMemo(() => {
@@ -1271,10 +1292,6 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
 
   // 🔥 VALUE OBJECT ESTÁVEL
   const contextValue = useMemo(() => {
-    if (!isInitialized) {
-      return null;
-    }
-
     const queriesArray = Object.values(carteirasQueries) as any[];
 
     return {
@@ -1306,6 +1323,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
       debug,
       debugReordenacao,
       isCarteiraPermitida,
+      initializeData,
 
       // Estados React Query
       isLoading: queriesArray.some((q: any) => q.isLoading),
@@ -1315,7 +1333,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
         adicionarMutation.isPending ||
         editarMutation.isPending ||
         removerMutation.isPending ||
-        atualizarViesMutation.isPending // 🔥 NOVO
+      atualizarViesMutation.isPending // 🔥 NOVO
     };
   }, [
     dadosFinais,
@@ -1341,6 +1359,7 @@ export const DataStoreProvider = ({ children }: { children: React.ReactNode }) =
     debug,
     debugReordenacao,
     isCarteiraPermitida,
+    initializeData,
     carteirasQueries,
     reordenarMutation.isPending,
     adicionarMutation.isPending,
