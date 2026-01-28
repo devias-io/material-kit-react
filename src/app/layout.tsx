@@ -8,7 +8,6 @@ import { AuthAccessProvider } from '@/contexts/auth-access-context';
 
 // 🔥 IMPORTS DOS PROVIDERS
 import { QueryProvider } from '@/components/providers/query-provider';
-import { DataStoreProvider } from '@/hooks/useDataStore';
 import { NotificationsProvider } from '@/hooks/useNotifications';
 
 export const viewport = { width: 'device-width', initialScale: 1 } satisfies Viewport;
@@ -26,14 +25,11 @@ export default function Layout({ children }: LayoutProps): React.JSX.Element {
             <AuthAccessProvider>
               {/* 🔥 QUERY PROVIDER (Client Component) */}
               <QueryProvider>
-                {/* 🔥 DATASTORE PROVIDER (com sincronização) */}
-                <DataStoreProvider>
-                  <ThemeProvider>
-                    <NotificationsProvider>
-                      {children}
-                    </NotificationsProvider>
-                  </ThemeProvider>
-                </DataStoreProvider>
+                <ThemeProvider>
+                  <NotificationsProvider>
+                    {children}
+                  </NotificationsProvider>
+                </ThemeProvider>
               </QueryProvider>
             </AuthAccessProvider>
           </UserProvider>
