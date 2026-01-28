@@ -852,31 +852,12 @@ export const DataStoreProvider = ({
   useEffect(() => {
     if (isLoadingRef.current || typeof window === 'undefined') return;
     isLoadingRef.current = true;
-    
-    console.log('🚀 DataStore: Inicializando modo híbrido simples...');
-    console.log('👤 User:', { id: user?.id, isAuthenticated });
-    
-    if (user?.id && isAuthenticated) {
-      console.log('✅ Usuário autenticado - MODO HÍBRIDO');
-      setModoSincronizacao('hibrido');
-    } else {
-      console.log('❌ Usuário não autenticado - MODO LOCALSTORAGE');
-      setModoSincronizacao('localStorage');
-      const dadosIniciais = lerDados();
-      setDados(normalizarDadosCarteiras(dadosIniciais));
-    }
-    
-    if (autoLoad) {
-      setIsInitialized(true);
-    }
-    isLoadingRef.current = false;
-  }, [user?.id, isAuthenticated, lerDados, autoLoad]);
 
-  useEffect(() => {
-    if (autoLoad && isAuthenticated && modoSincronizacao === 'hibrido') {
-      initializeData();
-    }
-  }, [autoLoad, initializeData, isAuthenticated, modoSincronizacao]);
+    const dadosIniciais = lerDados();
+    setDados(normalizarDadosCarteiras(dadosIniciais));
+
+    isLoadingRef.current = false;
+  }, [lerDados]);
 
   // 🔥 DADOS FINAIS SIMPLIFICADOS
   const dadosFinais = useMemo(() => {
