@@ -2761,6 +2761,15 @@ export default function AtivoPage() {
 
     return !carteirasPossiveis.some(carteira => podeAcessarCarteira(carteira));
   }, [carteirasPossiveis, planInfo?.pages, podeAcessarCarteira, ticker]);
+  const carteirasVisiveis = useMemo(() => {
+    if (!ativo?.portfoliosList || ativo.portfoliosList.length === 0) {
+      return [];
+    }
+
+    return ativo.portfoliosList.filter(nomeCarteira =>
+      podeAcessarCarteira(nomeCarteira as CarteiraKey)
+    );
+  }, [ativo?.portfoliosList, podeAcessarCarteira]);
 
   useEffect(() => {
     if (!deveNegarAcesso) {
@@ -2952,6 +2961,10 @@ export default function AtivoPage() {
       const dadosDetalhados = {};
 
       Object.entries(dados).forEach(([nomeCarteira, ativos]) => {
+        if (!podeAcessarCarteira(nomeCarteira as CarteiraKey)) {
+          return;
+        }
+
         if (Array.isArray(ativos)) {
           const ativoNaCarteira = ativos.find(a => a?.ticker === ticker);
           if (ativoNaCarteira) {
@@ -3433,6 +3446,46 @@ if (tipoAtivo.ehFII) return 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)';
                   )}
                 </div>
               </div>
+
+              {carteirasVisiveis.length > 1 && (
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                  alignItems: 'center',
+                  justifyContent: isMobileOrTablet ? 'center' : 'flex-start',
+                  marginBottom: '12px'
+                }}>
+                  <span style={{
+                    fontSize: isMobile ? '11px' : '12px',
+                    fontWeight: '600',
+                    color: '#475569'
+                  }}>
+                    Presente nas carteiras:
+                  </span>
+                  {carteirasVisiveis.map(nomeCarteira => {
+                    const config = CARTEIRAS_CONFIG[nomeCarteira];
+
+                    return (
+                      <span
+                        key={nomeCarteira}
+                        style={{
+                          background: config?.color || '#e2e8f0',
+                          color: config?.color ? 'white' : '#475569',
+                          padding: isMobile ? '3px 8px' : '4px 10px',
+                          borderRadius: '999px',
+                          fontSize: isMobile ? '10px' : '11px',
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.2px'
+                        }}
+                      >
+                        {config?.nome || nomeCarteira}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Nome da empresa */}
               <h2 style={{
