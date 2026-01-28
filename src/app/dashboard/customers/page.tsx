@@ -744,7 +744,7 @@ function calcularProventosFiltrados(
 
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL
 function useMicroCapsIntegradas() {
-  const { dados } = useDataStore({ autoInit: true });
+  const { dados } = useDataStore({ autoLoad: true });
   const [ativosAtualizados, setAtivosAtualizados] = React.useState<any[]>([]);
   const [cotacoesAtualizadas, setCotacoesAtualizadas] = React.useState<any>({});
   
@@ -962,7 +962,7 @@ function useMicroCapsIntegradas() {
 
 // 🎯 COMPONENTE PRINCIPAL OTIMIZADO
 export default function MicroCapsPage() {
-  const { dados } = useDataStore({ autoInit: true });
+  const { dados } = useDataStore({ autoLoad: true });
   const { 
     ativosAtualizados, 
     cotacoesAtualizadas, 

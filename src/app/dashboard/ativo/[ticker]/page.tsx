@@ -2722,7 +2722,7 @@ export default function AtivoPage() {
     CARTEIRAS_CONFIG,
     cotacoes,
     buscarCotacoes
-  } = useDataStore({ autoInit: true });
+  } = useDataStore({ autoLoad: true });
   const { planInfo } = useAuthAccess();
 
   const ticker = params?.ticker?.toString().toUpperCase();

@@ -592,7 +592,7 @@ async function buscarProventosProjetoAmerica(ativosData: any[]): Promise<Map<str
 
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL
 function useProjetoAmericaIntegradas() {
-  const { dados } = useDataStore({ autoInit: true });
+  const { dados } = useDataStore({ autoLoad: true });
   const [ativosAtualizados, setAtivosAtualizados] = React.useState<any[]>([]);
   const [cotacoesAtualizadas, setCotacoesAtualizadas] = React.useState<any>({});
 
@@ -868,7 +868,7 @@ function useProjetoAmericaIntegradas() {
 
 // 🎯 COMPONENTE PRINCIPAL OTIMIZADO
 export default function ProjetoAmericaPage() {
-  const { dados } = useDataStore({ autoInit: true });
+  const { dados } = useDataStore({ autoLoad: true });
   const {
     ativosAtualizados,
     cotacoesAtualizadas,

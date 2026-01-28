@@ -310,20 +310,20 @@ const api = {
 const DataStoreContext = createContext<any>(null);
 
 // 🎯 HOOK PRINCIPAL
-export const useDataStore = (options: { autoInit?: boolean } = {}) => {
+export const useDataStore = (options: { autoLoad?: boolean } = {}) => {
   const context = useContext(DataStoreContext);
 
   if (!context) {
     throw new Error('useDataStore deve ser usado dentro do DataStoreProvider');
   }
 
-  const { autoInit = false } = options;
+  const { autoLoad = false } = options;
 
   useEffect(() => {
-    if (autoInit && !context.isInitialized) {
+    if (autoLoad && !context.isInitialized) {
       context.initializeData();
     }
-  }, [autoInit, context]);
+  }, [autoLoad, context]);
 
   return context;
 };
@@ -1354,41 +1354,41 @@ export const DataStoreProvider = ({
 
 // 🎯 HOOKS ESPECÍFICOS (mantidos iguais)
 export const useSmallCaps = () => {
-  const { obterCarteira } = useDataStore({ autoInit: true });
+  const { obterCarteira } = useDataStore({ autoLoad: true });
   return obterCarteira('smallCaps');
 };
 
 export const useMicroCaps = () => {
-  const { obterCarteira } = useDataStore({ autoInit: true });
+  const { obterCarteira } = useDataStore({ autoLoad: true });
   return obterCarteira('microCaps');
 };
 
 export const useDividendos = () => {
-  const { obterCarteira } = useDataStore({ autoInit: true });
+  const { obterCarteira } = useDataStore({ autoLoad: true });
   return obterCarteira('dividendos');
 };
 
 export const useFiis = () => {
-  const { obterCarteira } = useDataStore({ autoInit: true });
+  const { obterCarteira } = useDataStore({ autoLoad: true });
   return obterCarteira('fiis');
 };
 
 export const useDividendosInternacional = () => {
-  const { obterCarteira } = useDataStore({ autoInit: true });
+  const { obterCarteira } = useDataStore({ autoLoad: true });
   return obterCarteira('dividendosInternacional');
 };
 
 export const useETFs = () => {
-  const { obterCarteira } = useDataStore({ autoInit: true });
+  const { obterCarteira } = useDataStore({ autoLoad: true });
   return obterCarteira('etfs');
 };
 
 export const useProjetoAmerica = () => {
-  const { obterCarteira } = useDataStore({ autoInit: true });
+  const { obterCarteira } = useDataStore({ autoLoad: true });
   return obterCarteira('projetoAmerica');
 };
 
 export const useExteriorStocks = () => {
-  const { obterCarteira } = useDataStore({ autoInit: true });
+  const { obterCarteira } = useDataStore({ autoLoad: true });
   return obterCarteira('exteriorStocks');
 };

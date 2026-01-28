@@ -98,7 +98,7 @@ export function MainNav(): React.JSX.Element {
     avatarRef.current = userAvatar;
   }, [userAvatar]);
   
-  const { dados, CARTEIRAS_CONFIG, isInitialized, initializeData } = useDataStore({ autoInit: false });
+  const { dados, CARTEIRAS_CONFIG, isInitialized, initializeData } = useDataStore({ autoLoad: false });
   const ativos = useAtivos(dados, CARTEIRAS_CONFIG, isInitialized);
   const { notifications, unreadCount } = useNotifications();
 
