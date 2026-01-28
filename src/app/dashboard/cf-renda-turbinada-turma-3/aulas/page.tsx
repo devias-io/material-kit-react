@@ -2537,8 +2537,7 @@ const handleUpdateModule = React.useCallback(
             backgroundColor: '#f8fafc',
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px',
-                overflow: 'visible'  // ← ADICIONAR ESTA LINHA
+            gap: '12px'
           }}
         >
           {isEditing ? (
@@ -2764,6 +2763,7 @@ const handleUpdateModule = React.useCallback(
 {enhancedEmbedSrc && (
   <div
     style={{
+      width: '100%',
       borderRadius: '12px',
       overflow: 'hidden',
       backgroundColor: '#010101'
@@ -3554,8 +3554,7 @@ visibleModules.map(module => {
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
-        opacity: !isAdmin && !isReleased ? 0.7 : 1,
-            overflow: 'visible'  // ← ADICIONAR ESTA LINHA
+        opacity: !isAdmin && !isReleased ? 0.7 : 1
       }}
     >
       {editingModuleId === module.id ? (
@@ -3881,7 +3880,7 @@ visibleModules.map(module => {
           {/* MOSTRA AULAS APENAS SE LIBERADO OU SE FOR ADMIN */}
           {(isReleased || isAdmin) && !isCollapsed && (
             <>
-<div style={{ display: 'grid', gap: '16px', overflow: 'visible' }}>
+              <div style={{ display: 'grid', gap: '16px' }}>
                 {module.lessons.length === 0 ? (
                   <div
                     style={{
