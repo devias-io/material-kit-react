@@ -748,7 +748,7 @@ function calcularProventosFiltrados(
 
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL
 function useSmallCapsIntegradas() {
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoInit: true });
   const [ativosAtualizados, setAtivosAtualizados] = React.useState<any[]>([]);
   const [cotacoesAtualizadas, setCotacoesAtualizadas] = React.useState<any>({});
   
@@ -973,7 +973,7 @@ function useSmallCapsIntegradas() {
 export default function SmallCapsPage() {
   // ✅ TODOS OS HOOKS NO TOPO - SEM EXCEÇÃO
   const { hasAccessSync, loading: authLoading, planInfo } = useAuthAccess();
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoInit: true });
   const { 
     ativosAtualizados, 
     cotacoesAtualizadas, 

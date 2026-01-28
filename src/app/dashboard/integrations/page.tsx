@@ -744,7 +744,7 @@ function calcularProventosFiltrados(
 
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL (BASEADO NO CÓDIGO 1)
 function useDividendosIntegradas() {
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoInit: true });
   const [ativosAtualizados, setAtivosAtualizados] = React.useState<any[]>([]);
   const [cotacoesAtualizadas, setCotacoesAtualizadas] = React.useState<any>({});
   
@@ -968,7 +968,7 @@ function useDividendosIntegradas() {
 
 // 🎯 COMPONENTE PRINCIPAL OTIMIZADO
 export default function DividendosPage() {
-  const { dados } = useDataStore();
+  const { dados } = useDataStore({ autoInit: true });
   const { 
     ativosAtualizados, 
     cotacoesAtualizadas, 
