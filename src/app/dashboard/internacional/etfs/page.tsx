@@ -8,6 +8,7 @@ import { aplicarViesOverride, getViesBadgePalette } from '@/utils/vies';
 import type { ViesOverride } from '@/utils/vies';
 import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
+import CarteiraComparacaoIndices from '@/components/CarteiraComparacaoIndices';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -33,6 +34,12 @@ const CUSTOM_LOGO_URLS: Record<string, string> = {
   QQQ: 'https://logo.clearbit.com/invesco.com',
   ARE: 'https://logo.clearbit.com/alexandriarealestate.com',
   MCHI: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWYDS--_v0EujW81cPjl386t2Tlm7vVXMb0A&s'
+};
+
+type ProventoAPI = {
+  valor: number;
+  data: Date | string;
+  tipo: string;
 };
 
 // 🔥 DETECÇÃO DE DISPOSITIVO SIMPLIFICADA E OTIMIZADA
@@ -990,6 +997,19 @@ export default function ETFsInternacionaisPage() {
     return signal + value.toFixed(2) + '%';
   }, []);
 
+  const proventosComparacao = React.useMemo(() => {
+    const map = new Map<string, ProventoAPI[]>();
+    proventosCompletos.forEach((_, ticker) => {
+      map.set(ticker, []);
+    });
+    return map;
+  }, [proventosCompletos]);
+
+  const indicesComparacao = React.useMemo(
+    () => [{ ticker: '^GSPC', label: 'S&P 500', color: '#6366f1', tipo: 'historico' as const }],
+    []
+  );
+
   return (
     <div style={{ 
       minHeight: '100vh', 
@@ -1912,6 +1932,14 @@ export default function ETFsInternacionaisPage() {
           </div>
         </div>
       </div>
+
+      <CarteiraComparacaoIndices
+        ativosAtualizados={ativosAtualizados}
+        proventosCompletos={proventosComparacao}
+        isMobile={isMobile}
+        formatCurrency={formatCurrency}
+        indicesPersonalizados={indicesComparacao}
+      />
 
       {/* Animações CSS Unificadas */}
       <style jsx>{`

@@ -6,6 +6,7 @@ import { useFinancialData } from '@/hooks/useFinancialData';
 import { useDataStore } from '@/hooks/useDataStore';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
+import CarteiraComparacaoIndices from '@/components/CarteiraComparacaoIndices';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -27,6 +28,12 @@ const WHITE_LOGO_TICKERS = ['XP', 'UNH'];
 const CUSTOM_LOGO_URLS: Record<string, string> = {
   XP: 'https://upload.wikimedia.org/wikipedia/pt/0/0b/XP_Investimentos_logo.png',
   UNH: 'https://s3-symbol-logo.tradingview.com/unitedhealth--600.png'
+};
+
+type ProventoAPI = {
+  valor: number;
+  data: Date | string;
+  tipo: string;
 };
 
 // 🔥 DETECÇÃO DE DISPOSITIVO SIMPLIFICADA E OTIMIZADA
@@ -686,6 +693,19 @@ export default function ExteriorStocksPage() {
     const signal = value >= 0 ? '+' : '';
     return signal + value.toFixed(2) + '%';
   }, []);
+
+  const proventosComparacao = React.useMemo(() => {
+    const map = new Map<string, ProventoAPI[]>();
+    proventosCompletos.forEach((_, ticker) => {
+      map.set(ticker, []);
+    });
+    return map;
+  }, [proventosCompletos]);
+
+  const indicesComparacao = React.useMemo(
+    () => [{ ticker: '^GSPC', label: 'S&P 500', color: '#6366f1', tipo: 'historico' as const }],
+    []
+  );
 
   return (
     <div style={{ 
@@ -1628,6 +1648,14 @@ export default function ExteriorStocksPage() {
           </div>
         </div>
       </div>
+
+      <CarteiraComparacaoIndices
+        ativosAtualizados={ativosAtualizados}
+        proventosCompletos={proventosComparacao}
+        isMobile={isMobile}
+        formatCurrency={formatCurrency}
+        indicesPersonalizados={indicesComparacao}
+      />
 
       {/* Animações CSS Unificadas */}
       <style jsx>{`

@@ -6,6 +6,7 @@ import { useDataStore } from '@/hooks/useDataStore';
 import { buildQuotesUrl } from '@/utils/brapiProxy';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
+import CarteiraComparacaoIndices from '@/components/CarteiraComparacaoIndices';
 
 type ProventoAPI = {
   valor: number;
@@ -2341,6 +2342,13 @@ export default function MicroCapsPage() {
           </div>
         </div>
       </div>
+
+      <CarteiraComparacaoIndices
+        ativosAtualizados={ativosAtualizados}
+        proventosCompletos={proventosCompletos}
+        isMobile={isMobile}
+        formatCurrency={formatCurrency}
+      />
 
       {/* Animações CSS */}
       <style jsx>{`

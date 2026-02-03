@@ -18,6 +18,13 @@ interface Serie {
   retorno: number;
 }
 
+type IndiceConfig = {
+  ticker: string;
+  label: string;
+  color: string;
+  tipo: 'historico' | 'cdi';
+};
+
 type RangeKey = '2y' | '5y' | '10y';
 
 type HistoricoPonto = {
@@ -50,6 +57,7 @@ interface CarteiraComparacaoIndicesProps {
   proventosCompletos: Map<string, ProventoAPI[]>;
   isMobile: boolean;
   formatCurrency: (valor: number) => string;
+  indicesPersonalizados?: IndiceConfig[];
 }
 
 const RANGE_CONFIG: Record<RangeKey, { label: string; range: string }> = {
@@ -63,8 +71,16 @@ const SERIES_COLORS = {
   smll: '#f59e0b',
   ibov: '#0ea5e9',
   cdi: '#0f766e',
-  ifix: '#16a34a'
+  ifix: '#16a34a',
+  sp500: '#6366f1'
 };
+
+const DEFAULT_INDICES: IndiceConfig[] = [
+  { ticker: 'SMAL11', label: 'SMLL', color: SERIES_COLORS.smll, tipo: 'historico' },
+  { ticker: '^BVSP', label: 'IBOV', color: SERIES_COLORS.ibov, tipo: 'historico' },
+  { ticker: 'XFIX11', label: 'IFIX', color: SERIES_COLORS.ifix, tipo: 'historico' },
+  { ticker: 'CDI', label: 'CDI', color: SERIES_COLORS.cdi, tipo: 'cdi' }
+];
 
 const INVESTIMENTO_BASE = 1000;
 
@@ -436,7 +452,8 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
   ativosAtualizados,
   proventosCompletos,
   isMobile,
-  formatCurrency
+  formatCurrency,
+  indicesPersonalizados
 }) => {
   const ativosAtivos = useMemo(
     () => ativosAtualizados.filter(ativo => !ativo.posicaoEncerrada),
@@ -464,6 +481,7 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
   const [indicesStatus, setIndicesStatus] = useState<Array<{ ticker: string; sucesso: boolean }>>([]);
 
   const rangeRef = useRef(rangePadrao);
+  const indicesParaBuscar = useMemo(() => indicesPersonalizados ?? DEFAULT_INDICES, [indicesPersonalizados]);
 
   useEffect(() => {
     if (rangeRef.current !== rangePadrao) {
@@ -489,13 +507,6 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
           range,
           controller.signal
         );
-
-        const indicesParaBuscar = [
-          { ticker: 'SMAL11', label: 'SMLL', color: SERIES_COLORS.smll, tipo: 'historico' as const },
-          { ticker: '^BVSP', label: 'IBOV', color: SERIES_COLORS.ibov, tipo: 'historico' as const },
-          { ticker: 'XFIX11', label: 'IFIX', color: SERIES_COLORS.ifix, tipo: 'historico' as const },
-          { ticker: 'CDI', label: 'CDI', color: SERIES_COLORS.cdi, tipo: 'cdi' as const }
-        ];
 
         const resultados = await Promise.allSettled(
           indicesParaBuscar.map(async indice => {
@@ -571,7 +582,7 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
     carregar();
 
     return () => controller.abort();
-  }, [ativosAtivos, proventosCompletos, range]);
+  }, [ativosAtivos, proventosCompletos, range, indicesParaBuscar]);
 
   const resumoInvestimento = useMemo(
     () =>
