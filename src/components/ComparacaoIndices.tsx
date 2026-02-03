@@ -358,9 +358,15 @@ const prepararSeriesAlinhadasFlexivel = (
     .filter(Boolean) as SeriePreparada[];
 };
 
-const formatarPercentual = (valor: number) => `${valor >= 0 ? '+' : ''}${valor.toFixed(2)}%`;
+const formatarPercentual = (valor?: number | null) => {
+  if (typeof valor !== 'number' || Number.isNaN(valor)) return '';
+  return `${valor >= 0 ? '+' : ''}${valor.toFixed(2)}%`;
+};
 
-const formatarData = (valor: number) => dayjs(valor).format('DD/MM/YY');
+const formatarData = (valor?: number | null) => {
+  if (typeof valor !== 'number' || Number.isNaN(valor)) return '';
+  return dayjs(valor).format('DD/MM/YY');
+};
 
 interface ComparacaoIndicesProps {
   ticker: string;
@@ -533,7 +539,13 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
   );
 
   const chartSeries = useMemo(
-    () => series.map(serie => ({ name: serie.name, data: serie.data })),
+    () =>
+      series.map(serie => ({
+        name: serie.name,
+        data: serie.data.filter(
+          ponto => Number.isFinite(ponto.x) && Number.isFinite(ponto.y)
+        )
+      })),
     [series]
   );
 
@@ -558,7 +570,10 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
       },
       yaxis: {
         labels: {
-          formatter: (valor: number) => `${valor.toFixed(0)}%`,
+          formatter: (valor: number) => {
+            if (typeof valor !== 'number' || Number.isNaN(valor)) return '';
+            return `${valor.toFixed(0)}%`;
+          },
           style: { fontSize: isMobile ? '10px' : '12px' }
         }
       },
