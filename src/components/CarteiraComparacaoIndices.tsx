@@ -479,8 +479,15 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
   const [aviso, setAviso] = useState<string | null>(null);
   const [indicesStatus, setIndicesStatus] = useState<Array<{ ticker: string; sucesso: boolean }>>([]);
 
+  const rangeRef = useRef(rangePadrao);
   const indicesParaBuscar = useMemo(() => indicesPersonalizados ?? DEFAULT_INDICES, [indicesPersonalizados]);
-  
+
+  useEffect(() => {
+    if (rangeRef.current !== rangePadrao) {
+      rangeRef.current = rangePadrao;
+      setRange(rangePadrao);
+    }
+  }, [rangePadrao]);
 
   useEffect(() => {
     if (ativosAtivos.length === 0) return;

@@ -745,9 +745,10 @@ function calcularProventosFiltrados(
 
 // 🚀 HOOK PRINCIPAL OTIMIZADO COM PARALELIZAÇÃO TOTAL (BASEADO NO CÓDIGO 1)
 function useDividendosIntegradas() {
-  const { dados } = useDataStore({ autoLoad: true });
   const [ativosAtualizados, setAtivosAtualizados] = React.useState<any[]>([]);
   const [cotacoesAtualizadas, setCotacoesAtualizadas] = React.useState<any>({});
+  const [dividendosData, setDividendosData] = React.useState<any[]>([]);
+  const [loadingDividendosData, setLoadingDividendosData] = React.useState(true);
   
   // Estados para garantir que TODOS os dados estejam prontos
   const [cotacoesCompletas, setCotacoesCompletas] = React.useState<Map<string, any>>(new Map());
@@ -762,10 +763,54 @@ function useDividendosIntegradas() {
   const [error, setError] = React.useState<string | null>(null);
 
   const isMobile = useDeviceDetection();
-  const dividendosData = dados.dividendos || [];
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const carregarDividendos = async () => {
+      try {
+        setLoadingDividendosData(true);
+        const response = await fetch('/api/meus-ativos/dividendos');
+        if (!response.ok) {
+          throw new Error(`Dividendos HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        if (!isMounted) return;
+
+        if (Array.isArray(data)) {
+          setDividendosData(data);
+        } else if (Array.isArray(data?.data)) {
+          setDividendosData(data.data);
+        } else if (Array.isArray(data?.ativos)) {
+          setDividendosData(data.ativos);
+        } else {
+          setDividendosData([]);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dividendos:', error);
+        if (isMounted) {
+          setDividendosData([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingDividendosData(false);
+        }
+      }
+    };
+
+    carregarDividendos();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // 🎯 FUNÇÃO PRINCIPAL REESCRITA - PARALELIZAÇÃO TOTAL (IGUAL AO CÓDIGO 1)
   const buscarDadosCompletos = React.useCallback(async () => {
+    if (loadingDividendosData) {
+      return;
+    }
+
     if (dividendosData.length === 0) {
       setAtivosAtualizados([]);
       setLoadingCotacoes(false);
@@ -934,7 +979,15 @@ function useDividendosIntegradas() {
     setAtivosAtualizados(ativosFinais);
     
     console.log('🏆 TOTAL RETURN PROCESSADO COM SUCESSO - PRIMEIRA VEZ!');
-  }, [todosOsDadosProntos, cotacoesCompletas, dyCompletos, proventosCompletos, dividendosData, loadingDY]);
+  }, [
+    todosOsDadosProntos,
+    cotacoesCompletas,
+    dyCompletos,
+    proventosCompletos,
+    dividendosData,
+    loadingDY,
+    loadingDividendosData
+  ]);
 
   // UseEffect original simplificado
   React.useEffect(() => {
@@ -969,7 +1022,6 @@ function useDividendosIntegradas() {
 
 // 🎯 COMPONENTE PRINCIPAL OTIMIZADO
 export default function DividendosPage() {
-  const { dados } = useDataStore({ autoLoad: true });
   const { 
     ativosAtualizados, 
     cotacoesAtualizadas, 
