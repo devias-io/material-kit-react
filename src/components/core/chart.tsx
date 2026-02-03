@@ -21,11 +21,17 @@ interface ChartProps {
 }
 
 // ✅ Error Boundary para capturar erros do ApexCharts
-class ChartErrorBoundary extends Component
-  { children: ReactNode },
-  { hasError: boolean; error: any }
-> {
-  constructor(props: { children: ReactNode }) {
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: any;
+}
+
+class ChartErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
@@ -40,7 +46,7 @@ class ChartErrorBoundary extends Component
 
   render() {
     if (this.state.hasError) {
-      return null; // ou <div>Erro ao carregar gráfico</div>
+      return null;
     }
     return this.props.children;
   }
@@ -86,7 +92,6 @@ export const Chart = ({ options, series, type = 'line', ...props }: ChartProps) 
             return isNaN(num) ? 0 : num;
           }
           if (typeof val === 'object' && val !== null) {
-            // Para dados tipo {x, y}
             return {
               x: val.x != null ? val.x : 0,
               y: val.y != null ? (typeof val.y === 'number' ? val.y : parseFloat(val.y) || 0) : 0
@@ -97,7 +102,7 @@ export const Chart = ({ options, series, type = 'line', ...props }: ChartProps) 
       };
     });
 
-    // ✅ Sanitiza options - removendo tudo que pode causar toString em undefined
+    // ✅ Sanitiza options
     const sanitizedOptions: ApexOptions = {
       chart: {
         ...options?.chart,
@@ -117,13 +122,13 @@ export const Chart = ({ options, series, type = 'line', ...props }: ChartProps) 
       colors: options?.colors || undefined,
       fill: options?.fill || undefined,
       legend: options?.legend || undefined,
-      tooltip: { enabled: false }, // Desabilita tooltip temporariamente
+      tooltip: { enabled: false },
       grid: options?.grid || undefined,
       plotOptions: options?.plotOptions || undefined,
       theme: options?.theme || undefined
     };
 
-    // ✅ Remove propriedades undefined do options
+    // ✅ Remove propriedades undefined
     const cleanOptions = Object.entries(sanitizedOptions).reduce((acc, [key, value]) => {
       if (value !== undefined) {
         acc[key] = value;
