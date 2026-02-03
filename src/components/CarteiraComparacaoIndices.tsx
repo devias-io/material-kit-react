@@ -373,9 +373,15 @@ const alinharSeries = (series: Serie[]): Serie[] => {
     .filter(Boolean) as Serie[];
 };
 
-const formatarPercentual = (valor: number) => `${valor >= 0 ? '+' : ''}${valor.toFixed(2)}%`;
+const formatarPercentual = (valor?: number | null) => {
+  if (typeof valor !== 'number' || Number.isNaN(valor)) return '';
+  return `${valor >= 0 ? '+' : ''}${valor.toFixed(2)}%`;
+};
 
-const formatarData = (valor: number) => dayjs(valor).format('DD/MM/YY');
+const formatarData = (valor?: number | null) => {
+  if (typeof valor !== 'number' || Number.isNaN(valor)) return '';
+  return dayjs(valor).format('DD/MM/YY');
+};
 
 const calcularPerformanceHistoricaCarteira = async (
   ativosAtualizados: any[],
@@ -597,7 +603,16 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
     [series]
   );
 
-  const chartSeries = useMemo(() => series.map(serie => ({ name: serie.name, data: serie.data })), [series]);
+  const chartSeries = useMemo(
+    () =>
+      series.map(serie => ({
+        name: serie.name,
+        data: serie.data.filter(
+          ponto => Number.isFinite(ponto.x) && Number.isFinite(ponto.y)
+        )
+      })),
+    [series]
+  );
 
   const chartOptions = useMemo(
     () => ({
@@ -620,7 +635,10 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
       },
       yaxis: {
         labels: {
-          formatter: (valor: number) => `${valor.toFixed(0)}%`,
+          formatter: (valor: number) => {
+            if (typeof valor !== 'number' || Number.isNaN(valor)) return '';
+            return `${valor.toFixed(0)}%`;
+          },
           style: { fontSize: isMobile ? '10px' : '12px' }
         }
       },
