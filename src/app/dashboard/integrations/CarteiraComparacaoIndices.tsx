@@ -454,24 +454,23 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
     return Math.min(...datas);
   }, [ativosAtivos]);
 
-  const rangePadrao = useMemo(() => calcularRange(dataMaisAntiga), [dataMaisAntiga]);
-
   const [range, setRange] = useState<RangeKey>('2y');
-  const [series, setSeries] = useState<Serie[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
-  const [indicesStatus, setIndicesStatus] = useState<Array<{ ticker: string; sucesso: boolean }>>([]);
+const [series, setSeries] = useState<Serie[]>([]);
+const [loading, setLoading] = useState(false);
+const [erro, setErro] = useState<string | null>(null);
+const [aviso, setAviso] = useState<string | null>(null);
+const [indicesStatus, setIndicesStatus] = useState<Array<{ ticker: string; sucesso: boolean }>>([]);
+const [rangeInicializado, setRangeInicializado] = useState(false);
 
-  const rangeRef = useRef<RangeKey>('2y');
-
-  useEffect(() => {
-    if (rangeRef.current !== rangePadrao) {
-      rangeRef.current = rangePadrao;
-      setRange(rangePadrao);
-    }
-  }, [rangePadrao]);
-
+// Sincroniza o range com o cálculo baseado na data mais antiga
+useEffect(() => {
+  if (!rangeInicializado && ativosAtivos.length > 0) {
+    const rangeCalculado = calcularRange(dataMaisAntiga);
+    setRange(rangeCalculado);
+    setRangeInicializado(true);
+  }
+}, [dataMaisAntiga, ativosAtivos.length, rangeInicializado]);
+  
   useEffect(() => {
     if (ativosAtivos.length === 0) return;
 
