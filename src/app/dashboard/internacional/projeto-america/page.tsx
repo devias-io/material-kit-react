@@ -7,6 +7,7 @@ import { useDataStore } from '@/hooks/useDataStore';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 import { calcularDyAPartirDoResultado, formatarDy } from '@/utils/dividendYield';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
+import CarteiraComparacaoIndices from '@/components/CarteiraComparacaoIndices';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -31,6 +32,12 @@ const CUSTOM_LOGO_URLS: Record<string, string> = {
   QQQ: 'https://s3-symbol-logo.tradingview.com/invesco--600.png',
   WPC: 'https://investidor10.com.br/storage/stocks/images/NyC6ZUHq0vYM6Bsb.jpg',
   ARE: 'https://investidor10.com.br/storage/stocks/thumbnails/rbQCq2xzJWAfLgUdBYeJJAymyTHUU0Bn4lFs5jpw.jpg'
+};
+
+type ProventoAPI = {
+  valor: number;
+  data: Date | string;
+  tipo: string;
 };
 
 // 🔥 DETECÇÃO DE DISPOSITIVO SIMPLIFICADA E OTIMIZADA
@@ -955,6 +962,19 @@ export default function ProjetoAmericaPage() {
     const signal = value >= 0 ? '+' : '';
     return signal + value.toFixed(2) + '%';
   }, []);
+
+  const proventosComparacao = React.useMemo(() => {
+    const map = new Map<string, ProventoAPI[]>();
+    proventosCompletos.forEach((_, ticker) => {
+      map.set(ticker, []);
+    });
+    return map;
+  }, [proventosCompletos]);
+
+  const indicesComparacao = React.useMemo(
+    () => [{ ticker: '^GSPC', label: 'S&P 500', color: '#6366f1', tipo: 'historico' as const }],
+    []
+  );
 
   const formatPrecoTeto = React.useCallback(
     (precoTeto: number | string | null | undefined) => {
@@ -2414,6 +2434,14 @@ export default function ProjetoAmericaPage() {
           </div>
         </div>
       </div>
+
+      <CarteiraComparacaoIndices
+        ativosAtualizados={ativosAtualizados}
+        proventosCompletos={proventosComparacao}
+        isMobile={isMobile}
+        formatCurrency={formatCurrency}
+        indicesPersonalizados={indicesComparacao}
+      />
 
       {/* Animações CSS Unificadas */}
       <style jsx>{`
