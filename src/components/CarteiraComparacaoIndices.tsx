@@ -471,9 +471,8 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
     return Math.min(...datas);
   }, [ativosAtivos]);
 
-  const rangePadrao = useMemo(() => calcularRange(dataMaisAntiga), [dataMaisAntiga]);
 
-  const [range, setRange] = useState<RangeKey>(rangePadrao);
+  const [range, setRange] = useState<RangeKey>('2y');
   const [series, setSeries] = useState<Serie[]>([]);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
