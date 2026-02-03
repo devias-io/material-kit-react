@@ -8,6 +8,7 @@ import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/u
 import { formatarDy } from '@/utils/dividendYield';
 import { fetchDividendYieldIntegrado } from '@/utils/fetchDividendYieldIntegrado';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
+import CarteiraComparacaoIndices from '@/components/CarteiraComparacaoIndices';
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
 const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos
@@ -23,6 +24,12 @@ const getCachedData = (key: string) => {
 
 const setCachedData = (key: string, data: any) => {
   globalCache.set(key, { data, timestamp: Date.now() });
+};
+
+type ProventoAPI = {
+  valor: number;
+  data: Date | string;
+  tipo: string;
 };
 
 // 🔥 DETECÇÃO DE DISPOSITIVO SIMPLIFICADA E OTIMIZADA
@@ -840,6 +847,7 @@ function useDividendosInternacionaisIntegradas() {
     ativosAtualizados,
     cotacoesAtualizadas,
     setCotacoesAtualizadas,
+    proventosCompletos,
     loading: loadingCotacoes || !todosOsDadosProntos, // ✅ Loading até TUDO estar pronto
     loadingDY,
     loadingProventos, // ✅ NOVO
@@ -857,6 +865,7 @@ export default function DividendosInternacionaisPage() {
     ativosAtualizados, 
     cotacoesAtualizadas, 
     setCotacoesAtualizadas, 
+    proventosCompletos,
     loading, 
     loadingDY,
     loadingProventos, // ✅ NOVO
@@ -939,6 +948,19 @@ export default function DividendosInternacionaisPage() {
     const signal = value >= 0 ? '+' : '';
     return signal + value.toFixed(2) + '%';
   }, []);
+
+  const proventosComparacao = React.useMemo(() => {
+    const map = new Map<string, ProventoAPI[]>();
+    proventosCompletos.forEach((_, ticker) => {
+      map.set(ticker, []);
+    });
+    return map;
+  }, [proventosCompletos]);
+
+  const indicesComparacao = React.useMemo(
+    () => [{ ticker: '^GSPC', label: 'S&P 500', color: '#6366f1', tipo: 'historico' as const }],
+    []
+  );
 
   return (
     <div style={{ 
@@ -1858,6 +1880,14 @@ export default function DividendosInternacionaisPage() {
           </div>
         </div>
       </div>
+
+      <CarteiraComparacaoIndices
+        ativosAtualizados={ativosAtualizados}
+        proventosCompletos={proventosComparacao}
+        isMobile={isMobile}
+        formatCurrency={formatCurrency}
+        indicesPersonalizados={indicesComparacao}
+      />
 
       {/* Animações CSS Unificadas */}
       <style jsx>{`
