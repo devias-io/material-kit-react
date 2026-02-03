@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 
 import { Chart } from '@/components/core/chart';
@@ -455,22 +455,22 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
   }, [ativosAtivos]);
 
   const [range, setRange] = useState<RangeKey>('2y');
-const [series, setSeries] = useState<Serie[]>([]);
-const [loading, setLoading] = useState(false);
-const [erro, setErro] = useState<string | null>(null);
-const [aviso, setAviso] = useState<string | null>(null);
-const [indicesStatus, setIndicesStatus] = useState<Array<{ ticker: string; sucesso: boolean }>>([]);
-const [rangeInicializado, setRangeInicializado] = useState(false);
+  const [series, setSeries] = useState<Serie[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const [indicesStatus, setIndicesStatus] = useState<Array<{ ticker: string; sucesso: boolean }>>([]);
+  const [rangeInicializado, setRangeInicializado] = useState(false);
 
-// Sincroniza o range com o cálculo baseado na data mais antiga
-useEffect(() => {
-  if (!rangeInicializado && ativosAtivos.length > 0) {
-    const rangeCalculado = calcularRange(dataMaisAntiga);
-    setRange(rangeCalculado);
-    setRangeInicializado(true);
-  }
-}, [dataMaisAntiga, ativosAtivos.length, rangeInicializado]);
-  
+  // Sincroniza o range com o cálculo baseado na data mais antiga
+  useEffect(() => {
+    if (!rangeInicializado && ativosAtivos.length > 0) {
+      const rangeCalculado = calcularRange(dataMaisAntiga);
+      setRange(rangeCalculado);
+      setRangeInicializado(true);
+    }
+  }, [dataMaisAntiga, ativosAtivos.length, rangeInicializado]);
+
   useEffect(() => {
     if (ativosAtivos.length === 0) return;
 
@@ -687,7 +687,8 @@ useEffect(() => {
               fontSize: isMobile ? '12px' : '13px'
             }}
           >
-            Acompanhe como a carteira performou frente aos principais benchmarks (retorno total com reinvestimento de dividendos).
+            Acompanhe como a carteira performou frente aos principais benchmarks (retorno total com reinvestimento de
+            dividendos).
           </p>
         </div>
 
