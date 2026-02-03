@@ -7,6 +7,7 @@ import { buildQuotesUrl } from '@/utils/brapiProxy';
 import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/utils/vies';
 import { useAuthAccess } from '@/hooks/use-auth-access';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
+import CarteiraComparacaoIndices from '@/components/CarteiraComparacaoIndices';
 
 type ProventoAPI = {
   valor: number;
@@ -2420,6 +2421,13 @@ const calcularPerformanceEncerrada = React.useCallback((ativo: any) => {
           </div>
         </div>
       </div>
+
+      <CarteiraComparacaoIndices
+        ativosAtualizados={ativosAtualizados}
+        proventosCompletos={proventosCompletos}
+        isMobile={isMobile}
+        formatCurrency={formatCurrency}
+      />
 
       {/* Animações CSS */}
       <style jsx>{`

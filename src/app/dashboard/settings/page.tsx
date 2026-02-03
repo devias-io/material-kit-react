@@ -9,10 +9,17 @@ import { aplicarViesOverride, getViesBadgePalette, type ViesOverride } from '@/u
 import { useProventosPorAtivo } from '@/hooks/useProventosPorAtivo';
 import { buildQuotesUrl, getQuoteResults } from '@/utils/brapiProxy';
 import { usePageVisibility } from '@/hooks/usePageVisibility';
+import CarteiraComparacaoIndices from '@/components/CarteiraComparacaoIndices';
 
 type PercentualParticipacao = {
   bruto: unknown;
   numerico: number | null;
+};
+
+type ProventoAPI = {
+  valor: number;
+  data: Date | string;
+  tipo: string;
 };
 
 // 🚀 CACHE GLOBAL SINCRONIZADO PARA GARANTIR DADOS IDÊNTICOS
@@ -1293,6 +1300,14 @@ export default function FiisPage() {
     const signal = safeValue >= 0 ? '+' : '';
     return signal + safeValue.toFixed(2) + '%';
   }, []);
+
+  const proventosComparacao = React.useMemo(() => {
+    const map = new Map<string, ProventoAPI[]>();
+    proventosCompletos.forEach((_, ticker) => {
+      map.set(ticker, []);
+    });
+    return map;
+  }, [proventosCompletos]);
 
   const calcularPerformanceEncerrada = React.useCallback((ativo: any) => {
     if (!ativo.precoSaida || !ativo.precoEntrada) return 0;
@@ -2660,6 +2675,14 @@ export default function FiisPage() {
           </div>
         </div>
       </div>
+
+      <CarteiraComparacaoIndices
+        ativosAtualizados={ativosAtualizados}
+        proventosCompletos={proventosComparacao}
+        isMobile={isMobile}
+        formatCurrency={formatCurrency}
+      />
+
       {/* Animações CSS */}
       <style jsx>{`
         /* Spinner de Loading Unificado */
