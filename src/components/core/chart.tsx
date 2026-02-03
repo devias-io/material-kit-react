@@ -20,29 +20,65 @@ interface ChartProps {
 }
 
 export const Chart = ({ options, series, ...props }: ChartProps) => {
-  // ✅ Validação com warning em desenvolvimento
-  if (!series || series.length === 0 || !series[0]?.data) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('Chart: Dados inválidos ou vazios', { series });
-    }
+  // ✅ Log para debug - veja o que está chegando
+  console.log('Chart Debug:', { 
+    series, 
+    options,
+    hasData: series?.[0]?.data,
+    firstDataPoint: series?.[0]?.data?.[0]
+  });
+
+  // ✅ Validação mais rigorosa
+  if (!series || !Array.isArray(series) || series.length === 0) {
+    console.warn('Chart: series inválida');
     return null;
   }
 
-  // ✅ Sanitiza apenas valores null/undefined, mantém 0 legítimos
-  const sanitizedSeries = series.map(s => ({
-    ...s,
-    data: Array.isArray(s.data) 
-      ? s.data.map(val => val == null ? 0 : val) // só substitui null/undefined
-      : []
-  }));
+  // ✅ Sanitiza TODOS os dados de forma profunda
+  const sanitizedSeries = series.map(s => {
+    if (!s) return { data: [] };
+    
+    return {
+      ...s,
+      name: s.name || '',
+      data: Array.isArray(s.data) 
+        ? s.data.map(val => {
+            // Converte tudo para número ou 0
+            if (val == null || val === undefined) return 0;
+            if (typeof val === 'object' && val.y != null) return { ...val, y: Number(val.y) || 0 };
+            return Number(val) || 0;
+          })
+        : []
+    };
+  });
 
-  const sanitizedOptions = {
+  // ✅ Sanitiza options de forma mais profunda
+  const sanitizedOptions: ApexOptions = {
     ...options,
+    chart: {
+      ...options.chart,
+      animations: {
+        enabled: false // desabilita animações temporariamente
+      }
+    },
     xaxis: {
       ...options.xaxis,
-      categories: options.xaxis?.categories?.filter(cat => cat != null) || []
+      categories: Array.isArray(options.xaxis?.categories)
+        ? options.xaxis.categories.map(cat => cat != null ? String(cat) : '')
+        : []
+    },
+    // ✅ Garante que labels/formatters não causem erro
+    tooltip: {
+      ...options.tooltip,
+      enabled: false // desabilita tooltip temporariamente
     }
   };
+
+  // ✅ Última validação antes de renderizar
+  if (sanitizedSeries.every(s => !s.data || s.data.length === 0)) {
+    console.warn('Chart: Nenhuma série tem dados válidos');
+    return null;
+  }
 
   return (
     <StyledApexChart
