@@ -847,6 +847,7 @@ function useDividendosInternacionaisIntegradas() {
     ativosAtualizados,
     cotacoesAtualizadas,
     setCotacoesAtualizadas,
+    proventosCompletos,
     loading: loadingCotacoes || !todosOsDadosProntos, // ✅ Loading até TUDO estar pronto
     loadingDY,
     loadingProventos, // ✅ NOVO
@@ -864,6 +865,7 @@ export default function DividendosInternacionaisPage() {
     ativosAtualizados, 
     cotacoesAtualizadas, 
     setCotacoesAtualizadas, 
+    proventosCompletos,
     loading, 
     loadingDY,
     loadingProventos, // ✅ NOVO

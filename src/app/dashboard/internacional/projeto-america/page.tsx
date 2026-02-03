@@ -863,6 +863,7 @@ function useProjetoAmericaIntegradas() {
     ativosAtualizados,
     cotacoesAtualizadas,
     setCotacoesAtualizadas,
+    proventosCompletos,
     loading: loadingCotacoes || !todosOsDadosProntos, // ✅ Loading até TUDO estar pronto
     loadingDY,
     loadingProventos,
@@ -880,6 +881,7 @@ export default function ProjetoAmericaPage() {
     ativosAtualizados,
     cotacoesAtualizadas,
     setCotacoesAtualizadas,
+    proventosCompletos,
     loading,
     loadingDY,
     loadingProventos,
