@@ -479,7 +479,7 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
   const [aviso, setAviso] = useState<string | null>(null);
   const [indicesStatus, setIndicesStatus] = useState<Array<{ ticker: string; sucesso: boolean }>>([]);
 
-  const rangeRef = useRef(rangePadrao);
+  const rangeRef = useRef<RangeKey>('2y');
   const indicesParaBuscar = useMemo(() => indicesPersonalizados ?? DEFAULT_INDICES, [indicesPersonalizados]);
 
   useEffect(() => {
