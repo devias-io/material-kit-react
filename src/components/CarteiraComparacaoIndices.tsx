@@ -626,10 +626,12 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
 
   const chartSeries = useMemo(
     () =>
-      series.map(serie => ({
-        name: serie.name,
-        data: (serie.data || []).filter(ponto => Number.isFinite(ponto.x) && Number.isFinite(ponto.y))
-      })),
+      series
+        .map(serie => ({
+          name: serie.name,
+          data: (serie.data || []).filter(ponto => Number.isFinite(ponto.x) && Number.isFinite(ponto.y))
+        }))
+        .filter(serie => serie.data.length > 0),
     [series]
   );
 
@@ -813,7 +815,7 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
               borderRadius: '10px'
             }}
           />
-        ) : series.length > 0 ? (
+        ) : chartSeries.length > 0 ? (
           <Chart type="line" height={isMobile ? 260 : 320} options={chartOptions} series={chartSeries} />
         ) : (
           <div
