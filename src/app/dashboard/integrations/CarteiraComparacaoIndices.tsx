@@ -272,9 +272,9 @@ const buscarCDI = async (range: RangeKey, signal?: AbortSignal): Promise<Histori
 };
 
 const aplicarDividendosComReinvestimento = (historico: HistoricoPonto[], dividendos: DividendoPonto[]) => {
-  if (historico.length === 0) return { data: [], retornoFinal: 0 };
+  if (!Array.isArray(historico) || historico.length === 0) return { data: [], retornoFinal: 0 };
 
-  const dividendosOrdenados = [...dividendos].sort((a, b) => a.date - b.date);
+  const dividendosOrdenados = [...(dividendos || [])].sort((a, b) => a.date - b.date);
   let indiceDividendo = 0;
   let cotas = 1;
   const precoInicial = historico[0].close;
@@ -300,7 +300,7 @@ const aplicarDividendosComReinvestimento = (historico: HistoricoPonto[], dividen
 };
 
 const calcularRetornoSerie = (historico: HistoricoPonto[]) => {
-  if (historico.length === 0) return { data: [], retornoFinal: 0 };
+  if (!Array.isArray(historico) || historico.length === 0) return { data: [], retornoFinal: 0 };
   const precoInicial = historico[0].close;
   const data = historico.map(ponto => ({
     x: ponto.date,
@@ -312,6 +312,8 @@ const calcularRetornoSerie = (historico: HistoricoPonto[]) => {
 };
 
 const obterUltimoPontoMensal = (pontos: DataPoint[]): DataPoint[] => {
+  if (!Array.isArray(pontos) || pontos.length === 0) return [];
+  
   const ultimoPorMes = new Map<string, DataPoint>();
 
   pontos.forEach(ponto => {
@@ -339,12 +341,14 @@ const gerarMeses = (inicio: number, fim: number): number[] => {
 };
 
 const alinharSeries = (series: Serie[]): Serie[] => {
-  if (series.length === 0) return series;
+  if (!Array.isArray(series) || series.length === 0) return [];
 
   const inicioComum = Math.max(...series.map(serie => serie.data[0]?.x ?? 0));
 
   return series
     .map(serie => {
+      if (!serie || !Array.isArray(serie.data)) return null;
+      
       const dataFiltrada = serie.data.filter(ponto => ponto.x >= inicioComum);
       if (dataFiltrada.length === 0) return null;
 
@@ -378,6 +382,8 @@ const calcularPerformanceHistoricaCarteira = async (
   range: RangeKey,
   signal?: AbortSignal
 ): Promise<DataPoint[]> => {
+  if (!Array.isArray(ativosAtualizados)) return [];
+  
   const ativosAtivos = ativosAtualizados.filter(ativo => !ativo.posicaoEncerrada);
   if (ativosAtivos.length === 0) return [];
 
@@ -425,8 +431,9 @@ const calcularPerformanceHistoricaCarteira = async (
 
     seriesAtivos.forEach(serie => {
       if (serie.dataEntrada > mesTimestamp) return;
-
-      const ponto = [...serie.data]
+      
+      // ✅ CORREÇÃO CRÍTICA: Validação do spread operator
+      const ponto = [...(serie.data || [])]
         .filter(item => item.x <= mesTimestamp)
         .slice(-1)[0];
 
@@ -444,14 +451,17 @@ const calcularPerformanceHistoricaCarteira = async (
 };
 
 const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
-  ativosAtualizados,
+  ativosAtualizados = [],
   proventosCompletos,
   isMobile,
   formatCurrency
 }) => {
+  // ✅ Validação de props
+  const ativosValidados = Array.isArray(ativosAtualizados) ? ativosAtualizados : [];
+  
   const ativosAtivos = useMemo(
-    () => ativosAtualizados.filter(ativo => !ativo.posicaoEncerrada),
-    [ativosAtualizados]
+    () => ativosValidados.filter(ativo => !ativo.posicaoEncerrada),
+    [ativosValidados]
   );
 
   const dataMaisAntiga = useMemo(() => {
@@ -473,7 +483,6 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
   const [indicesStatus, setIndicesStatus] = useState<Array<{ ticker: string; sucesso: boolean }>>([]);
   const [rangeInicializado, setRangeInicializado] = useState(false);
 
-  // Sincroniza o range com o cálculo baseado na data mais antiga
   useEffect(() => {
     if (!rangeInicializado && ativosAtivos.length > 0) {
       const rangeCalculado = calcularRange(dataMaisAntiga);
@@ -584,71 +593,121 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
   }, [ativosAtivos, proventosCompletos, range]);
 
   const resumoInvestimento = useMemo(
-    () =>
-      series
+    () => {
+      if (!Array.isArray(series) || series.length === 0) return [];
+      
+      return series
+        .filter(item => item && typeof item.name === 'string' && typeof item.retorno === 'number')
         .map(item => ({
           name: item.name,
           color: item.color,
           retorno: item.retorno,
           valorFinal: INVESTIMENTO_BASE * (1 + item.retorno / 100)
         }))
-        .sort((a, b) => b.retorno - a.retorno),
+        .sort((a, b) => b.retorno - a.retorno);
+    },
     [series]
   );
 
+  // ✅ VALIDAÇÃO ROBUSTA DO chartSeries
   const chartSeries = useMemo(
-    () =>
-      series.map(serie => ({
-        name: serie.name,
-        data: serie.data.filter(
-          ponto => Number.isFinite(ponto.x) && Number.isFinite(ponto.y)
-        )
-      })),
+    () => {
+      if (!Array.isArray(series) || series.length === 0) {
+        return [];
+      }
+
+      return series
+        .filter(serie => {
+          return (
+            serie &&
+            typeof serie.name === 'string' &&
+            serie.name.trim() !== '' &&
+            Array.isArray(serie.data) &&
+            serie.data.length > 0
+          );
+        })
+        .map(serie => ({
+          name: serie.name.trim(),
+          data: (serie.data || []).filter(
+            ponto =>
+              ponto &&
+              typeof ponto.x === 'number' &&
+              typeof ponto.y === 'number' &&
+              Number.isFinite(ponto.x) &&
+              Number.isFinite(ponto.y) &&
+              !Number.isNaN(ponto.x) &&
+              !Number.isNaN(ponto.y)
+          )
+        }))
+        .filter(serie => serie.data.length > 0);
+    },
     [series]
   );
 
+  // ✅ Log de debug
+  useEffect(() => {
+    if (chartSeries.length > 0) {
+      console.log('📊 Chart Series validadas:', {
+        quantidade: chartSeries.length,
+        series: chartSeries.map(s => ({
+          name: s.name,
+          pontos: s.data.length,
+          primeiroX: s.data[0]?.x,
+          primeiroY: s.data[0]?.y
+        }))
+      });
+    }
+  }, [chartSeries]);
+
+  // ✅ VALIDAÇÃO ROBUSTA DO chartOptions
   const chartOptions = useMemo(
-    () => ({
-      chart: {
-        type: 'line',
-        toolbar: { show: false },
-        zoom: { enabled: false },
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
-      },
-      stroke: { curve: 'smooth', width: 2.5 },
-      dataLabels: { enabled: false },
-      colors: series.map(item => item.color),
-      markers: { size: 0 },
-      xaxis: {
-        type: 'datetime',
-        labels: {
-          format: 'MM/yy',
-          style: { fontSize: isMobile ? '10px' : '12px' }
+    () => {
+      const cores = (series || [])
+        .filter(s => s && typeof s.color === 'string')
+        .map(s => s.color);
+
+      return {
+        chart: {
+          type: 'line',
+          toolbar: { show: false },
+          zoom: { enabled: false },
+          fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
+        },
+        stroke: { curve: 'smooth', width: 2.5 },
+        dataLabels: { enabled: false },
+        colors: cores.length > 0 ? cores : ['#ef4444'],
+        markers: { size: 0 },
+        xaxis: {
+          type: 'datetime',
+          labels: {
+            format: 'MM/yy',
+            style: { fontSize: isMobile ? '10px' : '12px' }
+          }
+        },
+        yaxis: {
+          labels: {
+            formatter: (valor: number) => {
+              if (typeof valor !== 'number' || Number.isNaN(valor)) return '';
+              return `${valor.toFixed(0)}%`;
+            },
+            style: { fontSize: isMobile ? '10px' : '12px' }
+          }
+        },
+        grid: { strokeDashArray: 4 },
+        tooltip: {
+          shared: true,
+          intersect: false,
+          x: { formatter: (valor: number) => formatarData(valor) },
+          y: { formatter: (valor: number) => formatarPercentual(valor) }
+        },
+        legend: {
+          position: 'top',
+          horizontalAlign: 'left',
+          fontSize: isMobile ? '11px' : '12px',
+          markers: { width: 12, height: 12 }
         }
-      },
-      yaxis: {
-        labels: {
-          formatter: (valor: number) => {
-            if (typeof valor !== 'number' || Number.isNaN(valor)) return '';
-            return `${valor.toFixed(0)}%`;
-          },
-          style: { fontSize: isMobile ? '10px' : '12px' }
-        }
-      },
-      grid: { strokeDashArray: 4 },
-      tooltip: {
-        shared: true,
-        intersect: false,
-        x: { formatter: (valor: number) => formatarData(valor) },
-        y: { formatter: (valor: number) => formatarPercentual(valor) }
-      },
-      legend: {
-        position: 'top',
-        horizontalAlign: 'left',
-        fontSize: isMobile ? '11px' : '12px',
-        markers: { width: 12, height: 12 }
-      }
-    }),
+      };
+    },
     [series, isMobile]
   );
 
@@ -788,7 +847,7 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
               borderRadius: '10px'
             }}
           />
-        ) : series.length > 0 ? (
+        ) : chartSeries.length > 0 && chartSeries.every(s => s.data.length > 0) ? (
           <Chart type="line" height={isMobile ? 260 : 320} options={chartOptions} series={chartSeries} />
         ) : (
           <div
