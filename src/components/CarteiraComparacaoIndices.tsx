@@ -124,7 +124,7 @@ const calcularRange = (dataMaisAntiga: number): RangeKey => {
   return '10y';
 };
 
-const extrairHistorico = (dados: HistoricoBruto): HistoricoPonto[] => {
+const extrairHistorico = (dados?: HistoricoBruto | null): HistoricoPonto[] => {
   if (!Array.isArray(dados)) return [];
 
   return dados
@@ -158,7 +158,13 @@ const buscarHistorico = async (
   const historicoRaw =
     payloadHistorico?.results?.[0]?.historicalDataPrice ||
     payloadHistorico?.results?.[0]?.historicalData ||
-    payloadHistorico?.results?.[0]?.prices;
+    payloadHistorico?.results?.[0]?.prices ||
+    [];
+
+  if (!Array.isArray(historicoRaw)) {
+    console.warn('Histórico retornou dados inválidos');
+    return [];
+  }
 
   const historico = extrairHistorico(historicoRaw);
 
@@ -210,7 +216,15 @@ const buscarHistoricoComDividendos = async (
   const historicoRaw =
     payloadHistorico?.results?.[0]?.historicalDataPrice ||
     payloadHistorico?.results?.[0]?.historicalData ||
-    payloadHistorico?.results?.[0]?.prices;
+    payloadHistorico?.results?.[0]?.prices ||
+    [];
+
+  if (!Array.isArray(historicoRaw)) {
+    console.warn('Histórico retornou dados inválidos');
+    const resultadoInvalido = { historico: [], dividendos };
+    setCachedData(cacheKey, resultadoInvalido);
+    return resultadoInvalido;
+  }
 
   let dividendos: DividendoPonto[] = [];
   if (dividendosResp.ok) {
@@ -357,17 +371,17 @@ const gerarMeses = (inicio: number, fim: number): number[] => {
 const alinharSeries = (series: Serie[]): Serie[] => {
   if (series.length === 0) return series;
 
-  const inicioComum = Math.max(...series.map(serie => serie.data[0]?.x ?? 0));
+  const inicioComum = Math.max(...series.map(serie => (serie.data || [])[0]?.x ?? 0));
 
   return series
     .map(serie => {
-      const dataFiltrada = serie.data.filter(ponto => ponto.x >= inicioComum);
+      const dataFiltrada = (serie.data || []).filter(ponto => ponto.x >= inicioComum);
       if (dataFiltrada.length === 0) return null;
 
       return {
         ...serie,
         data: dataFiltrada,
-        retorno: dataFiltrada[dataFiltrada.length - 1].y
+        retorno: dataFiltrada[dataFiltrada.length - 1]?.y ?? 0
       } as Serie;
     })
     .filter(Boolean) as Serie[];
@@ -394,6 +408,7 @@ const calcularPerformanceHistoricaCarteira = async (
   range: RangeKey,
   signal?: AbortSignal
 ): Promise<DataPoint[]> => {
+  if (!Array.isArray(ativosAtualizados)) return [];
   const ativosAtivos = ativosAtualizados.filter(ativo => !ativo.posicaoEncerrada);
   if (ativosAtivos.length === 0) return [];
 
@@ -442,7 +457,7 @@ const calcularPerformanceHistoricaCarteira = async (
     seriesAtivos.forEach(serie => {
       if (serie.dataEntrada > mesTimestamp) return;
 
-      const ponto = [...serie.data]
+      const ponto = [...(serie.data || [])]
         .filter(item => item.x <= mesTimestamp)
         .slice(-1)[0];
 
@@ -460,15 +475,16 @@ const calcularPerformanceHistoricaCarteira = async (
 };
 
 const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
-  ativosAtualizados,
+  ativosAtualizados = [],
   proventosCompletos,
   isMobile,
   formatCurrency,
   indicesPersonalizados
 }) => {
+  const ativosValidados = Array.isArray(ativosAtualizados) ? ativosAtualizados : [];
   const ativosAtivos = useMemo(
-    () => ativosAtualizados.filter(ativo => !ativo.posicaoEncerrada),
-    [ativosAtualizados]
+    () => ativosValidados.filter(ativo => !ativo.posicaoEncerrada),
+    [ativosValidados]
   );
 
   const dataMaisAntiga = useMemo(() => {
@@ -612,9 +628,7 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
     () =>
       series.map(serie => ({
         name: serie.name,
-        data: serie.data.filter(
-          ponto => Number.isFinite(ponto.x) && Number.isFinite(ponto.y)
-        )
+        data: (serie.data || []).filter(ponto => Number.isFinite(ponto.x) && Number.isFinite(ponto.y))
       })),
     [series]
   );
