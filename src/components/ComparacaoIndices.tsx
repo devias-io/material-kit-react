@@ -805,7 +805,7 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
           >
             {resumoInvestimento.map(item => (
               <div
-                key={item.name}
+                key={item.name || 'indice'}
                 style={{
                   border: '1px solid #e2e8f0',
                   borderRadius: '10px',
@@ -830,7 +830,7 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
                     fontSize: '12px'
                   }}
                 >
-                  {item.name.slice(0, 4).toUpperCase()}
+                  {(item.name || 'IDX').slice(0, 4).toUpperCase()}
                 </div>
 
                 <div style={{ flex: 1 }}>
@@ -848,7 +848,7 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
                         fontSize: '14px'
                       }}
                     >
-                      {item.name}
+                      {item.name || 'Índice'}
                     </span>
                     <span
                       style={{
