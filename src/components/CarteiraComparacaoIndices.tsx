@@ -627,13 +627,22 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
   const chartSeries = useMemo(
     () =>
       series
+        .filter(serie => serie && Array.isArray(serie.data) && serie.data.length > 0)
         .map(serie => ({
           name: serie.name,
-          data: (serie.data || []).filter(ponto => Number.isFinite(ponto.x) && Number.isFinite(ponto.y))
+          data: serie.data.filter(ponto => ponto && Number.isFinite(ponto.x) && Number.isFinite(ponto.y))
         }))
         .filter(serie => serie.data.length > 0),
     [series]
   );
+
+  const chartColors = useMemo(() => {
+    const seriesNames = chartSeries.map(s => s.name);
+    return series
+      .filter(item => seriesNames.includes(item.name))
+      .map(item => item.color)
+      .filter(c => typeof c === 'string');
+  }, [series, chartSeries]);
 
   const chartOptions = useMemo(
     () => ({
@@ -645,7 +654,7 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
       },
       stroke: { curve: 'smooth', width: 2.5 },
       dataLabels: { enabled: false },
-      colors: series.map(item => item.color),
+      colors: chartColors,
       markers: { size: 0 },
       xaxis: {
         type: 'datetime',
@@ -677,7 +686,7 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
         markers: { width: 12, height: 12 }
       }
     }),
-    [series, isMobile]
+    [chartColors, isMobile]
   );
 
   return (
