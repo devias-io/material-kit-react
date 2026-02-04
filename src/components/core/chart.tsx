@@ -67,6 +67,43 @@ function deepSanitize(obj: any): any {
   return sanitized;
 }
 
+const sanitizeDataPoint = (val: any) => {
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'number') {
+    return Number.isFinite(val) ? val : null;
+  }
+  if (typeof val === 'string') {
+    const num = parseFloat(val);
+    return Number.isFinite(num) ? num : null;
+  }
+  if (typeof val === 'object') {
+    const x = typeof val.x === 'number' ? val.x : parseFloat(val.x);
+    const y = typeof val.y === 'number' ? val.y : parseFloat(val.y);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    return { x, y };
+  }
+  return null;
+};
+
+const sanitizeSeries = (series: any[]) =>
+  series
+    .map((item) => {
+      if (!item || typeof item !== 'object') {
+        return { name: '', data: [] as any[] };
+      }
+
+      const rawData = Array.isArray(item.data) ? item.data : [];
+      const sanitizedData = rawData
+        .map((val) => sanitizeDataPoint(val))
+        .filter((val) => val !== null);
+
+      return {
+        name: String(item.name || ''),
+        data: sanitizedData
+      };
+    })
+    .filter(item => Array.isArray(item.data) && item.data.length > 0);
+
 export const Chart = ({ options, series, type = 'line', ...props }: ChartProps) => {
   try {
     // ✅ Validação básica
@@ -75,32 +112,10 @@ export const Chart = ({ options, series, type = 'line', ...props }: ChartProps) 
     }
 
     // ✅ Sanitiza series de forma segura
-    const sanitizedSeries = series.map(s => {
-      if (!s || typeof s !== 'object') {
-        return { name: '', data: [] };
-      }
-
-      const data = Array.isArray(s.data) ? s.data : [];
-      
-      return {
-        name: String(s.name || ''),
-        data: data.map(val => {
-          if (val === null || val === undefined) return 0;
-          if (typeof val === 'number') return isNaN(val) ? 0 : val;
-          if (typeof val === 'string') {
-            const num = parseFloat(val);
-            return isNaN(num) ? 0 : num;
-          }
-          if (typeof val === 'object' && val !== null) {
-            return {
-              x: val.x != null ? val.x : 0,
-              y: val.y != null ? (typeof val.y === 'number' ? val.y : parseFloat(val.y) || 0) : 0
-            };
-          }
-          return 0;
-        })
-      };
-    });
+    const sanitizedSeries = sanitizeSeries(series);
+    if (sanitizedSeries.length === 0) {
+      return null;
+    }
 
     // ✅ Sanitiza options
     const sanitizedOptions: ApexOptions = {
