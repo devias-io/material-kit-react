@@ -383,6 +383,11 @@ const formatarData = (valor?: number | null) => {
   return dayjs(valor).format('DD/MM/YY');
 };
 
+const obterLabelIndice = (indice: IndiceConfig) => {
+  const label = typeof indice.label === 'string' ? indice.label.trim() : '';
+  return label || indice.ticker;
+};
+
 const calcularPerformanceHistoricaCarteira = async (
   ativosAtualizados: any[],
   proventosCompletos: Map<string, ProventoAPI[]>,
@@ -519,7 +524,7 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
             if (indice.tipo === 'cdi') {
               const historico = await buscarCDI(range, controller.signal);
               return {
-                name: indice.label,
+                name: obterLabelIndice(indice),
                 color: indice.color,
                 data: calcularRetornoSerie(historico).data
               };
@@ -531,12 +536,12 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
               controller.signal
             );
             const { data } = aplicarDividendosComReinvestimento(historico, dividendos);
-            return { name: indice.label, color: indice.color, data };
+            return { name: obterLabelIndice(indice), color: indice.color, data };
           })
         );
 
         const status = resultados.map((resultado, index) => ({
-          ticker: indicesParaBuscar[index].label,
+          ticker: obterLabelIndice(indicesParaBuscar[index]),
           sucesso: resultado.status === 'fulfilled' && resultado.value.data.length > 0
         }));
 
@@ -862,7 +867,7 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
                     fontSize: '12px'
                   }}
                 >
-                  {item.name.slice(0, 4).toUpperCase()}
+                  {(item.name || 'IDX').slice(0, 4).toUpperCase()}
                 </div>
 
                 <div style={{ flex: 1 }}>
@@ -880,7 +885,7 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
                         fontSize: '14px'
                       }}
                     >
-                      {item.name}
+                      {item.name || 'Índice'}
                     </span>
                     <span
                       style={{
