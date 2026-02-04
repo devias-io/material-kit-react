@@ -340,59 +340,22 @@ const gerarMeses = (inicio: number, fim: number): number[] => {
   return meses;
 };
 
-// ✅ FUNÇÃO COMPLETAMENTE REESCRITA COM VALIDAÇÃO EXTREMA
 const alinharSeries = (series: Serie[]): Serie[] => {
-  if (!Array.isArray(series) || series.length === 0) {
-    console.warn('alinharSeries: séries vazias ou inválidas');
-    return [];
-  }
+  if (!Array.isArray(series) || series.length === 0) return [];
 
-  // Filtrar séries inválidas
-  const seriesValidas = series.filter(serie => {
-    const valido = (
-      serie &&
-      typeof serie.name === 'string' &&
-      serie.name.trim() !== '' &&
-      typeof serie.color === 'string' &&
-      Array.isArray(serie.data) &&
-      serie.data.length > 0
-    );
-    
-    if (!valido) {
-      console.warn('alinharSeries: série inválida removida:', serie);
-    }
-    
-    return valido;
-  });
+  const inicioComum = Math.max(...series.map(serie => serie.data[0]?.x ?? 0));
 
-  if (seriesValidas.length === 0) {
-    console.warn('alinharSeries: nenhuma série válida após filtro');
-    return [];
-  }
-
-  const inicioComum = Math.max(...seriesValidas.map(serie => serie.data[0]?.x ?? 0));
-
-  return seriesValidas
+  return series
     .map(serie => {
-      const dataFiltrada = (serie.data || []).filter(ponto => 
-        ponto && 
-        typeof ponto.x === 'number' && 
-        typeof ponto.y === 'number' &&
-        ponto.x >= inicioComum
-      );
+      if (!serie || !Array.isArray(serie.data)) return null;
       
-      if (dataFiltrada.length === 0) {
-        console.warn(`alinharSeries: série "${serie.name}" sem dados após filtro`);
-        return null;
-      }
+      const dataFiltrada = (serie.data || []).filter(ponto => ponto && ponto.x >= inicioComum);
+      if (dataFiltrada.length === 0) return null;
 
-      const ultimoPonto = dataFiltrada[dataFiltrada.length - 1];
-      
       return {
-        name: serie.name,
-        color: serie.color,
+        ...serie,
         data: dataFiltrada,
-        retorno: ultimoPonto?.y ?? 0
+        retorno: dataFiltrada[dataFiltrada.length - 1].y
       } as Serie;
     })
     .filter(Boolean) as Serie[];
@@ -419,16 +382,10 @@ const calcularPerformanceHistoricaCarteira = async (
   range: RangeKey,
   signal?: AbortSignal
 ): Promise<DataPoint[]> => {
-  if (!Array.isArray(ativosAtualizados)) {
-    console.warn('calcularPerformanceHistoricaCarteira: ativosAtualizados não é array');
-    return [];
-  }
+  if (!Array.isArray(ativosAtualizados)) return [];
   
   const ativosAtivos = ativosAtualizados.filter(ativo => !ativo.posicaoEncerrada);
-  if (ativosAtivos.length === 0) {
-    console.warn('calcularPerformanceHistoricaCarteira: nenhum ativo ativo');
-    return [];
-  }
+  if (ativosAtivos.length === 0) return [];
 
   const resultados = await Promise.allSettled(
     ativosAtivos.map(async ativo => {
@@ -463,10 +420,7 @@ const calcularPerformanceHistoricaCarteira = async (
     )
     .map(resultado => resultado.value);
 
-  if (seriesAtivos.length === 0) {
-    console.warn('calcularPerformanceHistoricaCarteira: nenhuma série de ativo válida');
-    return [];
-  }
+  if (seriesAtivos.length === 0) return [];
 
   const dataMaisAntiga = Math.min(...seriesAtivos.map(serie => serie.dataEntrada));
   const meses = gerarMeses(dataMaisAntiga, Date.now());
@@ -478,7 +432,6 @@ const calcularPerformanceHistoricaCarteira = async (
     seriesAtivos.forEach(serie => {
       if (serie.dataEntrada > mesTimestamp) return;
       
-      // ✅ Validação extrema
       if (!Array.isArray(serie.data) || serie.data.length === 0) return;
       
       const pontosFiltrados = serie.data.filter(item => item && item.x <= mesTimestamp);
@@ -497,49 +450,57 @@ const calcularPerformanceHistoricaCarteira = async (
   });
 };
 
-// ✅ VALIDAÇÃO ULTRA DEFENSIVA DE DADOS PARA APEXCHARTS
-const validarDadosParaChart = (series: any[]): boolean => {
-  if (!Array.isArray(series) || series.length === 0) {
-    console.error('❌ validarDadosParaChart: séries inválidas');
-    return false;
+// 🚨 COMPONENTE WRAPPER SEGURO PARA O CHART
+const SafeChart: React.FC<{
+  series: any[];
+  options: any;
+  type: string;
+  height: number;
+}> = ({ series, options, type, height }) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [series, options]);
+
+  if (hasError) {
+    return (
+      <div
+        style={{
+          height: `${height}px`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#ef4444',
+          fontWeight: 600,
+          border: '1px dashed #fecaca',
+          borderRadius: '10px',
+          flexDirection: 'column',
+          gap: '8px'
+        }}
+      >
+        <div>❌ Erro ao renderizar gráfico</div>
+        <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+          Os dados não puderam ser processados
+        </div>
+      </div>
+    );
   }
 
-  for (const serie of series) {
-    if (!serie || typeof serie.name !== 'string' || serie.name.trim() === '') {
-      console.error('❌ validarDadosParaChart: série sem nome válido', serie);
-      return false;
-    }
-
-    if (!Array.isArray(serie.data)) {
-      console.error(`❌ validarDadosParaChart: "${serie.name}" sem array de dados`);
-      return false;
-    }
-
-    if (serie.data.length === 0) {
-      console.error(`❌ validarDadosParaChart: "${serie.name}" com array vazio`);
-      return false;
-    }
-
-    for (const ponto of serie.data) {
-      if (!ponto || typeof ponto.x !== 'number' || typeof ponto.y !== 'number') {
-        console.error(`❌ validarDadosParaChart: "${serie.name}" com ponto inválido`, ponto);
-        return false;
-      }
-
-      if (!Number.isFinite(ponto.x) || !Number.isFinite(ponto.y)) {
-        console.error(`❌ validarDadosParaChart: "${serie.name}" com valores não-finitos`, ponto);
-        return false;
-      }
-
-      if (Number.isNaN(ponto.x) || Number.isNaN(ponto.y)) {
-        console.error(`❌ validarDadosParaChart: "${serie.name}" com NaN`, ponto);
-        return false;
-      }
-    }
+  try {
+    return (
+      <Chart
+        type={type as any}
+        height={height}
+        options={options}
+        series={series}
+      />
+    );
+  } catch (error) {
+    console.error('❌ Erro no SafeChart:', error);
+    setHasError(true);
+    return null;
   }
-
-  console.log('✅ validarDadosParaChart: TODOS os dados são válidos');
-  return true;
 };
 
 const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
@@ -583,7 +544,12 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
   }, [dataMaisAntiga, ativosAtivos.length, rangeInicializado]);
 
   useEffect(() => {
-    if (ativosAtivos.length === 0) return;
+    if (ativosAtivos.length === 0) {
+      // 🚨 SEM ATIVOS = NÃO RENDERIZAR NADA
+      setSeries([]);
+      setErro('Nenhum ativo ativo na carteira.');
+      return;
+    }
 
     const controller = new AbortController();
 
@@ -599,11 +565,6 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
           range,
           controller.signal
         );
-
-        console.log('📊 carteiraSeries recebida:', {
-          length: carteiraSeries.length,
-          sample: carteiraSeries.slice(0, 2)
-        });
 
         const indicesParaBuscar = [
           { ticker: 'SMAL11', label: 'SMLL', color: SERIES_COLORS.smll, tipo: 'historico' as const },
@@ -652,25 +613,15 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
             retorno: resultado.value.data[resultado.value.data.length - 1]?.y ?? 0
           }));
 
-        console.log('📊 seriesIndices:', seriesIndices.map(s => ({ name: s.name, pontos: s.data.length })));
-
-        // ✅ VALIDAÇÃO ANTES DE CRIAR seriesCompletas
-        const serieCarteira: Serie = {
-          name: 'Carteira',
-          color: SERIES_COLORS.carteira,
-          data: Array.isArray(carteiraSeries) ? carteiraSeries : [],
-          retorno: Array.isArray(carteiraSeries) && carteiraSeries.length > 0 
-            ? (carteiraSeries[carteiraSeries.length - 1]?.y ?? 0) 
-            : 0
-        };
-
-        console.log('📊 serieCarteira:', { name: serieCarteira.name, pontos: serieCarteira.data.length });
-
-        const todasAsSeries = [serieCarteira, ...seriesIndices];
-        console.log('📊 todasAsSeries ANTES de alinhar:', todasAsSeries.map(s => ({ name: s.name, pontos: s.data.length })));
-
-        const seriesCompletas = alinharSeries(todasAsSeries);
-        console.log('📊 seriesCompletas DEPOIS de alinhar:', seriesCompletas.map(s => ({ name: s.name, pontos: s.data.length })));
+        const seriesCompletas = alinharSeries([
+          {
+            name: 'Carteira',
+            color: SERIES_COLORS.carteira,
+            data: carteiraSeries,
+            retorno: carteiraSeries[carteiraSeries.length - 1]?.y ?? 0
+          },
+          ...seriesIndices
+        ]);
 
         if (seriesCompletas.length === 0) {
           setErro('Não encontramos histórico suficiente para comparar a carteira.');
@@ -716,32 +667,25 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
     [series]
   );
 
-  // ✅ chartSeries COM VALIDAÇÃO FINAL ANTES DE PASSAR PARA O CHART
   const chartSeries = useMemo(
     () => {
       if (!Array.isArray(series) || series.length === 0) {
-        console.warn('chartSeries: séries vazias');
         return [];
       }
 
-      const seriesProcessadas = series
+      return series
         .filter(serie => {
-          const valido = (
+          return (
             serie &&
             typeof serie.name === 'string' &&
             serie.name.trim() !== '' &&
             Array.isArray(serie.data) &&
             serie.data.length > 0
           );
-          
-          if (!valido) {
-            console.warn('chartSeries: série inválida filtrada:', serie);
-          }
-          
-          return valido;
         })
-        .map(serie => {
-          const dadosValidados = (serie.data || []).filter(
+        .map(serie => ({
+          name: serie.name.trim(),
+          data: (serie.data || []).filter(
             ponto =>
               ponto &&
               typeof ponto.x === 'number' &&
@@ -750,23 +694,9 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
               Number.isFinite(ponto.y) &&
               !Number.isNaN(ponto.x) &&
               !Number.isNaN(ponto.y)
-          );
-
-          return {
-            name: serie.name.trim(),
-            data: dadosValidados
-          };
-        })
+          )
+        }))
         .filter(serie => serie.data.length > 0);
-
-      console.log('📊 chartSeries final:', seriesProcessadas.map(s => ({
-        name: s.name,
-        pontos: s.data.length,
-        primeiro: s.data[0],
-        ultimo: s.data[s.data.length - 1]
-      })));
-
-      return seriesProcessadas;
     },
     [series]
   );
@@ -821,11 +751,6 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
     },
     [series, isMobile]
   );
-
-  // ✅ VALIDAÇÃO FINAL ANTES DE RENDERIZAR
-  const dadosValidosParaChart = useMemo(() => {
-    return validarDadosParaChart(chartSeries);
-  }, [chartSeries]);
 
   return (
     <div
@@ -963,8 +888,13 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
               borderRadius: '10px'
             }}
           />
-        ) : dadosValidosParaChart && chartSeries.length > 0 ? (
-          <Chart type="line" height={isMobile ? 260 : 320} options={chartOptions} series={chartSeries} />
+        ) : chartSeries.length > 0 ? (
+          <SafeChart
+            type="line"
+            height={isMobile ? 260 : 320}
+            options={chartOptions}
+            series={chartSeries}
+          />
         ) : (
           <div
             style={{
@@ -975,17 +905,10 @@ const CarteiraComparacaoIndices: React.FC<CarteiraComparacaoIndicesProps> = ({
               color: '#64748b',
               fontWeight: 600,
               border: '1px dashed #cbd5e1',
-              borderRadius: '10px',
-              flexDirection: 'column',
-              gap: '8px'
+              borderRadius: '10px'
             }}
           >
-            <div>Sem dados suficientes para exibir o gráfico.</div>
-            {!dadosValidosParaChart && (
-              <div style={{ fontSize: '12px', color: '#94a3b8' }}>
-                (Dados inválidos detectados - verifique o console)
-              </div>
-            )}
+            Sem dados suficientes para exibir o gráfico.
           </div>
         )}
       </div>
