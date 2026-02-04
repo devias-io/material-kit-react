@@ -117,6 +117,18 @@ export const Chart = ({ options, series, type = 'line', ...props }: ChartProps) 
       return null;
     }
 
+    // ✅ Alinha colors com as séries sanitizadas (evita undefined no ApexCharts)
+    let alignedColors: string[] | undefined;
+    if (Array.isArray(options?.colors) && options.colors.length > 0) {
+      // Mapeia cores para as séries que sobreviveram à sanitização
+      const originalNames = series.map((s: any) => String(s?.name || ''));
+      alignedColors = sanitizedSeries.map((s: any) => {
+        const idx = originalNames.indexOf(s.name);
+        const color = idx >= 0 ? options!.colors![idx] : undefined;
+        return typeof color === 'string' ? color : '#6b7280';
+      });
+    }
+
     // ✅ Sanitiza options
     const sanitizedOptions: ApexOptions = {
       chart: {
@@ -134,7 +146,7 @@ export const Chart = ({ options, series, type = 'line', ...props }: ChartProps) 
       yaxis: options?.yaxis ? deepSanitize(options.yaxis) : undefined,
       dataLabels: { enabled: false },
       stroke: options?.stroke || {},
-      colors: options?.colors || undefined,
+      colors: alignedColors || undefined,
       fill: options?.fill || undefined,
       legend: options?.legend || undefined,
       tooltip: { enabled: false },

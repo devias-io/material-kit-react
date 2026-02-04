@@ -343,7 +343,11 @@ const gerarMeses = (inicio: number, fim: number): number[] => {
 const alinharSeries = (series: Serie[]): Serie[] => {
   if (!Array.isArray(series) || series.length === 0) return [];
 
-  const inicioComum = Math.max(...series.map(serie => serie.data[0]?.x ?? 0));
+  // Filtra séries com data válida antes de calcular início comum
+  const seriesValidas = series.filter(serie => Array.isArray(serie.data) && serie.data.length > 0);
+  if (seriesValidas.length === 0) return [];
+
+  const inicioComum = Math.max(...seriesValidas.map(serie => serie.data[0]?.x ?? 0));
 
   return series
     .map(serie => {
