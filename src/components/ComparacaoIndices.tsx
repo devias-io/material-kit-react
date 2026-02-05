@@ -451,11 +451,33 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
   const [carregamentoCompleto, setCarregamentoCompleto] = useState(false); // ✅ NOVA FLAG
   const [erro, setErro] = useState<string | null>(null);
   const [indicesStatus, setIndicesStatus] = useState<IndiceStatus[]>([]);
+  const chartRef = React.useRef<any>(null); // ✅ Ref para controlar o Chart
 
   // ✅ Reseta flag quando range muda
   useEffect(() => {
     setCarregamentoCompleto(false);
   }, [range]);
+
+  // ✅ CORREÇÃO CRÍTICA: Força recálculo de dimensões do ApexCharts
+  // Resolve o bug onde gráfico só aparece ao abrir DevTools (F12)
+  useEffect(() => {
+    if (carregamentoCompleto && series.length > 0) {
+      // Delay para garantir que o layout está estável
+      const timer = setTimeout(() => {
+        if (chartRef.current?.chart) {
+          try {
+            // Força o ApexCharts a recalcular largura/altura
+            chartRef.current.chart.windowResizeHandler();
+            console.log('📐 ApexCharts dimensões recalculadas');
+          } catch (e) {
+            console.warn('⚠️ Erro ao recalcular dimensões do chart:', e);
+          }
+        }
+      }, 150);
+
+      return () => clearTimeout(timer);
+    }
+  }, [carregamentoCompleto, series]);
 
   useEffect(() => {
     if (!ticker) return;
@@ -1007,12 +1029,22 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
               console.log('=========================');
               return null;
             })()}
-            <Chart 
-              type="line" 
-              height={isMobile ? 260 : 320} 
-              options={chartOptions} 
-              series={chartSeries} 
-            />
+            {/* ✅ Container com dimensões explícitas para evitar bug do ApexCharts */}
+            <div 
+              style={{ 
+                width: '100%', 
+                height: isMobile ? '260px' : '320px',
+                minHeight: isMobile ? '260px' : '320px'
+              }}
+            >
+              <Chart 
+                ref={chartRef}
+                type="line" 
+                height={isMobile ? 260 : 320} 
+                options={chartOptions} 
+                series={chartSeries} 
+              />
+            </div>
           </>
         ) : (
           <div
