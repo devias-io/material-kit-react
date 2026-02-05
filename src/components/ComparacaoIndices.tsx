@@ -48,16 +48,18 @@ type IndiceStatus = {
 
 // ✅ CORREÇÃO 1: Validação rigorosa de números para evitar NaN/Infinity/undefined
 const ehNumeroValido = (valor: any): valor is number => {
-  return typeof valor === 'number' && !Number.isNaN(valor) && Number.isFinite(valor) && valor > 0;
+  return typeof valor === 'number' && !Number.isNaN(valor) && Number.isFinite(valor);
 };
 
-// ✅ CORREÇÃO 2: Validação de ponto de histórico completo
+// ✅ CORREÇÃO 2: Validação de ponto de histórico completo (close deve ser > 0, date também)
 const pontoEhValido = (ponto: any): ponto is HistoricoPonto => {
   return (
     ponto &&
     typeof ponto === 'object' &&
     ehNumeroValido(ponto.date) &&
-    ehNumeroValido(ponto.close)
+    ponto.date > 0 &&
+    ehNumeroValido(ponto.close) &&
+    ponto.close > 0
   );
 };
 
@@ -386,9 +388,11 @@ const prepararSeriesAlinhadasFlexivel = (
       const { data, retornoFinal } = aplicarDividendosComReinvestimento(pontosValidos, serie.dividendos);
       
       // ✅ CORREÇÃO 5: Valida se os dados processados são válidos
+      // Nota: y pode ser 0 (retorno 0%), mas x deve ser sempre > 0 (timestamp)
       const dadosValidos = data.filter(ponto => 
         ponto && 
         ehNumeroValido(ponto.x) && 
+        ponto.x > 0 &&
         ehNumeroValido(ponto.y)
       );
 
@@ -406,15 +410,24 @@ const prepararSeriesAlinhadasFlexivel = (
 };
 
 const formatarPercentual = (valor: number) => {
-  // ✅ CORREÇÃO 6: Protege formatação contra valores inválidos
-  if (!ehNumeroValido(valor)) return '0.00%';
-  return `${valor >= 0 ? '+' : ''}${valor.toFixed(2)}%`;
+  // ✅ CORREÇÃO 6: Protege formatação contra valores inválidos (mas aceita 0)
+  if (valor === null || valor === undefined || Number.isNaN(valor) || !Number.isFinite(valor)) {
+    return '0.00%';
+  }
+  const valorNum = Number(valor);
+  return `${valorNum >= 0 ? '+' : ''}${valorNum.toFixed(2)}%`;
 };
 
 const formatarData = (valor: number) => {
   // ✅ CORREÇÃO 7: Protege formatação de data
-  if (!ehNumeroValido(valor)) return 'Data inválida';
-  return dayjs(valor).format('DD/MM/YY');
+  if (valor === null || valor === undefined || Number.isNaN(valor) || !Number.isFinite(valor) || valor <= 0) {
+    return 'Data inválida';
+  }
+  try {
+    return dayjs(valor).format('DD/MM/YY');
+  } catch (e) {
+    return 'Data inválida';
+  }
 };
 
 interface ComparacaoIndicesProps {
@@ -435,8 +448,14 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
   const [range, setRange] = useState<RangeKey>('5y');
   const [series, setSeries] = useState<SeriePreparada[]>([]);
   const [loading, setLoading] = useState(false);
+  const [carregamentoCompleto, setCarregamentoCompleto] = useState(false); // ✅ NOVA FLAG
   const [erro, setErro] = useState<string | null>(null);
   const [indicesStatus, setIndicesStatus] = useState<IndiceStatus[]>([]);
+
+  // ✅ Reseta flag quando range muda
+  useEffect(() => {
+    setCarregamentoCompleto(false);
+  }, [range]);
 
   useEffect(() => {
     if (!ticker) return;
@@ -444,6 +463,7 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
     const controller = new AbortController();
     const carregar = async () => {
       setLoading(true);
+      setCarregamentoCompleto(false); // ✅ Marca como não completo no início
       setErro(null);
 
       const ativosParaBuscar = [
@@ -488,6 +508,9 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
           }
         })
       );
+
+      // ✅ AGUARDA TODAS as requisições terminarem antes de processar
+      console.log('⏳ Todas as requisições concluídas. Processando dados...');
 
       // 🔍 Gera relatório de status
       const status: IndiceStatus[] = resultados.map((resultado, index) => {
@@ -546,7 +569,9 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
       console.log('=== FIM DO DEBUG ===\n');
 
       if (!controller.signal.aborted) {
+        // ✅ Só atualiza state quando TUDO estiver pronto
         setSeries(seriesProcessadas);
+        setCarregamentoCompleto(true); // ✅ Marca como completo APENAS AQUI
 
         if (seriesProcessadas.length === 0) {
           setErro('Não encontramos histórico suficiente para comparar este ativo.');
@@ -562,6 +587,7 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
           console.error('❌ Erro geral ao carregar comparação:', error);
           setErro('Não conseguimos carregar o comparativo agora. Tente novamente em instantes.');
           setSeries([]);
+          setCarregamentoCompleto(true); // ✅ Marca como completo mesmo em erro
         }
       })
       .finally(() => {
@@ -588,89 +614,202 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
   );
 
   const chartSeries = useMemo(
-    () => series.map(serie => ({ name: serie.name, data: serie.data })),
+    () => {
+      // ✅ PROTEÇÃO EXTRA: Garante formato correto e filtra dados inválidos
+      return series
+        .filter(serie => serie && serie.name && Array.isArray(serie.data) && serie.data.length > 0)
+        .map(serie => ({
+          name: String(serie.name), // Garante string
+          data: serie.data
+            .filter(ponto => {
+              const xNum = Number(ponto.x);
+              const yNum = Number(ponto.y);
+              return (
+                ponto && 
+                ehNumeroValido(xNum) && 
+                xNum > 0 && // X deve ser timestamp válido
+                ehNumeroValido(yNum) // Y pode ser 0
+              );
+            })
+            .map(ponto => ({
+              x: Number(ponto.x), // Força conversão para número
+              y: Number(ponto.y)
+            }))
+        }))
+        .filter(serie => serie.data.length > 0); // Remove séries que ficaram vazias após filtro
+    },
     [series]
   );
 
-  // ✅ CORREÇÃO 8: Formatters com proteção completa contra valores inválidos
+  // ✅ CORREÇÃO 8: Formatters com proteção ULTRA-DEFENSIVA contra undefined
   const chartOptions = useMemo(
-    () => ({
-      chart: {
-        type: 'line',
-        toolbar: { show: false },
-        zoom: { enabled: false },
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
-      },
-      stroke: { curve: 'smooth', width: 2.5 },
-      dataLabels: { enabled: false },
-      colors: series.map(item => item.color),
-      markers: { size: 0 },
-      xaxis: {
-        type: 'datetime',
-        labels: {
-          format: 'MM/yy',
-          style: { fontSize: isMobile ? '10px' : '12px' },
-          formatter: (valor: any) => {
-            // ✅ Protege contra valores inválidos no eixo X
-            if (!valor || !ehNumeroValido(Number(valor))) return '';
-            return dayjs(Number(valor)).format('MM/YY');
-          }
-        }
-      },
-      yaxis: {
-        labels: {
-          formatter: (valor: any) => {
-            // ✅ Protege contra valores inválidos no eixo Y
-            if (valor === null || valor === undefined || Number.isNaN(valor) || !Number.isFinite(valor)) {
-              return '0%';
-            }
-            return `${Number(valor).toFixed(0)}%`;
-          },
-          style: { fontSize: isMobile ? '10px' : '12px' }
-        }
-      },
-      grid: { strokeDashArray: 4 },
-      tooltip: {
-        shared: true,
-        intersect: false,
-        x: { 
-          formatter: (valor: any) => {
-            // ✅ Protege tooltip X
-            if (!valor || !ehNumeroValido(Number(valor))) return 'Data inválida';
-            return formatarData(Number(valor));
+    () => {
+      // Garante que colors nunca é vazio ou undefined
+      const coresValidas = series.length > 0 ? series.map(item => item.color || '#000000') : ['#000000'];
+      
+      return {
+        chart: {
+          type: 'line' as const,
+          toolbar: { show: false },
+          zoom: { enabled: false },
+          fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+          animations: {
+            enabled: true,
+            speed: 800
           }
         },
-        y: { 
-          formatter: (valor: any) => {
-            // ✅ Protege tooltip Y
-            if (valor === null || valor === undefined || Number.isNaN(valor) || !Number.isFinite(valor)) {
-              return '0.00%';
+        stroke: { 
+          curve: 'smooth' as const, 
+          width: 2.5 
+        },
+        dataLabels: { enabled: false },
+        colors: coresValidas,
+        markers: { size: 0 },
+        xaxis: {
+          type: 'datetime' as const,
+          labels: {
+            format: 'MM/yy',
+            style: { 
+              fontSize: isMobile ? '10px' : '12px',
+              colors: '#64748b'
+            },
+            formatter: (valor: any, timestamp?: number) => {
+              // ✅ PROTEÇÃO MÁXIMA: usa timestamp se valor falhar
+              const valorFinal = timestamp ?? valor;
+              
+              if (!valorFinal) return '';
+              
+              const valorNum = Number(valorFinal);
+              if (!ehNumeroValido(valorNum)) return '';
+              
+              try {
+                return dayjs(valorNum).format('MM/YY');
+              } catch (e) {
+                return '';
+              }
             }
-            return formatarPercentual(Number(valor));
+          },
+          // ✅ Garante que não tenta processar dados vazios
+          min: undefined,
+          max: undefined
+        },
+        yaxis: {
+          labels: {
+            formatter: (valor: any) => {
+              // ✅ PROTEÇÃO: converte para número primeiro
+              try {
+                const valorNum = Number(valor);
+                if (!Number.isFinite(valorNum) || Number.isNaN(valorNum)) {
+                  return '0%';
+                }
+                return `${valorNum.toFixed(0)}%`;
+              } catch (e) {
+                return '0%';
+              }
+            },
+            style: { 
+              fontSize: isMobile ? '10px' : '12px',
+              colors: '#64748b'
+            }
+          },
+          // ✅ Define valores padrão
+          min: undefined,
+          max: undefined,
+          forceNiceScale: true
+        },
+        grid: { 
+          strokeDashArray: 4,
+          borderColor: '#e2e8f0'
+        },
+        tooltip: {
+          enabled: true,
+          shared: true,
+          intersect: false,
+          x: { 
+            formatter: (valor: any, opts?: any) => {
+              try {
+                // ✅ Tenta múltiplas fontes de dados
+                const valorFinal = opts?.w?.globals?.seriesX?.[opts?.seriesIndex]?.[opts?.dataPointIndex] ?? valor;
+                const valorNum = Number(valorFinal);
+                
+                if (!ehNumeroValido(valorNum)) return 'Data inválida';
+                return formatarData(valorNum);
+              } catch (e) {
+                return 'Data inválida';
+              }
+            }
+          },
+          y: { 
+            formatter: (valor: any) => {
+              try {
+                const valorNum = Number(valor);
+                if (!Number.isFinite(valorNum) || Number.isNaN(valorNum)) {
+                  return '0.00%';
+                }
+                return formatarPercentual(valorNum);
+              } catch (e) {
+                return '0.00%';
+              }
+            }
+          }
+        },
+        legend: {
+          position: 'top' as const,
+          horizontalAlign: 'left' as const,
+          fontSize: isMobile ? '11px' : '12px',
+          markers: { width: 12, height: 12 },
+          labels: {
+            colors: '#0f172a'
+          }
+        },
+        // ✅ CRÍTICO: Define noDataText para quando não há dados
+        noData: {
+          text: 'Carregando dados...',
+          align: 'center' as const,
+          verticalAlign: 'middle' as const,
+          style: {
+            color: '#64748b',
+            fontSize: '14px'
           }
         }
-      },
-      legend: {
-        position: 'top',
-        horizontalAlign: 'left',
-        fontSize: isMobile ? '11px' : '12px',
-        markers: { width: 12, height: 12 }
-      }
-    }),
+      };
+    },
     [series, isMobile]
   );
 
-  // ✅ CORREÇÃO 9: Validação final antes de renderizar o Chart
+  // ✅ CORREÇÃO 9: Validação final RIGOROSA antes de renderizar
   const dadosValidosParaGrafico = useMemo(() => {
-    return chartSeries.every(serie => 
-      Array.isArray(serie.data) && 
-      serie.data.length > 0 &&
-      serie.data.every(ponto => 
-        ponto && 
-        ehNumeroValido(ponto.x) && 
-        ehNumeroValido(ponto.y)
-      )
-    );
+    // Verifica se chartSeries existe e não está vazio
+    if (!Array.isArray(chartSeries) || chartSeries.length === 0) {
+      return false;
+    }
+
+    // Verifica cada série individualmente
+    return chartSeries.every(serie => {
+      // Verifica se a série é válida
+      if (!serie || typeof serie !== 'object') return false;
+      
+      // Verifica se tem nome válido
+      if (!serie.name || typeof serie.name !== 'string') return false;
+      
+      // Verifica se data é array e não está vazio
+      if (!Array.isArray(serie.data) || serie.data.length === 0) return false;
+      
+      // Verifica se todos os pontos são válidos
+      return serie.data.every(ponto => {
+        if (!ponto || typeof ponto !== 'object') return false;
+        
+        // Verifica x e y
+        const x = Number(ponto.x);
+        const y = Number(ponto.y);
+        
+        return (
+          ehNumeroValido(x) && 
+          x > 0 && // X deve ser timestamp positivo
+          ehNumeroValido(y) // Y pode ser qualquer número válido (incluindo 0)
+        );
+      });
+    });
   }, [chartSeries]);
 
   return (
@@ -831,34 +970,84 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
       )}
 
       <div style={{ marginTop: '16px' }}>
-        {loading ? (
+        {loading || !carregamentoCompleto ? (
           <div
             style={{
               height: isMobile ? '240px' : '300px',
               background: 'linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%)',
               backgroundSize: '200% 100%',
               animation: 'pulse 1.5s ease-in-out infinite',
-              borderRadius: '10px'
-            }}
-          />
-        ) : series.length > 0 && dadosValidosParaGrafico ? (
-          <Chart type="line" height={isMobile ? 260 : 320} options={chartOptions} series={chartSeries} />
-        ) : (
-          <div
-            style={{
-              height: isMobile ? '240px' : '300px',
+              borderRadius: '10px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#64748b',
               fontWeight: 600,
-              border: '1px dashed #cbd5e1',
-              borderRadius: '10px'
+              fontSize: '14px'
             }}
           >
-            {series.length > 0 && !dadosValidosParaGrafico 
-              ? 'Os dados carregados contêm valores inválidos e não podem ser exibidos.'
-              : 'Sem dados suficientes para exibir o gráfico.'}
+            {loading ? 'Carregando dados de todos os índices...' : 'Processando...'}
+          </div>
+        ) : chartSeries.length > 0 && dadosValidosParaGrafico ? (
+          <>
+            {/* ✅ DEBUG: Log antes de renderizar */}
+            {(() => {
+              console.log('🎨 === RENDERIZANDO CHART ===');
+              console.log('Número de séries:', chartSeries.length);
+              chartSeries.forEach((serie, idx) => {
+                console.log(`Série ${idx + 1}:`, {
+                  nome: serie.name,
+                  pontos: serie.data?.length || 0,
+                  primeiroX: serie.data?.[0]?.x,
+                  primeiroY: serie.data?.[0]?.y,
+                  ultimoX: serie.data?.[serie.data.length - 1]?.x,
+                  ultimoY: serie.data?.[serie.data.length - 1]?.y
+                });
+              });
+              console.log('=========================');
+              return null;
+            })()}
+            <Chart 
+              type="line" 
+              height={isMobile ? 260 : 320} 
+              options={chartOptions} 
+              series={chartSeries} 
+            />
+          </>
+        ) : (
+          <div
+            style={{
+              height: isMobile ? '240px' : '300px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#64748b',
+              fontWeight: 600,
+              border: '1px dashed #cbd5e1',
+              borderRadius: '10px',
+              padding: '24px',
+              textAlign: 'center',
+              gap: '12px'
+            }}
+          >
+            {chartSeries.length > 0 && !dadosValidosParaGrafico ? (
+              <>
+                <span style={{ fontSize: '32px' }}>⚠️</span>
+                <span>Os dados carregados contêm valores inválidos e não podem ser exibidos.</span>
+                <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                  Isso pode acontecer quando as APIs não retornam dados históricos para o período selecionado.
+                </span>
+              </>
+            ) : (
+              <>
+                <span style={{ fontSize: '32px' }}>📊</span>
+                <span>Sem dados suficientes para exibir o gráfico.</span>
+                <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                  Tente selecionar outro período ou aguarde alguns instantes.
+                </span>
+              </>
+            )}
           </div>
         )}
       </div>
