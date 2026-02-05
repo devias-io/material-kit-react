@@ -46,6 +46,21 @@ type IndiceStatus = {
   ultimaData?: string;
 };
 
+// ✅ CORREÇÃO 1: Validação rigorosa de números para evitar NaN/Infinity/undefined
+const ehNumeroValido = (valor: any): valor is number => {
+  return typeof valor === 'number' && !Number.isNaN(valor) && Number.isFinite(valor) && valor > 0;
+};
+
+// ✅ CORREÇÃO 2: Validação de ponto de histórico completo
+const pontoEhValido = (ponto: any): ponto is HistoricoPonto => {
+  return (
+    ponto &&
+    typeof ponto === 'object' &&
+    ehNumeroValido(ponto.date) &&
+    ehNumeroValido(ponto.close)
+  );
+};
+
 const normalizarData = (valor?: string | number): number | undefined => {
   if (!valor) return undefined;
 
@@ -91,8 +106,8 @@ const extrairHistorico = (dados: HistoricoBruto): HistoricoPonto[] => {
       date: normalizarData(item.date ?? item.pricedAt),
       close: item.close ?? item.adjClose ?? item.price ?? item.value
     }))
-    .filter(ponto => typeof ponto.date === 'number' && typeof ponto.close === 'number' && ponto.close > 0)
-    .sort((a, b) => a.date - b.date) as HistoricoPonto[];
+    .filter(pontoEhValido) // ✅ Usa validação rigorosa
+    .sort((a, b) => a.date - b.date);
 };
 
 const buscarHistorico = async (
@@ -209,10 +224,12 @@ const calcularIndiceAcumulado = (taxasMensais: { date: number; value: number }[]
   let indice = 100;
   const taxasOrdenadas = [...taxasMensais].sort((a, b) => a.date - b.date);
 
-  return taxasOrdenadas.map(ponto => {
-    indice = indice * (1 + ponto.value / 100);
-    return { date: ponto.date, close: indice };
-  });
+  return taxasOrdenadas
+    .map(ponto => {
+      indice = indice * (1 + ponto.value / 100);
+      return { date: ponto.date, close: indice };
+    })
+    .filter(pontoEhValido); // ✅ CORREÇÃO 3: Valida após cálculo acumulado
 };
 
 const agruparUltimoValorMensal = (pontos: { date: number; value: number }[]): { date: number; value: number }[] => {
@@ -291,15 +308,28 @@ const buscarCDI = async (range: RangeKey, signal?: AbortSignal): Promise<Histori
   return calcularIndiceAcumulado(taxas);
 };
 
+// ✅ CORREÇÃO 4: Proteção completa contra divisão por zero e valores inválidos
 const aplicarDividendosComReinvestimento = (historico: HistoricoPonto[], dividendos: DividendoPonto[]) => {
-  if (historico.length === 0) return { data: [], retornoFinal: 0 };
+  // Valida histórico antes de processar
+  const historicoValido = historico.filter(pontoEhValido);
+  
+  if (historicoValido.length === 0) {
+    return { data: [], retornoFinal: 0 };
+  }
+
+  const precoInicial = historicoValido[0].close;
+  
+  // ✅ PROTEÇÃO CRÍTICA: Se preço inicial for inválido, retorna vazio
+  if (!ehNumeroValido(precoInicial)) {
+    console.warn('⚠️ Preço inicial inválido:', precoInicial);
+    return { data: [], retornoFinal: 0 };
+  }
 
   const dividendosOrdenados = [...dividendos].sort((a, b) => a.date - b.date);
   let indiceDividendo = 0;
   let cotas = 1;
-  const precoInicial = historico[0].close;
 
-  const data = historico.map(ponto => {
+  const data = historicoValido.map(ponto => {
     while (indiceDividendo < dividendosOrdenados.length && dividendosOrdenados[indiceDividendo].date <= ponto.date) {
       const valorDividendo = dividendosOrdenados[indiceDividendo].valor;
       if (valorDividendo && ponto.close > 0) {
@@ -312,45 +342,62 @@ const aplicarDividendosComReinvestimento = (historico: HistoricoPonto[], dividen
     const valorAtual = ponto.close * cotas;
     const retornoPercentual = ((valorAtual - precoInicial) / precoInicial) * 100;
 
-    return { x: ponto.date, y: retornoPercentual };
-  });
+    // ✅ PROTEÇÃO: Só retorna se o valor calculado for válido
+    if (!ehNumeroValido(retornoPercentual)) {
+      return null;
+    }
 
-  const ultimoValor = historico[historico.length - 1].close * cotas;
+    return { x: ponto.date, y: retornoPercentual };
+  }).filter(Boolean) as { x: number; y: number }[]; // Remove nulls
+
+  const ultimoPonto = historicoValido[historicoValido.length - 1];
+  const ultimoValor = ultimoPonto.close * cotas;
   const retornoFinal = ((ultimoValor - precoInicial) / precoInicial) * 100;
 
-  return { data, retornoFinal };
+  return { 
+    data, 
+    retornoFinal: ehNumeroValido(retornoFinal) ? retornoFinal : 0 
+  };
 };
 
-// 🎯 NOVA FUNÇÃO: Alinhamento mais flexível
+// 🎯 Alinhamento flexível de séries
 const prepararSeriesAlinhadasFlexivel = (
   series: Array<{ name: string; color: string; tipo: SerieTipo; pontos: HistoricoPonto[]; dividendos: DividendoPonto[] }>
 ): SeriePreparada[] => {
-  // Em vez de forçar todos a começarem da data mais recente,
-  // vamos usar a data mais ANTIGA que tenha pelo menos 2 séries
-  const datasIniciais = series
-    .map(serie => (serie.pontos.length > 0 ? serie.pontos[0].date : 0))
-    .filter(valor => valor > 0)
-    .sort((a, b) => a - b); // Ordena do mais antigo para o mais recente
-
-  if (datasIniciais.length === 0) return [];
+  // Filtra séries que tem pontos válidos
+  const seriesValidas = series.filter(s => s.pontos.length > 0);
+  
+  if (seriesValidas.length === 0) return [];
 
   // Usa a data mais ANTIGA se houver pelo menos 2 séries com dados
+  const datasIniciais = seriesValidas
+    .map(serie => serie.pontos[0].date)
+    .sort((a, b) => a - b);
+
   const inicioComum = datasIniciais.length >= 2 ? datasIniciais[0] : datasIniciais[0];
 
-  return series
+  return seriesValidas
     .map(serie => {
-      const pontosValidos = serie.pontos.filter(ponto => ponto.date >= inicioComum);
+      const pontosValidos = serie.pontos.filter(ponto => ponto.date >= inicioComum && pontoEhValido(ponto));
       
-      // Reduz o mínimo de pontos para 1 (em vez de 2)
+      // Reduz o mínimo de pontos para 1
       if (pontosValidos.length < 1) return null;
 
       const { data, retornoFinal } = aplicarDividendosComReinvestimento(pontosValidos, serie.dividendos);
-      if (data.length === 0) return null;
+      
+      // ✅ CORREÇÃO 5: Valida se os dados processados são válidos
+      const dadosValidos = data.filter(ponto => 
+        ponto && 
+        ehNumeroValido(ponto.x) && 
+        ehNumeroValido(ponto.y)
+      );
+
+      if (dadosValidos.length === 0) return null;
 
       return {
         name: serie.name,
         color: serie.color,
-        data,
+        data: dadosValidos,
         retorno: retornoFinal,
         tipo: serie.tipo
       } as SeriePreparada;
@@ -358,9 +405,17 @@ const prepararSeriesAlinhadasFlexivel = (
     .filter(Boolean) as SeriePreparada[];
 };
 
-const formatarPercentual = (valor: number) => `${valor >= 0 ? '+' : ''}${valor.toFixed(2)}%`;
+const formatarPercentual = (valor: number) => {
+  // ✅ CORREÇÃO 6: Protege formatação contra valores inválidos
+  if (!ehNumeroValido(valor)) return '0.00%';
+  return `${valor >= 0 ? '+' : ''}${valor.toFixed(2)}%`;
+};
 
-const formatarData = (valor: number) => dayjs(valor).format('DD/MM/YY');
+const formatarData = (valor: number) => {
+  // ✅ CORREÇÃO 7: Protege formatação de data
+  if (!ehNumeroValido(valor)) return 'Data inválida';
+  return dayjs(valor).format('DD/MM/YY');
+};
 
 interface ComparacaoIndicesProps {
   ticker: string;
@@ -537,6 +592,7 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
     [series]
   );
 
+  // ✅ CORREÇÃO 8: Formatters com proteção completa contra valores inválidos
   const chartOptions = useMemo(
     () => ({
       chart: {
@@ -553,12 +609,23 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
         type: 'datetime',
         labels: {
           format: 'MM/yy',
-          style: { fontSize: isMobile ? '10px' : '12px' }
+          style: { fontSize: isMobile ? '10px' : '12px' },
+          formatter: (valor: any) => {
+            // ✅ Protege contra valores inválidos no eixo X
+            if (!valor || !ehNumeroValido(Number(valor))) return '';
+            return dayjs(Number(valor)).format('MM/YY');
+          }
         }
       },
       yaxis: {
         labels: {
-          formatter: (valor: number) => `${valor.toFixed(0)}%`,
+          formatter: (valor: any) => {
+            // ✅ Protege contra valores inválidos no eixo Y
+            if (valor === null || valor === undefined || Number.isNaN(valor) || !Number.isFinite(valor)) {
+              return '0%';
+            }
+            return `${Number(valor).toFixed(0)}%`;
+          },
           style: { fontSize: isMobile ? '10px' : '12px' }
         }
       },
@@ -566,8 +633,22 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
       tooltip: {
         shared: true,
         intersect: false,
-        x: { formatter: (valor: number) => formatarData(valor) },
-        y: { formatter: (valor: number) => formatarPercentual(valor) }
+        x: { 
+          formatter: (valor: any) => {
+            // ✅ Protege tooltip X
+            if (!valor || !ehNumeroValido(Number(valor))) return 'Data inválida';
+            return formatarData(Number(valor));
+          }
+        },
+        y: { 
+          formatter: (valor: any) => {
+            // ✅ Protege tooltip Y
+            if (valor === null || valor === undefined || Number.isNaN(valor) || !Number.isFinite(valor)) {
+              return '0.00%';
+            }
+            return formatarPercentual(Number(valor));
+          }
+        }
       },
       legend: {
         position: 'top',
@@ -578,6 +659,19 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
     }),
     [series, isMobile]
   );
+
+  // ✅ CORREÇÃO 9: Validação final antes de renderizar o Chart
+  const dadosValidosParaGrafico = useMemo(() => {
+    return chartSeries.every(serie => 
+      Array.isArray(serie.data) && 
+      serie.data.length > 0 &&
+      serie.data.every(ponto => 
+        ponto && 
+        ehNumeroValido(ponto.x) && 
+        ehNumeroValido(ponto.y)
+      )
+    );
+  }, [chartSeries]);
 
   return (
     <div
@@ -747,7 +841,7 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
               borderRadius: '10px'
             }}
           />
-        ) : series.length > 0 ? (
+        ) : series.length > 0 && dadosValidosParaGrafico ? (
           <Chart type="line" height={isMobile ? 260 : 320} options={chartOptions} series={chartSeries} />
         ) : (
           <div
@@ -762,7 +856,9 @@ const ComparacaoIndices: React.FC<ComparacaoIndicesProps> = ({
               borderRadius: '10px'
             }}
           >
-            Sem dados suficientes para exibir o gráfico.
+            {series.length > 0 && !dadosValidosParaGrafico 
+              ? 'Os dados carregados contêm valores inválidos e não podem ser exibidos.'
+              : 'Sem dados suficientes para exibir o gráfico.'}
           </div>
         )}
       </div>
