@@ -5,9 +5,7 @@ import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
-import Tooltip from "@mui/material/Tooltip";
 import { ListIcon } from "@phosphor-icons/react/dist/ssr/List";
-import { MagnifyingGlassIcon } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
 
 import { UserContext } from "@/contexts/user-context";
 import { usePopover } from "@/hooks/use-popover";
